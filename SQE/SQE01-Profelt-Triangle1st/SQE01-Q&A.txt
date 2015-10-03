@@ -1,0 +1,12 @@
+1.)
+    error: programming error in common code library from the vendor of the custom
+           code scrollbar
+    fault: SB_PAGEUP signal sent to the scrollbar when the scroll box is at
+           home, i.e. at the top position
+    failure: application crashes
+
+2.)
+    Nobody, all problems wihtin a software project are bugs, tester should
+    record every problem they acounter. Managers, teamleaders and developers
+    should then decide wich bug will be fixed and which bug is not worth being
+    fixed.
