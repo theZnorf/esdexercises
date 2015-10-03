@@ -12,6 +12,7 @@ import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.security.InvalidParameterException;
+import java.text.DecimalFormat;
 import java.util.Observable;
 import java.util.Observer;
 
@@ -37,6 +38,7 @@ public class Triangle1st extends JFrame implements ActionListener, Observer {
 
     // default dimension for all value fields
     private static final Dimension valueDim = new Dimension(100, 30);
+    
     private JTextField valueATxt;
     private JTextField valueBTxt;
     private JTextField valueCTxt;
@@ -210,6 +212,9 @@ public class Triangle1st extends JFrame implements ActionListener, Observer {
                             this,
                             e.getMessage(),
                             Messages.getString("Triangle1st.invalidValue"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
+            // reset results to invalid value text
+            perimeterTxt.setText(Messages.getString("Triangle1st.invalidValue")); //$NON-NLS-1$
+            areaTxt.setText(Messages.getString("Triangle1st.invalidValue")); //$NON-NLS-1$
         } catch (Exception e) {
             // show error dialog with exception
             JOptionPane
@@ -230,8 +235,10 @@ public class Triangle1st extends JFrame implements ActionListener, Observer {
      */
     @Override
     public void update(Observable o, Object arg) {
+        DecimalFormat format = new DecimalFormat("#######.####");
+        
         // show values
-        perimeterTxt.setText(String.valueOf(calculator.getPerimeter()));
-        areaTxt.setText(String.valueOf(calculator.getArea()));
+        perimeterTxt.setText(format.format(calculator.getPerimeter()));
+        areaTxt.setText(format.format(calculator.getArea()));
     }
 }

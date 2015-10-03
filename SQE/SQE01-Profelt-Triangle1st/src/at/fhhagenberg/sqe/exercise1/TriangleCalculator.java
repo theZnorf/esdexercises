@@ -52,7 +52,7 @@ public class TriangleCalculator extends Observable {
         try {
             valA = Double.parseDouble(strA);
             // check number
-            if (valA < 0)
+            if (valA <= 0)
                 throw new InvalidParameterException(
                         Messages.getString("TriangleCalculator.invalidNumberA")); //$NON-NLS-1$
         } catch (NumberFormatException e) {
@@ -73,7 +73,7 @@ public class TriangleCalculator extends Observable {
         try {
             valB = Double.parseDouble(strB);
             // check number
-            if (valB < 0)
+            if (valB <= 0)
                 throw new InvalidParameterException(
                         Messages.getString("TriangleCalculator.invalidNumberB")); //$NON-NLS-1$
         } catch (NumberFormatException e) {
@@ -94,7 +94,7 @@ public class TriangleCalculator extends Observable {
         try {
             valC = Double.parseDouble(strC);
             // check number
-            if (valC < 0)
+            if (valC <= 0)
                 throw new InvalidParameterException(
                         Messages.getString("TriangleCalculator.invalidNumberC")); //$NON-NLS-1$
         } catch (NumberFormatException e) {
@@ -113,8 +113,7 @@ public class TriangleCalculator extends Observable {
         valPerimeter = valA + valB + valC;
         double s = valPerimeter / 2;
         // calculate area
-        double d = s * (s - valA) * (s - valB) * (s - valC);
-        valArea = Math.sqrt(d);
+        valArea = Math.sqrt(s * (s - valA) * (s - valB) * (s - valC));
 
         // check validity of results
         if (Double.isNaN(valPerimeter))
