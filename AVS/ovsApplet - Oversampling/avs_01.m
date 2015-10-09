@@ -1,11 +1,11 @@
 close all;
 clear all;
 
-w = 2;
+w = 4;
 fs = 44100;
 
 f = 1000;
-A = 1;
+A = 0.5;
 N = 3001;
 
 Q = 2/2^w;
@@ -14,7 +14,7 @@ Q = 2/2^w;
 % 1: mit Noise shaping, kein dither
 % 2: kein Noise shaping, mit dither
 % 3: mit Noise shaping, mit dither
-iModus = 0;
+iModus = 3;
 
 %% Eingangssignal
 
@@ -36,13 +36,15 @@ hist(dither)
 
 %% Quantisierung auf W bit
 
-
-% kein noise shaping
-h = [ 0 ];
-% erster ordnung
-h = [ 1 ];
-% zweite ordnung
-h = [+2 -1 0];
+if (iModus == 0) || (iModus == 2)
+    % kein noise shaping
+    h = [ 0 ];
+elseif (iModus == 1) || (iModus == 3)
+    % erster ordnung
+    h = [ 1 ];
+    % zweite ordnung
+    h = [+2 -1 0];
+end
 
 TapDelayLine = zeros(1, length(h));
 
@@ -51,7 +53,12 @@ for ic=1:N
     eFiltered = sum(h .* TapDelayLine);
     % Quantisierung
     xmod = x(ic) - eFiltered;
-    xqr(ic) = Q * floor( xmod/Q + 0.5 );
+    if (iModus == 2) || (iModus == 3)
+        xqr(ic) = Q * floor( (xmod + dither(ic))/Q + 0.5 );
+    elseif (iModus == 0) || (iModus == 1)
+        xqr(ic) = Q * floor( xmod/Q + 0.5 );
+    end
+    
     % Fehler der Quantisierung
     e = xqr(ic) - xmod;
     TapDelayLine = [ e TapDelayLine(1:end-1) ];
