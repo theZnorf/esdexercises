@@ -68,9 +68,9 @@ if (iModus == 0) || (iModus == 2)
     h = [ 0 ];
 elseif (iModus == 1) || (iModus == 3)
     % erster ordnung
-    h = [ 1 ];
+    h = [ 1 ]; k = 1;
     % zweite ordnung
-    h = [+2 -1 0];
+    h = [+2 -1 0]; k = 2;
 end
 
 TapDelayLine = zeros(1, length(h));
@@ -91,10 +91,7 @@ for ic=1:NUP
     TapDelayLine = [ e TapDelayLine(1:end-1) ];
 end
 
-er = xUP - xUpqr;
-
 %% Abwärtstastung mit vorheriger Tiefpassfilterung
-
 
 % Filter anwenden
 xUpDownFiltered = filter(hLP,1,xUpqr);
@@ -102,6 +99,8 @@ xUpDownFiltered = filter(hLP,1,xUpqr);
 xUpDown = xUpDownFiltered(GrpDelayhLP+1:end);
 % Downsampling
 xDown = downsample(xUpDown, L);
+
+er = xUpDown - xUP(1:length(xUpDown));
 
 NDown = length(xDown);
 nDown = 0:1:NDown-1;
@@ -132,7 +131,7 @@ legend('show', 'location', 'best')
 
 subplot(414)
 grid on; hold on;
-plot(nUP, er ,'DisplayName','Quantisierungsfehler');
+plot(nUP(1:length(er)), er ,'DisplayName','Quantisierungsfehler');
 xlim([0 100])
 legend('show', 'location', 'best')
 
