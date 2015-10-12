@@ -1,0 +1,59 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title>Quantization Dithering and Noise Shaping Java Applet</title>
+</head>
+<body>
+<div align="center">
+<h1>Quantization, Dither, and Noise Shaping</h1>
+<p> <applet code="qdsApplet.class" name="qdsApplet" width="400"
+ height="500" hspace="0" vspace="0" align="middle"
+ archive="signedqdsApplet.jar"></applet> </p>
+<br>
+</div>
+<table cellpadding="2" cellspacing="2" border="0"
+ style="text-align: left; width: 600px; margin-left: auto; margin-right: auto;">
+  <tbody>
+    <tr>
+      <td style="vertical-align: top;"> This applet demonstrates audio
+effects resulting from <b>Quantization</b>. It is designed for a first
+insight into the perceptual effects of quantizing an audio signal.
+      <p>The following functions can be selected on the lower right of
+the graphical user interface</p>
+      <ul>
+        <li> <b>Quantizer&nbsp;</b>
+          <ul>
+            <li>word length w leads to quantization step size Q=2^(w-1)<br>
+            </li>
+          </ul>
+        </li>
+        <li><b>Dither</b>
+          <ul>
+            <li>rect dither - uniform probability density function </li>
+            <li>tri dither - triangular probability density
+function&nbsp;</li>
+            <li>high-pass dither - triangular probability density
+function and high-pass power spectral density</li>
+          </ul>
+        </li>
+        <li><b>Noise shaping</b>&nbsp;
+          <ul>
+            <li>first-order H(z)=z^(-1)</li>
+            <li>second-order H(z)=-2z^(-1)+z^(-2)</li>
+            <li>psychoacoustic noise shaping<br>
+            </li>
+          </ul>
+        </li>
+      </ul>
+      <p>You can choose between two predefined audio files from our
+web-server ("audio1.wav"   or "audio2.wav") or your own local .wav-file
+to be processed.</p>
+      <p>To run the applet you will need at least a <b>Java VM 1.4 or
+later</b>. Please   find the latest JRE (Java Runtime Environment) <a
+ href="http://java.sun.com/products/plugin/index.jsp">here</a>. </p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+</body>
+</html>
