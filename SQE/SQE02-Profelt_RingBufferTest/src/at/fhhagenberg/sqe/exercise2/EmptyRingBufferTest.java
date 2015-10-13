@@ -1,3 +1,7 @@
+/**
+ * @author Franz Profelt
+ * @id s1410567019
+ */
 package at.fhhagenberg.sqe.exercise2;
 
 import static org.junit.Assert.*;
