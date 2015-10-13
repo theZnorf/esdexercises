@@ -1,0 +1,9 @@
+Answers for Dependency Injection Questions:
+
+Symptoms:
+- the need for changing the transfer tests and the fee calculation test each time the fee calculation systems changes
+
+Locations for dependency injection:
+- Constructor: constructor parameter with fee object which will be saved as field
+- Setter: setter for an internal field with fee object
+- Method: method parameter for specific method which needs the given object
