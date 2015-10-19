@@ -1,0 +1,10 @@
+Use new with care:
+ - instantiating objects within methods can be very unuseful for future testing
+   and other changes in sight of design and functionality
+ - hardcoded instantiating an object defines the used implementation with no
+   possibility to change it
+ + the better would be an parameter or a field which allows to swap the used
+   implementation by using an interface
+ + another way to allow using different implementations without chaning an
+   implementation with new would be the usage of a template type, which is
+   instatiated hardcoded but can be changed at compile time
