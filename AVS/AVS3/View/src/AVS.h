@@ -17,20 +17,20 @@ typedef struct
 typedef struct
 {
     unsigned char Y;
-    unsigned char Cr;
     unsigned char Cb;
-} YCrCbPixel;
+    unsigned char Cr;
+} YCbCrPixel;
 
 void CreateBnWMeanRGB(PPM * image);
 
 void CreateBnWGreen(PPM * image);
 
-void RgbToYCrCbImage(PPM * image);
+void RgbToYCbCrImage(PPM * image);
 
-void YCrCbToRgbImage(PPM * image);
+void YCbCrToRgbImage(PPM * image);
 
-YCrCbPixel RgbToYCrCb(RgbPixel * pixel);
-YCrCbPixel RgbToYCrCb(RgbPixel * pixel);
+YCbCrPixel RgbToYCrCb(RgbPixel const * const pixel);
+RgbPixel YCbCrToRgb(YCbCrPixel const * const pixel);
 
 #ifdef __cplusplus
 }

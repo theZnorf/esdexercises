@@ -1,3 +1,4 @@
+#include <iostream>
 #include <SDL/SDL.h>
 #include "simpleppm.h"
 #include "AVS.h"
@@ -17,8 +18,18 @@ int main(int argc, char *argv[]) {
 
   PPM_load(&input, argv[1]);
 
-  RgbToYCrCbImage(&input);
-  YCrCbToRgbImage(&input);
+  unsigned char arr[3] = {23, 145, 240};
+  PPM test;
+  test.data = arr;
+  test.height = 1;
+  test.width = 1;
+  RgbToYCbCrImage(&test);
+
+  for (auto val : arr)
+	  std::cout << "val: " << (int)val << std::endl;
+
+  RgbToYCbCrImage(&input);
+  YCbCrToRgbImage(&input);
   
   SDL_Init(SDL_INIT_EVERYTHING);
   SDL_WM_SetCaption(argv[1], NULL);

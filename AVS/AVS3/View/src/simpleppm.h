@@ -16,6 +16,10 @@
 #include <string.h>
 #include <ctype.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
   unsigned char *data;
   unsigned int width, height;
@@ -24,5 +28,9 @@ typedef struct {
 
 int PPM_load(PPM* ppm, char* filename);
 int PPM_save(PPM* ppm, char* filename);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
