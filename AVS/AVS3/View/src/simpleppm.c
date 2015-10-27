@@ -42,12 +42,11 @@ int get_token(char* str, int* val, int* pos){
 
 int PPM_load(PPM* ppm, char* filename){
   FILE* file;
-  char str[1024], ch;
-  int height, width, maxcol;
+  char str[1024];
   int bpp;
   int token_type,token_val, str_pos;
   size_t bytes_read;
-  int bufsize, i;
+  int bufsize;
 
   /*read header*/ 
   file=fopen(filename,"rb");
@@ -99,7 +98,7 @@ int PPM_load(PPM* ppm, char* filename){
   ppm->maxcol=token_val; 
  
   /*now check for mandatory whitespace to delimit data from header*/
-  if (!isblank(str[str_pos]) && !str[str_pos]==10) return 4;
+  if (!isblank(str[str_pos]) && !(str[str_pos]==10)) return 4;
 
   /*now get the data*/
   bpp=(ppm->maxcol<256)?1:2;
@@ -118,16 +117,16 @@ int PPM_save(PPM* ppm, char* filename){
   
   FILE* file;
   size_t bytes_written;
-  int bpp,bufsize, i;
+  int bpp,bufsize;
   
   file=fopen(filename,"wb");
    
   fprintf(file,"P6\n#CREATED BY SIMPLEPPM\n %d %d\n%d\n",ppm->width,ppm->height,ppm->maxcol);
   
-  fwrite(ppm->data,sizeof(char), bufsize  ,file); 
-
   bpp=(ppm->maxcol<256)?1:2;
   bufsize=bpp*ppm->width*ppm->height*3;
+  bytes_written=fwrite(ppm->data,sizeof(char), bufsize  ,file); 
+
   if (bytes_written < bufsize) return 3;
   fclose(file);
 
