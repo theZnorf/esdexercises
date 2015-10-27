@@ -1,0 +1,572 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>FormTagTest.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tests.tagTests</a> &gt; <span class="el_source">FormTagTest.java</span></div><h1>FormTagTest.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Somik Raha
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/test/java/org/htmlparser/tests/tagTests/FormTagTest.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 13:37:00 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 5 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tests.tagTests;
+
+import org.htmlparser.Node;
+import org.htmlparser.Parser;
+import org.htmlparser.PrototypicalNodeFactory;
+import org.htmlparser.Remark;
+import org.htmlparser.Tag;
+import org.htmlparser.Text;
+import org.htmlparser.filters.NodeClassFilter;
+import org.htmlparser.tags.BodyTag;
+import org.htmlparser.tags.FormTag;
+import org.htmlparser.tags.HeadTag;
+import org.htmlparser.tags.Html;
+import org.htmlparser.tags.InputTag;
+import org.htmlparser.tags.LinkTag;
+import org.htmlparser.tags.OptionTag;
+import org.htmlparser.tags.ParagraphTag;
+import org.htmlparser.tags.SelectTag;
+import org.htmlparser.tags.TableTag;
+import org.htmlparser.tags.TextareaTag;
+import org.htmlparser.tests.ParserTestCase;
+import org.htmlparser.util.NodeIterator;
+import org.htmlparser.util.NodeList;
+import org.htmlparser.util.ParserException;
+
+public class FormTagTest extends ParserTestCase {
+
+    static
+    {
+<span class="fc" id="L55">        System.setProperty (&quot;org.htmlparser.tests.tagTests.FormTagTest&quot;, &quot;FormTagTest&quot;);</span>
+    }
+
+    public static final String FORM_HTML =
+    &quot;&lt;FORM METHOD=\&quot;&quot;+FormTag.POST+&quot;\&quot; ACTION=\&quot;do_login.php\&quot; NAME=\&quot;login_form\&quot; onSubmit=\&quot;return CheckData()\&quot;&gt;\n&quot;+
+        &quot;&lt;TR&gt;&lt;TD ALIGN=\&quot;center\&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;\n&quot;+
+        &quot;&lt;TR&gt;&lt;TD ALIGN=\&quot;center\&quot;&gt;&lt;FONT face=\&quot;Arial, verdana\&quot; size=2&gt;&lt;b&gt;User Name&lt;/b&gt;&lt;/font&gt;&lt;/TD&gt;&lt;/TR&gt;\n&quot;+
+        &quot;&lt;TR&gt;&lt;TD ALIGN=\&quot;center\&quot;&gt;&lt;INPUT TYPE=\&quot;text\&quot; NAME=\&quot;name\&quot; SIZE=\&quot;20\&quot;&gt;&lt;/TD&gt;&lt;/TR&gt;\n&quot;+
+        &quot;&lt;TR&gt;&lt;TD ALIGN=\&quot;center\&quot;&gt;&lt;FONT face=\&quot;Arial, verdana\&quot; size=2&gt;&lt;b&gt;Password&lt;/b&gt;&lt;/font&gt;&lt;/TD&gt;&lt;/TR&gt;\n&quot;+
+        &quot;&lt;TR&gt;&lt;TD ALIGN=\&quot;center\&quot;&gt;&lt;INPUT TYPE=\&quot;password\&quot; NAME=\&quot;passwd\&quot; SIZE=\&quot;20\&quot;&gt;&lt;/TD&gt;&lt;/TR&gt;\n&quot;+
+        &quot;&lt;TR&gt;&lt;TD ALIGN=\&quot;center\&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;\n&quot;+
+        &quot;&lt;TR&gt;&lt;TD ALIGN=\&quot;center\&quot;&gt;&lt;INPUT TYPE=\&quot;submit\&quot; NAME=\&quot;submit\&quot; VALUE=\&quot;Login\&quot;&gt;&lt;/TD&gt;&lt;/TR&gt;\n&quot;+
+        &quot;&lt;TR&gt;&lt;TD ALIGN=\&quot;center\&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;\n&quot;+
+        &quot;&lt;TEXTAREA name=\&quot;Description\&quot; rows=\&quot;15\&quot; cols=\&quot;55\&quot; wrap=\&quot;virtual\&quot; class=\&quot;composef\&quot; tabindex=\&quot;5\&quot;&gt;Contents of TextArea&lt;/TEXTAREA&gt;\n&quot;+
+//      &quot;&lt;TEXTAREA name=\&quot;AnotherDescription\&quot; rows=\&quot;15\&quot; cols=\&quot;55\&quot; wrap=\&quot;virtual\&quot; class=\&quot;composef\&quot; tabindex=\&quot;5\&quot;&gt;\n&quot;+
+        &quot;&lt;INPUT TYPE=\&quot;hidden\&quot; NAME=\&quot;password\&quot; SIZE=\&quot;20\&quot;&gt;\n&quot;+
+        &quot;&lt;INPUT TYPE=\&quot;submit\&quot;&gt;\n&quot;+
+<span class="fc" id="L72">        &quot;&lt;/FORM&gt;&quot;;</span>
+
+    public FormTagTest(String name) {
+<span class="fc" id="L75">        super(name);</span>
+<span class="fc" id="L76">    }</span>
+
+    public void assertTypeNameSize(String description,String type,String name,String size,InputTag inputTag)
+    {
+<span class="fc" id="L80">        assertEquals(description+&quot; type&quot;,type,inputTag.getAttribute(&quot;TYPE&quot;));</span>
+<span class="fc" id="L81">        assertEquals(description+&quot; name&quot;,name,inputTag.getAttribute(&quot;NAME&quot;));</span>
+<span class="fc" id="L82">        assertEquals(description+&quot; size&quot;,size,inputTag.getAttribute(&quot;SIZE&quot;));</span>
+<span class="fc" id="L83">    }</span>
+
+    public void assertTypeNameValue(String description,String type,String name,String value,InputTag inputTag)
+    {
+<span class="fc" id="L87">        assertEquals(description+&quot; type&quot;,type,inputTag.getAttribute(&quot;TYPE&quot;));</span>
+<span class="fc" id="L88">        assertEquals(description+&quot; name&quot;,name,inputTag.getAttribute(&quot;NAME&quot;));</span>
+<span class="fc" id="L89">        assertEquals(description+&quot; value&quot;,value,inputTag.getAttribute(&quot;VALUE&quot;));</span>
+<span class="fc" id="L90">    }</span>
+
+    public void testScan() throws ParserException
+    {
+<span class="fc" id="L94">        createParser(FORM_HTML,&quot;http://www.google.com/test/index.html&quot;);</span>
+<span class="fc" id="L95">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L96">        assertTrue(&quot;Node 0 should be Form Tag&quot;,node[0] instanceof FormTag);</span>
+<span class="fc" id="L97">        FormTag formTag = (FormTag)node[0];</span>
+<span class="fc" id="L98">        assertStringEquals(&quot;Method&quot;,FormTag.POST,formTag.getFormMethod());</span>
+<span class="fc" id="L99">        assertStringEquals(&quot;Location&quot;,&quot;http://www.google.com/test/do_login.php&quot;,formTag.getFormLocation());</span>
+<span class="fc" id="L100">        assertStringEquals(&quot;Name&quot;,&quot;login_form&quot;,formTag.getFormName());</span>
+<span class="fc" id="L101">        InputTag nameTag = formTag.getInputTag(&quot;name&quot;);</span>
+<span class="fc" id="L102">        InputTag passwdTag = formTag.getInputTag(&quot;passwd&quot;);</span>
+<span class="fc" id="L103">        InputTag submitTag = formTag.getInputTag(&quot;submit&quot;);</span>
+<span class="fc" id="L104">        InputTag dummyTag = formTag.getInputTag(&quot;dummy&quot;);</span>
+<span class="fc" id="L105">        assertNotNull(&quot;Input Name Tag should not be null&quot;,nameTag);</span>
+<span class="fc" id="L106">        assertNotNull(&quot;Input Password Tag should not be null&quot;,passwdTag);</span>
+<span class="fc" id="L107">        assertNotNull(&quot;Input Submit Tag should not be null&quot;,submitTag);</span>
+<span class="fc" id="L108">        assertNull(&quot;Input dummy tag should be null&quot;,dummyTag);</span>
+
+<span class="fc" id="L110">        assertTypeNameSize(&quot;Input Name Tag&quot;,&quot;text&quot;,&quot;name&quot;,&quot;20&quot;,nameTag);</span>
+<span class="fc" id="L111">        assertTypeNameSize(&quot;Input Password Tag&quot;,&quot;password&quot;,&quot;passwd&quot;,&quot;20&quot;,passwdTag);</span>
+<span class="fc" id="L112">        assertTypeNameValue(&quot;Input Submit Tag&quot;,&quot;submit&quot;,&quot;submit&quot;,&quot;Login&quot;,submitTag);</span>
+
+<span class="fc" id="L114">        TextareaTag textAreaTag = formTag.getTextAreaTag(&quot;Description&quot;);</span>
+<span class="fc" id="L115">        assertNotNull(&quot;Text Area Tag should have been found&quot;,textAreaTag);</span>
+<span class="fc" id="L116">        assertEquals(&quot;Text Area Tag Contents&quot;,&quot;Contents of TextArea&quot;,textAreaTag.getValue());</span>
+<span class="fc" id="L117">        assertNull(&quot;Should have been null&quot;,formTag.getTextAreaTag(&quot;junk&quot;));</span>
+
+<span class="fc" id="L119">        assertStringEquals(&quot;toHTML&quot;,FORM_HTML,formTag.toHtml());</span>
+<span class="fc" id="L120">    }</span>
+
+    public void testScanFormWithNoEnding() throws Exception
+    {
+<span class="fc" id="L124">        createParser(</span>
+<span class="fc" id="L125">        &quot;&lt;TABLE&gt;\n&quot;+</span>
+        &quot;&lt;FORM METHOD=\&quot;post\&quot; ACTION=\&quot;do_login.php\&quot; NAME=\&quot;login_form\&quot; onSubmit=\&quot;return CheckData()\&quot;&gt;\n&quot;+
+        &quot;&lt;TR&gt;&lt;TD ALIGN=\&quot;center\&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;\n&quot;+
+        &quot;&lt;TR&gt;&lt;TD ALIGN=\&quot;center\&quot;&gt;&lt;FONT face=\&quot;Arial, verdana\&quot; size=2&gt;&lt;b&gt;User Name&lt;/b&gt;&lt;/font&gt;&lt;/TD&gt;&lt;/TR&gt;\n&quot;+
+        &quot;&lt;TR&gt;&lt;TD ALIGN=\&quot;center\&quot;&gt;&lt;INPUT TYPE=\&quot;text\&quot; NAME=\&quot;name\&quot; SIZE=\&quot;20\&quot;&gt;&lt;/TD&gt;&lt;/TR&gt;\n&quot;+
+        &quot;&lt;TR&gt;&lt;TD ALIGN=\&quot;center\&quot;&gt;&lt;FONT face=\&quot;Arial, verdana\&quot; size=2&gt;&lt;b&gt;Password&lt;/b&gt;&lt;/font&gt;&lt;/TD&gt;&lt;/TR&gt;\n&quot;+
+        &quot;&lt;TR&gt;&lt;TD ALIGN=\&quot;center\&quot;&gt;&lt;INPUT TYPE=\&quot;password\&quot; NAME=\&quot;passwd\&quot; SIZE=\&quot;20\&quot;&gt;&lt;/TD&gt;&lt;/TR&gt;\n&quot;+
+        &quot;&lt;TR&gt;&lt;TD ALIGN=\&quot;center\&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;\n&quot;+
+        &quot;&lt;TR&gt;&lt;TD ALIGN=\&quot;center\&quot;&gt;&lt;INPUT TYPE=\&quot;submit\&quot; NAME=\&quot;submit\&quot; VALUE=\&quot;Login\&quot;&gt;&lt;/TD&gt;&lt;/TR&gt;\n&quot;+
+        &quot;&lt;TR&gt;&lt;TD ALIGN=\&quot;center\&quot;&gt;&amp;nbsp;&lt;/TD&gt;&lt;/TR&gt;\n&quot;+
+        &quot;&lt;INPUT TYPE=\&quot;hidden\&quot; NAME=\&quot;password\&quot; SIZE=\&quot;20\&quot;&gt;\n&quot;+
+<span class="fc" id="L136">        &quot;&lt;/TABLE&gt;&quot;,&quot;http://www.google.com/test/index.html&quot;);</span>
+
+<span class="fc" id="L138">        parser.setNodeFactory (</span>
+<span class="fc" id="L139">            new PrototypicalNodeFactory (</span>
+                new Tag[]
+<span class="fc" id="L141">                {</span>
+<span class="fc" id="L142">                    new FormTag (),</span>
+<span class="fc" id="L143">                    new InputTag (),</span>
+<span class="fc" id="L144">                    new TextareaTag (),</span>
+<span class="fc" id="L145">                    new SelectTag (),</span>
+<span class="fc" id="L146">                    new OptionTag (),</span>
+                }));
+
+<span class="fc" id="L149">        parseAndAssertNodeCount(4);</span>
+<span class="fc" id="L150">    }</span>
+
+    /**
+     * Bug reported by Pavan Podila - forms with links are not being parsed
+     * Sample html is from google
+     */
+    public void testScanFormWithLinks() throws ParserException
+    {
+<span class="fc" id="L158">        createParser(</span>
+<span class="fc" id="L159">        &quot;&lt;form action=\&quot;/search\&quot; name=f&gt;&lt;table cellspacing=0 cellpadding=0&gt;&lt;tr&gt;&lt;td width=75&gt;&amp;nbsp;&quot;+</span>
+        &quot;&lt;/td&gt;&lt;td align=center&gt;&lt;input type=hidden name=hl value=en&gt;&lt;input type=hidden name=ie &quot;+
+        &quot;value=\&quot;UTF-8\&quot;&gt;&lt;input type=hidden name=oe value=\&quot;UTF-8\&quot;&gt;&lt;input maxLength=256 size=55&quot;+
+        &quot; name=q value=\&quot;\&quot;&gt;&lt;br&gt;&lt;input type=submit value=\&quot;Google Search\&quot; name=btnG&gt;&lt;input type=&quot;+
+        &quot;submit value=\&quot;I'm Feeling Lucky\&quot; name=btnI&gt;&lt;/td&gt;&lt;td valign=top nowrap&gt;&lt;font size=-2&gt;&quot;+
+        &quot;&amp;nbsp;&amp;#8226;&amp;nbsp;&lt;a href=/advanced_search?hl=en&gt;Advanced&amp;nbsp;Search&lt;/a&gt;&lt;br&gt;&amp;nbsp;&amp;#8226;&quot;+
+        &quot;&amp;nbsp;&lt;a href=/preferences?hl=en&gt;Preferences&lt;/a&gt;&lt;br&gt;&amp;nbsp;&amp;#8226;&amp;nbsp;&lt;a href=/&quot;+
+        &quot;language_tools?hl=en&gt;Language Tools&lt;/a&gt;&lt;/font&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/form&gt;&quot;
+        );
+
+<span class="fc" id="L169">        parser.setNodeFactory (</span>
+<span class="fc" id="L170">            new PrototypicalNodeFactory (</span>
+                new Tag[]
+<span class="fc" id="L172">                {</span>
+<span class="fc" id="L173">                    new FormTag (),</span>
+<span class="fc" id="L174">                    new InputTag (),</span>
+<span class="fc" id="L175">                    new TextareaTag (),</span>
+<span class="fc" id="L176">                    new SelectTag (),</span>
+<span class="fc" id="L177">                    new OptionTag (),</span>
+<span class="fc" id="L178">                    new LinkTag (),</span>
+<span class="fc" id="L179">                    new TableTag (),</span>
+                }));
+<span class="fc" id="L181">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L182">        assertTrue(&quot;Should be a HTMLFormTag&quot;,node[0] instanceof FormTag);</span>
+<span class="fc" id="L183">        NodeList linkTags = new NodeList ();</span>
+<span class="fc" id="L184">        NodeClassFilter filter = new NodeClassFilter (LinkTag.class);</span>
+<span class="fc bfc" id="L185" title="All 2 branches covered.">        for (NodeIterator e = ((FormTag)node[0]).children (); e.hasMoreNodes ();)</span>
+<span class="fc" id="L186">            e.nextNode ().collectInto (linkTags, filter);</span>
+<span class="fc" id="L187">        assertEquals(&quot;Link Tag Count&quot;,3,linkTags.size ());</span>
+<span class="fc" id="L188">        LinkTag[] linkTag = new LinkTag[3];</span>
+<span class="fc" id="L189">        linkTags.copyToNodeArray (linkTag);</span>
+<span class="fc" id="L190">        assertEquals(&quot;First Link Tag Text&quot;,&quot;Advanced&amp;nbsp;Search&quot;,linkTag[0].getLinkText());</span>
+<span class="fc" id="L191">        assertEquals(&quot;Second Link Tag Text&quot;,&quot;Preferences&quot;,linkTag[1].getLinkText());</span>
+<span class="fc" id="L192">        assertEquals(&quot;Third Link Tag Text&quot;,&quot;Language Tools&quot;,linkTag[2].getLinkText());</span>
+<span class="fc" id="L193">    }</span>
+    /**
+     * Bug 652674 - forms with comments are not being parsed
+     */
+    public void testScanFormWithComments() throws ParserException {
+<span class="fc" id="L198">        createParser(</span>
+<span class="fc" id="L199">        &quot;&lt;form action=\&quot;/search\&quot; name=f&gt;&lt;table cellspacing=0 cellpadding=0&gt;&lt;tr&gt;&lt;td width=75&gt;&amp;nbsp;&quot;+</span>
+        &quot;&lt;/td&gt;&lt;td align=center&gt;&lt;input type=hidden name=hl value=en&gt;&lt;input type=hidden name=ie &quot;+
+        &quot;value=\&quot;UTF-8\&quot;&gt;&lt;input type=hidden name=oe value=\&quot;UTF-8\&quot;&gt;&lt;!-- Hello World --&gt;&quot;+
+        &quot;&lt;input maxLength=256 size=55&quot;+
+        &quot; name=q value=\&quot;\&quot;&gt;&lt;br&gt;&lt;input type=submit value=\&quot;Google Search\&quot; name=btnG&gt;&lt;input type=&quot;+
+        &quot;submit value=\&quot;I'm Feeling Lucky\&quot; name=btnI&gt;&lt;/td&gt;&lt;td valign=top nowrap&gt;&lt;font size=-2&gt;&quot;+
+        &quot;&amp;nbsp;&amp;#8226;&amp;nbsp;&lt;a href=/advanced_search?hl=en&gt;Advanced&amp;nbsp;Search&lt;/a&gt;&lt;br&gt;&amp;nbsp;&amp;#8226;&quot;+
+        &quot;&amp;nbsp;&lt;a href=/preferences?hl=en&gt;Preferences&lt;/a&gt;&lt;br&gt;&amp;nbsp;&amp;#8226;&amp;nbsp;&lt;a href=/&quot;+
+        &quot;language_tools?hl=en&gt;Language Tools&lt;/a&gt;&lt;/font&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/form&gt;&quot;
+        );
+
+<span class="fc" id="L210">        parser.setNodeFactory (</span>
+<span class="fc" id="L211">            new PrototypicalNodeFactory (</span>
+                new Tag[]
+<span class="fc" id="L213">                {</span>
+<span class="fc" id="L214">                    new FormTag (),</span>
+<span class="fc" id="L215">                    new InputTag (),</span>
+<span class="fc" id="L216">                    new TextareaTag (),</span>
+<span class="fc" id="L217">                    new SelectTag (),</span>
+<span class="fc" id="L218">                    new OptionTag (),</span>
+<span class="fc" id="L219">                    new TableTag (),</span>
+                }));
+<span class="fc" id="L221">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L222">        assertTrue(&quot;Should be a HTMLFormTag&quot;,node[0] instanceof FormTag);</span>
+<span class="fc" id="L223">        NodeList remarkNodes = new NodeList ();</span>
+<span class="fc" id="L224">        NodeClassFilter filter = new NodeClassFilter (Remark.class);</span>
+<span class="fc bfc" id="L225" title="All 2 branches covered.">        for (NodeIterator e = ((FormTag)node[0]).children (); e.hasMoreNodes ();)</span>
+<span class="fc" id="L226">            e.nextNode ().collectInto (remarkNodes, filter);</span>
+<span class="fc" id="L227">        assertEquals(&quot;Remark Node Count&quot;,1,remarkNodes.size ());</span>
+<span class="fc" id="L228">        assertEquals(&quot;First Remark Node&quot;,&quot; Hello World &quot;,remarkNodes.elementAt (0).getText ());</span>
+<span class="fc" id="L229">    }</span>
+    /**
+     * Bug 652674 - forms with comments are not being parsed
+     */
+    public void testScanFormWithComments2() throws ParserException {
+<span class="fc" id="L234">        createParser(</span>
+<span class="fc" id="L235">        &quot;&lt;FORM id=\&quot;id\&quot; name=\&quot;name\&quot; action=\&quot;http://some.site/aPage.asp?id=97\&quot; method=\&quot;post\&quot;&gt;\n&quot;+</span>
+        &quot;   &lt;!--\n&quot;+
+        &quot;   Just a Comment\n&quot;+
+        &quot;   --&gt;\n&quot;+
+        &quot;&lt;/FORM&gt;&quot;);
+<span class="fc" id="L240">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L241">        assertTrue(&quot;Should be a HTMLFormTag&quot;,node[0] instanceof FormTag);</span>
+<span class="fc" id="L242">        FormTag formTag = (FormTag)node[0];</span>
+<span class="fc" id="L243">        Remark [] remarkNode = new Remark[10];</span>
+<span class="fc" id="L244">        int i = 0;</span>
+<span class="fc bfc" id="L245" title="All 2 branches covered.">        for (NodeIterator e=formTag.children();e.hasMoreNodes();) {</span>
+<span class="fc" id="L246">            Node formNode = e.nextNode();</span>
+<span class="fc bfc" id="L247" title="All 2 branches covered.">            if (formNode instanceof Remark) {</span>
+<span class="fc" id="L248">                remarkNode[i++] = (Remark)formNode;</span>
+            }
+        }
+<span class="fc" id="L251">        assertEquals(&quot;Remark Node Count&quot;,1,i);</span>
+<span class="fc" id="L252">    }</span>
+
+    /**
+     * Bug 656870 - a form tag with a previously open link causes infinite loop
+     * on encounter
+     */
+    public void testScanFormWithPreviousOpenLink() throws ParserException {
+<span class="fc" id="L259">        createParser(</span>
+<span class="fc" id="L260">            &quot;&lt;A HREF=\&quot;http://www.oygevalt.org/\&quot;&gt;Home&lt;/A&gt;\n&quot;+</span>
+            &quot;&lt;P&gt;\n&quot;+
+            &quot;And now, the good stuff:\n&quot;+
+            &quot;&lt;P&gt;\n&quot;+
+            &quot;&lt;A HREF=\&quot;http://www.yahoo.com\&quot;&gt;Yahoo!\n&quot;+
+            &quot;&lt;FORM ACTION=\&quot;.\&quot; METHOD=\&quot;GET\&quot;&gt;\n&quot;+
+                &quot;&lt;INPUT TYPE=\&quot;TEXT\&quot;&gt;\n&quot;+
+                &quot;&lt;BR&gt;\n&quot;+
+                &quot;&lt;A HREF=\&quot;http://www.helpme.com\&quot;&gt;Help&lt;/A&gt; &quot; +
+                &quot;&lt;INPUT TYPE=\&quot;checkbox\&quot;&gt;\n&quot;+
+                &quot;&lt;P&gt;\n&quot;+
+                &quot;&lt;INPUT TYPE=\&quot;SUBMIT\&quot;&gt;\n&quot;+
+            &quot;&lt;/FORM&gt;&quot;
+        );
+<span class="fc" id="L274">        parseAndAssertNodeCount(5);</span>
+<span class="fc" id="L275">        assertTrue(&quot;Fourth Node is a paragraph&quot;,node[3] instanceof ParagraphTag);</span>
+<span class="fc" id="L276">        ParagraphTag paragraph = (ParagraphTag)node[3];</span>
+<span class="fc" id="L277">        assertTrue(&quot;Second Node of paragraph is a link&quot;, paragraph.getChildren ().elementAt (1) instanceof LinkTag);</span>
+<span class="fc" id="L278">        LinkTag linkTag = (LinkTag)paragraph.getChildren ().elementAt (1);</span>
+<span class="fc" id="L279">        assertEquals(&quot;Link Text&quot;,&quot;Yahoo!\n&quot;,linkTag.getLinkText());</span>
+<span class="fc" id="L280">        assertEquals(&quot;Link URL&quot;,&quot;http://www.yahoo.com&quot;,linkTag.getLink());</span>
+<span class="fc" id="L281">        assertType(&quot;Fifth Node&quot;,FormTag.class,node[4]);</span>
+<span class="fc" id="L282">    }</span>
+
+    /**
+     * Bug 713907 reported by Dhaval Udani, erroneous
+     * parsing of form tag (even when form scanner is not
+     * registered)
+     */
+    public void testFormScanningShouldNotHappen() throws Exception {
+<span class="fc" id="L290">        String testHTML =</span>
+<span class="fc" id="L291">            &quot;&lt;HTML&gt;&lt;HEAD&gt;&lt;TITLE&gt;Test Form Tag&lt;/TITLE&gt;&lt;/HEAD&gt;&quot; +</span>
+            &quot;&lt;BODY&gt;&lt;FORM name=\&quot;form0\&quot;&gt;&lt;INPUT type=\&quot;text\&quot; name=\&quot;text0\&quot;&gt;&lt;/FORM&gt;&quot; +
+            &quot;&lt;/BODY&gt;&lt;/HTML&gt;&quot;;
+<span class="fc" id="L294">        createParser(</span>
+<span class="fc" id="L295">            testHTML</span>
+        );
+<span class="fc" id="L297">        ((PrototypicalNodeFactory)parser.getNodeFactory ()).unregisterTag (new FormTag ());</span>
+<span class="fc" id="L298">        NodeList nodes =</span>
+<span class="fc" id="L299">            parser.extractAllNodesThatMatch (new NodeClassFilter (</span>
+<span class="fc" id="L300">                FormTag.class</span>
+            ));
+<span class="fc" id="L302">        assertEquals(</span>
+<span class="fc" id="L303">            &quot;shouldn't have found form tag&quot;,</span>
+<span class="fc" id="L304">            0,</span>
+<span class="fc" id="L305">            nodes.size ()</span>
+        );
+<span class="fc" id="L307">    }</span>
+
+    /**
+     * See bug #745566 StackOverflowError on select with too many unclosed options.
+     * Under Windows this throws a stack overflow exception.
+     */
+    public void testUnclosedOptions () throws ParserException
+    {
+<span class="nc" id="L315">        String url = &quot;http://htmlparser.sourceforge.net/test/overflowpage.html&quot;;</span>
+        int i;
+        Node[] nodes;
+
+<span class="nc" id="L319">        parser = new Parser(url);</span>
+<span class="nc" id="L320">        PrototypicalNodeFactory factory = new PrototypicalNodeFactory ();</span>
+        // we want to expose the repetitive tags
+<span class="nc" id="L322">        factory.unregisterTag (new Html ());</span>
+<span class="nc" id="L323">        factory.unregisterTag (new HeadTag ());</span>
+<span class="nc" id="L324">        factory.unregisterTag (new BodyTag ());</span>
+<span class="nc" id="L325">        factory.unregisterTag (new ParagraphTag ());</span>
+<span class="nc" id="L326">        parser.setNodeFactory (factory);</span>
+<span class="nc" id="L327">        i = 0;</span>
+<span class="nc" id="L328">        nodes = new Node[50];</span>
+<span class="nc bnc" id="L329" title="All 2 branches missed.">        for (NodeIterator e = parser.elements(); e.hasMoreNodes();)</span>
+<span class="nc" id="L330">            nodes[i++] = e.nextNode();</span>
+<span class="nc" id="L331">        assertEquals (&quot;Expected nodes&quot;, 39, i);</span>
+<span class="nc" id="L332">    }</span>
+    
+    public void testSetFormLocation() throws ParserException
+    {
+<span class="fc" id="L336">        createParser(FORM_HTML);</span>
+<span class="fc" id="L337">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L338">        assertTrue(&quot;Node 0 should be Form Tag&quot;,node[0] instanceof FormTag);</span>
+<span class="fc" id="L339">        FormTag formTag = (FormTag)node[0];</span>
+
+<span class="fc" id="L341">        formTag.setFormLocation(&quot;http://www.yahoo.com/yahoo/do_not_login.jsp&quot;);</span>
+<span class="fc" id="L342">        String expected = </span>
+<span class="fc" id="L343">            FORM_HTML.substring (0, FORM_HTML.indexOf (&quot;\&quot;do_login.php\&quot;&quot;))</span>
+<span class="fc" id="L344">            + &quot;\&quot;http://www.yahoo.com/yahoo/do_not_login.jsp\&quot;&quot;</span>
+<span class="fc" id="L345">            + FORM_HTML.substring (FORM_HTML.indexOf (&quot;\&quot;do_login.php\&quot;&quot;) + 14);</span>
+<span class="fc" id="L346">        assertStringEquals(&quot;Raw String&quot;,expected,formTag.toHtml());</span>
+<span class="fc" id="L347">    }</span>
+
+    public void testToPlainTextString() throws ParserException
+    {
+<span class="fc" id="L351">        createParser(FORM_HTML);</span>
+<span class="fc" id="L352">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L353">        assertTrue(&quot;Node 0 should be Form Tag&quot;,node[0] instanceof FormTag);</span>
+<span class="fc" id="L354">        FormTag formTag = (FormTag)node[0];</span>
+<span class="fc" id="L355">        assertStringEquals(&quot;Form Tag string representation&quot;,&quot;\n&amp;nbsp;\nUser Name\n\nPassword\n\n&amp;nbsp;\n\n&amp;nbsp;\nContents of TextArea\n\n\n&quot;, formTag.toPlainTextString());</span>
+<span class="fc" id="L356">    }</span>
+
+    public void testSearchFor() throws ParserException
+    {
+<span class="fc" id="L360">        createParser(FORM_HTML);</span>
+
+<span class="fc" id="L362">        parser.setNodeFactory (</span>
+<span class="fc" id="L363">            new PrototypicalNodeFactory (</span>
+                new Tag[]
+<span class="fc" id="L365">                {</span>
+<span class="fc" id="L366">                    new FormTag (),</span>
+<span class="fc" id="L367">                    new InputTag (),</span>
+<span class="fc" id="L368">                    new TextareaTag (),</span>
+<span class="fc" id="L369">                    new SelectTag (),</span>
+<span class="fc" id="L370">                    new OptionTag (),</span>
+                }));
+<span class="fc" id="L372">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L373">        assertTrue(&quot;Node 0 should be Form Tag&quot;,node[0] instanceof FormTag);</span>
+<span class="fc" id="L374">        FormTag formTag = (FormTag)node[0];</span>
+<span class="fc" id="L375">        NodeList nodeList = formTag.searchFor(&quot;USER NAME&quot;);</span>
+<span class="fc" id="L376">        assertEquals(&quot;Should have found nodes&quot;,1,nodeList.size());</span>
+
+<span class="fc" id="L378">        Node[] nodes = nodeList.toNodeArray();</span>
+
+<span class="fc" id="L380">        assertEquals(&quot;Number of nodes found&quot;,1,nodes.length);</span>
+<span class="fc" id="L381">        assertType(&quot;search result node&quot;,Text.class,nodes[0]);</span>
+<span class="fc" id="L382">        Text stringNode = (Text)nodes[0];</span>
+<span class="fc" id="L383">        assertEquals(&quot;Expected contents of string node&quot;,&quot;User Name&quot;,stringNode.getText());</span>
+<span class="fc" id="L384">    }</span>
+
+    public void testSearchForCaseSensitive() throws ParserException
+    {
+<span class="fc" id="L388">        createParser(FORM_HTML);</span>
+<span class="fc" id="L389">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L390">        assertTrue(&quot;Node 0 should be Form Tag&quot;,node[0] instanceof FormTag);</span>
+<span class="fc" id="L391">        FormTag formTag = (FormTag)node[0];</span>
+<span class="fc" id="L392">        NodeList nodeList = formTag.searchFor(&quot;USER NAME&quot;,true);</span>
+<span class="fc" id="L393">        assertEquals(&quot;Should have not found nodes&quot;,0,nodeList.size());</span>
+
+<span class="fc" id="L395">        nodeList = formTag.searchFor(&quot;User Name&quot;,true);</span>
+<span class="fc" id="L396">        assertNotNull(&quot;Should have not found nodes&quot;,nodeList);</span>
+<span class="fc" id="L397">    }</span>
+
+
+    public void testSearchByName() throws ParserException
+    {
+<span class="fc" id="L402">        createParser(FORM_HTML);</span>
+
+<span class="fc" id="L404">        parser.setNodeFactory (</span>
+<span class="fc" id="L405">            new PrototypicalNodeFactory (</span>
+                new Tag[]
+<span class="fc" id="L407">                {</span>
+<span class="fc" id="L408">                    new FormTag (),</span>
+<span class="fc" id="L409">                    new InputTag (),</span>
+<span class="fc" id="L410">                    new TextareaTag (),</span>
+<span class="fc" id="L411">                    new SelectTag (),</span>
+<span class="fc" id="L412">                    new OptionTag (),</span>
+                }));
+<span class="fc" id="L414">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L415">        assertTrue(&quot;Node 0 should be Form Tag&quot;,node[0] instanceof FormTag);</span>
+<span class="fc" id="L416">        FormTag formTag = (FormTag)node[0];</span>
+
+<span class="fc" id="L418">        Tag tag= formTag.searchByName(&quot;passwd&quot;);</span>
+<span class="fc" id="L419">        assertNotNull(&quot;Should have found the password node&quot;,tag);</span>
+<span class="fc" id="L420">        assertType(&quot;tag found&quot;,InputTag.class,tag);</span>
+<span class="fc" id="L421">    }</span>
+
+    /**
+     * Bug 713907 reported by Dhaval Udani, erroneous
+     * attributes being reported.
+     */
+    public void testFormRendering() throws Exception
+    {
+<span class="fc" id="L429">        String testHTML =</span>
+<span class="fc" id="L430">            &quot;&lt;HTML&gt;&lt;HEAD&gt;&lt;TITLE&gt;Test Form Tag&lt;/TITLE&gt;&lt;/HEAD&gt;&quot; +</span>
+            &quot;&lt;BODY&gt;&lt;FORM name=\&quot;form0\&quot;&gt;&lt;INPUT type=\&quot;text\&quot; name=\&quot;text0\&quot;&gt;&lt;/FORM&gt;&quot; +
+            &quot;&lt;/BODY&gt;&lt;/HTML&gt;&quot;;
+<span class="fc" id="L433">        createParser(</span>
+<span class="fc" id="L434">            testHTML</span>
+        );
+<span class="fc" id="L436">        FormTag formTag =</span>
+<span class="fc" id="L437">            (FormTag)(parser.extractAllNodesThatMatch (new NodeClassFilter (</span>
+<span class="fc" id="L438">                FormTag.class</span>
+<span class="fc" id="L439">            )).elementAt (0));</span>
+<span class="fc" id="L440">        assertNotNull(&quot;Should have found a form tag&quot;,formTag);</span>
+<span class="fc" id="L441">        assertStringEquals(&quot;name&quot;,&quot;form0&quot;,formTag.getFormName());</span>
+<span class="fc" id="L442">        assertNull(&quot;action&quot;,formTag.getAttribute(&quot;ACTION&quot;));</span>
+<span class="fc" id="L443">        assertXmlEquals(</span>
+<span class="fc" id="L444">            &quot;html&quot;,</span>
+<span class="fc" id="L445">            &quot;&lt;FORM NAME=\&quot;form0\&quot;&gt;&quot; +</span>
+                &quot;&lt;INPUT TYPE=\&quot;text\&quot; NAME=\&quot;text0\&quot;&gt;&quot; +
+            &quot;&lt;/FORM&gt;&quot;,
+<span class="fc" id="L448">            formTag.toHtml()</span>
+        );
+<span class="fc" id="L450">    }</span>
+
+    /**
+     * From support request #772998 Cannot extract input tags
+     * The getFormInputs list was reporting zero size and textarea tags were
+     * in the inputs list.
+     * Neither of these was reproducible.
+     */
+    public void testTextArea () throws Exception
+    {
+        FormTag formTag;
+        NodeList nl;
+        InputTag inpTag;
+        TextareaTag texTag;
+        
+<span class="fc" id="L465">        String html = &quot;&lt;body onload=\&quot;otextnloadHandler()\&quot; onunload=\&quot;closeAdvanced()\&quot;&gt;\n&quot; +</span>
+            &quot;	&lt;form name=\&quot;searchForm\&quot; onsubmit=\&quot;doSearch()\&quot;&gt;\n&quot; +
+            &quot;		&lt;table id=\&quot;searchTable\&quot; align=\&quot;left\&quot; valign=\&quot;middle\&quot; cellspacing=\&quot;0\&quot; cellpadding=\&quot;0\&quot; border=\&quot;0\&quot;&gt;\n&quot; +
+            &quot;			&lt;tbody&gt;&lt;tr nowrap=\&quot;\&quot; valign=\&quot;middle\&quot;&gt;\n&quot; +
+            &quot;				&lt;td id=\&quot;searchTD\&quot;&gt;\n&quot; +
+            &quot;					&lt;label id=\&quot;searchLabel\&quot; for=\&quot;searchWord\&quot;&gt;\n&quot; +
+            &quot;					 Search:\n&quot; +
+            &quot;					&lt;/label&gt;\n&quot; +
+            &quot;				&lt;/td&gt;\n&quot; +
+            &quot;\n&quot; +
+            &quot;				&lt;td&gt;\n&quot; +
+            &quot;					&lt;input type=\&quot;text\&quot; id=\&quot;searchWord\&quot; name=\&quot;searchWord\&quot; value=\&quot;\&quot; size=\&quot;24\&quot; maxlength=\&quot;256\&quot; alt=\&quot;Search Expression\&quot;&gt;\n&quot; +
+            &quot;				&lt;/td&gt;\n&quot; +
+            // note: this was added as there weren't any textarea tags in the page referenced
+            &quot;				&lt;td&gt;\n&quot; +
+            &quot;					&lt;textarea name=\&quot;mytextarea\&quot; rows=\&quot;1\&quot; cols=\&quot;12\&quot; alt=\&quot;Free Form Text\&quot;&gt;\n&quot; +
+            &quot;					   The text.\n&quot; +
+            &quot;					&lt;/textarea&gt;\n&quot; +
+            &quot;				&lt;/td&gt;\n&quot; +
+            &quot;				&lt;td&gt;\n&quot; +
+            &quot;					 &lt;input type=\&quot;button\&quot; onclick=\&quot;this.blur();doSearch()\&quot; value=\&quot;GO\&quot; id=\&quot;go\&quot; alt=\&quot;GO\&quot;&gt;\n&quot; +
+            &quot;					&lt;input type=\&quot;hidden\&quot; name=\&quot;maxHits\&quot; value=\&quot;500\&quot;&gt;\n&quot; +
+            &quot;				&lt;/td&gt;\n&quot; +
+            &quot;				&lt;td nowrap=\&quot;nowrap\&quot;&gt;\n&quot; +
+            &quot;\n&quot; +
+            &quot;					&lt;a id=\&quot;scopeLabel\&quot; href=\&quot;javascript:openAdvanced();\&quot; title=\&quot;Search only the following topics\&quot; alt=\&quot;Search only the following topics\&quot; onmouseover=\&quot;window.status='Search only the following topics'; return true;\&quot; onmouseout=\&quot;window.status='';\&quot;&gt;Search scope:&lt;/a&gt;\n&quot; +
+            &quot;				&lt;/td&gt;\n&quot; +
+            &quot;				&lt;td nowrap=\&quot;nowrap\&quot;&gt;\n&quot; +
+            &quot;					&lt;input type=\&quot;hidden\&quot; name=\&quot;workingSet\&quot; value=\&quot;All topics\&quot;&gt;\n&quot; +
+            &quot;					&lt;div id=\&quot;scope\&quot;&gt;All topics&lt;/div&gt;\n&quot; +
+            &quot;				&lt;/td&gt;\n&quot; +
+            &quot;			&lt;/tr&gt;\n&quot; +
+            &quot;\n&quot; +
+            &quot;		&lt;/tbody&gt;&lt;/table&gt;\n&quot; +
+            &quot;	&lt;/form&gt;\n&quot; +
+            &quot;\n&quot; +
+            &quot;&lt;/body&gt;\n&quot;;
+<span class="fc" id="L502">        createParser (html);</span>
+<span class="fc" id="L503">        formTag =</span>
+<span class="fc" id="L504">            (FormTag)(parser.extractAllNodesThatMatch (new NodeClassFilter (</span>
+<span class="fc" id="L505">                FormTag.class</span>
+<span class="fc" id="L506">            )).elementAt (0));</span>
+<span class="fc" id="L507">        assertNotNull (&quot;Should have found a form tag&quot;,formTag);</span>
+<span class="fc" id="L508">        assertStringEquals (&quot;name&quot;, &quot;searchForm&quot;, formTag.getFormName ());</span>
+<span class="fc" id="L509">        nl = formTag.getFormInputs ();</span>
+<span class="pc bpc" id="L510" title="1 of 2 branches missed.">        assertTrue (&quot;4 inputs&quot;, 4 == nl.size ());</span>
+<span class="fc" id="L511">        inpTag = (InputTag)nl.elementAt (0);</span>
+<span class="fc" id="L512">        assertStringEquals (&quot;name&quot;, &quot;searchWord&quot;, inpTag.getAttribute (&quot;name&quot;));</span>
+<span class="fc" id="L513">        assertStringEquals (&quot;value&quot;, &quot;&quot;, inpTag.getAttribute (&quot;value&quot;));</span>
+<span class="fc" id="L514">        inpTag = (InputTag)nl.elementAt (1);</span>
+<span class="fc" id="L515">        assertNull (&quot;name&quot;, inpTag.getAttribute (&quot;name&quot;));</span>
+<span class="fc" id="L516">        assertStringEquals (&quot;value&quot;, &quot;GO&quot;, inpTag.getAttribute (&quot;value&quot;));</span>
+<span class="fc" id="L517">        inpTag = (InputTag)nl.elementAt (2);</span>
+<span class="fc" id="L518">        assertStringEquals (&quot;name&quot;, &quot;maxHits&quot;, inpTag.getAttribute (&quot;name&quot;));</span>
+<span class="fc" id="L519">        assertStringEquals (&quot;value&quot;, &quot;500&quot;, inpTag.getAttribute (&quot;value&quot;));</span>
+<span class="fc" id="L520">        inpTag = (InputTag)nl.elementAt (3);</span>
+<span class="fc" id="L521">        assertStringEquals (&quot;name&quot;, &quot;workingSet&quot;, inpTag.getAttribute (&quot;name&quot;));</span>
+<span class="fc" id="L522">        assertStringEquals (&quot;value&quot;, &quot;All topics&quot;, inpTag.getAttribute (&quot;value&quot;));</span>
+<span class="fc" id="L523">        nl = formTag.getFormTextareas ();</span>
+<span class="pc bpc" id="L524" title="1 of 2 branches missed.">        assertTrue (&quot;1 textarea&quot;, 1 == nl.size ());</span>
+<span class="fc" id="L525">        texTag = (TextareaTag)nl.elementAt (0);</span>
+<span class="fc" id="L526">        assertStringEquals (&quot;name&quot;, &quot;mytextarea&quot;, texTag.getAttribute (&quot;name&quot;));</span>
+<span class="pc bpc" id="L527" title="1 of 2 branches missed.">        assertTrue (&quot;only 1 child&quot;, 1 == texTag.getChildCount ());</span>
+<span class="fc" id="L528">        assertStringEquals (&quot;text contents&quot;, &quot;\n					   The text.\n					&quot;, texTag.getChild (0).toHtml ());</span>
+<span class="fc" id="L529">    }</span>
+
+    /**
+     * From bug #825645 &lt;input&gt; not getting parsed inside table
+     */
+    public void testInputInTable () throws Exception
+    {
+        FormTag formTag;
+        NodeList nl;
+        InputTag inpTag;
+
+<span class="fc" id="L540">        String html = &quot;&lt;html&gt;\n&quot; +</span>
+            &quot;&lt;body&gt;\n&quot; +
+            &quot;&lt;form action=\&quot;/cgi-bin/test.pl\&quot; method=\&quot;post\&quot;&gt;\n&quot; +
+            &quot;&lt;table&gt;&lt;tr&gt;&lt;td&gt;\n&quot; +
+            &quot;&lt;INPUT type=hidden NAME=\&quot;test1\&quot; VALUE=\&quot;insidetable\&quot;&gt;\n&quot; +
+            &quot;&lt;/td&gt;&lt;/tr&gt;\n&quot; +
+            &quot;&lt;/table&gt;\n&quot; +
+            &quot;&lt;INPUT type=hidden NAME=\&quot;Test2\&quot;\n&quot; +
+            &quot;VALUE=\&quot;outsidetable\&quot;&gt;\n&quot; +
+            &quot;&lt;INPUT type=hidden name=\&quot;a\&quot; value=\&quot;b\&quot;&gt;\n&quot; +
+            &quot;&lt;/form&gt;\n&quot; +
+            &quot;&lt;/body&gt;\n&quot; +
+            &quot;&lt;/html&gt;\n&quot;;
+<span class="fc" id="L553">        createParser (html);</span>
+<span class="fc" id="L554">        formTag =</span>
+<span class="fc" id="L555">            (FormTag)(parser.extractAllNodesThatMatch (new NodeClassFilter (</span>
+<span class="fc" id="L556">                FormTag.class</span>
+<span class="fc" id="L557">            )).elementAt (0));</span>
+<span class="fc" id="L558">        assertNotNull (&quot;Should have found a form tag&quot;,formTag);</span>
+<span class="fc" id="L559">        nl = formTag.getFormInputs ();</span>
+<span class="pc bpc" id="L560" title="1 of 2 branches missed.">        assertTrue (&quot;3 inputs&quot;, 3 == nl.size ());</span>
+<span class="fc" id="L561">        inpTag = (InputTag)nl.elementAt (0);</span>
+<span class="fc" id="L562">        assertStringEquals (&quot;name&quot;, &quot;test1&quot;, inpTag.getAttribute (&quot;name&quot;));</span>
+<span class="fc" id="L563">        assertStringEquals (&quot;value&quot;, &quot;insidetable&quot;, inpTag.getAttribute (&quot;value&quot;));</span>
+<span class="fc" id="L564">        inpTag = (InputTag)nl.elementAt (1);</span>
+<span class="fc" id="L565">        assertStringEquals (&quot;name&quot;, &quot;Test2&quot;, inpTag.getAttribute (&quot;name&quot;));</span>
+<span class="fc" id="L566">        assertStringEquals (&quot;value&quot;, &quot;outsidetable&quot;, inpTag.getAttribute (&quot;value&quot;));</span>
+<span class="fc" id="L567">        inpTag = (InputTag)nl.elementAt (2);</span>
+<span class="fc" id="L568">        assertStringEquals (&quot;name&quot;, &quot;a&quot;, inpTag.getAttribute (&quot;name&quot;));</span>
+<span class="fc" id="L569">        assertStringEquals (&quot;value&quot;, &quot;b&quot;, inpTag.getAttribute (&quot;value&quot;));</span>
+<span class="fc" id="L570">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

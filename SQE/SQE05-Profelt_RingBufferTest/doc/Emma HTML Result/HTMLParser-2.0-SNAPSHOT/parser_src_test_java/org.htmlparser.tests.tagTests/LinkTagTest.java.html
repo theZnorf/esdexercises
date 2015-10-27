@@ -1,0 +1,868 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>LinkTagTest.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tests.tagTests</a> &gt; <span class="el_source">LinkTagTest.java</span></div><h1>LinkTagTest.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Somik Raha
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/test/java/org/htmlparser/tests/tagTests/LinkTagTest.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 13:37:00 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 5 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tests.tagTests;
+
+import org.htmlparser.Node;
+import org.htmlparser.PrototypicalNodeFactory;
+import org.htmlparser.Tag;
+import org.htmlparser.Text;
+import org.htmlparser.filters.NodeClassFilter;
+import org.htmlparser.tags.HeadTag;
+import org.htmlparser.tags.Html;
+import org.htmlparser.tags.ImageTag;
+import org.htmlparser.tags.LinkTag;
+import org.htmlparser.tests.ParserTestCase;
+import org.htmlparser.util.NodeList;
+import org.htmlparser.util.ParserException;
+import org.htmlparser.util.SimpleNodeIterator;
+
+public class LinkTagTest extends ParserTestCase {
+
+    static
+    {
+<span class="fc" id="L46">        System.setProperty (&quot;org.htmlparser.tests.tagTests.LinkTagTest&quot;, &quot;LinkTagTest&quot;);</span>
+<span class="fc" id="L47">    }</span>
+
+    public LinkTagTest(String name) {
+<span class="fc" id="L50">        super(name);</span>
+<span class="fc" id="L51">    }</span>
+
+    /**
+     * The bug being reproduced is this : &lt;BR&gt;
+     * &amp;lt;BODY aLink=#ff0000 bgColor=#ffffff link=#0000cc onload=setfocus() text=#000000 &lt;BR&gt;
+     * vLink=#551a8b&amp;gt;
+     * The above line is incorrectly parsed in that, the BODY tag is not identified.
+     * Creation date: (6/17/2001 4:01:06 PM)
+     */
+    public void testLinkNodeBug()  throws ParserException
+    {
+<span class="fc" id="L62">        createParser(&quot;&lt;A HREF=\&quot;../test.html\&quot;&gt;abcd&lt;/A&gt;&quot;,&quot;http://www.google.com/test/index.html&quot;);</span>
+<span class="fc" id="L63">        parseAndAssertNodeCount(1);</span>
+        // The node should be an LinkTag
+<span class="fc" id="L65">        assertTrue(&quot;Node should be a LinkTag&quot;,node[0] instanceof LinkTag);</span>
+<span class="fc" id="L66">        LinkTag linkNode = (LinkTag)node[0];</span>
+<span class="fc" id="L67">        assertEquals(&quot;The image locn&quot;,&quot;http://www.google.com/test.html&quot;,linkNode.getLink());</span>
+<span class="fc" id="L68">    }</span>
+
+    /**
+     * The bug being reproduced is this : &lt;BR&gt;
+     * &amp;lt;BODY aLink=#ff0000 bgColor=#ffffff link=#0000cc onload=setfocus() text=#000000 &lt;BR&gt;
+     * vLink=#551a8b&amp;gt;
+     * The above line is incorrectly parsed in that, the BODY tag is not identified.
+     * Creation date: (6/17/2001 4:01:06 PM)
+     */
+    public void testLinkNodeBug2() throws ParserException
+    {
+<span class="fc" id="L79">        createParser(&quot;&lt;A HREF=\&quot;../../test.html\&quot;&gt;abcd&lt;/A&gt;&quot;,&quot;http://www.google.com/test/test/index.html&quot;);</span>
+<span class="fc" id="L80">        parseAndAssertNodeCount(1);</span>
+        // The node should be an LinkTag
+<span class="fc" id="L82">        assertTrue(&quot;Node should be a LinkTag&quot;,node[0] instanceof LinkTag);</span>
+<span class="fc" id="L83">        LinkTag linkNode = (LinkTag)node[0];</span>
+<span class="fc" id="L84">        assertEquals(&quot;The image locn&quot;,&quot;http://www.google.com/test.html&quot;,linkNode.getLink());</span>
+<span class="fc" id="L85">    }</span>
+
+    /**
+     * The bug being reproduced is this : &lt;BR&gt;
+     * When a url ends with a slash, and the link begins with a slash,the parser puts two slashes
+     * This bug was submitted by Roget Kjensrud
+     * Creation date: (6/17/2001 4:01:06 PM)
+     */
+    public void testLinkNodeBug3() throws ParserException
+    {
+<span class="fc" id="L95">        createParser(&quot;&lt;A HREF=\&quot;/mylink.html\&quot;&gt;abcd&lt;/A&gt;&quot;,&quot;http://www.cj.com/&quot;);</span>
+<span class="fc" id="L96">        parseAndAssertNodeCount(1);</span>
+        // The node should be an LinkTag
+<span class="fc" id="L98">        assertTrue(&quot;Node should be a LinkTag&quot;,node[0] instanceof LinkTag);</span>
+<span class="fc" id="L99">        LinkTag linkNode = (LinkTag)node[0];</span>
+<span class="fc" id="L100">        assertEquals(&quot;Link incorrect&quot;,&quot;http://www.cj.com/mylink.html&quot;,linkNode.getLink());</span>
+<span class="fc" id="L101">    }</span>
+
+    /**
+     * The bug being reproduced is this : &lt;BR&gt;
+     * Simple url without index.html, doesent get appended to link
+     * This bug was submitted by Roget Kjensrud
+     * Creation date: (6/17/2001 4:01:06 PM)
+     */
+    public void testLinkNodeBug4() throws ParserException
+    {
+<span class="fc" id="L111">        createParser(&quot;&lt;A HREF=\&quot;/mylink.html\&quot;&gt;abcd&lt;/A&gt;&quot;,&quot;http://www.cj.com&quot;);</span>
+<span class="fc" id="L112">        parseAndAssertNodeCount(1);</span>
+        // The node should be an LinkTag
+<span class="fc" id="L114">        assertTrue(&quot;Node should be a LinkTag&quot;,node[0] instanceof LinkTag);</span>
+<span class="fc" id="L115">        LinkTag linkNode = (LinkTag)node[0];</span>
+<span class="fc" id="L116">        assertEquals(&quot;Link incorrect!!&quot;,&quot;http://www.cj.com/mylink.html&quot;,linkNode.getLink());</span>
+<span class="fc" id="L117">    }</span>
+
+    public void testLinkNodeBug5() throws ParserException
+    {
+<span class="fc" id="L121">        String link1 = &quot;http://note.kimo.com.tw/&quot;;</span>
+<span class="fc" id="L122">        String link2 = &quot;http://photo.kimo.com.tw/&quot;;</span>
+<span class="fc" id="L123">        String link3 = &quot;http://address.kimo.com.tw/&quot;;</span>
+<span class="fc" id="L124">        createParser(&quot;&lt;a href=&quot; + link1 + &quot;&gt;���O&lt;/a&gt;&amp;nbsp; &lt;a \n&quot;+</span>
+<span class="fc" id="L125">        &quot;href=&quot; + link2 + &quot;&gt;��ï&lt;/a&gt;&amp;nbsp; &lt;a\n&quot;+</span>
+<span class="fc" id="L126">        &quot;href=&quot; + link3 + &quot;&gt;�q�T��&lt;/a&gt;&amp;nbsp;&amp;nbsp;&quot;,&quot;http://www.cj.com&quot;);</span>
+<span class="fc" id="L127">        parseAndAssertNodeCount(6);</span>
+<span class="fc" id="L128">        assertTrue(&quot;Node should be a LinkTag&quot;,node[2] instanceof LinkTag);</span>
+<span class="fc" id="L129">        LinkTag linkNode = (LinkTag)node[2];</span>
+<span class="fc" id="L130">        assertStringEquals(&quot;Link incorrect!!&quot;,link2,linkNode.getLink());</span>
+<span class="fc" id="L131">        assertTrue(&quot;Node should be a LinkTag&quot;,node[4] instanceof LinkTag);</span>
+<span class="fc" id="L132">        LinkTag linkNode2 = (LinkTag)node[4];</span>
+<span class="fc" id="L133">        assertStringEquals(&quot;Link incorrect!!&quot;,link3,linkNode2.getLink());</span>
+<span class="fc" id="L134">    }</span>
+
+    /**
+     * This bug occurs when there is a null pointer exception thrown while scanning a tag using LinkScanner.
+     * Creation date: (7/1/2001 2:42:13 PM)
+     */
+    public void testLinkNodeBugNullPointerException() throws ParserException
+    {
+<span class="fc" id="L142">        createParser(&quot;&lt;FORM action=http://search.yahoo.com/bin/search name=f&gt;&lt;MAP name=m&gt;&lt;AREA\n&quot;+</span>
+            &quot;coords=0,0,52,52 href=\&quot;http://www.yahoo.com/r/c1\&quot; shape=RECT&gt;&lt;AREA&quot;+
+            &quot;coords=53,0,121,52 href=\&quot;http://www.yahoo.com/r/p1\&quot; shape=RECT&gt;&lt;AREA&quot;+
+            &quot;coords=122,0,191,52 href=\&quot;http://www.yahoo.com/r/m1\&quot; shape=RECT&gt;&lt;AREA&quot;+
+<span class="fc" id="L146">            &quot;coords=441,0,510,52 href=\&quot;http://www.yahoo.com/r/wn\&quot; shape=RECT&gt;&quot;,&quot;http://www.cj.com/&quot;);</span>
+<span class="fc" id="L147">        parser.setNodeFactory (new PrototypicalNodeFactory (new LinkTag ()));</span>
+<span class="fc" id="L148">        parseAndAssertNodeCount(6);</span>
+<span class="fc" id="L149">    }</span>
+
+    /**
+     * This bug occurs when there is a null pointer exception thrown while scanning a tag using LinkScanner.
+     * Creation date: (7/1/2001 2:42:13 PM)
+     */
+    public void testLinkNodeMailtoBug() throws ParserException
+    {
+<span class="fc" id="L157">        createParser(&quot;&lt;A HREF='mailto:somik@yahoo.com'&gt;hello&lt;/A&gt;&quot;,&quot;http://www.cj.com/&quot;);</span>
+<span class="fc" id="L158">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L159">        assertTrue(&quot;Node should be a LinkTag&quot;,node[0] instanceof LinkTag);</span>
+<span class="fc" id="L160">        LinkTag linkNode = (LinkTag)node[0];</span>
+<span class="fc" id="L161">        assertStringEquals(&quot;Link incorrect&quot;,&quot;somik@yahoo.com&quot;,linkNode.getLink());</span>
+<span class="fc" id="L162">        assertEquals(&quot;Link Type&quot;,new Boolean(true),new Boolean(linkNode.isMailLink()));</span>
+<span class="fc" id="L163">    }</span>
+
+    /**
+     * This bug occurs when there is a null pointer exception thrown while scanning a tag using LinkScanner.
+     * Creation date: (7/1/2001 2:42:13 PM)
+     */
+    public void testLinkNodeSingleQuoteBug() throws ParserException
+    {
+<span class="fc" id="L171">        createParser(&quot;&lt;A HREF='abcd.html'&gt;hello&lt;/A&gt;&quot;,&quot;http://www.cj.com/&quot;);</span>
+<span class="fc" id="L172">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L173">        assertTrue(&quot;Node should be a LinkTag&quot;,node[0] instanceof LinkTag);</span>
+<span class="fc" id="L174">        LinkTag linkNode = (LinkTag)node[0];</span>
+<span class="fc" id="L175">        assertEquals(&quot;Link incorrect&quot;,&quot;http://www.cj.com/abcd.html&quot;,linkNode.getLink());</span>
+<span class="fc" id="L176">    }</span>
+
+    /**
+     * The bug being reproduced is this : &lt;BR&gt;
+     * &amp;lt;BODY aLink=#ff0000 bgColor=#ffffff link=#0000cc onload=setfocus() text=#000000 &lt;BR&gt;
+     * vLink=#551a8b&amp;gt;
+     * The above line is incorrectly parsed in that, the BODY tag is not identified.
+     * Creation date: (6/17/2001 4:01:06 PM)
+     */
+    public void testLinkTag() throws ParserException
+    {
+<span class="fc" id="L187">        createParser(&quot;&lt;A HREF=\&quot;test.html\&quot;&gt;abcd&lt;/A&gt;&quot;,&quot;http://www.google.com/test/index.html&quot;);</span>
+<span class="fc" id="L188">        parseAndAssertNodeCount(1);</span>
+        // The node should be an LinkTag
+<span class="fc" id="L190">        assertTrue(&quot;Node should be a LinkTag&quot;,node[0] instanceof LinkTag);</span>
+<span class="fc" id="L191">        LinkTag LinkTag = (LinkTag)node[0];</span>
+<span class="fc" id="L192">        assertEquals(&quot;The image locn&quot;,&quot;http://www.google.com/test/test.html&quot;,LinkTag.getLink());</span>
+<span class="fc" id="L193">    }</span>
+
+    /**
+     * The bug being reproduced is this : &lt;BR&gt;
+     * &amp;lt;BODY aLink=#ff0000 bgColor=#ffffff link=#0000cc onload=setfocus() text=#000000 &lt;BR&gt;
+     * vLink=#551a8b&amp;gt;
+     * The above line is incorrectly parsed in that, the BODY tag is not identified.
+     * Creation date: (6/17/2001 4:01:06 PM)
+     */
+    public void testLinkTagBug() throws ParserException
+    {
+<span class="fc" id="L204">        createParser(&quot;&lt;A HREF=\&quot;../test.html\&quot;&gt;abcd&lt;/A&gt;&quot;,&quot;http://www.google.com/test/index.html&quot;);</span>
+<span class="fc" id="L205">        parseAndAssertNodeCount(1);</span>
+        // The node should be an LinkTag
+<span class="fc" id="L207">        assertTrue(&quot;Node should be a LinkTag&quot;,node[0] instanceof LinkTag);</span>
+<span class="fc" id="L208">        LinkTag LinkTag = (LinkTag)node[0];</span>
+<span class="fc" id="L209">        assertEquals(&quot;The image locn&quot;,&quot;http://www.google.com/test.html&quot;,LinkTag.getLink());</span>
+<span class="fc" id="L210">    }</span>
+
+    /**
+     * The bug being reproduced is this : &lt;BR&gt;
+     * &amp;lt;A HREF=&amp;gt;Something&amp;lt;A&amp;gt;&lt;BR&gt;
+     * vLink=#551a8b&amp;gt;
+     * The above line is incorrectly parsed in that, the BODY tag is not identified.
+     * Creation date: (6/17/2001 4:01:06 PM)
+     */
+    public void testNullTagBug() throws ParserException
+    {
+<span class="fc" id="L221">        createParser(&quot;&lt;A HREF=&gt;Something&lt;/A&gt;&quot;,&quot;http://www.google.com/test/index.html&quot;);</span>
+<span class="fc" id="L222">        parseAndAssertNodeCount(1);</span>
+        // The node should be an LinkTag
+<span class="fc" id="L224">        assertTrue(&quot;Node should be a LinkTag&quot;,node[0] instanceof LinkTag);</span>
+<span class="fc" id="L225">        LinkTag linkTag = (LinkTag)node[0];</span>
+<span class="fc" id="L226">        assertEquals(&quot;The link location&quot;,&quot;&quot;,linkTag.getLink());</span>
+<span class="fc" id="L227">        assertEquals(&quot;The link text&quot;,&quot;Something&quot;,linkTag.getLinkText());</span>
+<span class="fc" id="L228">    }</span>
+
+    public void testToPlainTextString() throws ParserException {
+<span class="fc" id="L231">        createParser(&quot;&lt;A HREF='mailto:somik@yahoo.com'&gt;hello&lt;/A&gt;&quot;,&quot;http://www.cj.com/&quot;);</span>
+<span class="fc" id="L232">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L233">        assertTrue(&quot;Node should be a LinkTag&quot;,node[0] instanceof LinkTag);</span>
+<span class="fc" id="L234">        LinkTag linkTag = (LinkTag)node[0];</span>
+<span class="fc" id="L235">        assertEquals(&quot;Link Plain Text&quot;,&quot;hello&quot;,linkTag.toPlainTextString());</span>
+<span class="fc" id="L236">    }</span>
+
+    public void testToHTML() throws ParserException {
+<span class="fc" id="L239">        String link1 = &quot;&lt;A HREF='mailto:somik@yahoo.com'&gt;hello&lt;/A&gt;&quot;;</span>
+<span class="fc" id="L240">        String link2 = &quot;&lt;a \n&quot;+</span>
+            &quot;href=\&quot;http://ads.samachar.com/bin/redirect/tech.txt?http://www.samachar.com/tech\n&quot;+
+            &quot;nical.html\&quot;&gt; Journalism 3.0&lt;/a&gt;&quot;;
+<span class="fc" id="L243">        createParser(link1 + &quot;\n&quot;+</span>
+<span class="fc" id="L244">            &quot;&lt;LI&gt;&lt;font color=\&quot;FF0000\&quot; size=-1&gt;&lt;b&gt;Tech Samachar:&lt;/b&gt;&lt;/font&gt;&quot; +</span>
+<span class="fc" id="L245">            link2 + &quot; by Rajesh Jain&quot;,&quot;http://www.cj.com/&quot;);</span>
+<span class="fc" id="L246">        parser.setNodeFactory (new PrototypicalNodeFactory (new LinkTag ()));</span>
+<span class="fc" id="L247">        parseAndAssertNodeCount(10);</span>
+<span class="fc" id="L248">        assertTrue(&quot;First Node should be a LinkTag&quot;,node[0] instanceof LinkTag);</span>
+<span class="fc" id="L249">        LinkTag linkTag = (LinkTag)node[0];</span>
+<span class="fc" id="L250">        assertStringEquals(&quot;Link Raw Text&quot;,link1,linkTag.toHtml());</span>
+<span class="fc" id="L251">        assertTrue(&quot;Ninth Node should be a LinkTag&quot;,node[8] instanceof LinkTag);</span>
+<span class="fc" id="L252">        linkTag = (LinkTag)node[8];</span>
+<span class="fc" id="L253">        assertStringEquals(&quot;Link Raw Text&quot;,link2,linkTag.toHtml());</span>
+<span class="fc" id="L254">    }</span>
+
+    public void testTypeHttps() throws ParserException
+    {
+        LinkTag link;
+
+<span class="fc" id="L260">        createParser (&quot;&lt;A HREF='https://www.someurl.com'&gt;Try https.&lt;/A&gt;&quot;,&quot;http://sourceforge.net&quot;);</span>
+<span class="fc" id="L261">        parseAndAssertNodeCount (1);</span>
+<span class="fc" id="L262">        assertTrue (&quot;Node should be a LinkTag&quot;, node[0] instanceof LinkTag);</span>
+<span class="fc" id="L263">        link = (LinkTag)node[0];</span>
+<span class="fc" id="L264">        assertTrue(&quot;This is a https link&quot;,link.isHTTPSLink());</span>
+<span class="fc" id="L265">    }</span>
+
+    public void testTypeFtp() throws ParserException
+    {
+        LinkTag link;
+
+<span class="fc" id="L271">        createParser (&quot;&lt;A HREF='ftp://www.someurl.com'&gt;Try ftp.&lt;/A&gt;&quot;,&quot;http://sourceforge.net&quot;);</span>
+<span class="fc" id="L272">        parseAndAssertNodeCount (1);</span>
+<span class="fc" id="L273">        assertTrue (&quot;Node should be a LinkTag&quot;, node[0] instanceof LinkTag);</span>
+<span class="fc" id="L274">        link = (LinkTag)node[0];</span>
+<span class="fc" id="L275">        assertTrue(&quot;This is an ftp link&quot;,link.isFTPLink());</span>
+<span class="fc" id="L276">    }</span>
+
+    public void testTypeJavaScript() throws ParserException
+    {
+        LinkTag link;
+
+<span class="fc" id="L282">        createParser (&quot;&lt;A HREF='javascript://www.someurl.com'&gt;Try javascript.&lt;/A&gt;&quot;,&quot;http://sourceforge.net&quot;);</span>
+<span class="fc" id="L283">        parseAndAssertNodeCount (1);</span>
+<span class="fc" id="L284">        assertTrue (&quot;Node should be a LinkTag&quot;, node[0] instanceof LinkTag);</span>
+<span class="fc" id="L285">        link = (LinkTag)node[0];</span>
+<span class="fc" id="L286">        assertTrue(&quot;This is a javascript link&quot;,link.isJavascriptLink());</span>
+<span class="fc" id="L287">    }</span>
+
+    public void testTypeHttpLink() throws ParserException
+    {
+        LinkTag link;
+
+<span class="fc" id="L293">        createParser (&quot;&lt;A HREF='http://www.someurl.com'&gt;Try http.&lt;/A&gt;&quot;,&quot;http://sourceforge.net&quot;);</span>
+<span class="fc" id="L294">        parseAndAssertNodeCount (1);</span>
+<span class="fc" id="L295">        assertTrue (&quot;Node should be a LinkTag&quot;, node[0] instanceof LinkTag);</span>
+<span class="fc" id="L296">        link = (LinkTag)node[0];</span>
+<span class="fc" id="L297">        assertTrue(&quot;This is a http link : &quot;+link.getLink(),link.isHTTPLink());</span>
+<span class="fc" id="L298">    }</span>
+
+    public void testRelativeTypeHttpLink() throws ParserException
+    {
+        LinkTag link;
+
+<span class="fc" id="L304">        createParser (&quot;&lt;A HREF='somePage.html'&gt;Try relative http.&lt;/A&gt;&quot;,&quot;http://sourceforge.net&quot;);</span>
+<span class="fc" id="L305">        parseAndAssertNodeCount (1);</span>
+<span class="fc" id="L306">        assertTrue (&quot;Node should be a LinkTag&quot;, node[0] instanceof LinkTag);</span>
+<span class="fc" id="L307">        link = (LinkTag)node[0];</span>
+<span class="fc" id="L308">        assertTrue(&quot;This relative link is also a http link : &quot;+link.getLink(),link.isHTTPLink());</span>
+<span class="fc" id="L309">    }</span>
+    
+    public void testTypeNonHttp() throws ParserException
+    {
+        LinkTag link;
+
+<span class="fc" id="L315">        createParser (&quot;&lt;A HREF='ftp://www.someurl.com'&gt;Try non-http.&lt;/A&gt;&quot;,&quot;http://sourceforge.net&quot;);</span>
+<span class="fc" id="L316">        parseAndAssertNodeCount (1);</span>
+<span class="fc" id="L317">        assertTrue (&quot;Node should be a LinkTag&quot;, node[0] instanceof LinkTag);</span>
+<span class="fc" id="L318">        link = (LinkTag)node[0];</span>
+<span class="pc bpc" id="L319" title="1 of 2 branches missed.">        assertTrue(&quot;This is not a http link : &quot;+link.getLink(),!link.isHTTPLink());</span>
+<span class="fc" id="L320">    }</span>
+
+    public void testTypeHttpLikeLink() throws ParserException
+    {
+        LinkTag link;
+
+<span class="fc" id="L326">        createParser (&quot;&lt;A HREF='http://'&gt;Try basic http.&lt;/A&gt;&quot;,&quot;http://sourceforge.net&quot;);</span>
+<span class="fc" id="L327">        parseAndAssertNodeCount (1);</span>
+<span class="fc" id="L328">        assertTrue (&quot;Node should be a LinkTag&quot;, node[0] instanceof LinkTag);</span>
+<span class="fc" id="L329">        link = (LinkTag)node[0];</span>
+<span class="fc" id="L330">        assertTrue(&quot;This is a http link&quot;,link.isHTTPLikeLink());</span>
+        
+<span class="fc" id="L332">        createParser (&quot;&lt;A HREF='https://www.someurl.com'&gt;Try https.&lt;/A&gt;&quot;,&quot;http://sourceforge.net&quot;);</span>
+<span class="fc" id="L333">        parseAndAssertNodeCount (1);</span>
+<span class="fc" id="L334">        assertTrue (&quot;Node should be a LinkTag&quot;, node[0] instanceof LinkTag);</span>
+<span class="fc" id="L335">        link = (LinkTag)node[0];</span>
+<span class="fc" id="L336">        assertTrue(&quot;This is a https link&quot;,link.isHTTPLikeLink());</span>
+<span class="fc" id="L337">    }</span>
+
+    /**
+     * Test mail link.
+     * Bug #738504 MailLink != HTTPLink
+     */
+    public void testMailToIsNotAHTTPLink () throws ParserException
+    {
+        LinkTag link;
+
+<span class="fc" id="L347">        createParser (&quot;&lt;A HREF='mailto:derrickoswald@users.sourceforge.net'&gt;Derrick&lt;/A&gt;&quot;,&quot;http://sourceforge.net&quot;);</span>
+<span class="fc" id="L348">        parseAndAssertNodeCount (1);</span>
+<span class="fc" id="L349">        assertTrue (&quot;Node should be a LinkTag&quot;, node[0] instanceof LinkTag);</span>
+<span class="fc" id="L350">        link = (LinkTag)node[0];</span>
+<span class="pc bpc" id="L351" title="1 of 2 branches missed.">        assertTrue (&quot;bug #738504 MailLink != HTTPLink&quot;, !link.isHTTPLink ());</span>
+<span class="pc bpc" id="L352" title="1 of 2 branches missed.">        assertTrue (&quot;bug #738504 MailLink != HTTPSLink&quot;, !link.isHTTPSLink ());</span>
+<span class="fc" id="L353">    }</span>
+
+    /**
+     * Bug #784767 irc://server/channel urls are HTTPLike?
+     */
+    public void testIrcIsNotAHTTPLink () throws ParserException
+    {
+        LinkTag link;
+
+<span class="fc" id="L362">        createParser (&quot;&lt;A HREF='irc://server/channel'&gt;Try irc.&lt;/A&gt;&quot;,&quot;http://sourceforge.net&quot;);</span>
+<span class="fc" id="L363">        parseAndAssertNodeCount (1);</span>
+<span class="fc" id="L364">        assertTrue (&quot;Node should be a LinkTag&quot;, node[0] instanceof LinkTag);</span>
+<span class="fc" id="L365">        link = (LinkTag)node[0];</span>
+<span class="pc bpc" id="L366" title="1 of 2 branches missed.">        assertTrue(&quot;This is not a http link&quot;, !link.isHTTPLikeLink ());</span>
+<span class="fc" id="L367">    }</span>
+
+    public void testAccessKey() throws ParserException {
+<span class="fc" id="L370">        createParser(&quot;&lt;a href=\&quot;http://www.kizna.com/servlets/SomeServlet?name=Sam Joseph\&quot; accessKey=1&gt;Click Here&lt;/A&gt;&quot;);</span>
+<span class="fc" id="L371">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L372">        assertTrue(&quot;The node should be a link tag&quot;,node[0] instanceof LinkTag);</span>
+<span class="fc" id="L373">        LinkTag linkTag = (LinkTag)node[0];</span>
+<span class="fc" id="L374">        assertEquals(&quot;Link URL of link tag&quot;,&quot;http://www.kizna.com/servlets/SomeServlet?name=Sam Joseph&quot;,linkTag.getLink());</span>
+<span class="fc" id="L375">        assertEquals(&quot;Link Text of link tag&quot;,&quot;Click Here&quot;,linkTag.getLinkText());</span>
+<span class="fc" id="L376">        assertEquals(&quot;Access key&quot;,&quot;1&quot;,linkTag.getAccessKey());</span>
+<span class="fc" id="L377">    }</span>
+
+    public void testErroneousLinkBug() throws ParserException {
+<span class="fc" id="L380">        createParser(</span>
+<span class="fc" id="L381">            &quot;Site Comments?&lt;br&gt;&quot; +</span>
+                &quot;&lt;a href=\&quot;mailto:sam@neurogrid.com?subject=Site Comments\&quot;&gt;&quot; +
+                    &quot;Mail Us&quot; +
+                &quot;&lt;a&gt;&quot;
+        );
+<span class="fc" id="L386">        parseAndAssertNodeCount(4);</span>
+        // The first node should be a Text
+<span class="fc" id="L388">        assertTrue(&quot;First node should be a Text&quot;,node[0] instanceof Text);</span>
+<span class="fc" id="L389">        Text stringNode = (Text)node[0];</span>
+<span class="fc" id="L390">        assertEquals(&quot;Text of the Text&quot;,&quot;Site Comments?&quot;,stringNode.getText());</span>
+<span class="fc" id="L391">        assertTrue(&quot;Second node should be a tag&quot;,node[1] instanceof Tag);</span>
+<span class="fc" id="L392">        assertTrue(&quot;Third node should be a link&quot;,node[2] instanceof LinkTag);</span>
+        // LinkScanner.evaluate() says no HREF means it isn't a link:
+<span class="fc" id="L394">        assertTrue(&quot;Fourth node should be a tag&quot;,node[3] instanceof Tag); </span>
+<span class="fc" id="L395">    }</span>
+
+    /**
+     * Test case based on a report by Raghavender Srimantula, of the parser giving out of memory exceptions. Found to occur
+     * on the following piece of html
+     * &lt;pre&gt;
+     * &lt;a href=s/8741&gt;&lt;img src=&quot;http://us.i1.yimg.com/us.yimg.com/i/i16/mov_popc.gif&quot; height=16 width=16 border=0&gt;&lt;/img&gt;&lt;/td&gt;&lt;td nowrap&gt; &amp;nbsp;
+     * &lt;a href=s/7509&gt;
+     * &lt;/pre&gt;
+     */
+    public void testErroneousLinkBugFromYahoo2() throws ParserException {
+<span class="fc" id="L406">        String link = &quot;&lt;a href=s/8741&gt;&quot; +</span>
+                &quot;&lt;img src=\&quot;http://us.i1.yimg.com/us.yimg.com/i/i16/mov_popc.gif\&quot; height=16 width=16 border=0&gt;&quot;;
+<span class="fc" id="L408">        createParser(</span>
+<span class="fc" id="L409">            &quot;&lt;td&gt;&quot; +</span>
+<span class="fc" id="L410">                link +</span>
+<span class="fc" id="L411">            &quot;&lt;/td&gt;&quot; +</span>
+<span class="fc" id="L412">            &quot;&lt;td nowrap&gt; &amp;nbsp;\n&quot;+</span>
+<span class="fc" id="L413">                &quot;&lt;a href=s/7509&gt;&lt;b&gt;Yahoo! Movies&lt;/b&gt;&lt;/a&gt;&quot; +</span>
+<span class="fc" id="L414">            &quot;&lt;/td&gt;&quot;,&quot;http://www.yahoo.com&quot;);</span>
+<span class="fc" id="L415">        NodeList linkNodes = parser.extractAllNodesThatMatch (new NodeClassFilter (LinkTag.class));</span>
+
+<span class="fc" id="L417">        assertEquals(&quot;number of links&quot;,2,linkNodes.size ());</span>
+<span class="fc" id="L418">        LinkTag linkTag = (LinkTag)linkNodes.elementAt (0);</span>
+<span class="fc" id="L419">        assertStringEquals(&quot;Link&quot;,&quot;http://www.yahoo.com/s/8741&quot;,linkTag.getLink());</span>
+        // Verify the link data
+<span class="fc" id="L421">        assertStringEquals(&quot;Link Text&quot;,&quot;&quot;,linkTag.getLinkText());</span>
+        // Verify the reconstruction html
+<span class="fc" id="L423">        assertStringEquals(&quot;toHTML&quot;,link + &quot;&lt;/a&gt;&quot;,linkTag.toHtml());</span>
+<span class="fc" id="L424">    }</span>
+
+    /**
+     * Test case based on a report by Raghavender Srimantula, of the parser giving out of memory exceptions. Found to occur
+     * on the following piece of html
+     * &lt;pre&gt;
+     * &lt;a href=s/8741&gt;&lt;img src=&quot;http://us.i1.yimg.com/us.yimg.com/i/i16/mov_popc.gif&quot; height=16 width=16 border=0&gt;&lt;/img&gt;This is test
+     * &lt;a href=s/7509&gt;
+     * &lt;/pre&gt;
+     */
+    public void testErroneousLinkBugFromYahoo() throws ParserException {
+<span class="fc" id="L435">        String link =</span>
+<span class="fc" id="L436">            &quot;&lt;a href=s/8741&gt;&quot; +</span>
+                &quot;&lt;img src=\&quot;http://us.i1.yimg.com/us.yimg.com/i/i16/mov_popc.gif\&quot; &quot; +
+                     &quot;height=16 &quot; +
+                     &quot;width=16 &quot; +
+                     &quot;border=0&gt;&quot; +
+                &quot;This is a test\n&quot;;
+<span class="fc" id="L442">        createParser(</span>
+<span class="fc" id="L443">                link +</span>
+<span class="fc" id="L444">                &quot;&lt;a href=s/7509&gt;&quot; +</span>
+<span class="fc" id="L445">                    &quot;&lt;b&gt;Yahoo! Movies&lt;/b&gt;&quot; +</span>
+<span class="fc" id="L446">                &quot;&lt;/a&gt;&quot;,</span>
+<span class="fc" id="L447">            &quot;http://www.yahoo.com&quot;</span>
+        );
+<span class="fc" id="L449">        parseAndAssertNodeCount(2);</span>
+<span class="fc" id="L450">        assertTrue(&quot;First node should be a LinkTag&quot;,node[0] instanceof LinkTag);</span>
+<span class="fc" id="L451">        assertTrue(&quot;Second node should be a LinkTag&quot;,node[1] instanceof LinkTag);</span>
+<span class="fc" id="L452">        LinkTag linkTag = (LinkTag)node[0];</span>
+<span class="fc" id="L453">        assertEquals(&quot;Link&quot;,&quot;http://www.yahoo.com/s/8741&quot;,linkTag.getLink());</span>
+        // Verify the link data
+<span class="fc" id="L455">        assertEquals(&quot;Link Text&quot;,&quot;This is a test\n&quot;,linkTag.getLinkText());</span>
+        // Verify the reconstruction html
+<span class="fc" id="L457">        assertStringEquals(&quot;toHTML()&quot;,link + &quot;&lt;/a&gt;&quot;,linkTag.toHtml());</span>
+<span class="fc" id="L458">    }</span>
+
+    /**
+     * This is the reproduction of a bug which produces multiple text copies.
+     */
+    public void testExtractLinkInvertedCommasBug2() throws ParserException
+    {
+<span class="fc" id="L465">        createParser(&quot;&lt;a href=\&quot;http://cbc.ca/artsCanada/stories/greatnorth271202\&quot; class=\&quot;lgblacku\&quot;&gt;Vancouver schools plan 'Great Northern Way'&lt;/a&gt;&quot;);</span>
+<span class="fc" id="L466">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L467">        assertTrue(&quot;The node should be a link tag&quot;,node[0] instanceof LinkTag);</span>
+<span class="fc" id="L468">        LinkTag linkTag = (LinkTag)node[0];</span>
+<span class="fc" id="L469">        assertStringEquals(&quot;Extracted Text&quot;,&quot;Vancouver schools plan 'Great Northern Way'&quot;, linkTag.getLinkText ());</span>
+<span class="fc" id="L470">    }</span>
+
+    /**
+     * Bug pointed out by Sam Joseph (sam@neurogrid.net)
+     * Links with spaces in them will get their spaces absorbed
+     */
+    public void testLinkSpacesBug() throws ParserException{
+<span class="fc" id="L477">        createParser(&quot;&lt;a href=\&quot;http://www.kizna.com/servlets/SomeServlet?name=Sam Joseph\&quot;&gt;Click Here&lt;/A&gt;&quot;);</span>
+<span class="fc" id="L478">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L479">        assertTrue(&quot;The node should be a link tag&quot;,node[0] instanceof LinkTag);</span>
+<span class="fc" id="L480">        LinkTag linkTag = (LinkTag)node[0];</span>
+<span class="fc" id="L481">        assertEquals(&quot;Link URL of link tag&quot;,&quot;http://www.kizna.com/servlets/SomeServlet?name=Sam Joseph&quot;,linkTag.getLink());</span>
+<span class="fc" id="L482">        assertEquals(&quot;Link Text of link tag&quot;,&quot;Click Here&quot;,linkTag.getLinkText());</span>
+<span class="fc" id="L483">    }</span>
+
+    /**
+     * Bug reported by Raj Sharma,5-Apr-2002, upon parsing
+     * http://www.samachar.com, the entire page could not be picked up.
+     * The problem was occurring after parsing a particular link
+     * after which the parsing would not proceed. This link was spread over three lines.
+     * The bug has been reproduced and fixed.
+     */
+    public void testMultipleLineBug() throws ParserException {
+<span class="fc" id="L493">        createParser(&quot;&lt;LI&gt;&lt;font color=\&quot;FF0000\&quot; size=-1&gt;&lt;b&gt;Tech Samachar:&lt;/b&gt;&lt;/font&gt;&lt;a \n&quot;+</span>
+        &quot;href=\&quot;http://ads.samachar.com/bin/redirect/tech.txt?http://www.samachar.com/tech\n&quot;+
+        &quot;nical.html\&quot;&gt; Journalism 3.0&lt;/a&gt; by Rajesh Jain&quot;);
+<span class="fc" id="L496">        parser.setNodeFactory (new PrototypicalNodeFactory (new LinkTag ()));</span>
+<span class="fc" id="L497">        parseAndAssertNodeCount(8);</span>
+<span class="fc" id="L498">        assertTrue(&quot;Seventh node should be a link tag&quot;,node[6] instanceof LinkTag);</span>
+<span class="fc" id="L499">        LinkTag linkTag = (LinkTag)node[6];</span>
+<span class="fc" id="L500">        String exp = new String(&quot;http://ads.samachar.com/bin/redirect/tech.txt?http://www.samachar.com/technical.html&quot;);</span>
+        //assertEquals(&quot;Length of link tag&quot;,exp.length(), linkTag.getLink().length());
+<span class="fc" id="L502">        assertStringEquals(&quot;Link URL of link tag&quot;,exp,linkTag.getLink());</span>
+<span class="fc" id="L503">        assertEquals(&quot;Link Text of link tag&quot;,&quot; Journalism 3.0&quot;,linkTag.getLinkText());</span>
+<span class="fc" id="L504">        assertTrue(&quot;Eight node should be a string node&quot;,node[7] instanceof Text);</span>
+<span class="fc" id="L505">        Text stringNode = (Text)node[7];</span>
+<span class="fc" id="L506">        assertEquals(&quot;String node contents&quot;,&quot; by Rajesh Jain&quot;,stringNode.getText());</span>
+<span class="fc" id="L507">    }</span>
+
+    public void testRelativeLinkScan() throws ParserException {
+<span class="fc" id="L510">        createParser(&quot;&lt;A HREF=\&quot;mytest.html\&quot;&gt; Hello World&lt;/A&gt;&quot;,&quot;http://www.yahoo.com&quot;);</span>
+<span class="fc" id="L511">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L512">        assertTrue(&quot;Node identified should be HTMLLinkTag&quot;,node[0] instanceof LinkTag);</span>
+<span class="fc" id="L513">        LinkTag linkTag = (LinkTag)node[0];</span>
+<span class="fc" id="L514">        assertEquals(&quot;Expected Link&quot;,&quot;http://www.yahoo.com/mytest.html&quot;,linkTag.getLink());</span>
+<span class="fc" id="L515">    }</span>
+
+    public void testRelativeLinkScan2() throws ParserException {
+<span class="fc" id="L518">        createParser(&quot;&lt;A HREF=\&quot;abc/def/mytest.html\&quot;&gt; Hello World&lt;/A&gt;&quot;,&quot;http://www.yahoo.com&quot;);</span>
+<span class="fc" id="L519">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L520">        assertTrue(&quot;Node identified should be HTMLLinkTag&quot;,node[0] instanceof LinkTag);</span>
+<span class="fc" id="L521">        LinkTag linkTag = (LinkTag)node[0];</span>
+<span class="fc" id="L522">        assertStringEquals(&quot;Expected Link&quot;,&quot;http://www.yahoo.com/abc/def/mytest.html&quot;,linkTag.getLink());</span>
+<span class="fc" id="L523">    }</span>
+
+    public void testRelativeLinkScan3() throws ParserException {
+<span class="fc" id="L526">        createParser(&quot;&lt;A HREF=\&quot;../abc/def/mytest.html\&quot;&gt; Hello World&lt;/A&gt;&quot;,&quot;http://www.yahoo.com/ghi&quot;);</span>
+<span class="fc" id="L527">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L528">        assertTrue(&quot;Node identified should be HTMLLinkTag&quot;,node[0] instanceof LinkTag);</span>
+<span class="fc" id="L529">        LinkTag linkTag = (LinkTag)node[0];</span>
+<span class="fc" id="L530">        assertStringEquals(&quot;Expected Link&quot;,&quot;http://www.yahoo.com/abc/def/mytest.html&quot;,linkTag.getLink());</span>
+<span class="fc" id="L531">    }</span>
+
+    /**
+     * Test scan with data which is of diff nodes type
+     */
+    public void testScan() throws ParserException
+    {
+<span class="fc" id="L538">        createParser(&quot;&lt;A HREF=\&quot;mytest.html\&quot;&gt;&lt;IMG SRC=\&quot;abcd.jpg\&quot;&gt;Hello World&lt;/A&gt;&quot;,&quot;http://www.yahoo.com&quot;);</span>
+<span class="fc" id="L539">        parser.setNodeFactory (</span>
+<span class="fc" id="L540">            new PrototypicalNodeFactory (</span>
+<span class="fc" id="L541">                new Tag[] {</span>
+<span class="fc" id="L542">                    new LinkTag (),</span>
+<span class="fc" id="L543">                    new ImageTag (),</span>
+                }));
+<span class="fc" id="L545">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L546">        assertTrue(&quot;Node should be a link node&quot;,node[0] instanceof LinkTag);</span>
+
+<span class="fc" id="L548">        LinkTag linkTag = (LinkTag)node[0];</span>
+        // Get the link data and cross-check
+<span class="fc" id="L550">        Node [] dataNode= new Node[10];</span>
+<span class="fc" id="L551">        int i = 0;</span>
+<span class="fc bfc" id="L552" title="All 2 branches covered.">        for (SimpleNodeIterator e = linkTag.children();e.hasMoreNodes();)</span>
+        {
+<span class="fc" id="L554">            dataNode[i++] = e.nextNode();</span>
+        }
+<span class="fc" id="L556">        assertEquals(&quot;Number of data nodes&quot;,new Integer(2),new Integer(i));</span>
+<span class="fc" id="L557">        assertTrue(&quot;First data node should be an Image Node&quot;,dataNode[0] instanceof ImageTag);</span>
+<span class="fc" id="L558">        assertTrue(&quot;Second data node shouls be a String Node&quot;,dataNode[1] instanceof Text);</span>
+
+        // Check the contents of each data node
+<span class="fc" id="L561">        ImageTag imageTag = (ImageTag)dataNode[0];</span>
+<span class="fc" id="L562">        assertEquals(&quot;Image URL&quot;,&quot;http://www.yahoo.com/abcd.jpg&quot;,imageTag.getImageURL());</span>
+<span class="fc" id="L563">        Text stringNode = (Text)dataNode[1];</span>
+<span class="fc" id="L564">        assertEquals(&quot;String Contents&quot;,&quot;Hello World&quot;,stringNode.getText());</span>
+<span class="fc" id="L565">    }</span>
+
+    /**
+     * A bug in the freshmeat page - really bad html
+     * tag - &amp;lt;A&amp;gt;Revision&amp;lt;\a&amp;gt;
+     * Reported by Mazlan Mat
+     * Note: Actually, this is completely legal HTML - Derrick
+     */
+    public void testFreshMeatBug() throws ParserException
+    {
+<span class="fc" id="L575">        String html = &quot;&lt;a&gt;Revision&lt;/a&gt;&quot;;</span>
+<span class="fc" id="L576">        createParser(html,&quot;http://www.yahoo.com&quot;);</span>
+<span class="fc" id="L577">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L578">        assertTrue(&quot;Node 0 should be a tag&quot;,node[0] instanceof Tag);</span>
+<span class="fc" id="L579">        Tag tag = (Tag)node[0];</span>
+<span class="fc" id="L580">        assertEquals(&quot;Tag Contents&quot;,html,tag.toHtml());</span>
+<span class="fc" id="L581">        assertEquals(&quot;Node 0 should have one child&quot;, 1, tag.getChildren ().size ());</span>
+<span class="fc" id="L582">        assertTrue(&quot;The child should be a string node&quot;, tag.getChildren ().elementAt (0) instanceof Text);</span>
+<span class="fc" id="L583">        Text stringNode = (Text)tag.getChildren ().elementAt (0);</span>
+<span class="fc" id="L584">        assertEquals(&quot;Text Contents&quot;,&quot;Revision&quot;,stringNode.getText());</span>
+<span class="fc" id="L585">    }</span>
+
+    /**
+     * Test suggested by Cedric Rosa
+     * A really bad link tag sends parser into infinite loop
+     */
+    public void testBrokenLink() throws ParserException {
+<span class="fc" id="L592">        createParser(</span>
+<span class="fc" id="L593">            &quot;&lt;a href=\&quot;faq.html\&quot;&gt;&quot; +</span>
+                &quot;&lt;br&gt;\n&quot;+
+                &quot;&lt;img src=\&quot;images/46revues.gif\&quot; &quot; +
+                     &quot;width=\&quot;100\&quot; &quot; +
+                     &quot;height=\&quot;46\&quot; &quot; +
+                     &quot;border=\&quot;0\&quot; &quot; +
+                     &quot;alt=\&quot;Rejoignez revues.org!\&quot; &quot; +
+                     &quot;align=\&quot;middle\&quot;&gt;&quot;,
+<span class="fc" id="L601">            &quot;http://www.yahoo.com&quot;</span>
+        );
+<span class="fc" id="L603">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L604">        assertTrue(&quot;Node 0 should be a link tag&quot;,node[0] instanceof LinkTag);</span>
+<span class="fc" id="L605">        LinkTag linkTag = (LinkTag)node[0];</span>
+<span class="fc" id="L606">        assertNotNull(linkTag.toString());</span>
+<span class="fc" id="L607">    }</span>
+
+    public void testLinkDataContents() throws ParserException {
+<span class="fc" id="L610">        createParser(&quot;&lt;a href=\&quot;http://transfer.go.com/cgi/atransfer.pl?goto=http://www.signs.movies.com&amp;name=114332&amp;srvc=nws&amp;context=283&amp;guid=4AD5723D-C802-4310-A388-0B24E1A79689\&quot; target=\&quot;_new\&quot;&gt;&lt;img src=\&quot;http://ad.abcnews.com/ad/sponsors/buena_vista_pictures/bvpi-ban0003.gif\&quot; width=468 height=60 border=\&quot;0\&quot; alt=\&quot;See Signs in Theaters 8-2 - Starring Mel Gibson\&quot; align=&gt;&lt;font face=\&quot;verdana,arial,helvetica\&quot; SIZE=\&quot;1\&quot;&gt;&lt;b&gt;&lt;/b&gt;&lt;/font&gt;&lt;/a&gt;&quot;,&quot;http://transfer.go.com&quot;);</span>
+<span class="fc" id="L611">        parser.setNodeFactory (</span>
+<span class="fc" id="L612">            new PrototypicalNodeFactory (</span>
+<span class="fc" id="L613">                new Tag[] {</span>
+<span class="fc" id="L614">                    new LinkTag (),</span>
+<span class="fc" id="L615">                    new ImageTag (),</span>
+                }));
+<span class="fc" id="L617">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L618">        assertTrue(&quot;Node 0 should be a link tag&quot;,node[0] instanceof LinkTag);</span>
+<span class="fc" id="L619">        LinkTag linkTag = (LinkTag)node[0];</span>
+<span class="fc" id="L620">        assertEquals(&quot;Link URL&quot;,&quot;http://transfer.go.com/cgi/atransfer.pl?goto=http://www.signs.movies.com&amp;name=114332&amp;srvc=nws&amp;context=283&amp;guid=4AD5723D-C802-4310-A388-0B24E1A79689&quot;,linkTag.getLink());</span>
+<span class="fc" id="L621">        assertEquals(&quot;Link Text&quot;,&quot;&quot;,linkTag.getLinkText());</span>
+<span class="fc" id="L622">        Node [] containedNodes = new Node[10];</span>
+<span class="fc" id="L623">        int i=0;</span>
+<span class="fc bfc" id="L624" title="All 2 branches covered.">        for (SimpleNodeIterator e = linkTag.children();e.hasMoreNodes();) {</span>
+<span class="fc" id="L625">            containedNodes[i++] = e.nextNode();</span>
+        }
+<span class="fc" id="L627">        assertEquals(&quot;There should be 5 contained nodes in the link tag&quot;,5,i);</span>
+<span class="fc" id="L628">        assertTrue(&quot;First contained node should be an image tag&quot;,containedNodes[0] instanceof ImageTag);</span>
+<span class="fc" id="L629">        ImageTag imageTag = (ImageTag)containedNodes[0];</span>
+<span class="fc" id="L630">        assertEquals(&quot;Image Location&quot;,&quot;http://ad.abcnews.com/ad/sponsors/buena_vista_pictures/bvpi-ban0003.gif&quot;,imageTag.getImageURL());</span>
+<span class="fc" id="L631">        assertEquals(&quot;Image Height&quot;,&quot;60&quot;,imageTag.getAttribute(&quot;HEIGHT&quot;));</span>
+<span class="fc" id="L632">        assertEquals(&quot;Image Width&quot;,&quot;468&quot;,imageTag.getAttribute(&quot;WIDTH&quot;));</span>
+<span class="fc" id="L633">        assertEquals(&quot;Image Border&quot;,&quot;0&quot;,imageTag.getAttribute(&quot;BORDER&quot;));</span>
+<span class="fc" id="L634">        assertEquals(&quot;Image Alt&quot;,&quot;See Signs in Theaters 8-2 - Starring Mel Gibson&quot;,imageTag.getAttribute(&quot;ALT&quot;));</span>
+<span class="fc" id="L635">        assertTrue(&quot;Second contained node should be Tag&quot;,containedNodes[1] instanceof Tag);</span>
+<span class="fc" id="L636">        Tag tag1 = (Tag)containedNodes[1];</span>
+<span class="fc" id="L637">        assertEquals(&quot;Tag Contents&quot;,&quot;font face=\&quot;verdana,arial,helvetica\&quot; SIZE=\&quot;1\&quot;&quot;,tag1.getText());</span>
+<span class="fc" id="L638">        assertTrue(&quot;Third contained node should be Tag&quot;,containedNodes[2] instanceof Tag);</span>
+<span class="fc" id="L639">        Tag tag2 = (Tag)containedNodes[2];</span>
+<span class="fc" id="L640">        assertEquals(&quot;Tag Contents&quot;,&quot;b&quot;,tag2.getText());</span>
+<span class="fc" id="L641">        assertTrue(&quot;Fourth contained node should be a Tag&quot;,containedNodes[3] instanceof Tag);</span>
+<span class="fc" id="L642">        Tag tag = (Tag)containedNodes[3];</span>
+<span class="fc" id="L643">        assertTrue(&quot;Fourth contained node should be an EndTag&quot;,tag.isEndTag ());</span>
+<span class="fc" id="L644">        assertEquals(&quot;Fourth Tag contents&quot;,&quot;/b&quot;,tag.getText());</span>
+<span class="fc" id="L645">        assertTrue(&quot;Fifth contained node should be a Tag&quot;,containedNodes[4] instanceof Tag);</span>
+<span class="fc" id="L646">        tag = (Tag)containedNodes[4];</span>
+<span class="fc" id="L647">        assertTrue(&quot;Fifth contained node should be an EndTag&quot;,tag.isEndTag ());</span>
+<span class="fc" id="L648">        assertEquals(&quot;Fifth Tag contents&quot;,&quot;/font&quot;,tag.getText());</span>
+
+<span class="fc" id="L650">    }</span>
+
+    public void testBaseRefLink() throws ParserException {
+<span class="fc" id="L653">        createParser(&quot;&lt;html&gt;\n&quot;+</span>
+            &quot;&lt;head&gt;\n&quot;+
+            &quot;&lt;TITLE&gt;test page&lt;/TITLE&gt;\n&quot;+
+            &quot;&lt;BASE HREF=\&quot;http://www.abc.com/\&quot;&gt;\n&quot;+
+            &quot;&lt;a href=\&quot;home.cfm\&quot;&gt;Home&lt;/a&gt;\n&quot;+
+            &quot;...\n&quot;+
+<span class="fc" id="L659">            &quot;&lt;/html&gt;&quot;,&quot;http://transfer.go.com&quot;);</span>
+<span class="fc" id="L660">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L661">        assertTrue(&quot;Node 1 should be a HTML tag&quot;, node[0] instanceof Html);</span>
+<span class="fc" id="L662">        Html html = (Html)node[0];</span>
+<span class="pc bpc" id="L663" title="1 of 2 branches missed.">        assertTrue(&quot;Html tag should have 2 children&quot;, 2 == html.getChildCount ());</span>
+<span class="fc" id="L664">        assertTrue(&quot;Html 2nd child should be HEAD tag&quot;, html.getChild (1) instanceof HeadTag);</span>
+<span class="fc" id="L665">        HeadTag head = (HeadTag)html.getChild (1);</span>
+<span class="pc bpc" id="L666" title="1 of 2 branches missed.">        assertTrue(&quot;Head tag should have 7 children&quot;, 7 == head.getChildCount ());</span>
+<span class="fc" id="L667">        assertTrue(&quot;Head 6th child should be a link tag&quot;, head.getChild (5) instanceof LinkTag);</span>
+<span class="fc" id="L668">        LinkTag linkTag = (LinkTag)head.getChild (5);</span>
+<span class="fc" id="L669">        assertEquals(&quot;Resolved Link&quot;,&quot;http://www.abc.com/home.cfm&quot;,linkTag.getLink());</span>
+<span class="fc" id="L670">        assertEquals(&quot;Resolved Link Text&quot;,&quot;Home&quot;,linkTag.getLinkText());</span>
+<span class="fc" id="L671">    }</span>
+
+    /**
+     * This is a reproduction of bug 617228, reported by
+     * Stephen J. Harrington. When faced with a link like :
+     * &amp;lt;A
+     * HREF=&quot;/cgi-bin/view_search?query_text=postdate&amp;gt;20020701&amp;txt_clr=White&amp;bg_clr=Red&amp;url=http://loc
+     * al
+     * host/Testing/Report
+     * 1.html&quot;&amp;gt;20020702 Report 1&amp;lt;/A&amp;gt;
+     *
+     * parser is unable to handle the link correctly due to the greater than
+     * symbol being confused to be the end of the tag.
+     */
+    public void testQueryLink() throws ParserException {
+<span class="fc" id="L686">        createParser(&quot;&lt;A \n&quot;+</span>
+<span class="fc" id="L687">        &quot;HREF=\&quot;/cgi-bin/view_search?query_text=postdate&gt;20020701&amp;txt_clr=White&amp;bg_clr=Red&amp;url=http://localhost/Testing/Report1.html\&quot;&gt;20020702 Report 1&lt;/A&gt;&quot;,&quot;http://transfer.go.com&quot;);</span>
+<span class="fc" id="L688">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L689">        assertTrue(&quot;Node 1 should be a link tag&quot;,node[0] instanceof LinkTag);</span>
+<span class="fc" id="L690">        LinkTag linkTag = (LinkTag)node[0];</span>
+<span class="fc" id="L691">        assertStringEquals(&quot;Resolved Link&quot;,&quot;http://transfer.go.com/cgi-bin/view_search?query_text=postdate&gt;20020701&amp;txt_clr=White&amp;bg_clr=Red&amp;url=http://localhost/Testing/Report1.html&quot;,linkTag.getLink());</span>
+<span class="fc" id="L692">        assertEquals(&quot;Resolved Link Text&quot;,&quot;20020702 Report 1&quot;,linkTag.getLinkText());</span>
+
+<span class="fc" id="L694">    }</span>
+
+    public void testNotMailtoLink() throws ParserException {
+<span class="fc" id="L697">        createParser(&quot;&lt;A HREF=\&quot;mailto.html\&quot;&gt;not@for.real&lt;/A&gt;&quot;,&quot;http://www.cj.com/&quot;);</span>
+<span class="fc" id="L698">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L699">        assertTrue(&quot;Node should be a HTMLLinkTag&quot;, node[0] instanceof LinkTag);</span>
+<span class="fc" id="L700">        LinkTag linkTag = (LinkTag) node[0];</span>
+
+<span class="fc" id="L702">        assertEquals(&quot;Link Plain Text&quot;, &quot;not@for.real&quot;, linkTag.toPlainTextString());</span>
+<span class="pc bpc" id="L703" title="1 of 2 branches missed.">        assertTrue(&quot;Link is not a mail link&quot;, !linkTag.isMailLink());</span>
+<span class="fc" id="L704">    }</span>
+
+    public void testMailtoLink() throws ParserException {
+<span class="fc" id="L707">        createParser(&quot;&lt;A HREF=\&quot;mailto:this@is.real\&quot;&gt;this@is.real&lt;/A&gt;&quot;,&quot;http://www.cj.com/&quot;);</span>
+<span class="fc" id="L708">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L709">        assertTrue(&quot;Node should be a HTMLLinkTag&quot;, node[0] instanceof LinkTag);</span>
+<span class="fc" id="L710">        LinkTag linkTag = (LinkTag) node[0];</span>
+<span class="fc" id="L711">        assertEquals(&quot;Link Plain Text&quot;, &quot;this@is.real&quot;, linkTag.toPlainTextString());</span>
+<span class="fc" id="L712">        assertTrue(&quot;Link is a mail link&quot;, linkTag.isMailLink());</span>
+<span class="fc" id="L713">    }</span>
+
+    public void testJavascriptLink() throws ParserException {
+<span class="fc" id="L716">        createParser(&quot;&lt;A HREF=\&quot;javascript:alert('hello');\&quot;&gt;say hello&lt;/A&gt;&quot;,&quot;http://www.cj.com/&quot;);</span>
+<span class="fc" id="L717">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L718">        assertTrue(&quot;Node should be a HTMLLinkTag&quot;, node[0] instanceof LinkTag);</span>
+<span class="fc" id="L719">        LinkTag linkTag = (LinkTag) node[0];</span>
+
+<span class="fc" id="L721">        assertEquals(&quot;Link Plain Text&quot;, &quot;say hello&quot;, linkTag.toPlainTextString());</span>
+<span class="fc" id="L722">        assertTrue(&quot;Link is a Javascript command&quot;, linkTag.isJavascriptLink());</span>
+<span class="fc" id="L723">    }</span>
+
+    public void testNotJavascriptLink() throws ParserException {
+<span class="fc" id="L726">        createParser(&quot;&lt;A HREF=\&quot;javascript_not.html\&quot;&gt;say hello&lt;/A&gt;&quot;,&quot;http://www.cj.com/&quot;);</span>
+<span class="fc" id="L727">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L728">        assertTrue(&quot;Node should be a HTMLLinkTag&quot;, node[0] instanceof LinkTag);</span>
+<span class="fc" id="L729">        LinkTag linkTag = (LinkTag) node[0];</span>
+
+<span class="fc" id="L731">        assertEquals(&quot;Link Plain Text&quot;, &quot;say hello&quot;, linkTag.toPlainTextString());</span>
+<span class="pc bpc" id="L732" title="1 of 2 branches missed.">        assertTrue(&quot;Link is not a Javascript command&quot;, !linkTag.isJavascriptLink());</span>
+<span class="fc" id="L733">    }</span>
+
+    public void testFTPLink() throws ParserException {
+<span class="fc" id="L736">        createParser(&quot;&lt;A HREF=\&quot;ftp://some.where.it\&quot;&gt;my ftp&lt;/A&gt;&quot;,&quot;http://www.cj.com/&quot;);</span>
+<span class="fc" id="L737">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L738">        assertTrue(&quot;Node should be a HTMLLinkTag&quot;, node[0] instanceof LinkTag);</span>
+<span class="fc" id="L739">        LinkTag linkTag = (LinkTag) node[0];</span>
+
+<span class="fc" id="L741">        assertEquals(&quot;Link Plain Text&quot;, &quot;my ftp&quot;, linkTag.toPlainTextString());</span>
+<span class="fc" id="L742">        assertTrue(&quot;Link is a FTP site&quot;, linkTag.isFTPLink());</span>
+<span class="fc" id="L743">    }</span>
+
+    public void testNotFTPLink() throws ParserException {
+<span class="fc" id="L746">        createParser(&quot;&lt;A HREF=\&quot;ftp.html\&quot;&gt;my ftp&lt;/A&gt;&quot;,&quot;http://www.cj.com/&quot;);</span>
+<span class="fc" id="L747">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L748">        assertTrue(&quot;Node should be a HTMLLinkTag&quot;, node[0] instanceof LinkTag);</span>
+<span class="fc" id="L749">        LinkTag linkTag = (LinkTag) node[0];</span>
+
+<span class="fc" id="L751">        assertEquals(&quot;Link Plain Text&quot;, &quot;my ftp&quot;, linkTag.toPlainTextString());</span>
+<span class="pc bpc" id="L752" title="1 of 2 branches missed.">        assertTrue(&quot;Link is not a FTP site&quot;, !linkTag.isFTPLink());</span>
+<span class="fc" id="L753">    }</span>
+
+    public void testRelativeLinkNotHTMLBug() throws ParserException {
+<span class="fc" id="L756">        createParser(&quot;&lt;A HREF=\&quot;newpage.html\&quot;&gt;New Page&lt;/A&gt;&quot;,&quot;http://www.mysite.com/books/some.asp&quot;);</span>
+<span class="fc" id="L757">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L758">        assertTrue(&quot;Node should be a HTMLLinkTag&quot;, node[0] instanceof LinkTag);</span>
+<span class="fc" id="L759">        LinkTag linkTag = (LinkTag) node[0];</span>
+<span class="fc" id="L760">        assertEquals(&quot;Link&quot;,&quot;http://www.mysite.com/books/newpage.html&quot;,linkTag.getLink());</span>
+<span class="fc" id="L761">    }</span>
+
+    public void testBadImageInLinkBug() throws ParserException {
+<span class="fc" id="L764">        createParser(&quot;&lt;a href=\&quot;registration.asp?EventID=1272\&quot;&gt;&lt;img border=\&quot;0\&quot; src=\&quot;\\images\\register.gif\&quot;&lt;/a&gt;&quot;,&quot;http://www.fedpage.com/Event.asp?EventID=1272&quot;);</span>
+<span class="fc" id="L765">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L766">        assertTrue(&quot;Node should be a HTMLLinkTag&quot;, node[0] instanceof LinkTag);</span>
+<span class="fc" id="L767">        LinkTag linkTag = (LinkTag) node[0];</span>
+        // Get the image tag from the link
+
+<span class="fc" id="L770">        Node insideNodes [] = new Node[10];</span>
+<span class="fc" id="L771">        int j =0 ;</span>
+<span class="fc bfc" id="L772" title="All 2 branches covered.">        for (SimpleNodeIterator e = linkTag.children();e.hasMoreNodes();) {</span>
+<span class="fc" id="L773">            insideNodes[j++]= e.nextNode();</span>
+        }
+<span class="fc" id="L775">        assertEquals(&quot;Number of contained internal nodes&quot;,1,j);</span>
+<span class="fc" id="L776">        assertTrue(insideNodes[0] instanceof ImageTag);</span>
+<span class="fc" id="L777">        ImageTag imageTag = (ImageTag)insideNodes[0];</span>
+<span class="fc" id="L778">        assertEquals(&quot;Image Tag Location&quot;,&quot;http://www.fedpage.com/images\\register.gif&quot;,imageTag.getImageURL());</span>
+<span class="fc" id="L779">    }</span>
+
+    /**
+     * This is an attempt to reproduce bug 677874
+     * reported by James Moliere. A link tag of the form
+     * &lt;code&gt;
+     * &lt;a class=rlbA href=/news/866201.asp?0sl=-
+     * 32&gt;Shoe bomber handed life sentence&lt;/a&gt;
+     * &lt;/code&gt;
+     * is not parsed correctly. The second '=' sign in the link causes
+     * the parser to treat it as a seperate attribute
+     */
+    public void testLinkContainsEqualTo() throws Exception {
+<span class="fc" id="L792">        createParser(</span>
+<span class="fc" id="L793">            &quot;&lt;a class=rlbA href=/news/866201.asp?0sl=-&quot; +</span>
+            &quot;32&gt;Shoe bomber handed life sentence&lt;/a&gt;&quot;
+        );
+<span class="fc" id="L796">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L797">        assertType(&quot;node type&quot;,LinkTag.class,node[0]);</span>
+<span class="fc" id="L798">        LinkTag linkTag = (LinkTag)node[0];</span>
+<span class="fc" id="L799">        assertStringEquals(</span>
+<span class="fc" id="L800">            &quot;link text&quot;,</span>
+<span class="fc" id="L801">            &quot;Shoe bomber handed life sentence&quot;,</span>
+<span class="fc" id="L802">            linkTag.getLinkText()</span>
+        );
+<span class="fc" id="L804">        assertStringEquals(</span>
+<span class="fc" id="L805">            &quot;link url&quot;,</span>
+<span class="fc" id="L806">            &quot;/news/866201.asp?0sl=-32&quot;,</span>
+<span class="fc" id="L807">            linkTag.getLink()</span>
+        );
+<span class="fc" id="L809">    }</span>
+
+    /**
+     * Bug report by Cory Seefurth
+     * @throws Exception
+     */
+    public void _testLinkWithJSP() throws Exception {
+<span class="nc" id="L816">        createParser(</span>
+<span class="nc" id="L817">            &quot;&lt;a href=\&quot;&lt;%=Application(\&quot;sURL\&quot;)% &quot; +</span>
+            &quot;&gt;/literature/index.htm\&quot;&gt;Literature&lt;/a&gt;&quot;
+        );
+<span class="nc" id="L820">        parseAndAssertNodeCount(1);</span>
+<span class="nc" id="L821">        assertType(&quot;should be link tag&quot;,LinkTag.class,node[0]);</span>
+<span class="nc" id="L822">        LinkTag linkTag = (LinkTag)node[0];</span>
+<span class="nc" id="L823">        assertStringEquals(&quot;expected link&quot;,&quot;&lt;%=Application(\&quot;sURL\&quot;)%&gt;/literature/index.htm&quot;,linkTag.getLink());</span>
+<span class="nc" id="L824">    }</span>
+
+    public void testTagSymbolsInLinkText() throws Exception {
+<span class="fc" id="L827">        createParser(</span>
+<span class="fc" id="L828">            &quot;&lt;a href=\&quot;/cataclysm/Langy-AnEmpireReborn-Ch2.shtml#story\&quot;&quot; +</span>
+            &quot;&gt;&lt;&lt; An Empire Reborn: Chapter 2 &lt;&lt;&lt;/a&gt;&quot;
+        );
+<span class="fc" id="L831">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L832">        assertType(&quot;node&quot;,LinkTag.class, node[0]);</span>
+<span class="fc" id="L833">        LinkTag linkTag = (LinkTag)node[0];</span>
+<span class="fc" id="L834">        assertEquals(&quot;link text&quot;,&quot;&lt;&lt; An Empire Reborn: Chapter 2 &lt;&lt;&quot;,linkTag.getLinkText());</span>
+<span class="fc" id="L835">    }</span>
+
+    /**
+     * See bug #813838 links not parsed correctly
+     */
+    public void testPlainText() throws Exception
+    {
+<span class="fc" id="L842">        String html = &quot;&lt;a href=Cities/&gt;&lt;b&gt;Cities&lt;/b&gt;&lt;/a&gt;&quot;;</span>
+<span class="fc" id="L843">        createParser (html);</span>
+<span class="fc" id="L844">        parseAndAssertNodeCount (1);</span>
+<span class="fc" id="L845">        assertType(&quot;node&quot;, LinkTag.class, node[0]);</span>
+<span class="fc" id="L846">        LinkTag linkTag = (LinkTag)node[0];</span>
+<span class="fc" id="L847">        assertEquals (&quot;plain text&quot;, &quot;Cities&quot;, linkTag.toPlainTextString ());</span>
+<span class="fc" id="L848">    }</span>
+
+    /**
+     * See bug #982175 False Positives on &amp;reg; entity
+     */
+    public void testCharacterReferenceInLink() throws Exception
+    {
+<span class="fc" id="L855">        String html = &quot;&lt;a href=\&quot;http://www.someplace.com/somepage.html?&amp;region=us\&quot;&gt;Search By Region&lt;/a&gt;&quot; +</span>
+	        &quot;&lt;a href=\&quot;http://www.someplace.com/somepage.html?&amp;region=&amp;destination=184\&quot;&gt;Search by Destination&lt;/a&gt;&quot;;
+<span class="fc" id="L857">        createParser (html);</span>
+<span class="fc" id="L858">        parseAndAssertNodeCount (2);</span>
+<span class="fc" id="L859">        assertType(&quot;node&quot;, LinkTag.class, node[0]);</span>
+<span class="fc" id="L860">        LinkTag linkTag = (LinkTag)node[0];</span>
+<span class="fc" id="L861">        assertEquals (&quot;link&quot;, &quot;http://www.someplace.com/somepage.html?&amp;region=us&quot;, linkTag.getLink());</span>
+<span class="fc" id="L862">        assertType(&quot;node&quot;, LinkTag.class, node[1]);</span>
+<span class="fc" id="L863">        linkTag = (LinkTag)node[1];</span>
+<span class="fc" id="L864">        assertEquals (&quot;link&quot;, &quot;http://www.someplace.com/somepage.html?&amp;region=&amp;destination=184&quot;, linkTag.getLink());</span>
+<span class="fc" id="L865">    }</span>
+    
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

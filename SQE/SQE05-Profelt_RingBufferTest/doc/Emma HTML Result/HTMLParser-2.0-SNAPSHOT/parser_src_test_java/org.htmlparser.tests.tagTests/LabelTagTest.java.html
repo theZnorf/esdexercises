@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>LabelTagTest.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tests.tagTests</a> &gt; <span class="el_source">LabelTagTest.java</span></div><h1>LabelTagTest.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/test/java/org/htmlparser/tests/tagTests/LabelTagTest.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 13:37:00 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 5 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tests.tagTests;
+
+import java.util.Hashtable;
+
+import org.htmlparser.tags.LabelTag;
+import org.htmlparser.tests.ParserTestCase;
+import org.htmlparser.util.ParserException;
+
+public class LabelTagTest extends ParserTestCase
+{
+    static
+    {
+<span class="fc" id="L38">        System.setProperty (&quot;org.htmlparser.tests.tagTests.LabelTagTest&quot;, &quot;LabelTagTest&quot;);</span>
+<span class="fc" id="L39">    }</span>
+
+    public LabelTagTest (String name)
+    {
+<span class="fc" id="L43">        super(name);</span>
+<span class="fc" id="L44">    }</span>
+    
+    public void testSimpleLabels() throws ParserException
+    {
+<span class="fc" id="L48">        String html = &quot;&lt;label&gt;This is a label tag&lt;/label&gt;&quot;;</span>
+<span class="fc" id="L49">        createParser(html);</span>
+<span class="fc" id="L50">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L51">        assertTrue(node[0] instanceof LabelTag);</span>
+        //  check the title node
+<span class="fc" id="L53">        LabelTag labelTag = (LabelTag) node[0];</span>
+<span class="fc" id="L54">        assertEquals(&quot;Label&quot;,&quot;This is a label tag&quot;,labelTag.getChildrenHTML());</span>
+<span class="fc" id="L55">        assertEquals(&quot;Label&quot;,&quot;This is a label tag&quot;,labelTag.getLabel());</span>
+<span class="fc" id="L56">        assertStringEquals(&quot;Label&quot;, html, labelTag.toHtml());</span>
+<span class="fc" id="L57">    }</span>
+
+    public void testLabelWithJspTag() throws ParserException {
+<span class="fc" id="L60">        String label = &quot;&lt;label&gt;&lt;%=labelValue%&gt;&lt;/label&gt;&quot;;</span>
+<span class="fc" id="L61">        createParser(label);</span>
+<span class="fc" id="L62">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L63">        assertTrue(node[0] instanceof LabelTag);</span>
+        //  check the title node
+<span class="fc" id="L65">        LabelTag labelTag = (LabelTag) node[0];</span>
+<span class="fc" id="L66">        assertStringEquals(&quot;Label&quot;,label,labelTag.toHtml());</span>
+<span class="fc" id="L67">    }</span>
+
+    public void testLabelWithOtherTags() throws ParserException
+    {
+<span class="fc" id="L71">        String html = &quot;&lt;label&gt;&lt;span&gt;Span within label&lt;/span&gt;&lt;/label&gt;&quot;;</span>
+<span class="fc" id="L72">        createParser(html);</span>
+<span class="fc" id="L73">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L74">        assertTrue(node[0] instanceof LabelTag);</span>
+        //  check the title node
+<span class="fc" id="L76">        LabelTag labelTag = (LabelTag) node[0];</span>
+<span class="fc" id="L77">        assertEquals(&quot;Label value&quot;,&quot;Span within label&quot;,labelTag.getLabel());</span>
+<span class="fc" id="L78">        assertStringEquals(&quot;Label&quot;, html, labelTag.toHtml());</span>
+<span class="fc" id="L79">    }</span>
+
+    public void testLabelWithManyCompositeTags() throws ParserException {
+<span class="fc" id="L82">        String guts = &quot;&lt;span&gt;Jane &lt;b&gt; Doe &lt;/b&gt; Smith&lt;/span&gt;&quot;;</span>
+<span class="fc" id="L83">        String html = &quot;&lt;label&gt;&quot; + guts + &quot;&lt;/label&gt;&quot;;</span>
+<span class="fc" id="L84">        createParser(html);</span>
+<span class="fc" id="L85">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L86">        assertTrue(node[0] instanceof LabelTag);</span>
+<span class="fc" id="L87">        LabelTag labelTag = (LabelTag) node[0];</span>
+<span class="fc" id="L88">        assertEquals(&quot;Label value&quot;,guts,labelTag.getChildrenHTML());</span>
+<span class="fc" id="L89">        assertEquals(&quot;Label value&quot;,&quot;Jane  Doe  Smith&quot;,labelTag.getLabel());</span>
+<span class="fc" id="L90">        assertStringEquals(&quot;Label&quot;,html,labelTag.toHtml());</span>
+<span class="fc" id="L91">    }</span>
+
+
+    public void testLabelsID() throws ParserException
+    {
+<span class="fc" id="L96">        String html = &quot;&lt;label&gt;John Doe&lt;/label&gt;&quot;;</span>
+<span class="fc" id="L97">        createParser(html);</span>
+<span class="fc" id="L98">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L99">        assertTrue(node[0] instanceof LabelTag);</span>
+<span class="fc" id="L100">        LabelTag labelTag = (LabelTag) node[0];</span>
+<span class="fc" id="L101">        assertStringEquals(&quot;Label&quot;, html, labelTag.toHtml());</span>
+<span class="fc" id="L102">        assertNull(&quot;ID&quot;,labelTag.getAttribute (&quot;id&quot;));</span>
+<span class="fc" id="L103">    }</span>
+
+    public void testNestedLabels() throws ParserException
+    {
+<span class="fc" id="L107">        String label1 = &quot;&lt;label id=\&quot;attr1\&quot;&gt;&quot;;</span>
+<span class="fc" id="L108">        String label2 = &quot;&lt;label&gt;Jane Doe&quot;;</span>
+<span class="fc" id="L109">        createParser(label1 + label2);</span>
+<span class="fc" id="L110">        parseAndAssertNodeCount(2);</span>
+<span class="fc" id="L111">        assertTrue(node[0] instanceof LabelTag);</span>
+<span class="fc" id="L112">        assertTrue(node[1] instanceof LabelTag);</span>
+<span class="fc" id="L113">        LabelTag labelTag = (LabelTag) node[0];</span>
+<span class="fc" id="L114">        assertStringEquals(&quot;Label&quot;, label1 + &quot;&lt;/label&gt;&quot;, labelTag.toHtml());</span>
+<span class="fc" id="L115">        labelTag = (LabelTag) node[1];</span>
+<span class="fc" id="L116">        assertStringEquals(&quot;Label&quot;, label2 + &quot;&lt;/label&gt;&quot;,labelTag.toHtml());</span>
+<span class="fc" id="L117">        assertNull (&quot;ID&quot;, labelTag.getAttribute (&quot;id&quot;));</span>
+<span class="fc" id="L118">    }</span>
+
+    public void testNestedLabels2() throws ParserException
+    {
+<span class="fc" id="L122">        String label1 = &quot;&lt;LABEL value=\&quot;Google Search\&quot;&gt;Google&lt;/LABEL&gt;&quot;;</span>
+<span class="fc" id="L123">        String label2 = &quot;&lt;LABEL value=\&quot;AltaVista Search\&quot;&gt;AltaVista&quot;;</span>
+<span class="fc" id="L124">        String label3 = &quot;&lt;LABEL value=\&quot;Lycos Search\&quot;&gt;&lt;/LABEL&gt;&quot;;</span>
+<span class="fc" id="L125">        String label4 = &quot;&lt;LABEL&gt;Yahoo!&lt;/LABEL&gt;&quot;;</span>
+<span class="fc" id="L126">        String label5 = &quot;&lt;LABEL&gt;\nHotmail&lt;/LABEL&gt;&quot;;</span>
+<span class="fc" id="L127">        String label6 = &quot;&lt;LABEL value=\&quot;ICQ Messenger\&quot;&gt;&quot;;</span>
+<span class="fc" id="L128">        String label7 = &quot;&lt;LABEL&gt;Mailcity\n&lt;/LABEL&gt;&quot;;</span>
+<span class="fc" id="L129">        String label8 = &quot;&lt;LABEL&gt;\nIndiatimes\n&lt;/LABEL&gt;&quot;;</span>
+<span class="fc" id="L130">        String label9 = &quot;&lt;LABEL&gt;\nRediff\n&lt;/LABEL&gt;&quot;;</span>
+<span class="fc" id="L131">        String label10 = &quot;&lt;LABEL&gt;Cricinfo&quot;;</span>
+<span class="fc" id="L132">        String label11 = &quot;&lt;LABEL value=\&quot;Microsoft Passport\&quot;&gt;&quot;;</span>
+<span class="fc" id="L133">        String label12 = &quot;&lt;LABEL value=\&quot;AOL\&quot;&gt;&lt;SPAN&gt;AOL&lt;/SPAN&gt;&lt;/LABEL&gt;&quot;;</span>
+<span class="fc" id="L134">        String label13 = &quot;&lt;LABEL value=\&quot;Time Warner\&quot;&gt;Time &lt;B&gt;Warner &lt;SPAN&gt;AOL &lt;/SPAN&gt;Inc.&lt;/B&gt;&quot;;</span>
+<span class="fc" id="L135">        String testHTML = label1 + label2 + label3 + label4 + label5 + label6 </span>
+<span class="fc" id="L136">            + label7 + label8 + label9 + label10 + label11 + label12 + label13;</span>
+<span class="fc" id="L137">        createParser(testHTML);</span>
+<span class="fc" id="L138">        parseAndAssertNodeCount(13);</span>
+        LabelTag LabelTag;
+<span class="fc" id="L140">        LabelTag = (LabelTag) node[0];</span>
+<span class="fc" id="L141">        assertStringEquals(&quot;HTML String&quot;, label1, LabelTag.toHtml());</span>
+<span class="fc" id="L142">        LabelTag = (LabelTag) node[1];</span>
+<span class="fc" id="L143">        assertStringEquals(&quot;HTML String&quot;, label2 + &quot;&lt;/LABEL&gt;&quot;, LabelTag.toHtml());</span>
+<span class="fc" id="L144">        LabelTag = (LabelTag) node[2];</span>
+<span class="fc" id="L145">        assertStringEquals(&quot;HTML String&quot;, label3, LabelTag.toHtml());</span>
+<span class="fc" id="L146">        LabelTag = (LabelTag) node[3];</span>
+<span class="fc" id="L147">        assertStringEquals(&quot;HTML String&quot;, label4, LabelTag.toHtml());</span>
+<span class="fc" id="L148">        LabelTag = (LabelTag) node[4];</span>
+<span class="fc" id="L149">        assertStringEquals(&quot;HTML String&quot;, label5, LabelTag.toHtml());</span>
+<span class="fc" id="L150">        LabelTag = (LabelTag) node[5];</span>
+<span class="fc" id="L151">        assertStringEquals(&quot;HTML String&quot;, label6 + &quot;&lt;/LABEL&gt;&quot;,LabelTag.toHtml());</span>
+<span class="fc" id="L152">        LabelTag = (LabelTag) node[6];</span>
+<span class="fc" id="L153">        assertStringEquals(&quot;HTML String&quot;, label7, LabelTag.toHtml());</span>
+<span class="fc" id="L154">        LabelTag = (LabelTag) node[7];</span>
+<span class="fc" id="L155">        assertStringEquals(&quot;HTML String&quot;, label8, LabelTag.toHtml());</span>
+<span class="fc" id="L156">        LabelTag = (LabelTag) node[8];</span>
+<span class="fc" id="L157">        assertStringEquals(&quot;HTML String&quot;, label9, LabelTag.toHtml());</span>
+<span class="fc" id="L158">        LabelTag = (LabelTag) node[9];</span>
+<span class="fc" id="L159">        assertStringEquals(&quot;HTML String&quot;, label10 + &quot;&lt;/LABEL&gt;&quot;,LabelTag.toHtml());</span>
+<span class="fc" id="L160">        LabelTag = (LabelTag) node[10];</span>
+<span class="fc" id="L161">        assertStringEquals(&quot;HTML String&quot;, label11 + &quot;&lt;/LABEL&gt;&quot;,LabelTag.toHtml());</span>
+<span class="fc" id="L162">        LabelTag = (LabelTag) node[11];</span>
+<span class="fc" id="L163">        assertStringEquals(&quot;HTML String&quot;, label12, LabelTag.toHtml());</span>
+<span class="fc" id="L164">        LabelTag = (LabelTag) node[12];</span>
+<span class="fc" id="L165">        assertStringEquals(&quot;HTML String&quot;, label13 + &quot;&lt;/LABEL&gt;&quot;,LabelTag.toHtml());</span>
+<span class="fc" id="L166">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

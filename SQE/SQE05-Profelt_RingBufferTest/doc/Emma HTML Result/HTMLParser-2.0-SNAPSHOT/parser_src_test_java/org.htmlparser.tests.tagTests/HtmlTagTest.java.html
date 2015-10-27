@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>HtmlTagTest.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tests.tagTests</a> &gt; <span class="el_source">HtmlTagTest.java</span></div><h1>HtmlTagTest.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/test/java/org/htmlparser/tests/tagTests/HtmlTagTest.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tests.tagTests;
+
+import org.htmlparser.Node;
+import org.htmlparser.PrototypicalNodeFactory;
+import org.htmlparser.Tag;
+import org.htmlparser.filters.NodeClassFilter;
+import org.htmlparser.tags.Html;
+import org.htmlparser.tags.TitleTag;
+import org.htmlparser.tests.ParserTestCase;
+import org.htmlparser.util.NodeList;
+
+public class HtmlTagTest extends ParserTestCase
+{
+    static
+    {
+<span class="fc" id="L41">        System.setProperty (&quot;org.htmlparser.tests.tagTests.HtmlTagTest&quot;, &quot;HtmlTagTest&quot;);</span>
+<span class="fc" id="L42">    }</span>
+
+    public HtmlTagTest (String name)
+    {
+<span class="fc" id="L46">        super(name);</span>
+<span class="fc" id="L47">    }</span>
+    
+    public void testScan() throws Exception {
+<span class="fc" id="L50">        createParser(</span>
+<span class="fc" id="L51">            &quot;&lt;html&gt;&quot; +</span>
+            &quot;   &lt;head&gt;&quot; +
+            &quot;       &lt;title&gt;Some Title&lt;/title&gt;&quot; +
+            &quot;   &lt;/head&gt;&quot; +
+            &quot;   &lt;body&gt;&quot; +
+            &quot;       Some data&quot; +
+            &quot;   &lt;/body&gt;&quot; +
+            &quot;&lt;/html&gt;&quot;);
+<span class="fc" id="L59">        parser.setNodeFactory (</span>
+<span class="fc" id="L60">            new PrototypicalNodeFactory (</span>
+                new Tag[]
+<span class="fc" id="L62">                {</span>
+<span class="fc" id="L63">                    new TitleTag (),</span>
+<span class="fc" id="L64">                    new Html (),</span>
+                }));
+<span class="fc" id="L66">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L67">        assertType(&quot;html tag&quot;,Html.class,node[0]);</span>
+<span class="fc" id="L68">        Html html = (Html)node[0];</span>
+<span class="fc" id="L69">        NodeList nodeList = new NodeList();</span>
+<span class="fc" id="L70">        NodeClassFilter filter = new NodeClassFilter (TitleTag.class);</span>
+<span class="fc" id="L71">        html.collectInto(nodeList, filter);</span>
+<span class="fc" id="L72">        assertEquals(&quot;nodelist size&quot;,1,nodeList.size());</span>
+<span class="fc" id="L73">        Node node = nodeList.elementAt(0);</span>
+<span class="fc" id="L74">        assertType(&quot;expected title tag&quot;,TitleTag.class,node);</span>
+<span class="fc" id="L75">        TitleTag titleTag = (TitleTag)node;</span>
+<span class="fc" id="L76">        assertStringEquals(&quot;title&quot;,&quot;Some Title&quot;,titleTag.getTitle());</span>
+<span class="fc" id="L77">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

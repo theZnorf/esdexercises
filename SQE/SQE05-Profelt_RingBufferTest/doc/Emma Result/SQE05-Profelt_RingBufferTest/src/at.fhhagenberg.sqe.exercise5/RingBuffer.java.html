@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>RingBuffer.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (2) (27-Oct-2015 13:59:45)</a> &gt; <a href="../../index.html" class="el_group">SQE05-Profelt_RingBufferTest</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">at.fhhagenberg.sqe.exercise5</a> &gt; <span class="el_source">RingBuffer.java</span></div><h1>RingBuffer.java</h1><pre class="source lang-java linenums">package at.fhhagenberg.sqe.exercise5;
+/*************************************************************************
+ *  Compilation:  javac RingBuffer.java
+ *  Execution:    java RingBuffer
+ *  
+ *  Ring buffer (fixed size queue) implementation using a circular array
+ *  (array with wrap-around).
+ *
+ *************************************************************************/
+
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+
+// suppress unchecked warnings in Java 1.5.0_6 and later
+@SuppressWarnings(&quot;unchecked&quot;)
+
+public class RingBuffer&lt;Item&gt; implements Iterable&lt;Item&gt; {
+    private Item[] a;            // queue elements
+<span class="fc" id="L19">    private int N = 0;           // number of elements on queue</span>
+<span class="fc" id="L20">    private int first = 0;       // index of first element of queue</span>
+<span class="fc" id="L21">    private int last  = 0;       // index of next available slot</span>
+
+    // cast needed since no generic array creation in Java
+<span class="fc" id="L24">    public RingBuffer(int capacity) {</span>
+<span class="fc" id="L25">        a = (Item[]) new Object[capacity];</span>
+<span class="fc" id="L26">    }</span>
+
+<span class="fc bfc" id="L28" title="All 2 branches covered.">    public boolean isEmpty() { return N == 0; }</span>
+<span class="fc" id="L29">    public int size()        { return N;      }</span>
+
+    public void enqueue(Item item) {
+<span class="fc bfc" id="L32" title="All 2 branches covered.">        if (N == a.length) { throw new RuntimeException(&quot;Ring buffer overflow&quot;); }</span>
+<span class="fc" id="L33">        a[last] = item;</span>
+<span class="fc" id="L34">        last = (last + 1) % a.length;     // wrap-around</span>
+<span class="fc" id="L35">        N++;</span>
+<span class="fc" id="L36">    }</span>
+
+    // remove the least recently added item - doesn't check for underflow
+    public Item dequeue() {
+<span class="fc bfc" id="L40" title="All 2 branches covered.">        if (isEmpty()) { throw new RuntimeException(&quot;Ring buffer underflow&quot;); }</span>
+<span class="fc" id="L41">        Item item = a[first];</span>
+<span class="fc" id="L42">        a[first] = null;                  // to help with garbage collection</span>
+<span class="fc" id="L43">        N--;</span>
+<span class="fc" id="L44">        first = (first + 1) % a.length;   // wrap-around</span>
+<span class="fc" id="L45">        return item;</span>
+    }
+
+<span class="fc" id="L48">    public Iterator&lt;Item&gt; iterator() { return new RingBufferIterator(); }</span>
+
+    // an iterator, doesn't implement remove() since it's optional
+<span class="fc" id="L51">    private class RingBufferIterator implements Iterator&lt;Item&gt; {</span>
+<span class="fc" id="L52">        private int i = 0;</span>
+<span class="fc bfc" id="L53" title="All 2 branches covered.">        public boolean hasNext()  { return i &lt; N;                               }</span>
+<span class="nc" id="L54">        public void remove()      { throw new UnsupportedOperationException();  }</span>
+
+        public Item next() {
+<span class="fc bfc" id="L57" title="All 2 branches covered.">            if (!hasNext()) throw new NoSuchElementException();</span>
+<span class="fc" id="L58">            return a[i++];</span>
+        }
+    }
+
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (2) (27-Oct-2015 13:59:45)</div></body></html>

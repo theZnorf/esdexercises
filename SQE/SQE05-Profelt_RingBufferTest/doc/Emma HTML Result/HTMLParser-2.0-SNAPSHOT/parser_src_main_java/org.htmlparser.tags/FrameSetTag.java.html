@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>FrameSetTag.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tags</a> &gt; <span class="el_source">FrameSetTag.java</span></div><h1>FrameSetTag.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Somik Raha
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/main/java/org/htmlparser/tags/FrameSetTag.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tags;
+
+import java.util.Locale;
+
+import org.htmlparser.Node;
+import org.htmlparser.util.NodeList;
+import org.htmlparser.util.SimpleNodeIterator;
+
+/**
+ * Identifies an frame set tag.
+ */
+public class FrameSetTag extends CompositeTag
+{
+    /**
+     * The set of names handled by this tag.
+     */
+<span class="fc" id="L42">    private static final String[] mIds = new String[] {&quot;FRAMESET&quot;};</span>
+
+    /**
+     * The set of end tag names that indicate the end of this tag.
+     */
+<span class="fc" id="L47">    private static final String[] mEndTagEnders = new String[] {&quot;HTML&quot;};</span>
+
+    /**
+     * Create a new frame set tag.
+     */
+<span class="fc" id="L52">    public FrameSetTag ()</span>
+    {
+<span class="fc" id="L54">    }</span>
+
+    /**
+     * Return the set of names handled by this tag.
+     * @return The names to be matched that create tags of this type.
+     */
+    public String[] getIds ()
+    {
+<span class="fc" id="L62">        return (mIds);</span>
+    }
+
+    /**
+     * Return the set of end tag names that cause this tag to finish.
+     * @return The names of following end tags that stop further scanning.
+     */
+    public String[] getEndTagEnders ()
+    {
+<span class="nc" id="L71">        return (mEndTagEnders);</span>
+    }
+
+    /**
+     * Return a string representation of the contents of this &lt;code&gt;FRAMESET&lt;/code&gt; tag suitable for debugging.
+     * @return A string with this tag's contents.
+     */
+    public String toString()
+    {
+<span class="nc" id="L80">        return &quot;FRAMESET TAG : begins at : &quot;+getStartPosition ()+&quot;; ends at : &quot;+getEndPosition ();</span>
+    }
+
+    /**
+     * Returns the frames.
+     * @return The children of this tag.
+     */
+    public NodeList getFrames()
+    {
+<span class="fc" id="L89">        return (getChildren());</span>
+    }
+
+    /**
+     * Gets a frame by name.
+     * Names are checked without case sensitivity and conversion to uppercase
+     * is performed with an English locale.
+     * @param name The name of the frame to retrieve.
+     * @return The specified frame or &lt;code&gt;null&lt;/code&gt; if it wasn't found.
+     */
+    public FrameTag getFrame (String name)
+    {
+<span class="fc" id="L101">        return (getFrame (name, Locale.ENGLISH));</span>
+    }
+
+    /**
+     * Gets a frame by name.
+     * Names are checked without case sensitivity and conversion to uppercase
+     * is performed with the locale provided.
+     * @param name The name of the frame to retrieve.
+     * @param locale The locale to use when converting to uppercase.
+     * @return The specified frame or &lt;code&gt;null&lt;/code&gt; if it wasn't found.
+     */
+    public FrameTag getFrame (String name, Locale locale)
+    {
+        Node node;
+        FrameTag ret;
+
+<span class="fc" id="L117">        ret = null;</span>
+        
+<span class="fc" id="L119">        name = name.toUpperCase (locale);</span>
+<span class="pc bpc" id="L120" title="1 of 4 branches missed.">        for (SimpleNodeIterator e = getFrames ().elements (); e.hasMoreNodes () &amp;&amp; (null == ret); )</span>
+        {
+<span class="fc" id="L122">            node = e.nextNode();</span>
+<span class="fc bfc" id="L123" title="All 2 branches covered.">            if (node instanceof FrameTag)</span>
+            {
+<span class="fc" id="L125">                ret = (FrameTag)node;</span>
+<span class="fc bfc" id="L126" title="All 2 branches covered.">                if (!ret.getFrameName ().toUpperCase (locale).equals (name))</span>
+<span class="fc" id="L127">                    ret = null;</span>
+            }
+        }
+
+<span class="fc" id="L131">        return (ret);</span>
+    }
+
+    /**
+     * Sets the frames (children of this tag).
+     * @param frames The frames to set
+     */
+    public void setFrames(NodeList frames)
+    {
+<span class="nc" id="L140">        setChildren (frames);</span>
+<span class="nc" id="L141">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

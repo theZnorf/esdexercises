@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>JspTagTest.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tests.tagTests</a> &gt; <span class="el_source">JspTagTest.java</span></div><h1>JspTagTest.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Somik Raha
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/test/java/org/htmlparser/tests/tagTests/JspTagTest.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tests.tagTests;
+
+import org.htmlparser.PrototypicalNodeFactory;
+import org.htmlparser.Tag;
+import org.htmlparser.tags.JspTag;
+import org.htmlparser.tests.ParserTestCase;
+import org.htmlparser.util.ParserException;
+
+public class JspTagTest extends ParserTestCase
+{
+    static
+    {
+<span class="fc" id="L38">        System.setProperty (&quot;org.htmlparser.tests.tagTests.JspTagTest&quot;, &quot;JspTagTest&quot;);</span>
+    }
+
+<span class="fc" id="L41">    private static final boolean JSP_TESTS_ENABLED = false;</span>
+
+    public JspTagTest(String name)
+    {
+<span class="fc" id="L45">        super(name);</span>
+<span class="fc" id="L46">    }</span>
+
+    /**
+     * Check if the JSP Tag is being correctly recognized.
+     * Our test html is : &lt;BR&gt;
+     * &amp;lt;%@ taglib uri=&quot;/WEB-INF/struts.tld&quot; prefix=&quot;struts&quot; %&amp;gt;&lt;BR&gt;
+     * &amp;lt;jsp:useBean id=&quot;transfer&quot; scope=&quot;session&quot; class=&quot;com.bank.PageBean&quot;/&amp;gt;&lt;BR&gt;
+     * &amp;lt;%&lt;BR&gt;
+     *   org.apache.struts.util.BeanUtils.populate(transfer, request);&lt;BR&gt;
+     *    if(request.getParameter(&quot;marker&quot;) == null)&lt;BR&gt;
+     *      // initialize a pseudo-property&lt;BR&gt;
+     *        transfer.set(&quot;days&quot;, java.util.Arrays.asList(&lt;BR&gt;
+     *            new String[] {&quot;1&quot;, &quot;2&quot;, &quot;3&quot;, &quot;4&quot;, &quot;31&quot;}));&lt;BR&gt;
+     *    else &lt;BR&gt;
+     *        if(transfer.validate(request))&lt;BR&gt;
+     *            %&amp;gt;&amp;lt;jsp:forward page=&quot;transferConfirm.jsp&quot;/&amp;gt;&amp;lt;%
+     * %&amp;gt;
+     * Creation date: (6/17/2001 4:01:06 PM)
+     */
+    public void testJspTag() throws ParserException
+    {
+<span class="fc" id="L67">        String contents = &quot;jsp:useBean id=\&quot;transfer\&quot; scope=\&quot;session\&quot; class=\&quot;com.bank.PageBean\&quot;/&quot;;</span>
+<span class="fc" id="L68">        String jsp = &quot;&lt;&quot; + contents + &quot;&gt;&quot;;</span>
+<span class="fc" id="L69">        String contents2 = &quot;%\n&quot;+</span>
+            &quot;    org.apache.struts.util.BeanUtils.populate(transfer, request);\n&quot;+
+            &quot;    if(request.getParameter(\&quot;marker\&quot;) == null)\n&quot;+
+            &quot;        // initialize a pseudo-property\n&quot;+
+            &quot;        transfer.set(\&quot;days\&quot;, java.util.Arrays.asList(\n&quot;+
+            &quot;            new String[] {\&quot;1\&quot;, \&quot;2\&quot;, \&quot;3\&quot;, \&quot;4\&quot;, \&quot;31\&quot;}));\n&quot;+
+            &quot;    else \n&quot;+
+            &quot;        if(transfer.validate(request))\n&quot;+
+            &quot;            %&quot;;
+<span class="fc" id="L78">        createParser(</span>
+<span class="fc" id="L79">            &quot;&lt;%@ taglib uri=\&quot;/WEB-INF/struts.tld\&quot; prefix=\&quot;struts\&quot; %&gt;\n&quot;+</span>
+<span class="fc" id="L80">            jsp + &quot;\n&quot; +</span>
+<span class="fc" id="L81">            &quot;&lt;&quot; + contents2 + &quot;&gt;\n&lt;jsp:forward page=\&quot;transferConfirm.jsp\&quot;/&gt;&lt;%\n&quot;+</span>
+<span class="fc" id="L82">            &quot;%&gt;&quot;);</span>
+<span class="fc" id="L83">        parser.setNodeFactory (new PrototypicalNodeFactory (new JspTag ()));</span>
+<span class="fc" id="L84">        parseAndAssertNodeCount(8);</span>
+        // The first node should be a JspTag
+<span class="fc" id="L86">        assertTrue(&quot;Node 1 should be a JspTag&quot;,node[0] instanceof JspTag);</span>
+<span class="fc" id="L87">        JspTag tag = (JspTag)node[0];</span>
+<span class="fc" id="L88">        assertStringEquals(&quot;Contents of the tag&quot;,&quot;%@ taglib uri=\&quot;/WEB-INF/struts.tld\&quot; prefix=\&quot;struts\&quot; %&quot;,tag.getText());</span>
+
+        // The second node should be a normal tag
+<span class="fc" id="L91">        assertTrue(&quot;Node 3 should be a normal Tag&quot;,node[2] instanceof Tag);</span>
+<span class="fc" id="L92">        Tag htag = (Tag)node[2];</span>
+<span class="fc" id="L93">        assertStringEquals(&quot;Contents of the tag&quot;,contents,htag.getText());</span>
+<span class="fc" id="L94">        assertStringEquals(&quot;html&quot;,jsp,htag.toHtml());</span>
+        // The third node should be an JspTag
+<span class="fc" id="L96">        assertTrue(&quot;Node 5 should be an JspTag&quot;,node[4] instanceof JspTag);</span>
+<span class="fc" id="L97">        JspTag tag2 = (JspTag)node[4];</span>
+<span class="fc" id="L98">        assertStringEquals(&quot;Contents of the tag&quot;,contents2,tag2.getText());</span>
+<span class="fc" id="L99">    }</span>
+
+    /**
+     * Check if the JSP Tag is being correctly recognized.
+     * Our test html is : &lt;BR&gt;
+     * &amp;lt;%@ taglib uri=&quot;/WEB-INF/struts.tld&quot; prefix=&quot;struts&quot; %&amp;gt;&lt;BR&gt;
+     * &amp;lt;jsp:useBean id=&quot;transfer&quot; scope=&quot;session&quot; class=&quot;com.bank.PageBean&quot;/&amp;gt;&lt;BR&gt;
+     * &amp;lt;%&lt;BR&gt;
+     *   org.apache.struts.util.BeanUtils.populate(transfer, request);&lt;BR&gt;
+     *    if(request.getParameter(&quot;marker&quot;) == null)&lt;BR&gt;
+     *      // initialize a pseudo-property&lt;BR&gt;
+     *        transfer.set(&quot;days&quot;, java.util.Arrays.asList(&lt;BR&gt;
+     *            new String[] {&quot;1&quot;, &quot;2&quot;, &quot;3&quot;, &quot;4&quot;, &quot;31&quot;}));&lt;BR&gt;
+     *    else &lt;BR&gt;
+     *        if(transfer.validate(request))&lt;BR&gt;
+     *            %&amp;gt;&amp;lt;jsp:forward page=&quot;transferConfirm.jsp&quot;/&amp;gt;&amp;lt;%
+     * %&amp;gt;
+     * Creation date: (6/17/2001 4:01:06 PM)
+     */
+    public void testToHtml () throws ParserException
+    {
+<span class="fc" id="L120">        String guts = &quot;\n&quot;+</span>
+            &quot;    org.apache.struts.util.BeanUtils.populate(transfer, request);\n&quot;+
+            &quot;    if(request.getParameter(\&quot;marker\&quot;) == null)\n&quot;+
+            &quot;        // initialize a pseudo-property\n&quot;+
+            &quot;        transfer.set(\&quot;days\&quot;, java.util.Arrays.asList(\n&quot;+
+            &quot;            new String[] {\&quot;1\&quot;, \&quot;2\&quot;, \&quot;3\&quot;, \&quot;4\&quot;, \&quot;31\&quot;}));\n&quot;+
+            &quot;    else \n&quot;+
+            &quot;        if(transfer.validate(request))\n&quot;+
+            &quot;            &quot;;
+<span class="fc" id="L129">        createParser(</span>
+<span class="fc" id="L130">            &quot;&lt;%@ taglib uri=\&quot;/WEB-INF/struts.tld\&quot; prefix=\&quot;struts\&quot; %&gt;\n&quot;+</span>
+            &quot;&lt;jsp:useBean id=\&quot;transfer\&quot; scope=\&quot;session\&quot; class=\&quot;com.bank.PageBean\&quot;/&gt;\n&quot;+
+            &quot;&lt;%&quot; +
+<span class="fc" id="L133">            guts</span>
+<span class="fc" id="L134">            + &quot;%&gt;&lt;jsp:forward page=\&quot;transferConfirm.jsp\&quot;/&gt;&lt;%\n&quot;+</span>
+<span class="fc" id="L135">            &quot;%&gt;\n&quot;);</span>
+<span class="fc" id="L136">        parser.setNodeFactory (new PrototypicalNodeFactory (new JspTag ()));</span>
+<span class="fc" id="L137">        parseAndAssertNodeCount(8);</span>
+        // The first node should be a JspTag
+<span class="fc" id="L139">        assertTrue(&quot;Node 1 should be a JspTag&quot;,node[0] instanceof JspTag);</span>
+<span class="fc" id="L140">        JspTag tag = (JspTag)node[0];</span>
+<span class="fc" id="L141">        assertEquals(&quot;Raw String of the first JSP tag&quot;,&quot;&lt;%@ taglib uri=\&quot;/WEB-INF/struts.tld\&quot; prefix=\&quot;struts\&quot; %&gt;&quot;,tag.toHtml());</span>
+
+
+        // The fifth node should be a JspTag
+<span class="fc" id="L145">        assertTrue(&quot;Node 5 should be a JspTag&quot;,node[4] instanceof JspTag);</span>
+<span class="fc" id="L146">        JspTag tag2 = (JspTag)node[4];</span>
+<span class="fc" id="L147">        String expected = &quot;&lt;%&quot; + guts + &quot;%&gt;&quot;;</span>
+<span class="fc" id="L148">        assertEquals(&quot;Raw String of the second JSP tag&quot;,expected,tag2.toHtml());</span>
+<span class="fc" id="L149">        assertTrue(&quot;Node 7 should be a JspTag&quot;,node[6] instanceof JspTag);</span>
+<span class="fc" id="L150">        JspTag tag4 = (JspTag)node[6];</span>
+<span class="fc" id="L151">        expected = &quot;&lt;%\n%&gt;&quot;;</span>
+<span class="fc" id="L152">        assertEquals(&quot;Raw String of the fourth JSP tag&quot;,expected,tag4.toHtml());</span>
+<span class="fc" id="L153">    }</span>
+
+    public void testSpecialCharacters() throws ParserException {
+<span class="fc" id="L156">        StringBuffer sb1 = new StringBuffer();</span>
+<span class="fc" id="L157">        sb1.append(&quot;&lt;% for (i=0;i&lt;j;i++);%&gt;&quot;);</span>
+<span class="fc" id="L158">        createParser(sb1.toString());</span>
+<span class="fc" id="L159">        parser.setNodeFactory (new PrototypicalNodeFactory (new JspTag ()));</span>
+<span class="fc" id="L160">        parseAndAssertNodeCount(1);</span>
+        //assertTrue(&quot;Node should be a jsp tag&quot;,node[1] instanceof HTMLJspTag);
+<span class="fc" id="L162">        JspTag jspTag = (JspTag)node[0];</span>
+<span class="fc" id="L163">        assertEquals(&quot;jsp toHTML()&quot;,&quot;&lt;% for (i=0;i&lt;j;i++);%&gt;&quot;,jspTag.toHtml());</span>
+<span class="fc" id="L164">    }</span>
+
+
+    /**
+     * See bug #772700 Jsp Tags are not parsed correctly when in quoted attributes.
+     */
+    public void testJspTagsInUnQuotedAttribes() throws ParserException
+    {
+        // this test should pass when none of the attibutes are quoted
+        if (JSP_TESTS_ENABLED)
+            testJspTagsInAttributes(&quot;&lt;img alt=&lt;%=altText1%&gt; src=&lt;%=imgUrl1%&gt; border=&lt;%=borderToggle%&gt;&gt;&quot;);
+<span class="fc" id="L175">    }</span>
+
+    /**
+     * See bug #772700 Jsp Tags are not parsed correctly when in quoted attributes.
+     */
+    public void testJspTagsInQuotedAttribes() throws ParserException
+    {
+        // this test seems to mess up....
+<span class="fc" id="L183">        testJspTagsInAttributes(&quot;&lt;img alt=\&quot;&lt;%=altText1%&gt;\&quot; src=\&quot;&lt;%=imgUrl1%&gt;\&quot; border=\&quot;&lt;%=borderToggle%&gt;\&quot;&gt;&quot;);</span>
+<span class="fc" id="L184">    }</span>
+
+    private void testJspTagsInAttributes(String html) throws ParserException
+    {
+<span class="fc" id="L188">        createParser (html);</span>
+<span class="fc" id="L189">        parser.setNodeFactory (new PrototypicalNodeFactory (new JspTag ()));</span>
+        if (JSP_TESTS_ENABLED)
+        {
+            parseAndAssertNodeCount (7);
+
+            assertTrue (&quot;Should be a Jsp tag but was &quot; + node[1].getClass().getName(), node[1] instanceof JspTag);
+            assertTrue (&quot;Should be a Jsp tag but was &quot; + node[3].getClass().getName(), node[3] instanceof JspTag);
+            assertTrue (&quot;Should be a Jsp tag but was &quot; + node[5].getClass().getName(), node[5] instanceof JspTag);
+
+            assertTrue (&quot;Text Should be '&lt;%=altText1%&gt;'but was '&quot; + node[1].toHtml() + &quot;'&quot; , node[1].toHtml().equals(&quot;&lt;%=altText1%&gt;&quot;));
+            assertTrue (&quot;Text Should be '&lt;%=imgUrl1%&gt;' but was '&quot; + node[3].toHtml() + &quot;'&quot; , node[3].toHtml().equals(&quot;&lt;%=imgUrl1%&gt;&quot;));
+            assertTrue (&quot;Text Should be '&lt;%=borderToggle%&gt;' but was '&quot; + node[5].toHtml() + &quot;'&quot; , node[5].toHtml().equals(&quot;&lt;%=borderToggle%&gt;&quot;));
+        }
+        else
+<span class="fc" id="L203">            parseAndAssertNodeCount (1);</span>
+<span class="fc" id="L204">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

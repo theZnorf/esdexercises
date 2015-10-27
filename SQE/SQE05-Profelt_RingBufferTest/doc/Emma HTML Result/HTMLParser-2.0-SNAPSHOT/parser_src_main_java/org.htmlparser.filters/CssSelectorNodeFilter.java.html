@@ -1,0 +1,413 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>CssSelectorNodeFilter.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.filters</a> &gt; <span class="el_source">CssSelectorNodeFilter.java</span></div><h1>CssSelectorNodeFilter.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Rogers George
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/main/java/org/htmlparser/filters/CssSelectorNodeFilter.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-22 20:26:16 -0400 (Fri, 22 Sep 2006) $
+// $Revision: 11 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.filters;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.htmlparser.Node;
+import org.htmlparser.NodeFilter;
+import org.htmlparser.Tag;
+import org.htmlparser.filters.AndFilter;
+import org.htmlparser.filters.HasAttributeFilter;
+import org.htmlparser.filters.HasParentFilter;
+import org.htmlparser.filters.OrFilter;
+import org.htmlparser.filters.TagNameFilter;
+import org.htmlparser.util.NodeList;
+
+/**
+ * A NodeFilter that accepts nodes based on whether they match a CSS2 selector.
+ * Refer to &lt;a href=&quot;http://www.w3.org/TR/REC-CSS2/selector.html&quot;&gt;
+ * http://www.w3.org/TR/REC-CSS2/selector.html&lt;/a&gt; for syntax.
+ * &lt;p&gt;
+ * Todo: more thorough testing, any relevant pseudo-classes, css3 features
+ */
+public class CssSelectorNodeFilter implements NodeFilter
+{
+    /**
+     * Regular expression to split the selector into tokens.
+     */
+<span class="fc" id="L53">    private static Pattern tokens =</span>
+<span class="fc" id="L54">        Pattern.compile (&quot;(&quot;</span>
+            + &quot;/\\*.*?\\*/&quot;             // comments
+            + &quot;) | (&quot;
+            + &quot;   \&quot;.*?[^\&quot;]\&quot;&quot;   // double quoted string
+            + &quot; | \'.*?[^\']\'&quot;   // single quoted string
+            + &quot; | \&quot;\&quot; | \'\' &quot;     // empty quoted string
+            + &quot;) | (&quot;
+            + &quot; [\\~\\*\\$\\^\\|]? = &quot; // attrib-val relations
+            + &quot;) | (&quot;
+            + &quot; [a-zA-Z_\\*](?:[a-zA-Z0-9_-]|\\\\.)* &quot; // bare name
+            + &quot;) | \\s*(&quot;
+            + &quot; [+&gt;~\\s] &quot;        // combinators
+            + &quot;)\\s* | (&quot;
+            + &quot; [\\.\\[\\]\\#\\:)(] &quot;       // class/id/attr/param delims
+            + &quot;) | (&quot;
+            + &quot; [\\,] &quot;                     // comma
+            + &quot;) | ( . )&quot;                   // everything else (bogus)
+            ,
+<span class="fc" id="L72">            Pattern.CASE_INSENSITIVE</span>
+            | Pattern.DOTALL
+            | Pattern.COMMENTS);
+
+    /**
+     * Comment token type.
+     */
+    private static final int COMMENT = 1;
+
+    /**
+     * quoted string token type.
+     */
+    private static final int QUOTEDSTRING = 2;
+
+    /**
+     * Relation token type.
+     */
+    private static final int RELATION = 3;
+
+    /**
+     * Name token type.
+     */
+    private static final int NAME = 4;
+
+    /**
+     * Combinator token type.
+     */
+    private static final int COMBINATOR = 5;
+
+    /**
+     * Delimiter token type.
+     */
+    private static final int DELIM = 6;
+
+    /**
+     * Comma token type.
+     */
+<span class="fc" id="L109">    private static final int COMMA = 7;</span>
+
+    private NodeFilter therule;
+
+<span class="fc" id="L113">    private Matcher m = null;</span>
+<span class="fc" id="L114">    private int tokentype = 0;</span>
+<span class="fc" id="L115">    private String token = null;</span>
+
+    /**
+     * Create a Cascading Style Sheet node filter.
+     * @param selector The selector expression.
+     */
+<span class="fc" id="L121">    public CssSelectorNodeFilter (String selector)</span>
+    {
+<span class="fc" id="L123">        m = tokens.matcher (selector);</span>
+<span class="pc bpc" id="L124" title="1 of 2 branches missed.">        if (nextToken ())</span>
+<span class="fc" id="L125">            therule = parse ();</span>
+<span class="fc" id="L126">    }</span>
+
+    /**
+     * Accept nodes that match the selector expression.
+     * @param node The node to check.
+     * @return &lt;code&gt;true&lt;/code&gt; if the node matches,
+     * &lt;code&gt;false&lt;/code&gt; otherwise.
+     */
+    public boolean accept (Node node)
+    {
+<span class="fc" id="L136">        return (therule.accept (node));</span>
+    }
+
+    private boolean nextToken ()
+    {
+<span class="pc bpc" id="L141" title="1 of 4 branches missed.">        if (m != null &amp;&amp; m.find ())</span>
+<span class="pc bpc" id="L142" title="1 of 2 branches missed.">            for (int i = 1; i &lt; m.groupCount (); i++)</span>
+<span class="fc bfc" id="L143" title="All 2 branches covered.">                if (null != m.group (i))</span>
+                {
+<span class="fc" id="L145">                    tokentype = i;</span>
+<span class="fc" id="L146">                    token = m.group (i);</span>
+<span class="fc" id="L147">                    return (true);</span>
+                }
+<span class="fc" id="L149">        tokentype = 0;</span>
+<span class="fc" id="L150">        token = null;</span>
+
+<span class="fc" id="L152">        return (false);</span>
+    }
+
+    private NodeFilter parse ()
+    {
+        NodeFilter ret;
+        
+<span class="fc" id="L159">        ret = null;</span>
+        do
+        {
+<span class="pc bpc" id="L162" title="2 of 4 branches missed.">            switch (tokentype)</span>
+            {
+                case COMMENT:
+                case NAME:
+                case DELIM:
+<span class="fc bfc" id="L167" title="All 2 branches covered.">                    if (ret == null)</span>
+<span class="fc" id="L168">                        ret = parseSimple ();</span>
+                    else
+<span class="fc" id="L170">                        ret = new AndFilter (ret, parseSimple ());</span>
+<span class="fc" id="L171">                    break;</span>
+                case COMBINATOR:
+<span class="pc bpc" id="L173" title="2 of 3 branches missed.">                    switch (token.charAt (0))</span>
+                    {
+                        case '+':
+<span class="fc" id="L176">                            ret = new AdjacentFilter (ret);</span>
+<span class="fc" id="L177">                            break;</span>
+                        case '&gt;':
+<span class="nc" id="L179">                            ret = new HasParentFilter (ret);</span>
+<span class="nc" id="L180">                            break;</span>
+                        default: // whitespace
+<span class="nc" id="L182">                            ret = new HasAncestorFilter (ret);</span>
+                    }
+<span class="fc" id="L184">                    nextToken ();</span>
+<span class="fc" id="L185">                    break;</span>
+                case COMMA:
+<span class="nc" id="L187">                    ret = new OrFilter (ret, parse ());</span>
+<span class="nc" id="L188">                    nextToken ();</span>
+                    break;
+            }
+        }
+<span class="fc bfc" id="L192" title="All 2 branches covered.">        while (token != null);</span>
+
+<span class="fc" id="L194">        return (ret);</span>
+    }
+
+    private NodeFilter parseSimple ()
+    {
+<span class="fc" id="L199">        boolean done = false;</span>
+<span class="fc" id="L200">        NodeFilter ret = null;</span>
+
+<span class="pc bpc" id="L202" title="1 of 2 branches missed.">        if (token != null)</span>
+            do
+            {
+<span class="pc bpc" id="L205" title="2 of 4 branches missed.">                switch (tokentype)</span>
+                {
+                    case COMMENT:
+<span class="nc" id="L208">                        nextToken ();</span>
+<span class="nc" id="L209">                        break;</span>
+                    case NAME:
+<span class="pc bpc" id="L211" title="1 of 2 branches missed.">                        if (&quot;*&quot;.equals (token))</span>
+<span class="nc" id="L212">                            ret = new YesFilter ();</span>
+<span class="pc bpc" id="L213" title="1 of 2 branches missed.">                        else if (ret == null)</span>
+<span class="fc" id="L214">                            ret = new TagNameFilter (unescape (token));</span>
+                        else
+<span class="nc" id="L216">                            ret = new AndFilter (ret, new TagNameFilter (</span>
+<span class="nc" id="L217">                                unescape (token)));</span>
+<span class="fc" id="L218">                        nextToken ();</span>
+<span class="fc" id="L219">                        break;</span>
+                    case DELIM:
+<span class="nc bnc" id="L221" title="All 5 branches missed.">                        switch (token.charAt (0))</span>
+                        {
+                            case '.':
+<span class="nc" id="L224">                                nextToken ();</span>
+<span class="nc bnc" id="L225" title="All 2 branches missed.">                                if (tokentype != NAME)</span>
+<span class="nc" id="L226">                                    throw new IllegalArgumentException (</span>
+<span class="nc" id="L227">                                        &quot;Syntax error at &quot; + token);</span>
+<span class="nc bnc" id="L228" title="All 2 branches missed.">                                if (ret == null)</span>
+<span class="nc" id="L229">                                    ret = new HasAttributeFilter (&quot;class&quot;,</span>
+<span class="nc" id="L230">                                        unescape (token));</span>
+                                else
+<span class="nc" id="L232">                                    ret = new AndFilter (ret, new HasAttributeFilter (</span>
+<span class="nc" id="L233">                                        &quot;class&quot;, unescape (token)));</span>
+<span class="nc" id="L234">                                break;</span>
+                            case '#':
+<span class="nc" id="L236">                                nextToken ();</span>
+<span class="nc bnc" id="L237" title="All 2 branches missed.">                                if (tokentype != NAME)</span>
+<span class="nc" id="L238">                                    throw new IllegalArgumentException (</span>
+<span class="nc" id="L239">                                        &quot;Syntax error at &quot; + token);</span>
+<span class="nc bnc" id="L240" title="All 2 branches missed.">                                if (ret == null)</span>
+<span class="nc" id="L241">                                    ret = new HasAttributeFilter (&quot;id&quot;, unescape (token));</span>
+                                else
+<span class="nc" id="L243">                                    ret = new AndFilter (ret, new HasAttributeFilter (</span>
+<span class="nc" id="L244">                                        &quot;id&quot;, unescape (token)));</span>
+<span class="nc" id="L245">                                break;</span>
+                            case ':':
+<span class="nc" id="L247">                                nextToken ();</span>
+<span class="nc bnc" id="L248" title="All 2 branches missed.">                                if (ret == null)</span>
+<span class="nc" id="L249">                                    ret = parsePseudoClass ();</span>
+                                else
+<span class="nc" id="L251">                                    ret = new AndFilter (ret, parsePseudoClass ());</span>
+<span class="nc" id="L252">                                break;</span>
+                            case '[':
+<span class="nc" id="L254">                                nextToken ();</span>
+<span class="nc bnc" id="L255" title="All 2 branches missed.">                                if (ret == null)</span>
+<span class="nc" id="L256">                                    ret = parseAttributeExp ();</span>
+                                else
+<span class="nc" id="L258">                                    ret = new AndFilter (ret, parseAttributeExp ());</span>
+                                break;
+                        }
+<span class="nc" id="L261">                        nextToken ();</span>
+<span class="nc" id="L262">                        break;</span>
+                    default:
+<span class="fc" id="L264">                        done = true;</span>
+                }
+            }
+<span class="fc bfc" id="L267" title="All 4 branches covered.">            while (!done &amp;&amp; token != null);</span>
+
+<span class="fc" id="L269">        return (ret);</span>
+    }
+
+    private NodeFilter parsePseudoClass ()
+    {
+<span class="nc" id="L274">        throw new IllegalArgumentException (&quot;pseudoclasses not implemented yet&quot;);</span>
+    }
+
+    private NodeFilter parseAttributeExp ()
+    {
+<span class="nc" id="L279">        NodeFilter ret = null;</span>
+<span class="nc bnc" id="L280" title="All 2 branches missed.">        if (tokentype == NAME)</span>
+        {
+<span class="nc" id="L282">            String attrib = token;</span>
+<span class="nc" id="L283">            nextToken ();</span>
+<span class="nc bnc" id="L284" title="All 2 branches missed.">            if (&quot;]&quot;.equals (token))</span>
+<span class="nc" id="L285">                ret = new HasAttributeFilter (unescape (attrib));</span>
+<span class="nc bnc" id="L286" title="All 2 branches missed.">            else if (tokentype == RELATION)</span>
+            {
+<span class="nc" id="L288">                String val = null, rel = token;</span>
+<span class="nc" id="L289">                nextToken ();</span>
+<span class="nc bnc" id="L290" title="All 2 branches missed.">                if (tokentype == QUOTEDSTRING)</span>
+<span class="nc" id="L291">                    val = unescape (token.substring (1, token.length () - 1));</span>
+<span class="nc bnc" id="L292" title="All 2 branches missed.">                else if (tokentype == NAME)</span>
+<span class="nc" id="L293">                    val = unescape (token);</span>
+<span class="nc bnc" id="L294" title="All 4 branches missed.">                if (&quot;~=&quot;.equals (rel) &amp;&amp; val != null)</span>
+<span class="nc" id="L295">                    ret = new AttribMatchFilter (unescape (attrib), &quot;\\b&quot;</span>
+<span class="nc" id="L296">                        + val.replaceAll (&quot;([^a-zA-Z0-9])&quot;, &quot;\\\\$1&quot;)</span>
+<span class="nc" id="L297">                        + &quot;\\b&quot;);</span>
+<span class="nc bnc" id="L298" title="All 4 branches missed.">                else if (&quot;|=&quot;.equals (rel) &amp;&amp; val != null)</span>
+<span class="nc" id="L299">                    ret = new AttribMatchFilter (unescape (attrib), val.replaceAll (&quot;([^a-zA-Z0-9])&quot;, &quot;\\\\$1&quot;)</span>
+<span class="nc" id="L300">                    + &quot;\\-[^a-zA-Z0-9]*&quot;);</span>
+<span class="nc bnc" id="L301" title="All 4 branches missed.">                else if (&quot;=&quot;.equals (rel) &amp;&amp; val != null)</span>
+<span class="nc" id="L302">                    ret = new HasAttributeFilter (attrib, val);</span>
+            }
+        }
+<span class="nc bnc" id="L305" title="All 2 branches missed.">        if (ret == null)</span>
+<span class="nc" id="L306">            throw new IllegalArgumentException (&quot;Syntax error at &quot; + token</span>
+<span class="nc" id="L307">                + tokentype);</span>
+        
+<span class="nc" id="L309">        nextToken ();</span>
+
+<span class="nc" id="L311">        return (ret);</span>
+    }
+
+    /**
+     * Replace escape sequences in a string.
+     * @param escaped The string to examine.
+     * @return The argument with escape sequences replaced by their
+     * equivalent character.
+     */
+    public static String unescape (String escaped)
+    {
+<span class="fc" id="L322">        StringBuffer result = new StringBuffer (escaped.length ());</span>
+<span class="fc" id="L323">        Matcher m = Pattern.compile (&quot;\\\\(?:([a-fA-F0-9]{2,6})|(.))&quot;).matcher (</span>
+<span class="fc" id="L324">            escaped);</span>
+<span class="fc bfc" id="L325" title="All 2 branches covered.">        while (m.find ())</span>
+        {
+<span class="pc bpc" id="L327" title="1 of 2 branches missed.">            if (null != m.group (1))</span>
+<span class="nc" id="L328">                m.appendReplacement (result, String.valueOf (</span>
+<span class="nc" id="L329">                    (char)Integer.parseInt (m.group (1), 16)));</span>
+<span class="pc bpc" id="L330" title="1 of 2 branches missed.">            else if (null != m.group (2))</span>
+<span class="fc" id="L331">                m.appendReplacement (result, m.group (2));</span>
+        }
+<span class="fc" id="L333">        m.appendTail (result);</span>
+        
+<span class="fc" id="L335">        return (result.toString ());</span>
+    }
+
+    private static class HasAncestorFilter implements NodeFilter
+    {
+        private NodeFilter atest;
+
+<span class="nc" id="L342">        public HasAncestorFilter (NodeFilter n)</span>
+        {
+<span class="nc" id="L344">            atest = n;</span>
+<span class="nc" id="L345">        }</span>
+
+        public boolean accept (Node n)
+        {
+<span class="nc bnc" id="L349" title="All 2 branches missed.">            while (n != null)</span>
+            {
+<span class="nc" id="L351">                n = n.getParent ();</span>
+<span class="nc bnc" id="L352" title="All 2 branches missed.">                if (atest.accept (n))</span>
+<span class="nc" id="L353">                    return (true);</span>
+            }
+<span class="nc" id="L355">            return (false);</span>
+        }
+    }
+
+    private static class AdjacentFilter implements NodeFilter
+    {
+        private NodeFilter sibtest;
+
+<span class="fc" id="L363">        public AdjacentFilter (NodeFilter n)</span>
+        {
+<span class="fc" id="L365">            sibtest = n;</span>
+<span class="fc" id="L366">        }</span>
+
+        public boolean accept (Node n)
+        {
+<span class="fc bfc" id="L370" title="All 2 branches covered.">            if (n.getParent () != null)</span>
+            {
+<span class="fc" id="L372">                NodeList l = n.getParent ().getChildren ();</span>
+<span class="fc bfc" id="L373" title="All 2 branches covered.">                for (int i = 0; i &lt; l.size (); i++)</span>
+<span class="fc bfc" id="L374" title="All 4 branches covered.">                    if (l.elementAt (i) == n &amp;&amp; i &gt; 0)</span>
+<span class="fc" id="L375">                        return (sibtest.accept (l.elementAt (i - 1)));</span>
+            }
+<span class="fc" id="L377">            return (false);</span>
+        }
+    }
+
+<span class="nc" id="L381">    private static class YesFilter implements NodeFilter</span>
+    {
+        public boolean accept (Node n)
+        {
+<span class="nc" id="L385">            return (true);</span>
+        }
+    }
+
+    private static class AttribMatchFilter implements NodeFilter
+    {
+        private Pattern rel;
+        private String attrib;
+
+<span class="nc" id="L394">        public AttribMatchFilter (String attrib, String regex)</span>
+        {
+<span class="nc" id="L396">            rel = Pattern.compile (regex);</span>
+<span class="nc" id="L397">            this.attrib = attrib;</span>
+<span class="nc" id="L398">        }</span>
+
+        public boolean accept (Node node)
+        {
+<span class="nc bnc" id="L402" title="All 4 branches missed.">            if (node instanceof Tag &amp;&amp; ((Tag) node).getAttribute (attrib) != null)</span>
+<span class="nc bnc" id="L403" title="All 2 branches missed.">                if (rel != null</span>
+<span class="nc bnc" id="L404" title="All 2 branches missed.">                    &amp;&amp; !rel.matcher (((Tag) node).getAttribute (attrib)).find ())</span>
+<span class="nc" id="L405">                    return (false);</span>
+                else
+<span class="nc" id="L407">                    return (true);</span>
+            else
+<span class="nc" id="L409">                return (false);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

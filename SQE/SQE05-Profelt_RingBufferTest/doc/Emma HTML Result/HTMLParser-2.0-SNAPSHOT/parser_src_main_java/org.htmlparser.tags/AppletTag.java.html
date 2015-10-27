@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>AppletTag.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tags</a> &gt; <span class="el_source">AppletTag.java</span></div><h1>AppletTag.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Somik Raha
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/main/java/org/htmlparser/tags/AppletTag.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tags;
+
+import java.util.Enumeration;
+import java.util.Hashtable;
+import java.util.Vector;
+
+import org.htmlparser.Attribute;
+import org.htmlparser.Node;
+import org.htmlparser.Tag;
+import org.htmlparser.Text;
+import org.htmlparser.nodes.TagNode;
+import org.htmlparser.util.NodeList;
+import org.htmlparser.util.SimpleNodeIterator;
+
+/**
+ * AppletTag represents an &amp;lt;Applet&amp;gt; tag.
+ * It extends a basic tag by providing accessors to the class, codebase,
+ * archive and parameters.
+ */
+public class AppletTag
+    extends
+        CompositeTag
+{
+    /**
+     * The set of names handled by this tag.
+     */
+<span class="fc" id="L52">    private static final String[] mIds = new String[] {&quot;APPLET&quot;};</span>
+
+    /**
+     * The set of end tag names that indicate the end of this tag.
+     */
+<span class="fc" id="L57">    private static final String[] mEndTagEnders = new String[] {&quot;BODY&quot;, &quot;HTML&quot;};</span>
+
+    /**
+     * Create a new applet tag.
+     */
+<span class="fc" id="L62">    public AppletTag ()</span>
+    {
+<span class="fc" id="L64">    }</span>
+
+    /**
+     * Return the set of names handled by this tag.
+     * @return The names to be matched that create tags of this type.
+     */
+    public String[] getIds ()
+    {
+<span class="fc" id="L72">        return (mIds);</span>
+    }
+
+    /**
+     * Return the set of end tag names that cause this tag to finish.
+     * @return The names of following end tags that stop further scanning.
+     */
+    public String[] getEndTagEnders ()
+    {
+<span class="nc" id="L81">        return (mEndTagEnders);</span>
+    }
+
+    /**
+     * Extract the applet &lt;code&gt;PARAM&lt;/code&gt; tags from the child list.
+     * @return The list of applet parameters (keys and values are String objects).
+     */
+    public Hashtable createAppletParamsTable ()
+    {
+        NodeList kids;
+        Node node;
+        Tag tag;
+        String paramName;
+        String paramValue;
+        Hashtable ret;
+
+<span class="fc" id="L97">        ret = new Hashtable ();</span>
+<span class="fc" id="L98">        kids = getChildren ();</span>
+<span class="pc bpc" id="L99" title="1 of 2 branches missed.">        if (null != kids)</span>
+<span class="fc bfc" id="L100" title="All 2 branches covered.">            for (int i = 0; i &lt; kids.size (); i++)</span>
+            {
+<span class="fc" id="L102">                node = children.elementAt(i);</span>
+<span class="fc bfc" id="L103" title="All 2 branches covered.">                if (node instanceof Tag)</span>
+                {
+<span class="fc" id="L105">                    tag = (Tag)node;</span>
+<span class="pc bpc" id="L106" title="1 of 2 branches missed.">                    if (tag.getTagName().equals (&quot;PARAM&quot;))</span>
+                    {
+<span class="fc" id="L108">                        paramName = tag.getAttribute (&quot;NAME&quot;);</span>
+<span class="pc bpc" id="L109" title="2 of 4 branches missed.">                        if (null != paramName &amp;&amp; 0 != paramName.length ())</span>
+                        {
+<span class="fc" id="L111">                            paramValue = tag.getAttribute (&quot;VALUE&quot;);</span>
+<span class="fc" id="L112">                            ret.put (paramName,paramValue);</span>
+                        }
+                    }
+                }
+            }
+
+<span class="fc" id="L118">        return (ret);</span>
+    }
+
+    /**
+     * Get the class name of the applet.
+     * @return The value of the &lt;code&gt;CODE&lt;/code&gt; attribute.
+     */
+    public String getAppletClass ()
+    {
+<span class="fc" id="L127">        return (getAttribute (&quot;CODE&quot;));</span>
+    }
+
+    /**
+     * Get the applet parameters.
+     * @return The list of parameter values (keys and values are String objects).
+     */
+    public Hashtable getAppletParams ()
+    {
+<span class="fc" id="L136">        return (createAppletParamsTable ());</span>
+    }
+
+    /**
+     * Get the jar file of the applet.
+     * @return The value of the &lt;code&gt;ARCHIVE&lt;/code&gt; attribute, or &lt;code&gt;null&lt;/code&gt; if it wasn't specified.
+     */
+    public String getArchive()
+    {
+<span class="fc" id="L145">        return (getAttribute (&quot;ARCHIVE&quot;));</span>
+    }
+
+    /**
+     * Get the code base of the applet.
+     * @return The value of the &lt;code&gt;CODEBASE&lt;/code&gt; attribute, or &lt;code&gt;null&lt;/code&gt; if it wasn't specified.
+     */
+    public String getCodeBase()
+    {
+<span class="fc" id="L154">        return (getAttribute (&quot;CODEBASE&quot;));</span>
+    }
+
+    /**
+     * Get the &lt;code&gt;PARAM&lt;code&gt; tag with the given name.
+     * &lt;em&gt;NOTE: This was called (erroneously) getAttribute() in previous versions.&lt;/em&gt;
+     * @param key The applet parameter name to get.
+     * @return The value of the parameter or &lt;code&gt;null&lt;/code&gt; if there is no parameter of that name.
+     */
+    public String getParameter (String key)
+    {
+<span class="fc" id="L165">        return ((String)(getAppletParams ().get (key)));</span>
+    }
+
+    /**
+     * Get an enumeration over the (String) parameter names.
+     * @return An enumeration of the &lt;code&gt;PARAM&lt;code&gt; tag &lt;code&gt;NAME&lt;code&gt; attributes.
+     */
+    public Enumeration getParameterNames ()
+    {
+<span class="fc" id="L174">        return (getAppletParams ().keys ());</span>
+    }
+
+    /**
+     * Set the &lt;code&gt;CODE&lt;code&gt; attribute.
+     * @param newAppletClass The new applet class.
+     */
+    public void setAppletClass (String newAppletClass)
+    {
+<span class="fc" id="L183">        setAttribute (&quot;CODE&quot;, newAppletClass);</span>
+<span class="fc" id="L184">    }</span>
+
+    /**
+     * Set the enclosed &lt;code&gt;PARM&lt;code&gt; children.
+     * @param newAppletParams The new parameters.
+     */
+    public void setAppletParams (Hashtable newAppletParams)
+    {
+        NodeList kids;
+        Node node;
+        Tag tag;
+        String paramName;
+        String paramValue;
+        Vector attributes;
+        Text string;
+
+<span class="fc" id="L200">        kids = getChildren ();</span>
+<span class="pc bpc" id="L201" title="1 of 2 branches missed.">        if (null == kids)</span>
+<span class="nc" id="L202">            kids = new NodeList ();</span>
+        else
+            // erase appletParams from kids
+<span class="fc bfc" id="L205" title="All 2 branches covered.">            for (int i = 0; i &lt; kids.size (); )</span>
+            {
+<span class="fc" id="L207">                node = kids.elementAt (i);</span>
+<span class="fc bfc" id="L208" title="All 2 branches covered.">                if (node instanceof Tag)</span>
+<span class="pc bpc" id="L209" title="1 of 2 branches missed.">                    if (((Tag)node).getTagName ().equals (&quot;PARAM&quot;))</span>
+                    {
+<span class="fc" id="L211">                        kids.remove (i);</span>
+                        // remove whitespace too
+<span class="pc bpc" id="L213" title="1 of 2 branches missed.">                        if (i &lt; kids.size ())</span>
+                        {
+<span class="fc" id="L215">                            node = kids.elementAt (i);</span>
+<span class="pc bpc" id="L216" title="1 of 2 branches missed.">                            if (node instanceof Text)</span>
+                            {
+<span class="fc" id="L218">                                string = (Text)node;</span>
+<span class="pc bpc" id="L219" title="1 of 2 branches missed.">                                if (0 == string.getText ().trim ().length ())</span>
+<span class="fc" id="L220">                                    kids.remove (i);</span>
+                            }   
+                        }
+<span class="fc" id="L223">                    }</span>
+                    else
+<span class="nc" id="L225">                        i++;</span>
+                else
+<span class="fc" id="L227">                    i++;</span>
+            }
+
+        // add newAppletParams to kids
+<span class="fc bfc" id="L231" title="All 2 branches covered.">        for (Enumeration e = newAppletParams.keys (); e.hasMoreElements (); )</span>
+        {
+<span class="fc" id="L233">            attributes = new Vector (); // should the tag copy the attributes?</span>
+<span class="fc" id="L234">            paramName = (String)e.nextElement ();</span>
+<span class="fc" id="L235">            paramValue = (String)newAppletParams.get (paramName);</span>
+<span class="fc" id="L236">            attributes.addElement (new Attribute (&quot;PARAM&quot;, null));</span>
+<span class="fc" id="L237">            attributes.addElement (new Attribute (&quot; &quot;));</span>
+<span class="fc" id="L238">            attributes.addElement (new Attribute (&quot;VALUE&quot;, paramValue, '&quot;'));</span>
+<span class="fc" id="L239">            attributes.addElement (new Attribute (&quot; &quot;));</span>
+<span class="fc" id="L240">            attributes.addElement (new Attribute (&quot;NAME&quot;, paramName, '&quot;'));</span>
+<span class="fc" id="L241">            tag = new TagNode (null, 0, 0, attributes);</span>
+<span class="fc" id="L242">            kids.add (tag);</span>
+        }
+
+        //set kids as new children
+<span class="fc" id="L246">        setChildren (kids);</span>
+<span class="fc" id="L247">    }</span>
+
+    /**
+     * Set the &lt;code&gt;ARCHIVE&lt;code&gt; attribute.
+     * @param newArchive The new archive file.
+     */
+    public void setArchive (String newArchive)
+    {
+<span class="fc" id="L255">        setAttribute (&quot;ARCHIVE&quot;, newArchive);</span>
+<span class="fc" id="L256">    }</span>
+
+    /**
+     * Set the &lt;code&gt;CODEBASE&lt;code&gt; attribute.
+     * @param newCodeBase The new applet code base.
+     */
+    public void setCodeBase (String newCodeBase)
+    {
+<span class="fc" id="L264">        setAttribute (&quot;CODEBASE&quot;, newCodeBase);</span>
+<span class="fc" id="L265">    }</span>
+
+    /**
+     * Output a string representing this applet tag.
+     * @return A string showing the contents of the applet tag.
+     */
+    public String toString ()
+    {
+        Hashtable parameters;
+        Enumeration params;
+        String paramName;
+        String paramValue;
+        boolean found;
+        Node node;
+        StringBuffer ret;
+
+<span class="nc" id="L281">        ret = new StringBuffer(500);</span>
+<span class="nc" id="L282">        ret.append (&quot;Applet Tag\n&quot;);</span>
+<span class="nc" id="L283">        ret.append (&quot;**********\n&quot;);</span>
+<span class="nc" id="L284">        ret.append (&quot;Class Name = &quot;);</span>
+<span class="nc" id="L285">        ret.append (getAppletClass ());</span>
+<span class="nc" id="L286">        ret.append (&quot;\n&quot;);</span>
+<span class="nc" id="L287">        ret.append (&quot;Archive = &quot;);</span>
+<span class="nc" id="L288">        ret.append (getArchive ());</span>
+<span class="nc" id="L289">        ret.append (&quot;\n&quot;);</span>
+<span class="nc" id="L290">        ret.append (&quot;Codebase = &quot;);</span>
+<span class="nc" id="L291">        ret.append (getCodeBase ());</span>
+<span class="nc" id="L292">        ret.append (&quot;\n&quot;);</span>
+<span class="nc" id="L293">        parameters = getAppletParams ();</span>
+<span class="nc" id="L294">        params = parameters.keys ();</span>
+<span class="nc bnc" id="L295" title="All 2 branches missed.">        if (null == params)</span>
+<span class="nc" id="L296">            ret.append (&quot;No Params found.\n&quot;);</span>
+        else
+<span class="nc bnc" id="L298" title="All 2 branches missed.">            for (int cnt = 0; params.hasMoreElements (); cnt++)</span>
+            {
+<span class="nc" id="L300">                paramName = (String)params.nextElement ();</span>
+<span class="nc" id="L301">                paramValue = (String)parameters.get (paramName);</span>
+<span class="nc" id="L302">                ret.append (cnt);</span>
+<span class="nc" id="L303">                ret.append (&quot;: Parameter name = &quot;);</span>
+<span class="nc" id="L304">                ret.append (paramName);</span>
+<span class="nc" id="L305">                ret.append (&quot;, Parameter value = &quot;);</span>
+<span class="nc" id="L306">                ret.append (paramValue);</span>
+<span class="nc" id="L307">                ret.append (&quot;\n&quot;);</span>
+            }
+<span class="nc" id="L309">        found = false;</span>
+<span class="nc bnc" id="L310" title="All 2 branches missed.">        for (SimpleNodeIterator e = children (); e.hasMoreNodes ();)</span>
+        {
+<span class="nc" id="L312">            node = e.nextNode ();</span>
+<span class="nc bnc" id="L313" title="All 2 branches missed.">            if (node instanceof Tag)</span>
+<span class="nc bnc" id="L314" title="All 2 branches missed.">                if (((Tag)node).getTagName ().equals (&quot;PARAM&quot;))</span>
+<span class="nc" id="L315">                    continue;</span>
+<span class="nc bnc" id="L316" title="All 2 branches missed.">            if (!found)</span>
+<span class="nc" id="L317">                ret.append (&quot;Miscellaneous items :\n&quot;);</span>
+            else
+<span class="nc" id="L319">                ret.append (&quot; &quot;);</span>
+<span class="nc" id="L320">            found = true;</span>
+<span class="nc" id="L321">            ret.append (node.toString ());</span>
+        }
+<span class="nc bnc" id="L323" title="All 2 branches missed.">        if (found)</span>
+<span class="nc" id="L324">            ret.append (&quot;\n&quot;);</span>
+<span class="nc" id="L325">        ret.append (&quot;End of Applet Tag\n&quot;);</span>
+<span class="nc" id="L326">        ret.append (&quot;*****************\n&quot;);</span>
+
+<span class="nc" id="L328">        return (ret.toString ());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

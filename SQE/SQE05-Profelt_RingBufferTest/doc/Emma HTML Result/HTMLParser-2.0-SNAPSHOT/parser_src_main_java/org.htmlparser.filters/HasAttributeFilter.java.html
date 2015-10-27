@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>HasAttributeFilter.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.filters</a> &gt; <span class="el_source">HasAttributeFilter.java</span></div><h1>HasAttributeFilter.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/main/java/org/htmlparser/filters/HasAttributeFilter.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.filters;
+
+import java.util.Locale;
+
+import org.htmlparser.Attribute;
+import org.htmlparser.Node;
+import org.htmlparser.NodeFilter;
+import org.htmlparser.Tag;
+
+/**
+ * This class accepts all tags that have a certain attribute,
+ * and optionally, with a certain value.
+ */
+public class HasAttributeFilter implements NodeFilter
+{
+    /**
+     * The attribute to check for.
+     */
+    protected String mAttribute;
+
+    /**
+     * The value to check for.
+     */
+    protected String mValue;
+
+    /**
+     * Creates a new instance of HasAttributeFilter.
+     * With no attribute name, this would always return &lt;code&gt;false&lt;/code&gt;
+     * from {@link #accept}.
+     */
+    public HasAttributeFilter ()
+    {
+<span class="nc" id="L58">        this (&quot;&quot;, null);</span>
+<span class="nc" id="L59">    }</span>
+
+    /**
+     * Creates a new instance of HasAttributeFilter that accepts tags
+     * with the given attribute.
+     * @param attribute The attribute to search for.
+     */
+    public HasAttributeFilter (String attribute)
+    {
+<span class="fc" id="L68">        this (attribute, null);</span>
+<span class="fc" id="L69">    }</span>
+
+    /**
+     * Creates a new instance of HasAttributeFilter that accepts tags
+     * with the given attribute and value.
+     * @param attribute The attribute to search for.
+     * @param value The value that must be matched,
+     * or null if any value will match.
+     */
+<span class="fc" id="L78">    public HasAttributeFilter (String attribute, String value)</span>
+    {
+<span class="fc" id="L80">        mAttribute = attribute.toUpperCase (Locale.ENGLISH);</span>
+<span class="fc" id="L81">        mValue = value;</span>
+<span class="fc" id="L82">    }</span>
+
+    /**
+     * Get the attribute name.
+     * @return Returns the name of the attribute that is acceptable.
+     */
+    public String getAttributeName ()
+    {
+<span class="nc" id="L90">        return (mAttribute);</span>
+    }
+
+    /**
+     * Set the attribute name.
+     * @param name The name of the attribute to accept.
+     */
+    public void setAttributeName (String name)
+    {
+<span class="nc" id="L99">        mAttribute = name;</span>
+<span class="nc" id="L100">    }</span>
+
+    /**
+     * Get the attribute value.
+     * @return Returns the value of the attribute that is acceptable.
+     */
+    public String getAttributeValue ()
+    {
+<span class="nc" id="L108">        return (mValue);</span>
+    }
+
+    /**
+     * Set the attribute value.
+     * @param value The value of the attribute to accept.
+     * If &lt;code&gt;null&lt;/code&gt;, any tag with the attribute,
+     * no matter what it's value is acceptable.
+     */
+    public void setAttributeValue (String value)
+    {
+<span class="nc" id="L119">        mValue = value;</span>
+<span class="nc" id="L120">    }</span>
+
+    /**
+     * Accept tags with a certain attribute.
+     * @param node The node to check.
+     * @return &lt;code&gt;true&lt;/code&gt; if the node has the attribute
+     * (and value if that is being checked too), &lt;code&gt;false&lt;/code&gt; otherwise.
+     */
+    public boolean accept (Node node)
+    {
+        Tag tag;
+        Attribute attribute;
+        boolean ret;
+
+<span class="fc" id="L134">        ret = false;</span>
+<span class="fc bfc" id="L135" title="All 2 branches covered.">        if (node instanceof Tag)</span>
+        {
+<span class="fc" id="L137">            tag = (Tag)node;</span>
+<span class="fc" id="L138">            attribute = tag.getAttributeEx (mAttribute);</span>
+<span class="fc bfc" id="L139" title="All 2 branches covered.">            ret = null != attribute;</span>
+<span class="pc bpc" id="L140" title="1 of 4 branches missed.">            if (ret &amp;&amp; (null != mValue))</span>
+<span class="nc" id="L141">                ret = mValue.equals (attribute.getValue ());</span>
+        }
+
+<span class="fc" id="L144">        return (ret);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

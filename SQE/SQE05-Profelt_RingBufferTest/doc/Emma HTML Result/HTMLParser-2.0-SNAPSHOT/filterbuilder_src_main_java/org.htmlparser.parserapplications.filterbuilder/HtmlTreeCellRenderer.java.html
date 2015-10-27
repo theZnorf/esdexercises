@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>HtmlTreeCellRenderer.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">filterbuilder/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.parserapplications.filterbuilder</a> &gt; <span class="el_source">HtmlTreeCellRenderer.java</span></div><h1>HtmlTreeCellRenderer.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/filterbuilder/src/main/java/org/htmlparser/parserapplications/filterbuilder/HtmlTreeCellRenderer.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.parserapplications.filterbuilder;
+
+import java.awt.Component;
+import java.util.Vector;
+
+import javax.swing.JTree;
+import javax.swing.tree.DefaultTreeCellRenderer;
+import javax.swing.tree.TreeCellRenderer;
+
+import org.htmlparser.Attribute;
+import org.htmlparser.Node;
+import org.htmlparser.lexer.Cursor;
+import org.htmlparser.nodes.TagNode;
+import org.htmlparser.nodes.TextNode;
+import org.htmlparser.util.ParserException;
+import org.htmlparser.util.Translate;
+
+/**
+ * Renderer for tree view of a NodeList.
+ */
+public class HtmlTreeCellRenderer
+    extends
+        DefaultTreeCellRenderer
+    implements
+        TreeCellRenderer
+{
+    /**
+     * Create a new tree cell renderer for Nodes.
+     */
+<span class="nc" id="L55">    public HtmlTreeCellRenderer ()</span>
+    {
+<span class="nc" id="L57">        setLeafIcon (null);</span>
+<span class="nc" id="L58">        setClosedIcon (null);</span>
+<span class="nc" id="L59">        setOpenIcon (null);</span>
+<span class="nc" id="L60">    }</span>
+
+    /**
+     * Render the tag as HTML.
+     * This is different from the tag's normal toHtml() method in that it
+     * doesn't process children or end tags, just the initial tag, and
+     * it also wraps the tag in html a label would expect.
+     * @see org.htmlparser.Node#toHtml()
+     * @param tag The tag to convert to HTML.
+     * @return A string suitable for rendering the tag.
+     */
+    public String toHtml (TagNode tag)
+    {
+        int length;
+        int size;
+        Vector attributes;
+        Attribute attribute;
+        String s;
+        boolean children;
+        StringBuffer ret;
+
+<span class="nc" id="L81">        length = 2;</span>
+<span class="nc" id="L82">        attributes = tag.getAttributesEx ();</span>
+<span class="nc" id="L83">        size = attributes.size ();</span>
+<span class="nc bnc" id="L84" title="All 2 branches missed.">        for (int i = 0; i &lt; size; i++)</span>
+        {
+<span class="nc" id="L86">            attribute = (Attribute)attributes.elementAt (i);</span>
+<span class="nc" id="L87">            length += attribute.getLength ();</span>
+        }
+<span class="nc" id="L89">        ret = new StringBuffer (length);</span>
+<span class="nc" id="L90">        ret.append (&quot;&lt;&quot;);</span>
+<span class="nc bnc" id="L91" title="All 2 branches missed.">        for (int i = 0; i &lt; size; i++)</span>
+        {
+<span class="nc" id="L93">            attribute = (Attribute)attributes.elementAt (i);</span>
+<span class="nc" id="L94">            attribute.toString (ret);</span>
+        }
+<span class="nc" id="L96">        ret.append (&quot;&gt;&quot;);</span>
+<span class="nc" id="L97">        s = Translate.encode (ret.toString ());</span>
+<span class="nc bnc" id="L98" title="All 2 branches missed.">        children = null != tag.getChildren ();</span>
+<span class="nc bnc" id="L99" title="All 2 branches missed.">        ret = new StringBuffer (s.length () + 13 + (children ? 16 : 0));</span>
+<span class="nc" id="L100">        ret.append (&quot;&lt;html&gt;&quot;);</span>
+<span class="nc bnc" id="L101" title="All 2 branches missed.">        if (children)</span>
+<span class="nc" id="L102">            ret.append (&quot;&lt;font color=\&quot;blue\&quot;&gt;&quot;);</span>
+<span class="nc" id="L103">        ret.append (s);</span>
+<span class="nc bnc" id="L104" title="All 2 branches missed.">        if (children)</span>
+<span class="nc" id="L105">            ret.append (&quot;&lt;/font&gt;&quot;);</span>
+<span class="nc" id="L106">        ret.append (&quot;&lt;/html&gt;&quot;);</span>
+
+<span class="nc" id="L108">        return (ret.toString ());</span>
+    }
+    
+    /**
+     * Express this string node as a printable string
+     * This is suitable for display in a debugger or output to a printout.
+     * Control characters are replaced by their equivalent escape
+     * sequence and contents is truncated to 80 characters.
+     * @param node The node to render.
+     * @return A string representation of the string node.
+     */
+    public String toText (TextNode node)
+    {
+        int startpos;
+        int endpos;
+        String s;
+        char c;
+        StringBuffer ret;
+
+<span class="nc" id="L127">        startpos = node.getStartPosition ();</span>
+<span class="nc" id="L128">        endpos = node.getEndPosition ();</span>
+<span class="nc" id="L129">        ret = new StringBuffer (endpos - startpos + 20);</span>
+<span class="nc" id="L130">        s = node.toHtml ();</span>
+<span class="nc bnc" id="L131" title="All 2 branches missed.">        for (int i = 0; i &lt; s.length (); i++)</span>
+        {
+<span class="nc" id="L133">            c = s.charAt (i);</span>
+<span class="nc bnc" id="L134" title="All 4 branches missed.">            switch (c)</span>
+            {
+                case '\t':
+<span class="nc" id="L137">                    ret.append (&quot;\\t&quot;);</span>
+<span class="nc" id="L138">                    break;</span>
+                case '\n':
+<span class="nc" id="L140">                    ret.append (&quot;\\n&quot;);</span>
+<span class="nc" id="L141">                    break;</span>
+                case '\r':
+<span class="nc" id="L143">                    ret.append (&quot;\\r&quot;);</span>
+<span class="nc" id="L144">                    break;</span>
+                default:
+<span class="nc" id="L146">                    ret.append (c);</span>
+            }
+<span class="nc bnc" id="L148" title="All 2 branches missed.">            if (77 &lt;= ret.length ())</span>
+            {
+<span class="nc" id="L150">                ret.append (&quot;...&quot;);</span>
+<span class="nc" id="L151">                break;</span>
+            }
+        }
+
+<span class="nc" id="L155">        return (ret.toString ());</span>
+    }
+
+    /**
+     * Render the node for the tree cell.
+     * @see TreeCellRenderer#getTreeCellRendererComponent(JTree, Object, boolean, boolean, boolean, int, boolean)
+     * @param tree {@inheritDoc}
+     * @param value {@inheritDoc}
+     * @param selected {@inheritDoc}
+     * @param expanded {@inheritDoc}
+     * @param leaf {@inheritDoc}
+     * @param row {@inheritDoc}
+     * @param hasFocus {@inheritDoc}
+     * @return {@inheritDoc}
+     */
+    public Component getTreeCellRendererComponent (JTree tree, Object value,
+            boolean selected, boolean expanded, boolean leaf, int row,
+            boolean hasFocus)
+    {
+        Node node;
+
+<span class="nc" id="L176">        super.getTreeCellRendererComponent (tree, value, selected, expanded, leaf, row, hasFocus);</span>
+<span class="nc" id="L177">        node = (Node)value;</span>
+<span class="nc bnc" id="L178" title="All 2 branches missed.">        if (node instanceof TagNode)</span>
+<span class="nc" id="L179">            setText (toHtml ((TagNode)node));</span>
+<span class="nc bnc" id="L180" title="All 2 branches missed.">        else if (node instanceof TextNode)</span>
+<span class="nc" id="L181">            setText (toText ((TextNode)node));</span>
+        else
+<span class="nc" id="L183">            setText (node.toHtml ());</span>
+
+<span class="nc" id="L185">        return (this);</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

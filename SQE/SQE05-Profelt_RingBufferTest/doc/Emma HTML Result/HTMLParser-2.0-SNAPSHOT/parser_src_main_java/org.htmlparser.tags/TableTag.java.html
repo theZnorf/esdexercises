@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>TableTag.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tags</a> &gt; <span class="el_source">TableTag.java</span></div><h1>TableTag.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Somik Raha
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/main/java/org/htmlparser/tags/TableTag.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tags;
+
+import org.htmlparser.NodeFilter;
+import org.htmlparser.filters.AndFilter;
+import org.htmlparser.filters.IsEqualFilter;
+import org.htmlparser.filters.NodeClassFilter;
+import org.htmlparser.filters.HasParentFilter;
+import org.htmlparser.filters.NotFilter;
+import org.htmlparser.filters.OrFilter;
+import org.htmlparser.util.NodeList;
+
+/**
+ * A table tag.
+ */
+public class TableTag extends CompositeTag
+{
+    /**
+     * The set of names handled by this tag.
+     */
+<span class="fc" id="L45">    private static final String[] mIds = new String[] {&quot;TABLE&quot;};</span>
+
+    /**
+     * The set of end tag names that indicate the end of this tag.
+     */
+<span class="fc" id="L50">    private static final String[] mEndTagEnders = new String[] {&quot;BODY&quot;, &quot;HTML&quot;};</span>
+
+    /**
+     * Create a new table tag.
+     */
+<span class="fc" id="L55">    public TableTag ()</span>
+    {
+<span class="fc" id="L57">    }</span>
+
+    /**
+     * Return the set of names handled by this tag.
+     * @return The names to be matched that create tags of this type.
+     */
+    public String[] getIds ()
+    {
+<span class="fc" id="L65">        return (mIds);</span>
+    }
+
+    /**
+     * Return the set of end tag names that cause this tag to finish.
+     * @return The names of following end tags that stop further scanning.
+     */
+    public String[] getEndTagEnders ()
+    {
+<span class="fc" id="L74">        return (mEndTagEnders);</span>
+    }
+
+    /**
+     * Get the row tags within this table.
+     * @return The rows directly contained by this table.
+     */
+    public TableRow[] getRows ()
+    {
+        NodeList kids;
+        NodeClassFilter cls;
+        HasParentFilter recursion;
+        NodeFilter filter;
+        TableRow[] ret;
+
+<span class="fc" id="L89">        kids = getChildren ();</span>
+<span class="pc bpc" id="L90" title="1 of 2 branches missed.">        if (null != kids)</span>
+        {
+<span class="fc" id="L92">            cls = new NodeClassFilter (TableTag.class);</span>
+<span class="fc" id="L93">            recursion = new HasParentFilter (null);</span>
+<span class="fc" id="L94">            filter = new OrFilter (</span>
+<span class="fc" id="L95">                        new AndFilter (</span>
+<span class="fc" id="L96">                            cls, </span>
+<span class="fc" id="L97">                            new IsEqualFilter (this)),</span>
+<span class="fc" id="L98">                        new AndFilter ( // recurse up the parent chain</span>
+<span class="fc" id="L99">                            new NotFilter (cls), // but not past the first table</span>
+<span class="fc" id="L100">                            recursion));</span>
+<span class="fc" id="L101">            recursion.setParentFilter (filter);</span>
+<span class="fc" id="L102">            kids = kids.extractAllNodesThatMatch (</span>
+                // it's a row, and has this table as it's enclosing table
+<span class="fc" id="L104">                new AndFilter (</span>
+<span class="fc" id="L105">                    new NodeClassFilter (TableRow.class),</span>
+<span class="fc" id="L106">                    filter), true);</span>
+<span class="fc" id="L107">            ret = new TableRow[kids.size ()];</span>
+<span class="fc" id="L108">            kids.copyToNodeArray (ret);</span>
+<span class="fc" id="L109">        }</span>
+        else
+<span class="nc" id="L111">            ret = new TableRow[0];</span>
+        
+<span class="fc" id="L113">        return (ret);</span>
+    }
+
+    /**
+     * Get the number of rows in this table.
+     * @return The number of rows in this table.
+     * &lt;em&gt;Note: this is a a simple count of the number of {@.html &lt;TR&gt;} tags and
+     * may be incorrect if the {@.html &lt;TR&gt;} tags span multiple rows.&lt;/em&gt;
+     */
+    public int getRowCount ()
+    {
+<span class="fc" id="L124">        return (getRows ().length);</span>
+    }
+
+    /**
+     * Get the row at the given index.
+     * @param index The row number (zero based) to get. 
+     * @return The row for the given index.
+     */
+    public TableRow getRow (int index)
+    {
+        TableRow[] rows;
+        TableRow ret;
+
+<span class="fc" id="L137">        rows = getRows ();</span>
+<span class="pc bpc" id="L138" title="1 of 2 branches missed.">        if (index &lt; rows.length)</span>
+<span class="fc" id="L139">            ret = rows[index];</span>
+        else
+<span class="nc" id="L141">            ret = null;</span>
+        
+<span class="fc" id="L143">        return (ret);</span>
+    }
+
+    /**
+     * Return a string suitable for debugging display.
+     * @return The table as HTML, sorry.
+     */
+    public String toString()
+    {
+<span class="nc" id="L152">        return</span>
+<span class="nc" id="L153">            &quot;TableTag\n&quot; +</span>
+            &quot;********\n&quot;+
+<span class="nc" id="L155">            toHtml();</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

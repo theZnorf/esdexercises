@@ -1,0 +1,430 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>TagTests.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tests.lexerTests</a> &gt; <span class="el_source">TagTests.java</span></div><h1>TagTests.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/test/java/org/htmlparser/tests/lexerTests/TagTests.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 13:37:00 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 5 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tests.lexerTests;
+
+import org.htmlparser.Node;
+import org.htmlparser.Parser;
+import org.htmlparser.PrototypicalNodeFactory;
+import org.htmlparser.Tag;
+import org.htmlparser.filters.NodeClassFilter;
+import org.htmlparser.tags.LinkTag;
+import org.htmlparser.tags.MetaTag;
+import org.htmlparser.tests.ParserTestCase;
+import org.htmlparser.util.NodeList;
+import org.htmlparser.util.ParserException;
+
+public class TagTests extends ParserTestCase {
+    static
+    {
+<span class="fc" id="L42">        System.setProperty (&quot;org.htmlparser.tests.lexerTests.TagTests&quot;, &quot;TagTests&quot;);</span>
+    }
+
+    private static final String TEST_HTML = &quot;&lt;!DOCTYPE HTML PUBLIC \&quot;-//W3C//DTD HTML 4.0 Transitional//EN\&quot;&gt;&quot; +
+        &quot;&lt;!-- Server: sf-web2 --&gt;\n&quot; +
+        &quot;&lt;html lang=\&quot;en\&quot;&gt;\n&quot; +
+        &quot;  &lt;head&gt;&lt;link rel=\&quot;stylesheet\&quot; type=\&quot;text/css\&quot; href=\&quot;http://sourceforge.net/cssdef.php\&quot;&gt;\n&quot; +
+        &quot;   &lt;meta http-equiv=\&quot;Content-Type\&quot; content=\&quot;text/html; charset=iso-8859-1\&quot;&gt;\n&quot; +
+        &quot;    &lt;TITLE&gt;SourceForge.net: Modify: 711073 - HTMLTagParser not threadsafe as a static variable in Tag&lt;/TITLE&gt;\n&quot; +
+        &quot;   &lt;SCRIPT language=\&quot;JavaScript\&quot; type=\&quot;text/javascript\&quot;&gt;\n&quot; +
+        &quot;   &lt;!--\n&quot; +
+        &quot;   function help_window(helpurl) {\n&quot; +
+        &quot;       HelpWin = window.open( 'http://sourceforge.net' + helpurl,'HelpWindow','scrollbars=yes,resizable=yes,toolbar=no,height=400,width=400');\n&quot; +
+        &quot;   }\n&quot; +
+        &quot;   // --&gt;\n&quot; +
+        &quot;   &lt;/SCRIPT&gt;\n&quot; +
+        &quot;       &lt;link rel=\&quot;SHORTCUT ICON\&quot; href=\&quot;/images/favicon.ico\&quot;&gt;\n&quot; +
+        &quot;&lt;!-- This is temp javascript for the jump button. If we could actually have a jump script on the server side that would be ideal --&gt;\n&quot; +
+        &quot;&lt;script language=\&quot;JavaScript\&quot; type=\&quot;text/javascript\&quot;&gt;\n&quot; +
+        &quot;&lt;!--\n&quot; +
+        &quot;   function jump(targ,selObj,restore){ //v3.0\n&quot; +
+        &quot;   if (selObj.options[selObj.selectedIndex].value)\n&quot; +
+        &quot;       eval(targ+\&quot;.location='\&quot;+selObj.options[selObj.selectedIndex].value+\&quot;'\&quot;);\n&quot; +
+        &quot;   if (restore) selObj.selectedIndex=0;\n&quot; +
+        &quot;   }\n&quot; +
+        &quot;   //--&gt;\n&quot; +
+        &quot;&lt;/script&gt;\n&quot; +
+        &quot;&lt;a href=\&quot;http://normallink.com/sometext.html\&quot;&gt;\n&quot; +
+        &quot;&lt;style type=\&quot;text/css\&quot;&gt;\n&quot; +
+        &quot;&lt;!--\n&quot; +
+        &quot;A:link { text-decoration:none }\n&quot; +
+        &quot;A:visited { text-decoration:none }\n&quot; +
+        &quot;A:active { text-decoration:none }\n&quot; +
+        &quot;A:hover { text-decoration:underline; color:#0066FF; }\n&quot; +
+        &quot;--&gt;\n&quot; +
+        &quot;&lt;/style&gt;\n&quot; +
+        &quot;&lt;/head&gt;\n&quot; +
+<span class="fc" id="L79">        &quot;&lt;body bgcolor=\&quot;#FFFFFF\&quot; text=\&quot;#000000\&quot; leftmargin=\&quot;0\&quot; topmargin=\&quot;0\&quot; marginwidth=\&quot;0\&quot; marginheight=\&quot;0\&quot; link=\&quot;#003399\&quot; vlink=\&quot;#003399\&quot; alink=\&quot;#003399\&quot;&gt;\n&quot;;</span>
+    private int testProgress;
+
+    public TagTests (String name) {
+<span class="fc" id="L83">        super(name);</span>
+<span class="fc" id="L84">    }</span>
+
+    public void testTagWithQuotes() throws Exception {
+<span class="fc" id="L87">        String testHtml =</span>
+<span class="fc" id="L88">        &quot;&lt;img src=\&quot;http://g-images.amazon.com/images/G/01/merchants/logos/marshall-fields-logo-20.gif\&quot; width=87 height=20 border=0 alt=\&quot;Marshall Field's\&quot;&gt;&quot;;</span>
+
+<span class="fc" id="L90">        createParser(testHtml);</span>
+<span class="fc" id="L91">        parser.setNodeFactory (new PrototypicalNodeFactory (true));</span>
+<span class="fc" id="L92">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L93">        assertType(&quot;should be Tag&quot;,Tag.class,node[0]);</span>
+<span class="fc" id="L94">        Tag tag = (Tag)node[0];</span>
+<span class="fc" id="L95">        assertStringEquals(&quot;alt&quot;,&quot;Marshall Field's&quot;,tag.getAttribute(&quot;ALT&quot;));</span>
+<span class="fc" id="L96">        assertStringEquals(</span>
+<span class="fc" id="L97">            &quot;html&quot;,</span>
+<span class="fc" id="L98">            testHtml,</span>
+<span class="fc" id="L99">            tag.toHtml()</span>
+        );
+<span class="fc" id="L101">    }</span>
+
+    public void testEmptyTag() throws Exception 
+    {
+<span class="fc" id="L105">        String html = &quot;&lt;custom/&gt;&quot;;</span>
+<span class="fc" id="L106">        createParser(html);</span>
+<span class="fc" id="L107">        parser.setNodeFactory (new PrototypicalNodeFactory (true));</span>
+<span class="fc" id="L108">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L109">        assertType(&quot;should be Tag&quot;,Tag.class,node[0]);</span>
+<span class="fc" id="L110">        Tag tag = (Tag)node[0];</span>
+<span class="fc" id="L111">        assertStringEquals(&quot;tag name&quot;,&quot;CUSTOM&quot;,tag.getTagName());</span>
+<span class="fc" id="L112">        assertTrue(&quot;empty tag&quot;,tag.isEmptyXmlTag());</span>
+<span class="fc" id="L113">        assertStringEquals(</span>
+<span class="fc" id="L114">            &quot;html&quot;,</span>
+<span class="fc" id="L115">            html,</span>
+<span class="fc" id="L116">            tag.toHtml()</span>
+        );
+<span class="fc" id="L118">    }</span>
+
+    public void testTagWithCloseTagSymbolInAttribute() throws ParserException {
+<span class="fc" id="L121">        createParser(&quot;&lt;tag att=\&quot;a&gt;b\&quot;&gt;&quot;);</span>
+<span class="fc" id="L122">        parser.setNodeFactory (new PrototypicalNodeFactory (true));</span>
+<span class="fc" id="L123">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L124">        assertType(&quot;should be Tag&quot;,Tag.class,node[0]);</span>
+<span class="fc" id="L125">        Tag tag = (Tag)node[0];</span>
+<span class="fc" id="L126">        assertStringEquals(&quot;attribute&quot;,&quot;a&gt;b&quot;,tag.getAttribute(&quot;att&quot;));</span>
+<span class="fc" id="L127">    }</span>
+
+    public void testTagWithOpenTagSymbolInAttribute() throws ParserException {
+<span class="fc" id="L130">        createParser(&quot;&lt;tag att=\&quot;a&lt;b\&quot;&gt;&quot;);</span>
+<span class="fc" id="L131">        parser.setNodeFactory (new PrototypicalNodeFactory (true));</span>
+<span class="fc" id="L132">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L133">        assertType(&quot;should be Tag&quot;,Tag.class,node[0]);</span>
+<span class="fc" id="L134">        Tag tag = (Tag)node[0];</span>
+<span class="fc" id="L135">        assertStringEquals(&quot;attribute&quot;,&quot;a&lt;b&quot;,tag.getAttribute(&quot;att&quot;));</span>
+<span class="fc" id="L136">    }</span>
+
+    public void testTagWithSingleQuote() throws ParserException {
+<span class="fc" id="L139">        String html = &quot;&lt;tag att=\'a&lt;b\'&gt;&quot;;</span>
+<span class="fc" id="L140">        createParser(html);</span>
+<span class="fc" id="L141">        parser.setNodeFactory (new PrototypicalNodeFactory (true));</span>
+<span class="fc" id="L142">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L143">        assertType(&quot;should be Tag&quot;,Tag.class,node[0]);</span>
+<span class="fc" id="L144">        Tag tag = (Tag)node[0];</span>
+<span class="fc" id="L145">        assertStringEquals(&quot;html&quot;,html,tag.toHtml());</span>
+<span class="fc" id="L146">        assertStringEquals(&quot;attribute&quot;,&quot;a&lt;b&quot;,tag.getAttribute(&quot;att&quot;));</span>
+<span class="fc" id="L147">    }</span>
+
+    /**
+     * The following multi line test cases are from
+     * bug #725749 Parser does not handle &lt; and &gt; in multi-line attributes
+     * submitted by Joe Robins (zorblak)
+     */
+    public void testMultiLine1 () throws ParserException
+    {
+<span class="fc" id="L156">        String html = &quot;&lt;meta name=\&quot;foo\&quot; content=\&quot;foo&lt;bar&gt;\&quot;&gt;&quot;;</span>
+<span class="fc" id="L157">        createParser(html);</span>
+<span class="fc" id="L158">        parseAndAssertNodeCount (1);</span>
+<span class="fc" id="L159">        assertType (&quot;should be MetaTag&quot;, MetaTag.class, node[0]);</span>
+<span class="fc" id="L160">        Tag tag = (Tag)node[0];</span>
+<span class="fc" id="L161">        assertStringEquals (&quot;html&quot;,html, tag.toHtml ());</span>
+<span class="fc" id="L162">        String attribute1 = tag.getAttribute (&quot;NAME&quot;);</span>
+<span class="fc" id="L163">        assertStringEquals (&quot;attribute 1&quot;,&quot;foo&quot;, attribute1);</span>
+<span class="fc" id="L164">        String attribute2 = tag.getAttribute (&quot;CONTENT&quot;);</span>
+<span class="fc" id="L165">        assertStringEquals (&quot;attribute 2&quot;,&quot;foo&lt;bar&gt;&quot;, attribute2);</span>
+<span class="fc" id="L166">    }</span>
+
+    public void testMultiLine2 () throws ParserException
+    {
+<span class="fc" id="L170">        String html = &quot;&lt;meta name=\&quot;foo\&quot; content=\&quot;foo&lt;bar\&quot;&gt;&quot;;</span>
+<span class="fc" id="L171">        createParser(html);</span>
+<span class="fc" id="L172">        parseAndAssertNodeCount (1);</span>
+<span class="fc" id="L173">        assertType (&quot;should be MetaTag&quot;, MetaTag.class, node[0]);</span>
+<span class="fc" id="L174">        Tag tag = (Tag)node[0];</span>
+<span class="fc" id="L175">        assertStringEquals (&quot;html&quot;,html, tag.toHtml ());</span>
+<span class="fc" id="L176">        String attribute1 = tag.getAttribute (&quot;NAME&quot;);</span>
+<span class="fc" id="L177">        assertStringEquals (&quot;attribute 1&quot;,&quot;foo&quot;, attribute1);</span>
+<span class="fc" id="L178">        String attribute2 = tag.getAttribute (&quot;CONTENT&quot;);</span>
+<span class="fc" id="L179">        assertStringEquals (&quot;attribute 2&quot;,&quot;foo&lt;bar&quot;, attribute2);</span>
+<span class="fc" id="L180">    }</span>
+
+    public void testMultiLine3 () throws ParserException
+    {
+<span class="fc" id="L184">        String html = &quot;&lt;meta name=\&quot;foo\&quot; content=\&quot;foobar&gt;\&quot;&gt;&quot;;</span>
+<span class="fc" id="L185">        createParser(html);</span>
+<span class="fc" id="L186">        parseAndAssertNodeCount (1);</span>
+<span class="fc" id="L187">        assertType (&quot;should be MetaTag&quot;, MetaTag.class, node[0]);</span>
+<span class="fc" id="L188">        Tag tag = (Tag)node[0];</span>
+<span class="fc" id="L189">        assertStringEquals (&quot;html&quot;,html, tag.toHtml ());</span>
+<span class="fc" id="L190">        String attribute1 = tag.getAttribute (&quot;NAME&quot;);</span>
+<span class="fc" id="L191">        assertStringEquals (&quot;attribute 1&quot;,&quot;foo&quot;, attribute1);</span>
+<span class="fc" id="L192">        String attribute2 = tag.getAttribute (&quot;CONTENT&quot;);</span>
+<span class="fc" id="L193">        assertStringEquals (&quot;attribute 2&quot;,&quot;foobar&gt;&quot;, attribute2);</span>
+<span class="fc" id="L194">    }</span>
+
+    public void testMultiLine4 () throws ParserException
+    {
+<span class="fc" id="L198">        String html = &quot;&lt;meta name=\&quot;foo\&quot; content=\&quot;foo\nbar&gt;\&quot;&gt;&quot;;</span>
+<span class="fc" id="L199">        createParser(html);</span>
+<span class="fc" id="L200">        parseAndAssertNodeCount (1);</span>
+<span class="fc" id="L201">        assertType (&quot;should be MetaTag&quot;, MetaTag.class, node[0]);</span>
+<span class="fc" id="L202">        Tag tag = (Tag)node[0];</span>
+<span class="fc" id="L203">        assertStringEquals (&quot;html&quot;,html, tag.toHtml ());</span>
+<span class="fc" id="L204">        String attribute1 = tag.getAttribute (&quot;NAME&quot;);</span>
+<span class="fc" id="L205">        assertStringEquals (&quot;attribute 1&quot;,&quot;foo&quot;, attribute1);</span>
+<span class="fc" id="L206">        String attribute2 = tag.getAttribute (&quot;CONTENT&quot;);</span>
+<span class="fc" id="L207">        assertStringEquals (&quot;attribute 2&quot;,&quot;foo\nbar&gt;&quot;, attribute2);</span>
+<span class="fc" id="L208">    }</span>
+
+    /**
+     * Test multiline tag like attribute.
+     * See feature request #725749 Handle &lt; and &gt; in multi-line attributes.
+     */
+    public void testMultiLine5 () throws ParserException
+    {
+        // &lt;meta name=&quot;foo&quot; content=&quot;&lt;foo&gt;
+        // bar&quot;&gt;
+<span class="fc" id="L218">        String html = &quot;&lt;meta name=\&quot;foo\&quot; content=\&quot;&lt;foo&gt;\nbar\&quot;&gt;&quot;;</span>
+<span class="fc" id="L219">        createParser(html);</span>
+<span class="fc" id="L220">        parseAndAssertNodeCount (1);</span>
+<span class="fc" id="L221">        assertType (&quot;should be MetaTag&quot;, MetaTag.class, node[0]);</span>
+<span class="fc" id="L222">        Tag tag = (Tag)node[0];</span>
+<span class="fc" id="L223">        assertStringEquals (&quot;html&quot;,html, tag.toHtml ());</span>
+<span class="fc" id="L224">        String attribute1 = tag.getAttribute (&quot;NAME&quot;);</span>
+<span class="fc" id="L225">        assertStringEquals (&quot;attribute 1&quot;,&quot;foo&quot;, attribute1);</span>
+<span class="fc" id="L226">        String attribute2 = tag.getAttribute (&quot;CONTENT&quot;);</span>
+<span class="fc" id="L227">        assertStringEquals (&quot;attribute 2&quot;,&quot;&lt;foo&gt;\nbar&quot;, attribute2);</span>
+<span class="fc" id="L228">    }</span>
+
+    /**
+     * Test multiline broken tag like attribute.
+     * See feature request #725749 Handle &lt; and &gt; in multi-line attributes.
+     */
+    public void testMultiLine6 () throws ParserException
+    {
+        // &lt;meta name=&quot;foo&quot; content=&quot;foo&gt;
+        // bar&quot;&gt;
+<span class="fc" id="L238">        String html = &quot;&lt;meta name=\&quot;foo\&quot; content=\&quot;foo&gt;\nbar\&quot;&gt;&quot;;</span>
+<span class="fc" id="L239">        createParser(html);</span>
+<span class="fc" id="L240">        parseAndAssertNodeCount (1);</span>
+<span class="fc" id="L241">        assertType (&quot;should be MetaTag&quot;, MetaTag.class, node[0]);</span>
+<span class="fc" id="L242">        Tag tag = (Tag)node[0];</span>
+<span class="fc" id="L243">        assertStringEquals (&quot;html&quot;,html, tag.toHtml ());</span>
+<span class="fc" id="L244">        String attribute1 = tag.getAttribute (&quot;NAME&quot;);</span>
+<span class="fc" id="L245">        assertStringEquals (&quot;attribute 1&quot;,&quot;foo&quot;, attribute1);</span>
+<span class="fc" id="L246">        String attribute2 = tag.getAttribute (&quot;CONTENT&quot;);</span>
+<span class="fc" id="L247">        assertStringEquals (&quot;attribute 2&quot;,&quot;foo&gt;\nbar&quot;, attribute2);</span>
+<span class="fc" id="L248">    }</span>
+
+    /**
+     * Test multiline split tag like attribute.
+     * See feature request #725749 Handle &lt; and &gt; in multi-line attributes.
+     */
+    public void testMultiLine7 () throws ParserException
+    {
+        // &lt;meta name=&quot;foo&quot; content=&quot;&lt;foo
+        // bar&quot;&gt;
+<span class="fc" id="L258">        String html = &quot;&lt;meta name=\&quot;foo\&quot; content=\&quot;&lt;foo\nbar\&quot;&quot;;</span>
+<span class="fc" id="L259">        createParser(html);</span>
+<span class="fc" id="L260">        parseAndAssertNodeCount (1);</span>
+<span class="fc" id="L261">        assertType (&quot;should be MetaTag&quot;, MetaTag.class, node[0]);</span>
+<span class="fc" id="L262">        Tag tag = (Tag)node[0];</span>
+<span class="fc" id="L263">        assertStringEquals (&quot;html&quot;,html + &quot;&gt;&quot;, tag.toHtml ());</span>
+<span class="fc" id="L264">        String attribute1 = tag.getAttribute (&quot;NAME&quot;);</span>
+<span class="fc" id="L265">        assertStringEquals (&quot;attribute 1&quot;,&quot;foo&quot;, attribute1);</span>
+<span class="fc" id="L266">        String attribute2 = tag.getAttribute (&quot;CONTENT&quot;);</span>
+<span class="fc" id="L267">        assertStringEquals (&quot;attribute 2&quot;,&quot;&lt;foo\nbar&quot;, attribute2);</span>
+<span class="fc" id="L268">    }</span>
+
+    /**
+     * End of multi line test cases.
+     */
+
+    /**
+     * Test multiple threads running against the parser.
+     * See feature request #736144 Handle multi-threaded operation.
+     */
+    /*public void testThreadSafety() throws Exception
+    {
+        createParser(&quot;&lt;html&gt;&lt;/html&gt;&quot;);
+        parser.setNodeFactory (new PrototypicalNodeFactory (true));
+        String testHtml1 = &quot;&lt;a HREF=\&quot;/cgi-bin/view_search?query_text=postdate&gt;20020701&amp;txt_clr=White&amp;bg_clr=Red&amp;url=http://localhost/Testing/Report1.html\&quot;&gt;20020702 Report 1&lt;/A&gt;&quot; +
+                            TEST_HTML;
+
+        String testHtml2 = &quot;&lt;a href=\&quot;http://normallink.com/sometext.html\&quot;&gt;&quot; +
+                            TEST_HTML;
+        ParsingThread parsingThread [] =
+            new ParsingThread[100];
+        testProgress = 0;
+        for (int i=0;i&lt;parsingThread.length;i++) {
+            if (i&lt;parsingThread.length/2)
+                parsingThread[i] =
+                    new ParsingThread(i,testHtml1,parsingThread.length);
+                else
+                    parsingThread[i] =
+                        new ParsingThread(i,testHtml2,parsingThread.length);
+
+            Thread thread = new Thread(parsingThread[i]);
+            thread.start();
+        }
+
+        int completionValue = computeCompletionValue(parsingThread.length);
+
+        do {
+            try {
+                Thread.sleep(500);
+            }
+            catch (InterruptedException e) {
+            }
+        }
+        while (testProgress!=completionValue);
+        for (int i=0;i&lt;parsingThread.length;i++)
+        {
+            if (!parsingThread[i].passed())
+            {
+                assertNotNull(&quot;Thread &quot;+i+&quot; link 1&quot;,parsingThread[i].getLink1());
+                assertNotNull(&quot;Thread &quot;+i+&quot; link 2&quot;,parsingThread[i].getLink2());
+                if (i&lt;parsingThread.length/2) {
+                    assertStringEquals(
+                        &quot;Thread &quot;+i+&quot;, link 1:&quot;,
+                        &quot;/cgi-bin/view_search?query_text=postdate&gt;20020701&amp;txt_clr=White&amp;bg_clr=Red&amp;url=http://localhost/Testing/Report1.html&quot;,
+                        parsingThread[i].getLink1().getLink()
+                    );
+                    assertStringEquals(
+                        &quot;Thread &quot;+i+&quot;, link 2:&quot;,
+                        &quot;http://normallink.com/sometext.html&quot;,
+                        parsingThread[i].getLink2().getLink()
+                    );
+                } else {
+                    assertStringEquals(
+                        &quot;Thread &quot;+i+&quot;, link 1:&quot;,
+                        &quot;http://normallink.com/sometext.html&quot;,
+                        parsingThread[i].getLink1().getLink()
+                    );
+                    assertNotNull(&quot;Thread &quot;+i+&quot; link 2&quot;,parsingThread[i].getLink2());
+                    assertStringEquals(
+                        &quot;Thread &quot;+i+&quot;, link 2:&quot;,
+                        &quot;/cgi-bin/view_search?query_text=postdate&gt;20020701&amp;txt_clr=White&amp;bg_clr=Red&amp;url=http://localhost/Testing/Report1.html&quot;,
+                        parsingThread[i].getLink2().getLink()
+                    );
+                }
+            }
+        }
+    }
+
+    private int computeCompletionValue(int numThreads) {
+        return numThreads * (numThreads - 1) / 2;
+    }*/
+
+    class ParsingThread implements Runnable {
+        Parser mParser;
+        int mId;
+        LinkTag mLink1;
+        LinkTag mLink2;
+        boolean mResult;
+        int mMax;
+
+<span class="nc" id="L358">        ParsingThread(int id, String testHtml, int max) {</span>
+<span class="nc" id="L359">            mId = id;</span>
+<span class="nc" id="L360">            mMax = max;</span>
+<span class="nc" id="L361">            mParser = Parser.createParser(testHtml, null);</span>
+<span class="nc" id="L362">        }</span>
+
+        public void run() {
+            try {
+<span class="nc" id="L366">                mResult = false;</span>
+<span class="nc" id="L367">                NodeList linkTag = mParser.extractAllNodesThatMatch (new NodeClassFilter (LinkTag.class));</span>
+<span class="nc" id="L368">                mLink1 = (LinkTag)linkTag.elementAt (0);</span>
+<span class="nc" id="L369">                mLink2 = (LinkTag)linkTag.elementAt (1);</span>
+<span class="nc bnc" id="L370" title="All 2 branches missed.">                if (mId &lt; mMax / 2) {</span>
+<span class="nc bnc" id="L371" title="All 2 branches missed.">                    if (mLink1.getLink().equals(&quot;/cgi-bin/view_search?query_text=postdate&gt;20020701&amp;txt_clr=White&amp;bg_clr=Red&amp;url=http://localhost/Testing/Report1.html&quot;) &amp;&amp;</span>
+<span class="nc bnc" id="L372" title="All 2 branches missed.">                        mLink2.getLink().equals(&quot;http://normallink.com/sometext.html&quot;))</span>
+<span class="nc" id="L373">                        mResult = true;</span>
+<span class="nc" id="L374">                } else {</span>
+<span class="nc bnc" id="L375" title="All 2 branches missed.">                    if (mLink1.getLink().equals(&quot;http://normallink.com/sometext.html&quot;) &amp;&amp;</span>
+<span class="nc bnc" id="L376" title="All 2 branches missed.">                        mLink2.getLink().equals(&quot;http://normallink.com/sometext.html&quot;))</span>
+<span class="nc" id="L377">                        mResult = true;</span>
+                }
+<span class="nc" id="L379">            }</span>
+<span class="nc" id="L380">            catch (ParserException e) {</span>
+<span class="nc" id="L381">                System.err.println(&quot;Parser Exception&quot;);</span>
+<span class="nc" id="L382">                e.printStackTrace();</span>
+            }
+<span class="nc" id="L384">            finally {</span>
+<span class="nc" id="L385">                testProgress += mId;</span>
+<span class="nc" id="L386">            }</span>
+<span class="nc" id="L387">        }</span>
+
+        public LinkTag getLink1() {
+<span class="nc" id="L390">            return (mLink1);</span>
+        }
+
+        public LinkTag getLink2() {
+<span class="nc" id="L394">            return (mLink2);</span>
+        }
+
+        public boolean passed() {
+<span class="nc" id="L398">            return (mResult);</span>
+        }
+    }
+
+    /**
+     * Test the toHTML method for a standalone attribute.
+     */
+    public void testStandAloneToHTML () throws ParserException
+    {
+<span class="fc" id="L407">        String html = &quot;&lt;input disabled&gt;&quot;;</span>
+<span class="fc" id="L408">        createParser(html);</span>
+<span class="fc" id="L409">        parser.setNodeFactory (new PrototypicalNodeFactory (true));</span>
+<span class="fc" id="L410">        parseAndAssertNodeCount (1);</span>
+<span class="fc" id="L411">        assertType (&quot;should be Tag&quot;, Tag.class, node[0]);</span>
+<span class="fc" id="L412">        Tag tag = (Tag)node[0];</span>
+<span class="fc" id="L413">        assertStringEquals (&quot;html&quot;, html, tag.toHtml ());</span>
+<span class="fc" id="L414">    }</span>
+
+    /**
+     * Test the toHTML method for a missing value attribute.
+     */
+    public void testMissingValueToHTML () throws ParserException
+    {
+<span class="fc" id="L421">        String html = &quot;&lt;input disabled=&gt;&quot;;</span>
+<span class="fc" id="L422">        createParser(html);</span>
+<span class="fc" id="L423">        parser.setNodeFactory (new PrototypicalNodeFactory (true));</span>
+<span class="fc" id="L424">        parseAndAssertNodeCount (1);</span>
+<span class="fc" id="L425">        assertType (&quot;should be Tag&quot;, Tag.class, node[0]);</span>
+<span class="fc" id="L426">        Tag tag = (Tag)node[0];</span>
+<span class="fc" id="L427">        assertStringEquals (&quot;html&quot;, html, tag.toHtml ());</span>
+<span class="fc" id="L428">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

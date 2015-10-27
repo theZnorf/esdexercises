@@ -1,0 +1,419 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>NodeTreeWalker.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.util</a> &gt; <span class="el_source">NodeTreeWalker.java</span></div><h1>NodeTreeWalker.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Somik Raha
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/main/java/org/htmlparser/util/NodeTreeWalker.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.util;
+
+import org.htmlparser.Node;
+
+/**
+ * A class for walking a tree of {@link Node} objects, in either a depth-first or breadth-first manner.
+ * The following two diagrams show the represent tree traversal with the two different methods.
+ * &lt;table&gt;
+ *  &lt;tr&gt;
+ *   &lt;th&gt;Depth-first traversal&lt;/th&gt;
+ *   &lt;th&gt;Breadth-first traversal&lt;/th&gt;
+ *  &lt;/tr&gt;
+ *  &lt;tr&gt;
+ *   &lt;img src=&quot;http://htmlparser.sourceforge.net/tree-traversal-depth-first.gif&quot; alt=&quot;Diagram showing depth-first tree traversal&quot; width=&quot;300&quot; height=&quot;300&quot; /&gt;
+ *  &lt;/tr&gt;
+ *  &lt;tr&gt;
+ *   &lt;img src=&quot;http://htmlparser.sourceforge.net/tree-traversal-breadth-first.gif&quot; alt=&quot;Diagram showing breadth-first tree traversal&quot; width=&quot;300&quot; height=&quot;300&quot; /&gt;
+ *  &lt;/tr&gt;
+ * &lt;/table&gt;
+ * @author  ian_macfarlane
+ */
+public class NodeTreeWalker implements NodeIterator
+{
+
+    /**
+     * The root Node element which defines the scope of the current tree to walk.
+     */
+    protected Node mRootNode;
+    
+    /**
+     * The current Node element, which will be a child of the root Node, or null.
+     */
+    protected Node mCurrentNode;
+    
+    /**
+     * The next Node element after the current Node element.
+     * Stored for internal use only.
+     */
+    protected Node mNextNode;
+    
+    /**
+     * The maximum depth (child-parent links) from which this NodeTreeWalker may be removed from the root Node.
+     * A value of -1 indicates that there is no depth restriction.
+     */
+    protected int mMaxDepth;
+    
+    /**
+     * Whether the tree traversal method used is depth-first (default) or breadth-first.
+     */
+    protected boolean mDepthFirst;
+    
+    /**
+     * Creates a new instance of NodeTreeWalker using depth-first tree traversal, without limits on how deep it may traverse.
+     * @param rootNode Node The Node to set as the root of the tree.
+     * @throws NullPointerException if root Node is null.
+     */
+    public NodeTreeWalker(Node rootNode)
+    {
+<span class="nc" id="L84">        this(rootNode, true, -1);</span>
+<span class="nc" id="L85">    }</span>
+    
+    /**
+     * Creates a new instance of NodeTreeWalker using the specified type of tree traversal, without limits on how deep it may traverse.
+     * @param rootNode The Node to set as the root of the tree.
+     * @param depthFirst Whether to use depth-first (true) or breadth-first (false) tree traversal.
+     * @throws NullPointerException if rootNode is null.
+     */
+    public NodeTreeWalker(Node rootNode, boolean depthFirst)
+    {
+<span class="nc" id="L95">        this(rootNode, depthFirst, -1);</span>
+<span class="nc" id="L96">    }</span>
+    
+    /**
+     * Creates a new instance of NodeTreeWalker using the specified type of tree traversal and maximum depth from the root Node to traverse.
+     * @param rootNode The Node to set as the root of the tree.
+     * @param depthFirst Whether to use depth-first (true) or breadth-first (false) tree traversal.
+     * @param maxDepth The maximum depth from the root Node that this NodeTreeWalker may traverse. This must be &gt; 0 or equal to -1.
+     * @throws NullPointerException if rootNode is null.
+     * @throws IllegalArgumentException maxDepth is not &gt; 0 or equal to -1.
+     */
+<span class="nc" id="L106">    public NodeTreeWalker(Node rootNode, boolean depthFirst, int maxDepth)</span>
+    {
+        //check maxDepth is valid
+<span class="nc bnc" id="L109" title="All 4 branches missed.">        if ( ! ((maxDepth &gt;= 1) || (maxDepth == -1)))//if not one of these valid possibilities</span>
+<span class="nc" id="L110">            throw new IllegalArgumentException(&quot;Paramater maxDepth must be &gt; 0 or equal to -1.&quot;);</span>
+<span class="nc" id="L111">        initRootNode(rootNode);//this method also checks if rootNode is valid</span>
+<span class="nc" id="L112">        this.mDepthFirst = depthFirst;</span>
+<span class="nc" id="L113">        this.mMaxDepth = maxDepth;</span>
+<span class="nc" id="L114">    }</span>
+    
+    /**
+     * Whether the NodeTreeWalker is currently set to use depth-first or breadth-first tree traversal.
+     * @return True if depth-first tree-traversal is used, or false if breadth-first tree-traversal is being used.
+     */
+    public boolean isDepthFirst()
+    {
+<span class="nc" id="L122">        return (this.mDepthFirst);</span>
+    }
+    
+    /**
+     * Sets whether the NodeTreeWalker should use depth-first or breadth-first tree traversal.
+     * @param depthFirst Whether to use depth-first (true) or breadth-first (false) tree traversal.
+     */
+    public void setDepthFirst(boolean depthFirst)
+    {
+<span class="nc bnc" id="L131" title="All 2 branches missed.">        if (this.mDepthFirst != depthFirst)//if we are changing search pattern</span>
+<span class="nc" id="L132">            this.mNextNode = null;</span>
+<span class="nc" id="L133">        this.mDepthFirst = depthFirst;</span>
+<span class="nc" id="L134">    }</span>
+    
+    /**
+     * The maximum depth (number of child-parent links) below the root Node that this NodeTreeWalker may traverse.
+     * @return The maximum depth that this NodeTreeWalker can traverse to.
+     */
+    public int getMaxDepth()
+    {
+<span class="nc" id="L142">        return (this.mMaxDepth);</span>
+    }
+    
+    /**
+     * Removes any restrictions in place that prevent this NodeTreeWalker from traversing beyond a certain depth.
+     */
+    public void removeMaxDepthRestriction()
+    {
+<span class="nc" id="L150">        this.mMaxDepth = -1;</span>
+<span class="nc" id="L151">    }</span>
+    
+    /**
+     * Get the root Node that defines the scope of the tree to traverse.
+     * @return The root Node.
+     */
+    public Node getRootNode()
+    {
+<span class="nc" id="L159">        return (this.mRootNode);</span>
+    }
+    
+    /**
+     * Get the Node in the tree that the NodeTreeWalker is current at.
+     * @return The current Node.
+     */
+    public Node getCurrentNode()
+    {
+<span class="nc" id="L168">        return (this.mCurrentNode);</span>
+    }
+    
+    /**
+     * Sets the current Node as the root Node.
+     * Resets the current position in the tree.
+     * @throws NullPointerException if the current Node is null (i.e. if the tree traversal has not yet begun).
+     */
+    public void setCurrentNodeAsRootNode() throws NullPointerException
+    {
+<span class="nc bnc" id="L178" title="All 2 branches missed.">        if (this.mCurrentNode == null)</span>
+<span class="nc" id="L179">            throw new NullPointerException(&quot;Current Node is null, cannot set as root Node.&quot;);</span>
+<span class="nc" id="L180">        initRootNode(this.mCurrentNode);</span>
+<span class="nc" id="L181">    }</span>
+    
+    /**
+     * Sets the specified Node as the root Node.
+     * Resets the current position in the tree.
+     * @param rootNode The Node to set as the root of the tree.
+     * @throws NullPointerException if rootNode is null.
+     */
+    public void setRootNode(Node rootNode) throws NullPointerException
+    {
+<span class="nc" id="L191">        initRootNode(rootNode);</span>
+<span class="nc" id="L192">    }</span>
+    
+    /**
+     * Resets the current position in the tree,
+     * such that calling &lt;code&gt;nextNode()&lt;/code&gt; will return the first Node again.
+     */
+    public void reset()
+    {
+<span class="nc" id="L200">        this.mCurrentNode = null;</span>
+<span class="nc" id="L201">        this.mNextNode = null;</span>
+<span class="nc" id="L202">    }</span>
+    
+    /**
+     * Traverses to the next Node from the current Node, using either depth-first or breadth-first tree traversal as appropriate.
+     * @return The next Node from the current Node.
+     */
+    public Node nextNode()
+    {
+<span class="nc bnc" id="L210" title="All 2 branches missed.">        if (this.mNextNode != null)//check if we've already found the next Node by calling hasMoreNodes()</span>
+        {
+<span class="nc" id="L212">            this.mCurrentNode = this.mNextNode;</span>
+<span class="nc" id="L213">            this.mNextNode = null;//reset mNextNode</span>
+<span class="nc" id="L214">        }</span>
+        else
+        {
+            //Check if we have started traversing yet. If not, start with first child (for either traversal method).
+<span class="nc bnc" id="L218" title="All 2 branches missed.">            if (this.mCurrentNode == null)</span>
+<span class="nc" id="L219">                this.mCurrentNode = this.mRootNode.getFirstChild();</span>
+            else
+            {
+<span class="nc bnc" id="L222" title="All 2 branches missed.">                if (this.mDepthFirst)</span>
+<span class="nc" id="L223">                    this.mCurrentNode = getNextNodeDepthFirst();</span>
+                else
+<span class="nc" id="L225">                    this.mCurrentNode = getNextNodeBreadthFirst();</span>
+            }
+        }
+<span class="nc" id="L228">        return (this.mCurrentNode);</span>
+    }
+    
+    /**
+     * Get the number of places down that the current Node is from the root Node.
+     * Returns 1 if current Node is a child of the root Node.
+     * Returns 0 if this NodeTreeWalker has not yet traversed to any Nodes.
+     * @return The depth the current Node is from the root Node.
+     */
+    public int getCurrentNodeDepth()
+    {
+<span class="nc" id="L239">        int depth = 0;</span>
+<span class="nc bnc" id="L240" title="All 2 branches missed.">        if (this.mCurrentNode != null)//if we are not at the root Node.</span>
+        {
+<span class="nc" id="L242">            Node traverseNode = this.mCurrentNode;</span>
+<span class="nc bnc" id="L243" title="All 2 branches missed.">            while (traverseNode != this.mRootNode)</span>
+            {
+<span class="nc" id="L245">                ++depth;</span>
+<span class="nc" id="L246">                traverseNode = traverseNode.getParent();</span>
+            }
+        }
+<span class="nc" id="L249">        return (depth);</span>
+    }
+    
+    /**
+     * Returns whether or not there are more nodes available based on the current configuration of this NodeTreeWalker.
+     * @return True if there are more Nodes available, based on the current configuration, or false otherwise.
+     */
+    public boolean hasMoreNodes()
+    {
+<span class="nc bnc" id="L258" title="All 2 branches missed.">        if (this.mNextNode == null)//if we've already generated mNextNode</span>
+        {
+<span class="nc bnc" id="L260" title="All 2 branches missed.">            if (this.mCurrentNode == null)</span>
+<span class="nc" id="L261">                this.mNextNode = this.mRootNode.getFirstChild();</span>
+            else
+            {
+<span class="nc bnc" id="L264" title="All 2 branches missed.">                if (this.mDepthFirst)</span>
+<span class="nc" id="L265">                    this.mNextNode = getNextNodeDepthFirst();</span>
+                else
+<span class="nc" id="L267">                    this.mNextNode = getNextNodeBreadthFirst();</span>
+            }
+        }
+<span class="nc bnc" id="L270" title="All 2 branches missed.">        return (this.mNextNode != null);</span>
+    }
+    
+    /**
+     * Sets the root Node to be the given Node.
+     * Resets the current position in the tree.
+     * @param rootNode The Node to set as the root of the tree.
+     * @throws NullPointerException if rootNode is null.
+     */
+    protected void initRootNode(Node rootNode) throws NullPointerException
+    {
+<span class="nc bnc" id="L281" title="All 2 branches missed.">        if (rootNode == null)</span>
+<span class="nc" id="L282">            throw new NullPointerException(&quot;Root Node cannot be null.&quot;);</span>
+<span class="nc" id="L283">        this.mRootNode = rootNode;</span>
+<span class="nc" id="L284">        this.mCurrentNode = null;</span>
+<span class="nc" id="L285">        this.mNextNode = null;</span>
+<span class="nc" id="L286">    }</span>
+    
+    /**
+     * Traverses to the next Node from the current Node using depth-first tree traversal
+     * @return The next Node from the current Node using depth-first tree traversal.
+     */
+    protected Node getNextNodeDepthFirst()
+    {
+        //loosely based on http://www.myarch.com/treeiter/traditways.jhtml
+<span class="nc" id="L295">        int currentDepth = getCurrentNodeDepth();</span>
+<span class="nc" id="L296">        Node traverseNode = null;</span>
+<span class="nc bnc" id="L297" title="All 4 branches missed.">        if ((this.mMaxDepth == -1) || (currentDepth &lt; this.mMaxDepth))//if it is less than max depth, then getting first child won't be more than max depth</span>
+        {
+<span class="nc" id="L299">            traverseNode = this.mCurrentNode.getFirstChild();</span>
+<span class="nc bnc" id="L300" title="All 2 branches missed.">            if (traverseNode != null)</span>
+<span class="nc" id="L301">                return (traverseNode);</span>
+        }
+        
+<span class="nc" id="L304">        traverseNode = this.mCurrentNode;</span>
+        
+<span class="nc" id="L306">        Node tempNextSibling = null;//keeping a reference to this this saves calling getNextSibling once later</span>
+<span class="nc bnc" id="L307" title="All 4 branches missed.">        while ((traverseNode != this.mRootNode) &amp;&amp; (tempNextSibling = traverseNode.getNextSibling()) == null)//CANNOT assign traverseNode as root Node</span>
+<span class="nc" id="L308">            traverseNode = traverseNode.getParent();// use child-parent link to get to the parent level</span>
+        
+<span class="nc" id="L310">        return (tempNextSibling);//null if ran out of Node's</span>
+    }
+    
+    /**
+     * Traverses to the next Node from the current Node using breadth-first tree traversal
+     * @return The next Node from the current Node using breadth-first tree traversal.
+     */
+    protected Node getNextNodeBreadthFirst()
+    {
+        Node traverseNode;
+        
+        //see if the mCurrentNode has a sibling after it
+<span class="nc" id="L322">        traverseNode = this.mCurrentNode.getNextSibling();</span>
+<span class="nc bnc" id="L323" title="All 2 branches missed.">        if (traverseNode != null)</span>
+<span class="nc" id="L324">            return (traverseNode);</span>
+        
+<span class="nc" id="L326">        int depth = getCurrentNodeDepth();</span>
+        
+        //try and find the next Node at the same depth that is not a sibling
+
+        NodeList traverseNodeList;
+        
+        //step up to the parent Node to look through its children
+<span class="nc" id="L333">        traverseNode = this.mCurrentNode.getParent();</span>
+<span class="nc" id="L334">        int currentDepth = depth - 1;</span>
+        
+<span class="nc bnc" id="L336" title="All 2 branches missed.">        while(currentDepth &gt; 0)//this is safe as we've tried getNextSibling already</span>
+        {
+<span class="nc" id="L338">            Node tempNextSibling = null;//keeping a reference to this this saves calling getNextSibling once later</span>
+            //go to first parent with nextSibling, then to that sibling
+<span class="nc bnc" id="L340" title="All 4 branches missed.">            while(((tempNextSibling = traverseNode.getNextSibling()) == null) &amp;&amp; (traverseNode != this.mRootNode))//CAN assign traverseNode as root Node</span>
+            {
+<span class="nc" id="L342">                traverseNode = traverseNode.getParent();</span>
+<span class="nc" id="L343">                --currentDepth;</span>
+            }
+            
+            //if have traversed back to the root Node, skip to next part where it finds the first Node at the next depth down
+<span class="nc bnc" id="L347" title="All 2 branches missed.">            if (traverseNode == this.mRootNode)</span>
+<span class="nc" id="L348">                break;</span>
+            
+<span class="nc" id="L350">            traverseNode = tempNextSibling;</span>
+            
+<span class="nc bnc" id="L352" title="All 2 branches missed.">            if (traverseNode != null)</span>
+            {
+                //go through children of that sibling
+<span class="nc" id="L355">                traverseNodeList = traverseNode.getChildren();</span>
+<span class="nc bnc" id="L356" title="All 4 branches missed.">                while((traverseNodeList != null) &amp;&amp; (traverseNodeList.size() != 0))</span>
+                {
+<span class="nc" id="L358">                    traverseNode = traverseNode.getFirstChild();</span>
+<span class="nc" id="L359">                    ++currentDepth;</span>
+<span class="nc bnc" id="L360" title="All 2 branches missed.">                    if (currentDepth == depth)</span>
+<span class="nc" id="L361">                        return (traverseNode);//found the next Node at the current depth</span>
+                    else
+<span class="nc" id="L363">                        traverseNodeList = traverseNode.getChildren();</span>
+                } // while((traverseNodeList != null) &amp;&amp; (traverseNodeList.size() != 0))
+            } // if (traverseNode != null)
+        } // while(currentDepth &gt; 0)
+        
+        //step to the next depth down
+        
+        //check first whether we are about to go past max depth
+<span class="nc bnc" id="L371" title="All 2 branches missed.">        if (this.mMaxDepth != -1)//if -1, then there is no max depth restriction</span>
+        {
+<span class="nc bnc" id="L373" title="All 2 branches missed.">            if (depth &gt;= this.mMaxDepth)</span>
+<span class="nc" id="L374">                return (null);//can't go past max depth</span>
+        }
+        
+<span class="nc" id="L377">        traverseNode = this.mRootNode.getFirstChild();</span>
+<span class="nc" id="L378">        ++depth;//look for next depth</span>
+<span class="nc" id="L379">        currentDepth = 1;</span>
+<span class="nc bnc" id="L380" title="All 2 branches missed.">        while(currentDepth &gt; 0)</span>
+        {
+            //go through children of that sibling
+<span class="nc" id="L383">            traverseNodeList = traverseNode.getChildren();</span>
+<span class="nc bnc" id="L384" title="All 4 branches missed.">            while((traverseNodeList != null) &amp;&amp; (traverseNodeList.size() != 0))</span>
+            {
+<span class="nc" id="L386">                traverseNode = traverseNode.getFirstChild();</span>
+<span class="nc" id="L387">                ++currentDepth;</span>
+<span class="nc bnc" id="L388" title="All 2 branches missed.">                if (currentDepth == depth)</span>
+<span class="nc" id="L389">                    return (traverseNode);//found the next Node at the current depth</span>
+                else
+<span class="nc" id="L391">                    traverseNodeList = traverseNode.getChildren();</span>
+            } // while((traverseNodeList != null) &amp;&amp; (traverseNodeList.size() != 0))
+            
+            //go to first parent with nextSibling, then to that sibling
+<span class="nc bnc" id="L395" title="All 4 branches missed.">            while((traverseNode.getNextSibling() == null) &amp;&amp; (traverseNode != this.mRootNode))</span>
+            {
+<span class="nc" id="L397">                traverseNode = traverseNode.getParent();</span>
+<span class="nc" id="L398">                --currentDepth;</span>
+            }
+<span class="nc" id="L400">            traverseNode = traverseNode.getNextSibling();</span>
+<span class="nc bnc" id="L401" title="All 2 branches missed.">            if (traverseNode == null)//if null (i.e. reached end of tree), return null</span>
+<span class="nc" id="L402">                return (null);</span>
+        } // while(currentDepth &gt; 0)
+        
+        //otherwise, finished searching, return null
+<span class="nc" id="L406">        return (null);</span>
+    }
+    
+    
+    // todo
+    
+    // previousNode()
+    // getPreviousNodeDepthFirst()
+    // getPreviousNodeBreadthFirst()
+    // hasPreviousNodes() ?
+    // these should be specificed in an interface - suggest something like ReversableNodeIterator (extends NodeIterator)
+    // possible optimisations: when doing mNextNode, we should save mCurrentNode as previousNode, and vice versa
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

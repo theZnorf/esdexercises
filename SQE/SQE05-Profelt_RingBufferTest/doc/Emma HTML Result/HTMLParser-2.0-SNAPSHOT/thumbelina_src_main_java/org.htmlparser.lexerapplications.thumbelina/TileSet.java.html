@@ -1,0 +1,684 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>TileSet.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">thumbelina/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.lexerapplications.thumbelina</a> &gt; <span class="el_source">TileSet.java</span></div><h1>TileSet.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/thumbelina/src/main/java/org/htmlparser/lexerapplications/thumbelina/TileSet.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.lexerapplications.thumbelina;
+
+import java.awt.Rectangle;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+
+/**
+ * Class to track tile regions.
+ */
+public class TileSet
+    extends
+        java.awt.Canvas
+    implements
+        java.awt.event.ActionListener,
+        java.awt.event.MouseListener,
+        java.awt.event.WindowListener
+{
+    /**
+     * The list of Tiles.
+     */
+    protected ArrayList&lt;Tile&gt; mRegions;
+
+    /**
+     * Construct a tile set.
+     */
+<span class="nc" id="L53">    public TileSet ()</span>
+    {
+<span class="nc" id="L55">        mRegions = new ArrayList&lt;Tile&gt; ();</span>
+<span class="nc" id="L56">    }</span>
+
+    /**
+     * Get the number of tiles in this collection.
+     * @return The number of tiles showing.
+     * Note that the same tile (as determinded by the identity) may be showing
+     * (different pieces) in several locations.
+     */
+    public int getTileCount ()
+    {
+<span class="nc" id="L66">        return (mRegions.size ());</span>
+    }
+
+    public Iterator&lt;Tile&gt; getTiles ()
+    {
+<span class="nc" id="L71">        return (mRegions.iterator ());</span>
+    }
+
+    /**
+     * Add a single tile to the list.
+     * @param tile The tile to add.
+     */
+    public void add (final Tile tile)
+    {
+        ArrayList&lt;Tile&gt; regions; // this will be the new set
+        Iterator&lt;Tile&gt; iterator;
+        Rectangle intersection;
+        ArrayList&lt;Tile&gt; splits;
+        Map&lt;Object,ArrayList&lt;Tile&gt;&gt; table;
+        Rectangle rectangle;
+        Rectangle r;
+        int size;
+        Tile test;
+
+<span class="nc" id="L90">        regions = new ArrayList&lt;Tile&gt; ();</span>
+<span class="nc" id="L91">        table = new HashMap&lt;Object,ArrayList&lt;Tile&gt;&gt; ();</span>
+<span class="nc" id="L92">        rectangle = tile.getBounds ();</span>
+<span class="nc bnc" id="L93" title="All 2 branches missed.">        for (Tile rover : mRegions)</span>
+        {
+<span class="nc bnc" id="L95" title="All 2 branches missed.">            if (rover.getValid ())</span>
+            {
+                ArrayList&lt;Tile&gt; siblings;
+<span class="nc" id="L98">                r = rover.getBounds ();</span>
+<span class="nc bnc" id="L99" title="All 2 branches missed.">                if (r.intersects (rectangle))</span>
+                {
+<span class="nc" id="L101">                    intersection = r.intersection (rectangle);</span>
+<span class="nc bnc" id="L102" title="All 2 branches missed.">                    if (!intersection.equals (rover))</span>
+                    {
+                        // incoming lies completely within the existing tile
+                        // or touches the existing tile somehow
+<span class="nc" id="L106">                        splits = split (tile, rover, false);</span>
+<span class="nc" id="L107">                        siblings = table.get (rover.getIdentity ());</span>
+<span class="nc bnc" id="L108" title="All 2 branches missed.">                        if (null == siblings)</span>
+                        {
+<span class="nc" id="L110">                            siblings = new ArrayList&lt;Tile&gt; ();</span>
+<span class="nc" id="L111">                            table.put (rover.getIdentity (), siblings);</span>
+                        }
+<span class="nc bnc" id="L113" title="All 2 branches missed.">                        for (int i = 0; i &lt; splits.size (); i++)</span>
+                        {
+<span class="nc" id="L115">                            rover = splits.get (i);</span>
+<span class="nc" id="L116">                            regions.add (rover);</span>
+<span class="nc" id="L117">                            siblings.add (rover);</span>
+                        }
+<span class="nc" id="L119">                    }</span>
+                    else
+                        // incoming covers existing... drop the existing tile
+<span class="nc" id="L122">                        rover.setValid (false);</span>
+<span class="nc" id="L123">                }</span>
+                else
+                {
+                    // no conflict, keep the existing
+<span class="nc" id="L127">                    regions.add (rover);</span>
+<span class="nc" id="L128">                    siblings = table.get (rover.getIdentity ());</span>
+<span class="nc bnc" id="L129" title="All 2 branches missed.">                    if (null == siblings)</span>
+                    {
+<span class="nc" id="L131">                        siblings = new ArrayList&lt;Tile&gt; ();</span>
+<span class="nc" id="L132">                        table.put (rover.getIdentity (), siblings);</span>
+                    }
+<span class="nc" id="L134">                    siblings.add (rover);</span>
+                }
+            }
+        }
+<span class="nc" id="L138">        regions.add (tile);</span>
+
+        // OK, see if we can amalgamate any siblings
+<span class="nc bnc" id="L141" title="All 2 branches missed.">        for (ArrayList&lt;Tile&gt; siblings : table.values ())</span>
+        {
+<span class="nc bnc" id="L143" title="All 2 branches missed.">            for (int i = 0; i &lt; siblings.size (); i++)</span>
+            {
+                Tile rover;
+                
+<span class="nc" id="L147">                rover = siblings.get (i);</span>
+<span class="nc" id="L148">                r = rover.getBounds ();</span>
+<span class="nc bnc" id="L149" title="All 2 branches missed.">                for (int j = i; j &lt; siblings.size (); j++)</span>
+                {
+<span class="nc" id="L151">                    test = siblings.get (j);</span>
+<span class="nc" id="L152">                    rectangle = test.getBounds ();</span>
+<span class="nc bnc" id="L153" title="All 4 branches missed.">                    if ((r.x == rectangle.x) &amp;&amp; (r.width == rectangle.width))</span>
+                    {
+                        // x extent matches, check if top and bottom coincide
+<span class="nc bnc" id="L156" title="All 2 branches missed.">                        if (r.y == (rectangle.y + rectangle.height))</span>
+                        {
+                            // tile above rover, set top up
+<span class="nc" id="L159">                            r.y = rectangle.y;</span>
+<span class="nc" id="L160">                            r.height += rectangle.height;</span>
+<span class="nc" id="L161">                            regions.remove (test);</span>
+<span class="nc" id="L162">                            siblings.remove (test);</span>
+<span class="nc" id="L163">                            j--;</span>
+<span class="nc" id="L164">                        }</span>
+<span class="nc bnc" id="L165" title="All 2 branches missed.">                        else if (rectangle.y == (r.y + r.height))</span>
+                        {
+                            // tile below rover, set bottom down
+<span class="nc" id="L168">                            r.height += rectangle.height;</span>
+<span class="nc" id="L169">                            regions.remove (test);</span>
+<span class="nc" id="L170">                            siblings.remove (test);</span>
+<span class="nc" id="L171">                            j--;</span>
+                        }
+<span class="nc" id="L173">                    }</span>
+<span class="nc bnc" id="L174" title="All 4 branches missed.">                    else if ((r.y == rectangle.y) &amp;&amp; (r.height == rectangle.height))</span>
+                    {
+                        // y extent matches, check if left and right coincide
+<span class="nc bnc" id="L177" title="All 2 branches missed.">                        if (r.x == (rectangle.x + rectangle.width))</span>
+                        {
+                            // tile to left of rover, set left less
+<span class="nc" id="L180">                            r.x = rectangle.x;</span>
+<span class="nc" id="L181">                            r.width += rectangle.width;</span>
+<span class="nc" id="L182">                            regions.remove (test);</span>
+<span class="nc" id="L183">                            siblings.remove (test);</span>
+<span class="nc" id="L184">                            j--;</span>
+<span class="nc" id="L185">                        }</span>
+<span class="nc bnc" id="L186" title="All 2 branches missed.">                        else if (rectangle.x == (r.x + r.width))</span>
+                        {
+                            // tile to right of rover, set right more
+<span class="nc" id="L189">                            r.width += rectangle.width;</span>
+<span class="nc" id="L190">                            regions.remove (test);</span>
+<span class="nc" id="L191">                            siblings.remove (test);</span>
+<span class="nc" id="L192">                            j--;</span>
+                        }
+                    }
+                }
+<span class="nc" id="L196">                rover.setBounds (r);</span>
+            }
+        }
+        
+<span class="nc" id="L200">        mRegions = regions;</span>
+<span class="nc" id="L201">    }</span>
+
+    /**
+     * Split the large tile.
+     * Strategy: split horizontally (full width strips top and bottom).
+     * NOTE: top and bottom make sense only in terms of AWT coordinates.
+     * @param small The incoming tile.
+     * @param large The encompassing tile. The attributes of this one
+     * are propagated to the fragments.
+     * @param keep If &lt;code&gt;true&lt;/code&gt;, the center area is kept,
+     * otherwise discarded.
+     * @return The fragments from the large tile.
+     */
+    private ArrayList&lt;Tile&gt; split (
+        final Tile small,
+        final Tile large,
+        final boolean keep)
+    {
+        Rectangle rl;
+        Rectangle rs;
+        Rectangle rectangle;
+        Rectangle intersection;
+        Tile m;
+        ArrayList&lt;Tile&gt; ret;
+
+<span class="nc" id="L226">        ret = new ArrayList&lt;Tile&gt; ();</span>
+
+<span class="nc" id="L228">        rl = large.getBounds ();</span>
+<span class="nc" id="L229">        rs = small.getBounds ();</span>
+<span class="nc bnc" id="L230" title="All 2 branches missed.">        if (rl.intersects (rs))</span>
+        {
+<span class="nc" id="L232">            intersection = rl.intersection (rs);</span>
+
+            // if tops don't match split off the top
+<span class="nc bnc" id="L235" title="All 2 branches missed.">            if ((intersection.y + intersection.height)</span>
+<span class="nc" id="L236">                != (rl.y + rl.height))</span>
+            {
+<span class="nc" id="L238">                m = (Tile)large.clone ();</span>
+<span class="nc" id="L239">                rectangle = m.getBounds ();</span>
+<span class="nc" id="L240">                rectangle.y = (intersection.y + intersection.height);</span>
+<span class="nc" id="L241">                rectangle.height = (rl.y + rl.height) - rectangle.y;</span>
+<span class="nc" id="L242">                m.setBounds (rectangle);</span>
+<span class="nc" id="L243">                ret.add (m);</span>
+            }
+
+            // if left sides don't match make a left fragment
+<span class="nc bnc" id="L247" title="All 2 branches missed.">            if (intersection.x != rl.x)</span>
+            {
+<span class="nc" id="L249">                m = (Tile)large.clone ();</span>
+<span class="nc" id="L250">                rectangle = m.getBounds ();</span>
+<span class="nc" id="L251">                rectangle.y = intersection.y;</span>
+<span class="nc" id="L252">                rectangle.width = intersection.x - rl.x;</span>
+<span class="nc" id="L253">                rectangle.height = intersection.height;</span>
+<span class="nc" id="L254">                m.setBounds (rectangle);</span>
+<span class="nc" id="L255">                ret.add (m);</span>
+            }
+
+            // the center bit
+<span class="nc bnc" id="L259" title="All 2 branches missed.">            if (keep)</span>
+            {
+<span class="nc" id="L261">                m = (Tile)large.clone ();</span>
+<span class="nc" id="L262">                rectangle = m.getBounds ();</span>
+<span class="nc" id="L263">                rectangle.x = intersection.x;</span>
+<span class="nc" id="L264">                rectangle.y = intersection.y;</span>
+<span class="nc" id="L265">                rectangle.width = intersection.width;</span>
+<span class="nc" id="L266">                rectangle.height = intersection.height;</span>
+<span class="nc" id="L267">                m.setBounds (rectangle);</span>
+<span class="nc" id="L268">                ret.add (m);</span>
+            }
+
+            // if right sides don't match make a right fragment
+<span class="nc bnc" id="L272" title="All 2 branches missed.">            if ((intersection.x + intersection.width)</span>
+<span class="nc" id="L273">                != (rl.x + rl.width))</span>
+            {
+<span class="nc" id="L275">                m = (Tile)large.clone ();</span>
+<span class="nc" id="L276">                rectangle = m.getBounds ();</span>
+<span class="nc" id="L277">                rectangle.x = intersection.x + intersection.width;</span>
+<span class="nc" id="L278">                rectangle.y = intersection.y;</span>
+<span class="nc" id="L279">                rectangle.width = (rl.x + rl.width) - rectangle.x;</span>
+<span class="nc" id="L280">                rectangle.height = intersection.height;</span>
+<span class="nc" id="L281">                m.setBounds (rectangle);</span>
+<span class="nc" id="L282">                ret.add (m);</span>
+            }
+
+            // if bottoms don't match split off the bottom
+<span class="nc bnc" id="L286" title="All 2 branches missed.">            if (intersection.y != rl.y)</span>
+            {
+<span class="nc" id="L288">                m = (Tile)large.clone ();</span>
+<span class="nc" id="L289">                rectangle = m.getBounds ();</span>
+<span class="nc" id="L290">                rectangle.height = (intersection.y - rl.y);</span>
+<span class="nc" id="L291">                m.setBounds (rectangle);</span>
+<span class="nc" id="L292">                ret.add (m);</span>
+            }
+        }
+
+<span class="nc" id="L296">        return (ret);</span>
+    }
+
+    /**
+     * Find the Tile at position x,y
+     * @param x The x coordinate of the point to examine.
+     * @param y The y coordinate of the point to examine.
+     * @return The tile at that point, or &lt;code&gt;null&lt;/code&gt;
+     * if there are none.
+     */
+    public Tile tileAt (final int x, final int y)
+    {
+        Tile ret;
+
+<span class="nc" id="L310">        ret = null;</span>
+
+<span class="nc bnc" id="L312" title="All 2 branches missed.">        for (Tile m : mRegions)</span>
+        {
+<span class="nc bnc" id="L314" title="All 2 branches missed.">            if (m.getBounds ().contains (x, y))</span>
+            {
+<span class="nc" id="L316">                ret = m;</span>
+<span class="nc" id="L317">                break;</span>
+            }
+        }
+
+<span class="nc" id="L321">        return (ret);</span>
+    }
+
+    /**
+     * Move the given tile to the top of the Z order.
+     * The tile is reset to it's original size and all fragments are discarded.
+     * @param tile The tile to bring to the top.
+     */
+    public void bringToTop (final Tile tile)
+    {
+        Iterator&lt;Tile&gt; iterator;
+        Tile m;
+
+<span class="nc bnc" id="L334" title="All 2 branches missed.">        for (iterator = mRegions.iterator (); iterator.hasNext (); )</span>
+        {
+<span class="nc" id="L336">            m = iterator.next ();</span>
+<span class="nc bnc" id="L337" title="All 2 branches missed.">            if (tile.getIdentity ().equals (m.getIdentity ()))</span>
+<span class="nc" id="L338">                iterator.remove ();</span>
+        }
+<span class="nc" id="L340">        tile.reset ();</span>
+<span class="nc" id="L341">        add (tile);</span>
+
+<span class="nc" id="L343">    }</span>
+
+    //
+    // Unit test.
+    //
+
+    // also need to add:
+    //    extends
+    //        java.awt.Canvas
+    //    implements
+    //        java.awt.event.ActionListener,
+    //        java.awt.event.MouseListener,
+    //        java.awt.event.WindowListener
+    // to the class definition
+
+<span class="nc" id="L358">    static final java.awt.Color[] mColours =</span>
+<span class="nc" id="L359">    {</span>
+<span class="nc" id="L360">        java.awt.Color.blue,</span>
+<span class="nc" id="L361">        java.awt.Color.cyan,</span>
+<span class="nc" id="L362">        java.awt.Color.gray,</span>
+<span class="nc" id="L363">        java.awt.Color.green,</span>
+<span class="nc" id="L364">        java.awt.Color.orange,</span>
+<span class="nc" id="L365">        java.awt.Color.pink,</span>
+<span class="nc" id="L366">        java.awt.Color.red,</span>
+<span class="nc" id="L367">        java.awt.Color.yellow,</span>
+<span class="nc" id="L368">        java.awt.Color.lightGray,</span>
+<span class="nc" id="L369">        java.awt.Color.darkGray,</span>
+<span class="nc" id="L370">    };</span>
+
+    java.awt.Point origin;
+    Rectangle last;
+
+    public void setStatus (String text)
+    {
+<span class="nc" id="L377">        java.awt.Container container = getParent ();</span>
+<span class="nc" id="L378">        java.awt.Component[] children = container.getComponents ();</span>
+<span class="nc bnc" id="L379" title="All 2 branches missed.">        for (int i = 0; i &lt; children.length; i++)</span>
+<span class="nc bnc" id="L380" title="All 2 branches missed.">            if (children[i] instanceof java.awt.TextField)</span>
+            {
+<span class="nc" id="L382">                ((java.awt.TextField)children[i]).setText (text);</span>
+<span class="nc" id="L383">                break;</span>
+            }
+<span class="nc" id="L385">    }</span>
+
+    public boolean isVerbose ()
+    {
+        boolean ret;
+
+<span class="nc" id="L391">        ret = false;</span>
+
+<span class="nc" id="L393">        java.awt.Container container = getParent ();</span>
+<span class="nc" id="L394">        java.awt.Frame frame = (java.awt.Frame)container;</span>
+<span class="nc" id="L395">        java.awt.MenuBar menubar = frame.getMenuBar ();</span>
+<span class="nc" id="L396">        java.awt.Menu menu = menubar.getMenu (0);</span>
+<span class="nc bnc" id="L397" title="All 2 branches missed.">        for (int i = 0; i &lt; menu.getItemCount (); i++)</span>
+<span class="nc bnc" id="L398" title="All 2 branches missed.">            if (menu.getItem (i) instanceof java.awt.CheckboxMenuItem)</span>
+            {
+<span class="nc" id="L400">                ret = ((java.awt.CheckboxMenuItem)menu.getItem (i)).getState ();</span>
+<span class="nc" id="L401">                break;</span>
+            }
+        
+<span class="nc" id="L404">        return (ret);</span>
+    }
+
+    void addTile (Rectangle rectangle)
+    {
+        try
+        {
+<span class="nc" id="L411">            int count = Integer.parseInt (getName ());</span>
+<span class="nc" id="L412">            Tile m = new Picture (new java.net.URL (&quot;http://localhost/image#&quot; + count), null, rectangle);</span>
+<span class="nc" id="L413">            add (m);</span>
+<span class="nc" id="L414">            repaint ();</span>
+<span class="nc" id="L415">            setStatus (&quot;&quot; + getTileCount ());</span>
+<span class="nc" id="L416">            count++;</span>
+<span class="nc" id="L417">            setName (&quot;&quot; + count);</span>
+<span class="nc" id="L418">        }</span>
+<span class="nc" id="L419">        catch (java.net.MalformedURLException murle)</span>
+        {
+<span class="nc" id="L421">            murle.printStackTrace ();</span>
+        }
+<span class="nc" id="L423">    }</span>
+
+    void checkOverlap (java.awt.Graphics graphics)
+    {
+        Tile m;
+        Rectangle rectangle;
+        Tile _m;
+        Rectangle r;
+
+<span class="nc" id="L432">        graphics.setColor (java.awt.Color.magenta);</span>
+<span class="nc bnc" id="L433" title="All 2 branches missed.">        for (int i = 0; i &lt; mRegions.size (); i++)</span>
+        {
+<span class="nc" id="L435">            m = mRegions.get (i);</span>
+<span class="nc" id="L436">            rectangle = m.getBounds ();</span>
+<span class="nc bnc" id="L437" title="All 2 branches missed.">            for (int j = i + 1; j &lt; mRegions.size (); j++)</span>
+            {
+<span class="nc" id="L439">                _m = mRegions.get (j);</span>
+<span class="nc" id="L440">                r = _m.getBounds ();</span>
+<span class="nc bnc" id="L441" title="All 2 branches missed.">                if (rectangle.intersects (r))</span>
+                {
+<span class="nc" id="L443">                    r = rectangle.intersection (r);</span>
+<span class="nc" id="L444">                    System.out.println (</span>
+<span class="nc" id="L445">                        &quot;overlap (&quot;</span>
+<span class="nc" id="L446">                        + r.x</span>
+<span class="nc" id="L447">                        + &quot;,&quot;</span>
+<span class="nc" id="L448">                        + r.y</span>
+<span class="nc" id="L449">                        + &quot;) (&quot;</span>
+<span class="nc" id="L450">                        + (r.x + r.width)</span>
+<span class="nc" id="L451">                        + &quot;,&quot;</span>
+<span class="nc" id="L452">                        + (r.y + r.height)</span>
+<span class="nc" id="L453">                        + &quot;)&quot;);</span>
+<span class="nc" id="L454">                    graphics.fillRect (r.x, r.y, r.width + 1, r.height + 1);</span>
+                }
+            }
+        }
+<span class="nc" id="L458">    }</span>
+
+    void lift (int x, int y)
+    {
+        Tile m;
+
+<span class="nc" id="L464">        m = tileAt (x, y);</span>
+<span class="nc bnc" id="L465" title="All 2 branches missed.">        if (null != m)</span>
+        {
+<span class="nc" id="L467">            bringToTop (m);</span>
+<span class="nc" id="L468">            repaint ();</span>
+<span class="nc" id="L469">            setStatus (&quot;&quot; + getTileCount ());</span>
+        }
+<span class="nc" id="L471">    }</span>
+
+    String getDetails (int x, int y)
+    {
+        Tile m;
+        String ret;
+
+<span class="nc" id="L478">        ret = null;</span>
+
+<span class="nc" id="L480">        m = tileAt (x, y);</span>
+<span class="nc bnc" id="L481" title="All 2 branches missed.">        if (null == m)</span>
+<span class="nc" id="L482">            ret = &quot;&quot;;</span>
+        else
+<span class="nc" id="L484">            ret = m.toString ();</span>
+
+<span class="nc" id="L486">        return (ret);</span>
+    }
+
+    //
+    // Component overrides
+    //
+
+    public void update (java.awt.Graphics graphics)
+    {
+<span class="nc" id="L495">        paint (graphics);</span>
+<span class="nc" id="L496">    }</span>
+
+    public void paint (java.awt.Graphics graphics)
+    {
+<span class="nc" id="L500">        java.awt.Dimension size = getSize ();</span>
+<span class="nc" id="L501">        graphics.setColor (getBackground ());</span>
+<span class="nc" id="L502">        graphics.fillRect (0, 0, size.width + 1, size.height + 1);</span>
+
+<span class="nc bnc" id="L504" title="All 2 branches missed.">        if (0 == mRegions.size ())</span>
+        {
+<span class="nc" id="L506">            graphics.setColor (getForeground ());</span>
+<span class="nc" id="L507">            graphics.drawString (</span>
+<span class="nc" id="L508">                &quot;Click and drag to create a tile.&quot;, 10, 20);</span>
+<span class="nc" id="L509">            graphics.drawString (</span>
+<span class="nc" id="L510">                &quot;Right click a tile for details.&quot;, 10, 40);</span>
+<span class="nc" id="L511">            graphics.drawString (</span>
+<span class="nc" id="L512">                &quot;Shift right click a tile to bring to top.&quot;, 10, 60);</span>
+<span class="nc" id="L513">        }</span>
+        else
+        {
+<span class="nc bnc" id="L516" title="All 2 branches missed.">            for (Tile tile : mRegions)</span>
+            {
+<span class="nc" id="L518">                String url = ((java.net.URL)tile.getIdentity ()).toString ();</span>
+<span class="nc" id="L519">                int n = url.indexOf ('#');</span>
+<span class="nc" id="L520">                n = Integer.parseInt (url.substring (n + 1));</span>
+<span class="nc" id="L521">                java.awt.Color colour = mColours[n % mColours.length];</span>
+<span class="nc" id="L522">                graphics.setColor (colour);</span>
+<span class="nc" id="L523">                Rectangle m = tile.getBounds ();</span>
+<span class="nc" id="L524">                graphics.fillRect (m.x, m.y, m.width + 1, m.height + 1);</span>
+<span class="nc" id="L525">                graphics.setColor (java.awt.Color.black);</span>
+<span class="nc" id="L526">                graphics.drawRect (m.x, m.y, m.width, m.height);</span>
+            }
+<span class="nc" id="L528">            checkOverlap (graphics);</span>
+        }
+<span class="nc" id="L530">    }</span>
+
+    //
+    // WindowListener interface
+    //
+
+<span class="nc" id="L536">    public void windowOpened (java.awt.event.WindowEvent e) {}</span>
+
+    public void windowClosing (java.awt.event.WindowEvent e)
+    {
+<span class="nc" id="L540">        System.exit (0);</span>
+<span class="nc" id="L541">    }</span>
+
+<span class="nc" id="L543">    public void windowClosed (java.awt.event.WindowEvent e) {}</span>
+
+<span class="nc" id="L545">    public void windowIconified (java.awt.event.WindowEvent e) {}</span>
+
+<span class="nc" id="L547">    public void windowDeiconified (java.awt.event.WindowEvent e) {}</span>
+
+<span class="nc" id="L549">    public void windowActivated (java.awt.event.WindowEvent e) {}</span>
+
+<span class="nc" id="L551">    public void windowDeactivated (java.awt.event.WindowEvent e) {}</span>
+
+    //
+    // ActionListener interface
+    //
+
+    public void actionPerformed (java.awt.event.ActionEvent event)
+    {
+<span class="nc" id="L559">        java.awt.MenuItem item = (java.awt.MenuItem)event.getSource ();</span>
+<span class="nc bnc" id="L560" title="All 2 branches missed.">        if (item.getName ().equals (&quot;repeat&quot;))</span>
+<span class="nc" id="L561">            addTile (last);</span>
+<span class="nc bnc" id="L562" title="All 2 branches missed.">        else if (item.getName ().equals (&quot;clear&quot;))</span>
+        {
+<span class="nc" id="L564">            mRegions = new ArrayList&lt;Tile&gt; ();</span>
+<span class="nc" id="L565">            repaint ();</span>
+        }
+<span class="nc" id="L567">    }</span>
+
+    //
+    // MouseListener Interface
+    //
+
+    public void mouseClicked (java.awt.event.MouseEvent event)
+    {
+<span class="nc bnc" id="L575" title="All 2 branches missed.">        if (isVerbose ())</span>
+<span class="nc" id="L576">            System.out.println (&quot;DrawTarget.mouseClicked &quot; + event);</span>
+<span class="nc" id="L577">    }</span>
+
+    public void mouseReleased (java.awt.event.MouseEvent event)
+    {
+<span class="nc bnc" id="L581" title="All 2 branches missed.">        if (isVerbose ())</span>
+<span class="nc" id="L582">            System.out.println (&quot;DrawTarget.mouseReleased &quot; + event);</span>
+<span class="nc bnc" id="L583" title="All 2 branches missed.">        if (null != origin)</span>
+        {
+<span class="nc" id="L585">            last = new Rectangle (</span>
+<span class="nc" id="L586">                Math.min (origin.x, event.getX ()),</span>
+<span class="nc" id="L587">                Math.min (origin.y, event.getY ()),</span>
+<span class="nc" id="L588">                Math.abs (event.getX () - origin.x),</span>
+<span class="nc" id="L589">                Math.abs (event.getY () - origin.y));</span>
+<span class="nc" id="L590">            addTile (last);</span>
+<span class="nc" id="L591">            origin = null;</span>
+        }
+<span class="nc" id="L593">    }</span>
+
+    public void mouseEntered (java.awt.event.MouseEvent event)
+    {
+<span class="nc bnc" id="L597" title="All 2 branches missed.">        if (isVerbose ())</span>
+<span class="nc" id="L598">            System.out.println (&quot;DrawTarget.mouseEntered &quot; + event);</span>
+<span class="nc" id="L599">    }</span>
+
+    public void mouseExited (java.awt.event.MouseEvent event)
+    {
+<span class="nc bnc" id="L603" title="All 2 branches missed.">        if (isVerbose ())</span>
+<span class="nc" id="L604">            System.out.println (&quot;DrawTarget.mouseExited &quot; + event);</span>
+<span class="nc" id="L605">    }</span>
+
+    public void mousePressed (java.awt.event.MouseEvent event)
+    {
+<span class="nc bnc" id="L609" title="All 2 branches missed.">        if (isVerbose ())</span>
+<span class="nc" id="L610">            System.out.println (&quot;DrawTarget.mousePressed &quot; + event);</span>
+<span class="nc bnc" id="L611" title="All 4 branches missed.">        if (event.isShiftDown () &amp;&amp; event.isMetaDown ())</span>
+<span class="nc" id="L612">            lift (event.getX (), event.getY ());</span>
+<span class="nc bnc" id="L613" title="All 2 branches missed.">        else if (event.isMetaDown ())</span>
+<span class="nc" id="L614">            setStatus (getDetails (event.getX (), event.getY ()));</span>
+        else
+<span class="nc" id="L616">            origin = new java.awt.Point (event.getX (), event.getY ());</span>
+<span class="nc" id="L617">    }</span>
+
+    /**
+     * Visual unit test for the TileSet class.
+     * @param args &lt;em&gt;Ignored.&lt;/em&gt;
+     */
+    public static void main (String[] args)
+    {
+        java.awt.Frame frame;
+        java.awt.MenuBar menuMain;
+        java.awt.Menu options;
+        java.awt.CheckboxMenuItem verbose;
+        java.awt.MenuItem repeat;
+        java.awt.MenuItem clear;
+        java.awt.TextField status;
+
+<span class="nc" id="L633">        frame = new java.awt.Frame ();</span>
+<span class="nc" id="L634">        frame.setSize (400,400);</span>
+<span class="nc" id="L635">        menuMain = new java.awt.MenuBar();</span>
+<span class="nc" id="L636">        options = new java.awt.Menu (&quot;Options&quot;);</span>
+<span class="nc" id="L637">        verbose = new java.awt.CheckboxMenuItem (&quot;Verbose&quot;);</span>
+<span class="nc" id="L638">        options.add (verbose);</span>
+<span class="nc" id="L639">        repeat = new java.awt.MenuItem(&quot;Repeat&quot;);</span>
+<span class="nc" id="L640">        repeat.setName (&quot;repeat&quot;);</span>
+<span class="nc" id="L641">        options.add (repeat);</span>
+<span class="nc" id="L642">        clear = new java.awt.MenuItem(&quot;Clear&quot;);</span>
+<span class="nc" id="L643">        clear.setName (&quot;clear&quot;);</span>
+<span class="nc" id="L644">        options.add (clear);</span>
+
+<span class="nc" id="L646">        menuMain.add (options);</span>
+<span class="nc" id="L647">        frame.setMenuBar (menuMain);</span>
+
+<span class="nc" id="L649">        TileSet buffy = new TileSet ();</span>
+<span class="nc" id="L650">        buffy.setBackground (java.awt.Color.lightGray.brighter ());</span>
+<span class="nc" id="L651">        buffy.setVisible (true);</span>
+<span class="nc" id="L652">        buffy.setName (&quot;0&quot;);</span>
+
+<span class="nc" id="L654">        frame.add (buffy, &quot;Center&quot;);</span>
+<span class="nc" id="L655">        status = new java.awt.TextField ();</span>
+<span class="nc" id="L656">        frame.add (status, &quot;South&quot;);</span>
+
+<span class="nc" id="L658">        frame.addWindowListener (buffy);</span>
+<span class="nc" id="L659">        buffy.addMouseListener (buffy);</span>
+<span class="nc" id="L660">        repeat.addActionListener (buffy);</span>
+<span class="nc" id="L661">        clear.addActionListener (buffy);</span>
+
+<span class="nc" id="L663">        frame.setVisible (true);</span>
+
+<span class="nc" id="L665">    }</span>
+}
+
+/*
+ * Revision Control Modification History
+ *
+ * $Log: TileSet.java,v $
+ * Revision 1.2  2004/07/31 16:42:30  derrickoswald
+ * Remove unused variables and other fixes exposed by turning on compiler warnings.
+ *
+ * Revision 1.1  2003/09/21 18:20:56  derrickoswald
+ * Thumbelina
+ * Created a lexer GUI application to extract images behind thumbnails.
+ * Added a task in the ant build script - thumbelina - to create the jar file.
+ * You need JDK 1.4.x to build it.  It can be run on JDK 1.3.x in crippled mode.
+ * Usage: java -Xmx256M thumbelina.jar [URL]
+ *
+ *
+ */
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

@@ -1,0 +1,412 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>BeanyBaby.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.beans</a> &gt; <span class="el_source">BeanyBaby.java</span></div><h1>BeanyBaby.java</h1><pre class="source lang-java linenums"><span class="nc" id="L1">// HTMLParser Library - A java-based parser for HTML</span>
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/main/java/org/htmlparser/beans/BeanyBaby.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.beans;
+
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.beans.PropertyChangeListener;
+import java.util.Vector;
+
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JMenuItem;
+
+/**
+ * Demo of beans.
+ * Created on December 30, 2002, 7:54 PM
+ * @author Derrick Oswald
+ */
+public class BeanyBaby
+    extends
+        javax.swing.JFrame
+    implements
+        PropertyChangeListener,
+        ActionListener,
+        MouseListener
+{
+    /**
+     * Bread crumb trail of visited URLs.
+     */
+    protected Vector mTrail;
+
+    /**
+     * Current position on the bread crumb trail.
+     */
+    protected int mCrumb;
+
+    /** Creates new form BeanyBaby */
+<span class="nc" id="L67">    public BeanyBaby ()</span>
+    {
+<span class="nc" id="L69">        initComponents ();</span>
+<span class="nc" id="L70">        mTrail = new Vector ();</span>
+<span class="nc" id="L71">        mCrumb = -1;</span>
+
+        // shenanigans to get the splitter bar at the midpoint
+<span class="nc" id="L74">        setVisible (true);</span>
+<span class="nc" id="L75">        mSplitPane.setDividerLocation (0.5); // 50% for each pane</span>
+<span class="nc" id="L76">        setVisible (false);</span>
+
+        // set up twinning
+<span class="nc" id="L79">        mLinkBean.addPropertyChangeListener (this);</span>
+<span class="nc" id="L80">        mStringBean.addPropertyChangeListener (this);</span>
+        // set up user input
+<span class="nc" id="L82">        mTextField.addActionListener (this);</span>
+<span class="nc" id="L83">        mLinkBean.addMouseListener (this);</span>
+
+        // set initial checkbox states
+<span class="nc" id="L86">        mLinks.setSelected (mStringBean.getLinks ());</span>
+<span class="nc" id="L87">        mCollapse.setSelected (mStringBean.getCollapse ());</span>
+<span class="nc" id="L88">        mNobreak.setSelected (mStringBean.getReplaceNonBreakingSpaces ());</span>
+<span class="nc" id="L89">    }</span>
+
+    //
+    // PropertyChangeListener interface
+    //
+
+    /**
+     * This method ties the two beans together on the same connection.
+     * Whenever a property changes on one bean, make sure the URL properties
+     * agree by setting the URL from one to the other.
+     * @param event The event describing the event source
+     * and the property that has changed.
+     */
+    public void propertyChange (java.beans.PropertyChangeEvent event)
+    {
+        Object source;
+        String name;
+
+<span class="nc" id="L107">        source = event.getSource ();</span>
+<span class="nc bnc" id="L108" title="All 2 branches missed.">        if (source == mLinkBean)</span>
+        {
+<span class="nc bnc" id="L110" title="All 2 branches missed.">            if (!mLinkBean.getURL ().equals (mStringBean.getURL ()))</span>
+<span class="nc" id="L111">                mStringBean.setURL (mLinkBean.getURL ());</span>
+<span class="nc" id="L112">        }</span>
+<span class="nc bnc" id="L113" title="All 2 branches missed.">        else if (source == mStringBean)</span>
+        {
+<span class="nc bnc" id="L115" title="All 2 branches missed.">            if (!mStringBean.getURL ().equals (mLinkBean.getURL ()))</span>
+<span class="nc" id="L116">                mLinkBean.setURL (mStringBean.getURL ());</span>
+            // check for menu status changes
+<span class="nc" id="L118">            name = event.getPropertyName ();</span>
+<span class="nc bnc" id="L119" title="All 2 branches missed.">            if (name.equals (StringBean.PROP_LINKS_PROPERTY))</span>
+<span class="nc" id="L120">                mLinks.setSelected (</span>
+<span class="nc" id="L121">                    ((Boolean)event.getNewValue ()).booleanValue ());</span>
+<span class="nc bnc" id="L122" title="All 2 branches missed.">            else if (name.equals (StringBean.PROP_COLLAPSE_PROPERTY))</span>
+<span class="nc" id="L123">                mCollapse.setSelected (</span>
+<span class="nc" id="L124">                    ((Boolean)event.getNewValue ()).booleanValue ());</span>
+<span class="nc bnc" id="L125" title="All 2 branches missed.">            else if (name.equals (StringBean.PROP_REPLACE_SPACE_PROPERTY))</span>
+<span class="nc" id="L126">                mNobreak.setSelected (</span>
+<span class="nc" id="L127">                    ((Boolean)event.getNewValue ()).booleanValue ());</span>
+        }
+<span class="nc" id="L129">    }</span>
+
+    //
+    // ActionListener interface
+    //
+
+    /**
+     * Handles UI events.
+     * Changing the URL in the text field, altering a checkbox setting or
+     * choosing a menu item winds up here, where the appropriate change
+     * is made to the state of the bean.
+     * @param event Details about the action.
+     */
+    public void actionPerformed (ActionEvent event)
+    {
+        Object source;
+        String url;
+        String name;
+        JMenuItem item;
+
+<span class="nc" id="L149">        source = event.getSource ();</span>
+<span class="nc bnc" id="L150" title="All 2 branches missed.">        if (source == mTextField)</span>
+        {
+<span class="nc" id="L152">            url = mTextField.getText ();</span>
+<span class="nc" id="L153">            mTextField.selectAll ();</span>
+<span class="nc" id="L154">            setURL (url);</span>
+<span class="nc" id="L155">        }</span>
+<span class="nc bnc" id="L156" title="All 2 branches missed.">        else if (source instanceof JCheckBoxMenuItem)</span>
+        {
+<span class="nc" id="L158">            item = (JMenuItem)source;</span>
+<span class="nc" id="L159">            name = item.getName ();</span>
+<span class="nc bnc" id="L160" title="All 2 branches missed.">            if (&quot;Links&quot;.equals (name))</span>
+<span class="nc" id="L161">                mStringBean.setLinks (item.isSelected ());</span>
+<span class="nc bnc" id="L162" title="All 2 branches missed.">            else if (&quot;Collapse&quot;.equals (name))</span>
+<span class="nc" id="L163">                mStringBean.setCollapse (item.isSelected ());</span>
+<span class="nc bnc" id="L164" title="All 2 branches missed.">            else if (&quot;Nobreak&quot;.equals (name))</span>
+<span class="nc" id="L165">                mStringBean.setReplaceNonBreakingSpaces (item.isSelected ());</span>
+<span class="nc" id="L166">        }</span>
+<span class="nc bnc" id="L167" title="All 2 branches missed.">        else if (source instanceof JMenuItem)</span>
+        {
+<span class="nc" id="L169">            name = ((JMenuItem)source).getName ();</span>
+<span class="nc bnc" id="L170" title="All 2 branches missed.">            if (&quot;Back&quot;.equals (name))</span>
+            {
+<span class="nc bnc" id="L172" title="All 2 branches missed.">                if (mCrumb &gt; 0)</span>
+                {
+<span class="nc" id="L174">                    mCrumb--;</span>
+<span class="nc" id="L175">                    url = (String)mTrail.elementAt (mCrumb);</span>
+<span class="nc" id="L176">                    mCrumb--;</span>
+<span class="nc" id="L177">                    setURL (url);</span>
+                }
+<span class="nc" id="L179">            }</span>
+<span class="nc bnc" id="L180" title="All 2 branches missed.">            else if (&quot;Forward&quot;.equals (name))</span>
+            {
+<span class="nc bnc" id="L182" title="All 2 branches missed.">                if (mCrumb &lt; mTrail.size ())</span>
+                {
+<span class="nc" id="L184">                    mCrumb++;</span>
+<span class="nc" id="L185">                    url = (String)mTrail.elementAt (mCrumb);</span>
+<span class="nc" id="L186">                    mCrumb--;</span>
+<span class="nc" id="L187">                    setURL (url);</span>
+                }
+            }
+        }
+
+<span class="nc" id="L192">    }</span>
+
+    //
+    // MouseListener interface
+    //
+
+    /**
+     * Invoked when the mouse button has been clicked on a component.
+     * A mouse click is a press and release of a mouse button.
+     * @param event Details on the mouse event.
+     */
+    public void mouseClicked (MouseEvent event)
+    {
+        int index;
+        String url;
+
+<span class="nc bnc" id="L208" title="All 2 branches missed.">        if (2 == event.getClickCount())</span>
+        {
+<span class="nc" id="L210">            index = mLinkBean.locationToIndex (event.getPoint ());</span>
+<span class="nc" id="L211">            url = mLinkBean.getModel ().getElementAt (index).toString ();</span>
+<span class="nc" id="L212">            setURL (url);</span>
+        }
+<span class="nc" id="L214">    }</span>
+
+    /**
+     * Invoked when the mouse enters a component.
+     * @param event Details on the mouse event.
+     */
+    public void mouseEntered (MouseEvent event)
+    {
+<span class="nc" id="L222">    }</span>
+
+    /**
+     * Invoked when the mouse exits a component.
+     * @param event Details on the mouse event.
+     */
+    public void mouseExited (MouseEvent event)
+    {
+<span class="nc" id="L230">    }</span>
+
+    /**
+     * Invoked when a mouse button has been pressed on a component.
+     * @param event Details on the mouse event.
+     */
+    public void mousePressed (MouseEvent event)
+    {
+<span class="nc" id="L238">    }</span>
+
+    /**
+     * Invoked when a mouse button has been released on a component.
+     * @param event Details on the mouse event.
+     */
+    public void mouseReleased (MouseEvent event)
+    {
+<span class="nc" id="L246">    }</span>
+
+    //
+    // API control
+    //
+
+    /**
+     * Set the URL for the bean.
+     * @param url The URL to use in the bean.
+     */
+    public void setURL (String url)
+    {
+<span class="nc" id="L258">        mTextField.setText (url);</span>
+<span class="nc" id="L259">        mCrumb++;</span>
+<span class="nc bnc" id="L260" title="All 2 branches missed.">        if (mTrail.size () &lt;= mCrumb)</span>
+<span class="nc" id="L261">            mTrail.addElement (url);</span>
+        else
+<span class="nc" id="L263">            mTrail.setElementAt (url, mCrumb);</span>
+<span class="nc" id="L264">        mLinkBean.setURL (url);</span>
+
+        // update navigation menu
+<span class="nc bnc" id="L267" title="All 2 branches missed.">        mBack.setEnabled (mCrumb &gt; 0);</span>
+<span class="nc bnc" id="L268" title="All 2 branches missed.">        mForward.setEnabled (mCrumb + 1 &lt; mTrail.size ());</span>
+<span class="nc" id="L269">    }</span>
+
+    /** This method is called from within the constructor to
+     * initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is
+     * always regenerated by the Form Editor.
+     */
+    private void initComponents()//GEN-BEGIN:initComponents
+    {
+        javax.swing.JMenuBar menubar;
+        javax.swing.JScrollPane pane1;
+        javax.swing.JScrollPane pane2;
+        javax.swing.JMenu go;
+        javax.swing.JMenu options;
+        javax.swing.JPanel panel;
+
+<span class="nc" id="L285">        menubar = new javax.swing.JMenuBar();</span>
+<span class="nc" id="L286">        setJMenuBar (menubar);</span>
+<span class="nc" id="L287">        go = new javax.swing.JMenu();</span>
+<span class="nc" id="L288">        mBack = new javax.swing.JMenuItem();</span>
+<span class="nc" id="L289">        mForward = new javax.swing.JMenuItem();</span>
+<span class="nc" id="L290">        options = new javax.swing.JMenu();</span>
+<span class="nc" id="L291">        mLinks = new javax.swing.JCheckBoxMenuItem();</span>
+<span class="nc" id="L292">        mCollapse = new javax.swing.JCheckBoxMenuItem();</span>
+<span class="nc" id="L293">        mNobreak = new javax.swing.JCheckBoxMenuItem();</span>
+<span class="nc" id="L294">        panel = new javax.swing.JPanel();</span>
+<span class="nc" id="L295">        mSplitPane = new javax.swing.JSplitPane();</span>
+<span class="nc" id="L296">        pane1 = new javax.swing.JScrollPane();</span>
+<span class="nc" id="L297">        mLinkBean = new org.htmlparser.beans.HTMLLinkBean();</span>
+<span class="nc" id="L298">        pane2 = new javax.swing.JScrollPane();</span>
+<span class="nc" id="L299">        mStringBean = new org.htmlparser.beans.HTMLTextBean();</span>
+<span class="nc" id="L300">        mTextField = new javax.swing.JTextField();</span>
+
+<span class="nc" id="L302">        go.setMnemonic('G');</span>
+<span class="nc" id="L303">        go.setText(&quot;Go&quot;);</span>
+<span class="nc" id="L304">        go.setToolTipText(&quot;crude URL navigation&quot;);</span>
+<span class="nc" id="L305">        mBack.setMnemonic('B');</span>
+<span class="nc" id="L306">        mBack.setText(&quot;Back&quot;);</span>
+<span class="nc" id="L307">        mBack.setToolTipText(&quot;back one URL&quot;);</span>
+<span class="nc" id="L308">        mBack.setName(&quot;Back&quot;);</span>
+<span class="nc" id="L309">        mBack.addActionListener (this);</span>
+<span class="nc" id="L310">        go.add(mBack);</span>
+
+<span class="nc" id="L312">        mForward.setMnemonic('F');</span>
+<span class="nc" id="L313">        mForward.setText(&quot;Forward&quot;);</span>
+<span class="nc" id="L314">        mForward.setToolTipText(&quot;forward one URL&quot;);</span>
+<span class="nc" id="L315">        mForward.setName(&quot;Forward&quot;);</span>
+<span class="nc" id="L316">        mForward.addActionListener (this);</span>
+<span class="nc" id="L317">        go.add(mForward);</span>
+
+<span class="nc" id="L319">        menubar.add(go);</span>
+
+<span class="nc" id="L321">        options.setMnemonic('O');</span>
+<span class="nc" id="L322">        options.setText(&quot;Options&quot;);</span>
+<span class="nc" id="L323">        options.setToolTipText(&quot;Bean settings&quot;);</span>
+<span class="nc" id="L324">        mLinks.setMnemonic('L');</span>
+<span class="nc" id="L325">        mLinks.setText(&quot;Links&quot;);</span>
+<span class="nc" id="L326">        mLinks.setToolTipText(&quot;show/hide links in text&quot;);</span>
+<span class="nc" id="L327">        mLinks.setName(&quot;Links&quot;);</span>
+<span class="nc" id="L328">        mLinks.addActionListener (this);</span>
+<span class="nc" id="L329">        options.add(mLinks);</span>
+
+<span class="nc" id="L331">        mCollapse.setMnemonic('C');</span>
+<span class="nc" id="L332">        mCollapse.setText(&quot;Collapse&quot;);</span>
+<span class="nc" id="L333">        mCollapse.setToolTipText(&quot;collapse/retain whitespace sequences&quot;);</span>
+<span class="nc" id="L334">        mCollapse.setName(&quot;Collapse&quot;);</span>
+<span class="nc" id="L335">        mCollapse.addActionListener (this);</span>
+<span class="nc" id="L336">        options.add(mCollapse);</span>
+
+<span class="nc" id="L338">        mNobreak.setMnemonic('N');</span>
+<span class="nc" id="L339">        mNobreak.setText(&quot;Non-breaking Spaces&quot;);</span>
+<span class="nc" id="L340">        mNobreak.setToolTipText(&quot;replace/retain non-breaking spaces&quot;);</span>
+<span class="nc" id="L341">        mNobreak.setName(&quot;Nobreak&quot;);</span>
+<span class="nc" id="L342">        mNobreak.addActionListener (this);</span>
+<span class="nc" id="L343">        options.add(mNobreak);</span>
+
+<span class="nc" id="L345">        menubar.add(options);</span>
+
+<span class="nc" id="L347">        setTitle(&quot;BeanyBaby&quot;);</span>
+<span class="nc" id="L348">        addWindowListener(new WindowAdapter()</span>
+        {
+            public void windowClosing(WindowEvent evt)
+            {
+<span class="nc" id="L352">                exitForm(evt);</span>
+<span class="nc" id="L353">            }</span>
+        });
+
+<span class="nc" id="L356">        panel.setLayout(new BorderLayout());</span>
+
+<span class="nc" id="L358">        pane1.setViewportView(mLinkBean);</span>
+
+<span class="nc" id="L360">        mSplitPane.setLeftComponent(pane1);</span>
+
+<span class="nc" id="L362">        pane2.setViewportView(mStringBean);</span>
+
+<span class="nc" id="L364">        mSplitPane.setRightComponent(pane2);</span>
+
+<span class="nc" id="L366">        panel.add(mSplitPane, BorderLayout.CENTER);</span>
+
+<span class="nc" id="L368">        mTextField.setToolTipText(&quot;Enter the URL to view&quot;);</span>
+<span class="nc" id="L369">        panel.add(mTextField, BorderLayout.SOUTH);</span>
+
+<span class="nc" id="L371">        getContentPane().add(panel, BorderLayout.CENTER);</span>
+
+<span class="nc" id="L373">        pack();</span>
+<span class="nc" id="L374">        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();</span>
+<span class="nc" id="L375">        setSize(new Dimension(640, 480));</span>
+<span class="nc" id="L376">        setLocation((screenSize.width-640)/2,(screenSize.height-480)/2);</span>
+<span class="nc" id="L377">    }//GEN-END:initComponents</span>
+
+    /** Exit the Application
+     * @param event Details about the window event. */
+    private void exitForm (WindowEvent event)
+    {//GEN-FIRST:event_exitForm
+<span class="nc" id="L383">        System.exit (0);</span>
+<span class="nc" id="L384">    }//GEN-LAST:event_exitForm</span>
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private org.htmlparser.beans.HTMLLinkBean mLinkBean;
+    private javax.swing.JMenuItem mForward;
+    private javax.swing.JMenuItem mBack;
+    private javax.swing.JCheckBoxMenuItem mCollapse;
+    private javax.swing.JTextField mTextField;
+    private javax.swing.JSplitPane mSplitPane;
+    private javax.swing.JCheckBoxMenuItem mLinks;
+    private org.htmlparser.beans.HTMLTextBean mStringBean;
+    private javax.swing.JCheckBoxMenuItem mNobreak;
+    // End of variables declaration//GEN-END:variables
+
+    /**
+     * Unit test.
+     * @param args [0] The URL to use in the bean (optional).
+     */
+    public static void main (String[] args)
+    {
+<span class="nc" id="L404">        BeanyBaby bb = new BeanyBaby ();</span>
+<span class="nc" id="L405">        bb.setVisible (true);</span>
+<span class="nc bnc" id="L406" title="All 2 branches missed.">        if (0 &gt;= args.length)</span>
+<span class="nc" id="L407">            bb.setURL (&quot;http://www.slashdot.org&quot;);</span>
+        else
+<span class="nc" id="L409">            bb.setURL (args[0]);</span>
+<span class="nc" id="L410">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

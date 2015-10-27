@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>DoctypeTagTest.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tests.tagTests</a> &gt; <span class="el_source">DoctypeTagTest.java</span></div><h1>DoctypeTagTest.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Somik Raha
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/test/java/org/htmlparser/tests/tagTests/DoctypeTagTest.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tests.tagTests;
+
+import org.htmlparser.Node;
+import org.htmlparser.tags.DoctypeTag;
+import org.htmlparser.tests.ParserTestCase;
+import org.htmlparser.util.NodeIterator;
+import org.htmlparser.util.ParserException;
+
+public class DoctypeTagTest extends ParserTestCase {
+
+    static
+    {
+<span class="fc" id="L38">        System.setProperty (&quot;org.htmlparser.tests.tagTests.DoctypeTagTest&quot;, &quot;DoctypeTagTest&quot;);</span>
+<span class="fc" id="L39">    }</span>
+
+    public DoctypeTagTest(String name) {
+<span class="fc" id="L42">        super(name);</span>
+<span class="fc" id="L43">    }</span>
+
+    public void testToHTML() throws ParserException
+    {
+<span class="fc" id="L47">        String testHTML = new String(</span>
+<span class="fc" id="L48">        &quot;&lt;!DOCTYPE HTML PUBLIC \&quot;-//W3C//DTD HTML 4.0//EN\&quot;&gt;\n&quot;+</span>
+        &quot;&lt;HTML&gt;\n&quot;+
+        &quot;&lt;HEAD&gt;\n&quot;+
+        &quot;&lt;TITLE&gt;Cogs of Chicago&lt;/TITLE&gt;\n&quot;+
+        &quot;&lt;/HEAD&gt;\n&quot;+
+        &quot;&lt;BODY&gt;\n&quot;+
+        &quot;...\n&quot;+
+        &quot;&lt;/BODY&gt;\n&quot;+
+        &quot;&lt;/HTML&gt;\n&quot;);
+<span class="fc" id="L57">        createParser(testHTML);</span>
+<span class="fc" id="L58">        parseAndAssertNodeCount(4);</span>
+        // The first node should be an DoctypeTag
+<span class="fc" id="L60">        assertTrue(&quot;First node should be a DoctypeTag&quot;,node[0] instanceof DoctypeTag);</span>
+<span class="fc" id="L61">        DoctypeTag docTypeTag = (DoctypeTag)node[0];</span>
+<span class="fc" id="L62">        assertStringEquals(&quot;toHTML()&quot;,&quot;&lt;!DOCTYPE HTML PUBLIC \&quot;-//W3C//DTD HTML 4.0//EN\&quot;&gt;&quot;,docTypeTag.toHtml());</span>
+<span class="fc" id="L63">    }</span>
+
+    /**
+     * See bug #833592 DOCTYPE element is not parsed correctly
+     * Contributed by Trevor Watson (t007).
+     */
+    public void DocTypeElementTest () throws ParserException
+    {
+<span class="nc" id="L71">        final String DOCTYPE = &quot;&lt;!DOCTYPE HTML PUBLIC \&quot;-//W3C//DTD HTML 4.0 Transitional//EN\&quot;&gt;&quot;;</span>
+<span class="nc" id="L72">        final String HTML = DOCTYPE + &quot;\n&lt;HTML&gt;\n  &lt;HEAD&gt;\n    &lt;TITLE&gt;HTMLParserDocTypeBugTest&lt;/TITLE&gt;\n  &lt;/HEAD&gt;\n  &lt;BODY&gt;\n    HTMLParser DOCTYPE node bug test.\n  &lt;/BODY&gt;\n&lt;/HTML&gt;&quot;;</span>
+
+<span class="nc" id="L74">        createParser(HTML);</span>
+
+<span class="nc" id="L76">        NodeIterator e = parser.elements();</span>
+<span class="nc" id="L77">        Node node = e.nextNode();</span>
+
+        // First node is doctype
+<span class="nc" id="L80">        assertStringEquals(&quot;Doctype element output is incorrect.&quot;, DOCTYPE, node.toHtml());</span>
+<span class="nc" id="L81">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

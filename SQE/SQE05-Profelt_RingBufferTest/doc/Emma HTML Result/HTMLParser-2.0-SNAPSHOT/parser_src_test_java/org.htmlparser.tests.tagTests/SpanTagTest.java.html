@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>SpanTagTest.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tests.tagTests</a> &gt; <span class="el_source">SpanTagTest.java</span></div><h1>SpanTagTest.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/test/java/org/htmlparser/tests/tagTests/SpanTagTest.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tests.tagTests;
+
+import org.htmlparser.Node;
+import org.htmlparser.PrototypicalNodeFactory;
+import org.htmlparser.Tag;
+import org.htmlparser.tags.Span;
+import org.htmlparser.tags.TableColumn;
+import org.htmlparser.tests.ParserTestCase;
+
+public class SpanTagTest extends ParserTestCase
+{
+    static
+    {
+<span class="fc" id="L39">        System.setProperty (&quot;org.htmlparser.tests.tagTests.SpanTagTest&quot;, &quot;SpanTagTest&quot;);</span>
+    }
+
+    private static final String HTML_WITH_SPAN =
+        &quot;&lt;TD BORDER=\&quot;0.0\&quot; VALIGN=\&quot;Top\&quot; COLSPAN=\&quot;4\&quot; WIDTH=\&quot;33.33%\&quot;&gt;&quot; +
+        &quot;   &lt;DIV&gt;&quot; +
+        &quot;       &lt;SPAN&gt;Flavor: small(90 to 120 minutes)&lt;BR /&gt;&lt;/SPAN&gt;&quot; +
+        &quot;       &lt;SPAN&gt;The short version of our Refactoring Challenge gives participants a general feel for the smells in the code base and includes time for participants to find and implement important refactorings.&amp;#013;&lt;BR /&gt;&lt;/SPAN&gt;&quot; +
+        &quot;   &lt;/DIV&gt;&quot; +
+<span class="fc" id="L48">        &quot;&lt;/TD&gt;&quot;;</span>
+
+    public SpanTagTest (String name)
+    {
+<span class="fc" id="L52">        super(name);</span>
+<span class="fc" id="L53">    }</span>
+    
+    public void testScan() throws Exception {
+<span class="fc" id="L56">        createParser(</span>
+<span class="fc" id="L57">            HTML_WITH_SPAN</span>
+        );
+<span class="fc" id="L59">        parser.setNodeFactory (</span>
+<span class="fc" id="L60">            new PrototypicalNodeFactory (</span>
+<span class="fc" id="L61">                new Tag[] {</span>
+<span class="fc" id="L62">                    new TableColumn (),</span>
+<span class="fc" id="L63">                    new Span (),</span>
+                }));
+<span class="fc" id="L65">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L66">        assertType(&quot;node&quot;,TableColumn.class,node[0]);</span>
+<span class="fc" id="L67">        TableColumn col = (TableColumn)node[0];</span>
+<span class="fc" id="L68">        Node spans [] = col.searchFor(Span.class, true).toNodeArray();</span>
+<span class="fc" id="L69">        assertEquals(&quot;number of spans found&quot;,2,spans.length);</span>
+<span class="fc" id="L70">        assertStringEquals(</span>
+<span class="fc" id="L71">            &quot;span 1&quot;,</span>
+<span class="fc" id="L72">            &quot;Flavor: small(90 to 120 minutes)&quot;,</span>
+<span class="fc" id="L73">            spans[0].toPlainTextString()</span>
+        );
+<span class="fc" id="L75">        assertStringEquals(</span>
+<span class="fc" id="L76">            &quot;span 2&quot;,</span>
+<span class="fc" id="L77">            &quot;The short version of our Refactoring Challenge gives participants a general feel for the smells in the code base and includes time for participants to find and implement important refactorings.&amp;#013;&quot;,</span>
+<span class="fc" id="L78">            spans[1].toPlainTextString()</span>
+        );
+
+<span class="fc" id="L81">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

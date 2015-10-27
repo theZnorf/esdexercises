@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>NodeVisitorTest.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tests.visitorsTests</a> &gt; <span class="el_source">NodeVisitorTest.java</span></div><h1>NodeVisitorTest.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Somik Raha
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/test/java/org/htmlparser/tests/visitorsTests/NodeVisitorTest.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tests.visitorsTests;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import org.htmlparser.Tag;
+import org.htmlparser.Text;
+import org.htmlparser.tests.ParserTestCase;
+import org.htmlparser.visitors.NodeVisitor;
+
+public class NodeVisitorTest extends ParserTestCase {
+
+    static
+    {
+<span class="fc" id="L40">        System.setProperty (&quot;org.htmlparser.tests.visitorsTests.NodeVisitorTest&quot;, &quot;NodeVisitorTest&quot;);</span>
+<span class="fc" id="L41">    }</span>
+
+    public NodeVisitorTest(String name) {
+<span class="fc" id="L44">        super(name);</span>
+<span class="fc" id="L45">    }</span>
+
+    public void testVisitTag() throws Exception {
+<span class="fc" id="L48">        ParameterVisitor visitor = new ParameterVisitor();</span>
+<span class="fc" id="L49">        createParser(</span>
+<span class="fc" id="L50">            &quot;&lt;input&gt;&quot; +</span>
+                &quot;&lt;param name='key1'&gt;value1&lt;/param&gt;&quot;+
+                &quot;&lt;param name='key2'&gt;value2&lt;/param&gt;&quot;+
+            &quot;&lt;/input&gt;&quot;
+        );
+<span class="fc" id="L55">        parser.visitAllNodesWith(visitor);</span>
+<span class="fc" id="L56">        assertEquals(&quot;value of key1&quot;,&quot;value1&quot;,visitor.getValue(&quot;key1&quot;));</span>
+<span class="fc" id="L57">        assertEquals(&quot;value of key2&quot;,&quot;value2&quot;,visitor.getValue(&quot;key2&quot;));</span>
+<span class="fc" id="L58">    }</span>
+
+<span class="fc" id="L60">    class ParameterVisitor extends NodeVisitor {</span>
+<span class="fc" id="L61">        Map paramsMap = new HashMap();</span>
+        String lastKeyVisited;
+
+        public String getValue(String key) {
+<span class="fc" id="L65">            return (String)paramsMap.get(key);</span>
+        }
+
+        public void visitStringNode(Text stringNode) {
+<span class="fc" id="L69">            paramsMap.put(lastKeyVisited,stringNode.getText());</span>
+<span class="fc" id="L70">        }</span>
+
+        public void visitTag(Tag tag) {
+<span class="fc bfc" id="L73" title="All 2 branches covered.">            if (tag.getTagName().equals(&quot;PARAM&quot;)) {</span>
+<span class="fc" id="L74">                lastKeyVisited = tag.getAttribute(&quot;NAME&quot;);</span>
+            }
+<span class="fc" id="L76">        }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

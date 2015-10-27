@@ -1,0 +1,572 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>ParserTestCase.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tests</a> &gt; <span class="el_source">ParserTestCase.java</span></div><h1>ParserTestCase.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Somik Raha
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/test/java/org/htmlparser/tests/ParserTestCase.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tests;
+
+import java.util.Enumeration;
+import java.util.Properties;
+import java.util.Vector;
+
+import junit.framework.TestCase;
+import org.htmlparser.Attribute;
+
+import org.htmlparser.Node;
+import org.htmlparser.Parser;
+import org.htmlparser.Tag;
+import org.htmlparser.Text;
+import org.htmlparser.lexer.Lexer;
+import org.htmlparser.lexer.Page;
+import org.htmlparser.nodes.TagNode;
+import org.htmlparser.tags.FormTag;
+import org.htmlparser.tags.InputTag;
+import org.htmlparser.util.DefaultParserFeedback;
+import org.htmlparser.util.NodeIterator;
+import org.htmlparser.util.ParserException;
+import org.htmlparser.util.ParserUtils;
+
+public class ParserTestCase extends TestCase {
+
+<span class="fc" id="L51">    static boolean mCaseInsensitiveComparisons = false;</span>
+    protected Parser parser;
+    protected Node node [];
+    protected int nodeCount;
+    protected Lexer mLexer;
+
+    public ParserTestCase(String name) {
+<span class="fc" id="L58">        super(name);</span>
+<span class="fc" id="L59">    }</span>
+
+    public void testFake ()
+    {
+<span class="fc" id="L63">    }</span>
+
+    protected void parse(String response) throws ParserException {
+<span class="nc" id="L66">        createParser(response,10000);</span>
+<span class="nc" id="L67">        parseNodes();</span>
+<span class="nc" id="L68">    }</span>
+
+    protected void createParser(String inputHTML) {
+<span class="fc" id="L71">        mLexer =  new Lexer (new Page (inputHTML));</span>
+<span class="fc" id="L72">        parser = new Parser(mLexer, new DefaultParserFeedback(DefaultParserFeedback.QUIET));</span>
+<span class="fc" id="L73">        node = new Node[40];</span>
+<span class="fc" id="L74">    }</span>
+
+    protected void createParser(String inputHTML,int numNodes)
+    {
+<span class="nc" id="L78">        Lexer lexer = new Lexer (inputHTML);</span>
+<span class="nc" id="L79">        parser = new Parser (lexer, new DefaultParserFeedback(DefaultParserFeedback.QUIET));</span>
+<span class="nc" id="L80">        node = new Node[numNodes];</span>
+<span class="nc" id="L81">    }</span>
+
+    protected void createParser(String inputHTML, String url) {
+<span class="fc" id="L84">        Lexer lexer = new Lexer (inputHTML);</span>
+<span class="fc" id="L85">        lexer.getPage ().setUrl (url);</span>
+<span class="fc" id="L86">        parser = new Parser (lexer, new DefaultParserFeedback(DefaultParserFeedback.QUIET));</span>
+<span class="fc" id="L87">        node = new Node[40];</span>
+<span class="fc" id="L88">    }</span>
+
+    protected void createParser(String inputHTML, String url,int numNodes) {
+<span class="fc" id="L91">        Lexer lexer = new Lexer (inputHTML);</span>
+<span class="fc" id="L92">        lexer.getPage ().setUrl (url);</span>
+<span class="fc" id="L93">        parser = new Parser (lexer, new DefaultParserFeedback(DefaultParserFeedback.QUIET));</span>
+<span class="fc" id="L94">        node = new Node[numNodes];</span>
+<span class="fc" id="L95">    }</span>
+
+    public Parser getParser ()
+    {
+<span class="nc" id="L99">        return (parser);</span>
+    }
+
+    public void setParser (Parser parser)
+    {
+<span class="nc" id="L104">        this.parser = parser;</span>
+<span class="nc" id="L105">    }</span>
+
+    public void assertStringEquals(String message, String expected,
+                                      String actual) {
+<span class="fc" id="L109">        String mismatchInfo = &quot;&quot;;</span>
+
+<span class="pc bpc" id="L111" title="1 of 2 branches missed.">        if (expected.length() &lt; actual.length()) {</span>
+<span class="nc" id="L112">            mismatchInfo = &quot;\n\nACTUAL result has &quot;+(actual.length()-expected.length())+&quot; extra characters at the end. They are :&quot;;</span>
+<span class="nc" id="L113">            int limit = Math.min (expected.length() + 10, actual.length());</span>
+<span class="nc bnc" id="L114" title="All 2 branches missed.">            for (int i = expected.length(); i &lt; limit; i++)</span>
+<span class="nc" id="L115">                mismatchInfo += (&quot;\nPosition : &quot; + i + &quot; , Code = &quot; + (int) actual.charAt(i));</span>
+<span class="nc bnc" id="L116" title="All 2 branches missed.">            if (limit != actual.length())</span>
+<span class="nc" id="L117">                mismatchInfo += &quot;\netc.&quot;;</span>
+<span class="pc bpc" id="L118" title="1 of 2 branches missed.">        } else if(expected.length() &gt; actual.length()) {</span>
+<span class="nc" id="L119">            mismatchInfo = &quot;\n\nEXPECTED result has &quot;+(expected.length()-actual.length())+&quot; extra characters at the end. They are :&quot;;</span>
+<span class="nc" id="L120">            int limit = Math.min (actual.length() + 10, expected.length());</span>
+<span class="nc bnc" id="L121" title="All 2 branches missed.">            for (int i = actual.length(); i &lt; expected.length(); i++)</span>
+<span class="nc" id="L122">                mismatchInfo += (&quot;\nPosition : &quot; + i + &quot; , Code = &quot; + (int) expected.charAt(i));</span>
+<span class="nc bnc" id="L123" title="All 2 branches missed.">            if (limit != expected.length ())</span>
+<span class="nc" id="L124">                mismatchInfo += &quot;\netc.&quot;;</span>
+        }
+<span class="fc bfc" id="L126" title="All 2 branches covered.">        for (int i = 0; i &lt; expected.length(); i++) {</span>
+            if (
+<span class="pc bpc" id="L128" title="1 of 2 branches missed.">                    (expected.length() != actual.length() &amp;&amp;</span>
+                        (
+<span class="nc bnc" id="L130" title="All 2 branches missed.">                            i &gt;= (expected.length()-1 ) ||</span>
+<span class="nc bnc" id="L131" title="All 2 branches missed.">                            i &gt;= (actual.length()-1 )</span>
+                        )
+                    ) ||
+<span class="pc bpc" id="L134" title="3 of 4 branches missed.">                    (mCaseInsensitiveComparisons &amp;&amp; Character.toUpperCase (actual.charAt(i)) != Character.toUpperCase (expected.charAt(i))) ||</span>
+<span class="pc bpc" id="L135" title="2 of 4 branches missed.">                    (!mCaseInsensitiveComparisons &amp;&amp; (actual.charAt(i) != expected.charAt(i)))</span>
+                ) {
+<span class="nc" id="L137">                    StringBuffer errorMsg = new StringBuffer();</span>
+<span class="nc" id="L138">                    errorMsg.append(</span>
+<span class="nc" id="L139">                        message +mismatchInfo + &quot; \nMismatch of strings at char posn &quot; + i +</span>
+<span class="nc" id="L140">                        &quot; \n\nString Expected upto mismatch = &quot; +</span>
+<span class="nc" id="L141">                        expected.substring(0, i) +</span>
+<span class="nc" id="L142">                        &quot; \n\nString Actual upto mismatch = &quot; +</span>
+<span class="nc" id="L143">                        actual.substring(0, i)</span>
+                    );
+<span class="nc bnc" id="L145" title="All 2 branches missed.">                    if (i&lt;expected.length())</span>
+<span class="nc" id="L146">                       errorMsg.append(</span>
+<span class="nc" id="L147">                            &quot; \n\nString Expected MISMATCH CHARACTER = &quot;+</span>
+<span class="nc" id="L148">                            expected.charAt(i) + &quot;, code = &quot; +</span>
+<span class="nc" id="L149">                            (int) expected.charAt(i)</span>
+                        );
+
+<span class="nc bnc" id="L152" title="All 2 branches missed.">                    if (i&lt;actual.length())</span>
+<span class="nc" id="L153">                        errorMsg.append(</span>
+<span class="nc" id="L154">                            &quot; \n\nString Actual MISMATCH CHARACTER = &quot; +</span>
+<span class="nc" id="L155">                            actual.charAt(i) + &quot;, code = &quot; +</span>
+<span class="nc" id="L156">                            (int) actual.charAt(i)</span>
+                        );
+
+<span class="nc" id="L159">                    errorMsg.append(</span>
+<span class="nc" id="L160">                        &quot; \n\n**** COMPLETE STRING EXPECTED ****\n&quot; +</span>
+<span class="nc" id="L161">                        expected +</span>
+<span class="nc" id="L162">                        &quot; \n\n**** COMPLETE STRING ACTUAL***\n&quot; + actual</span>
+                    );
+<span class="nc" id="L164">                    System.out.println (&quot;string differs, expected \&quot;&quot; + expected + &quot;\&quot;, actual \&quot;&quot; + actual + &quot;\&quot;&quot;);</span>
+<span class="nc" id="L165">                    failWithMessage(errorMsg.toString());</span>
+            }
+
+        }
+<span class="fc" id="L169">    }</span>
+
+    public void failWithMessage(String message) {
+<span class="nc" id="L172">    	fail(message);</span>
+<span class="nc" id="L173">	}</span>
+
+	public void parseNodes() throws ParserException{
+<span class="fc" id="L176">        nodeCount = 0;</span>
+<span class="fc bfc" id="L177" title="All 2 branches covered.">        for (NodeIterator e = parser.elements();e.hasMoreNodes();)</span>
+        {
+<span class="fc" id="L179">            node[nodeCount++] = e.nextNode();</span>
+        }
+<span class="fc" id="L181">    }</span>
+
+    public void assertNodeCount(int nodeCountExpected) {
+<span class="fc" id="L184">        StringBuffer msg = new StringBuffer();</span>
+<span class="fc bfc" id="L185" title="All 2 branches covered.">        for (int i=0;i&lt;nodeCount;i++) {</span>
+<span class="fc" id="L186">            msg.append(node[i].getClass().getName());</span>
+<span class="fc" id="L187">            msg.append(&quot;--&gt;\n&quot;).append(node[i].toHtml()).append(&quot;\n&quot;);</span>
+        }
+<span class="pc bpc" id="L189" title="1 of 2 branches missed.">        if (nodeCountExpected != nodeCount)</span>
+<span class="nc" id="L190">            System.out.println (&quot;node count differs, expected &quot; + nodeCountExpected + &quot;, actual &quot; + nodeCount);</span>
+<span class="fc" id="L191">        assertEquals(&quot;Number of nodes parsed didn't match, nodes found were :\n&quot;+msg.toString(),nodeCountExpected,nodeCount);</span>
+<span class="fc" id="L192">    }</span>
+
+    public void parseAndAssertNodeCount(int nodeCountExpected) throws ParserException {
+<span class="fc" id="L195">        parseNodes();</span>
+<span class="fc" id="L196">        assertNodeCount(nodeCountExpected);</span>
+<span class="fc" id="L197">    }</span>
+
+    public void assertSameType(String displayMessage, Node expected, Node actual) {
+<span class="fc" id="L200">        String expectedNodeName = expected.getClass().getName();</span>
+<span class="fc" id="L201">        String actualNodeName = actual.getClass().getName();</span>
+<span class="fc" id="L202">        displayMessage =</span>
+<span class="fc" id="L203">            &quot;The types did not match: Expected &quot;+</span>
+<span class="fc" id="L204">            expectedNodeName+&quot; \nbut was &quot;+</span>
+<span class="fc" id="L205">            actualNodeName+&quot;\nEXPECTED XML:&quot;+expected.toHtml()+&quot;\n&quot;+</span>
+<span class="fc" id="L206">            &quot;ACTUAL XML:&quot;+actual.toHtml()+displayMessage;</span>
+<span class="fc" id="L207">        assertStringEquals(displayMessage, expectedNodeName, actualNodeName);</span>
+<span class="fc" id="L208">    }</span>
+
+    public void assertTagEquals(String displayMessage, Node expected, Node actual) {
+<span class="fc bfc" id="L211" title="All 2 branches covered.">        if (expected instanceof Tag) {</span>
+<span class="fc" id="L212">            Tag expectedTag = (Tag)expected;</span>
+<span class="fc" id="L213">            Tag actualTag   = (Tag)actual;</span>
+<span class="fc" id="L214">            assertTagNameMatches(displayMessage, expectedTag, actualTag);</span>
+<span class="fc" id="L215">            assertAttributesMatch(displayMessage, expectedTag, actualTag);</span>
+        }
+<span class="fc" id="L217">    }</span>
+
+    private void assertTagNameMatches(
+        String displayMessage,
+        Tag nextExpectedTag,
+        Tag nextActualTag) {
+<span class="fc" id="L223">        String expectedTagName = nextExpectedTag.getTagName();</span>
+<span class="fc" id="L224">        String actualTagName = nextActualTag.getTagName();</span>
+<span class="fc" id="L225">        displayMessage = &quot;The tag names did not match: Expected &quot;+expectedTagName+&quot; \nbut was &quot;+actualTagName+displayMessage;</span>
+<span class="fc" id="L226">        assertStringEquals(displayMessage, expectedTagName, actualTagName);</span>
+<span class="fc" id="L227">    }</span>
+
+    public void assertXmlEquals(String displayMessage, String expected, String actual) throws Exception
+    {
+        Node nextExpectedNode;
+        Node nextActualNode;
+        Tag tag1;
+        Tag tag2;
+
+<span class="fc" id="L236">        expected = removeEscapeCharacters(expected);</span>
+<span class="fc" id="L237">        actual   = removeEscapeCharacters(actual);</span>
+
+<span class="fc" id="L239">        Parser expectedParser = Parser.createParser(expected, null);</span>
+<span class="fc" id="L240">        Parser resultParser   = Parser.createParser(actual, null);</span>
+
+<span class="fc" id="L242">        NodeIterator expectedIterator = expectedParser.elements();</span>
+<span class="fc" id="L243">        NodeIterator actualIterator =  resultParser.elements();</span>
+<span class="fc" id="L244">        displayMessage = createGenericFailureMessage(displayMessage, expected, actual);</span>
+
+<span class="fc" id="L246">        nextExpectedNode = null;</span>
+<span class="fc" id="L247">        nextActualNode = null;</span>
+<span class="fc" id="L248">        tag1 = null;</span>
+<span class="fc" id="L249">        tag2 = null;</span>
+        do {
+<span class="fc bfc" id="L251" title="All 2 branches covered.">            if (null != tag1)</span>
+<span class="fc" id="L252">                nextExpectedNode = tag1;</span>
+            else
+<span class="fc" id="L254">                nextExpectedNode = getNextNodeUsing (expectedIterator);</span>
+<span class="fc bfc" id="L255" title="All 2 branches covered.">            if (null != tag2)</span>
+<span class="fc" id="L256">                nextActualNode = tag2;</span>
+            else
+<span class="fc" id="L258">                nextActualNode = getNextNodeUsing (actualIterator);</span>
+<span class="fc" id="L259">            assertNotNull (nextActualNode);</span>
+<span class="fc" id="L260">            tag1 = fixIfXmlEndTag (expectedParser.getLexer ().getPage (), nextExpectedNode);</span>
+<span class="fc" id="L261">            tag2 = fixIfXmlEndTag (resultParser.getLexer ().getPage (), nextActualNode);</span>
+<span class="fc" id="L262">            assertStringValueMatches(</span>
+<span class="fc" id="L263">                displayMessage,</span>
+<span class="fc" id="L264">                nextExpectedNode,</span>
+<span class="fc" id="L265">                nextActualNode</span>
+            );
+<span class="fc" id="L267">            assertSameType(displayMessage, nextExpectedNode, nextActualNode);</span>
+<span class="fc" id="L268">            assertTagEquals(displayMessage, nextExpectedNode, nextActualNode);</span>
+        }
+<span class="fc bfc" id="L270" title="All 4 branches covered.">        while (expectedIterator.hasMoreNodes() || (null != tag1));</span>
+<span class="fc" id="L271">        assertActualXmlHasNoMoreNodes(displayMessage, actualIterator);</span>
+<span class="fc" id="L272">    }</span>
+
+    private Node getNextNodeUsing(NodeIterator nodeIterator)
+        throws ParserException {
+        Node nextNode;
+<span class="fc" id="L277">        String text=null;</span>
+        do {
+<span class="fc" id="L279">            nextNode = nodeIterator.nextNode();</span>
+<span class="fc bfc" id="L280" title="All 2 branches covered.">            if (nextNode instanceof Text) {</span>
+<span class="fc" id="L281">                text = nextNode.toPlainTextString().trim();</span>
+<span class="fc" id="L282">            } else text = null;</span>
+        }
+<span class="fc bfc" id="L284" title="All 4 branches covered.">        while (text!=null &amp;&amp; text.length()==0);</span>
+<span class="fc" id="L285">        return nextNode;</span>
+    }
+
+    private void assertStringValueMatches(
+        String displayMessage, Node expectedNode,Node actualNode) {
+
+<span class="fc" id="L291">        String expected = expectedNode.toPlainTextString().trim();</span>
+<span class="fc" id="L292">        String actual = actualNode.toPlainTextString().trim();</span>
+<span class="fc" id="L293">        expected = expected.replace('\n', ' ');</span>
+<span class="fc" id="L294">        actual = actual.replace('\n',' ');</span>
+<span class="fc" id="L295">        displayMessage = &quot;String value mismatch\nEXPECTED:&quot;+expected+&quot;\nACTUAL:&quot;+actual+displayMessage;</span>
+<span class="fc" id="L296">        assertStringEquals(displayMessage,expected,actual);</span>
+
+<span class="fc" id="L298">    }</span>
+
+    private void assertActualXmlHasNoMoreNodes(
+        String displayMessage,
+        NodeIterator actualIterator)
+        throws ParserException {
+<span class="pc bpc" id="L304" title="1 of 2 branches missed.">        if (actualIterator.hasMoreNodes()) {</span>
+<span class="nc" id="L305">            String extraTags = &quot;\nExtra Tags\n**********\n&quot;;</span>
+            do {
+<span class="nc" id="L307">                extraTags += actualIterator.nextNode().toHtml();</span>
+            }
+<span class="nc bnc" id="L309" title="All 2 branches missed.">            while (actualIterator.hasMoreNodes());</span>
+
+<span class="nc" id="L311">            displayMessage = &quot;Actual had more data than expected\n&quot;+extraTags+displayMessage;</span>
+<span class="nc" id="L312">            fail(displayMessage);</span>
+        }
+<span class="fc" id="L314">    }</span>
+
+    private String createGenericFailureMessage(
+        String displayMessage,
+        String expected,
+        String actual) {
+<span class="fc" id="L320">        return &quot;\n\n&quot;+displayMessage+&quot;\n\nComplete Xml\n************\nEXPECTED:\n&quot;+expected+&quot;\nACTUAL:\n&quot;+actual;</span>
+    }
+
+    /**
+     * Return a following tag if node is an empty XML tag.
+     */
+    private Tag fixIfXmlEndTag (Page page, Node node)
+    {
+        Tag ret;
+
+<span class="fc" id="L330">        ret = null;</span>
+<span class="fc bfc" id="L331" title="All 2 branches covered.">        if (node instanceof Tag)</span>
+        {
+<span class="fc" id="L333">            Tag tag = (Tag)node;</span>
+<span class="fc bfc" id="L334" title="All 2 branches covered.">            if (tag.isEmptyXmlTag())</span>
+            {
+<span class="fc" id="L336">                tag.setEmptyXmlTag (false);</span>
+<span class="fc" id="L337">                ret = new TagNode (page, tag.getStartPosition (), tag.getEndPosition (), tag.getAttributesEx ());</span>
+            }
+        }
+        
+<span class="fc" id="L341">        return (ret);</span>
+    }
+
+    private void assertAttributesMatch(String displayMessage, Tag expectedTag, Tag actualTag)
+    {
+<span class="fc" id="L346">        assertAllExpectedTagAttributesFoundInActualTag(</span>
+<span class="fc" id="L347">            displayMessage,</span>
+<span class="fc" id="L348">            expectedTag,</span>
+<span class="fc" id="L349">            actualTag);</span>
+<span class="pc bpc" id="L350" title="1 of 2 branches missed.">        if (expectedTag.getAttributesEx().size() != actualTag.getAttributesEx().size())</span>
+<span class="nc" id="L351">            assertActualTagHasNoExtraAttributes(displayMessage, expectedTag, actualTag);</span>
+<span class="fc" id="L352">    }</span>
+
+    private void assertActualTagHasNoExtraAttributes(String displayMessage, Tag expectedTag, Tag actualTag)
+    {
+<span class="nc" id="L356">        assertStringEquals (displayMessage+&quot;\ntag name&quot;, expectedTag.getTagName (), actualTag.getTagName ());</span>
+<span class="nc" id="L357">        Vector v = actualTag.getAttributesEx ();</span>
+<span class="nc bnc" id="L358" title="All 2 branches missed.">        for (int i = 1; i &lt; v.size (); i++)</span>
+        {
+<span class="nc" id="L360">            Attribute a = (Attribute)v.elementAt (i);</span>
+<span class="nc bnc" id="L361" title="All 2 branches missed.">            if (a.isWhitespace ())</span>
+<span class="nc" id="L362">                continue;</span>
+<span class="nc" id="L363">            String expectedValue = expectedTag.getAttribute (a.getName ());</span>
+<span class="nc bnc" id="L364" title="All 2 branches missed.">            if (null == expectedValue)</span>
+<span class="nc" id="L365">                fail(&quot;\nActual tag had extra attribute: &quot; + a.getName () + displayMessage);</span>
+        }
+<span class="nc" id="L367">    }</span>
+
+    private void assertAllExpectedTagAttributesFoundInActualTag(
+        String displayMessage,
+        Tag expectedTag,
+        Tag actualTag)
+    {
+<span class="fc" id="L374">        assertStringEquals (displayMessage+&quot;\ntag name&quot;, expectedTag.getTagName (), actualTag.getTagName ());</span>
+<span class="fc" id="L375">        Vector v = actualTag.getAttributesEx ();</span>
+<span class="fc bfc" id="L376" title="All 2 branches covered.">        for (int i = 1; i &lt; v.size (); i++)</span>
+        {
+<span class="fc" id="L378">            Attribute a = (Attribute)v.elementAt (i);</span>
+<span class="fc bfc" id="L379" title="All 2 branches covered.">            if (a.isWhitespace ())</span>
+<span class="fc" id="L380">                continue;</span>
+<span class="fc" id="L381">            String actualValue = actualTag.getAttribute (a.getName ());</span>
+<span class="fc" id="L382">            String expectedValue = expectedTag.getAttribute (a.getName ());</span>
+
+<span class="fc" id="L384">            assertStringEquals(</span>
+<span class="fc" id="L385">                &quot;\nvalue for attribute &quot; + a.getName () + &quot; in tag &quot;+expectedTag.getTagName()+&quot; expected=&quot;+expectedValue+&quot; but was &quot;+actualValue+</span>
+<span class="fc" id="L386">                &quot;\n\nComplete Tag expected:\n&quot;+expectedTag.toHtml()+</span>
+<span class="fc" id="L387">                &quot;\n\nComplete Tag actual:\n&quot;+actualTag.toHtml()+</span>
+<span class="fc" id="L388">                displayMessage,</span>
+<span class="fc" id="L389">                expectedValue,</span>
+<span class="fc" id="L390">                actualValue</span>
+            );
+        }
+<span class="fc" id="L393">    }</span>
+
+    public static String removeEscapeCharacters(String inputString) {
+<span class="fc" id="L396">        inputString = ParserUtils.removeChars(inputString,'\r');</span>
+<span class="fc" id="L397">        inputString = inputString.replace ('\n',' ');</span>
+<span class="fc" id="L398">        inputString = ParserUtils.removeChars(inputString,'\t');</span>
+<span class="fc" id="L399">        return inputString;</span>
+    }
+
+    public void assertSuperType(
+        String message,
+        Class expectedType,
+        Object object)
+    {   
+<span class="fc" id="L407">        String expectedTypeName = expectedType.getName();</span>
+<span class="fc" id="L408">        String actualTypeName   = object.getClass().getName();</span>
+<span class="pc bpc" id="L409" title="1 of 2 branches missed.">        if (!expectedType.isAssignableFrom (object.getClass ()))</span>
+<span class="nc" id="L410">            fail(</span>
+<span class="nc" id="L411">                message+&quot; should have been of type\n&quot;+</span>
+<span class="nc" id="L412">                expectedTypeName+</span>
+<span class="nc" id="L413">                &quot; but was of type \n&quot;+</span>
+<span class="nc" id="L414">                actualTypeName+&quot;\n and is :&quot;+((Node)object).toHtml()</span>
+            );
+<span class="fc" id="L416">    }</span>
+
+    public void assertType(
+        String message,
+        Class expectedType,
+        Object object)
+    {
+<span class="pc bpc" id="L423" title="1 of 2 branches missed.">        if (!expectedType.isAssignableFrom (object.getClass ()))</span>
+        {
+<span class="nc" id="L425">            String expectedTypeName = expectedType.getName ();</span>
+<span class="nc" id="L426">            String actualTypeName   = object.getClass ().getName ();</span>
+<span class="nc bnc" id="L427" title="All 2 branches missed.">            if (!actualTypeName.equals (expectedTypeName))</span>
+<span class="nc" id="L428">                fail(</span>
+<span class="nc" id="L429">                    message + &quot; should have been of type &quot;+</span>
+<span class="nc" id="L430">                    expectedTypeName</span>
+<span class="nc" id="L431">                    + &quot; but was of type &quot;</span>
+<span class="nc" id="L432">                    + actualTypeName</span>
+<span class="nc" id="L433">                    + &quot; and is:&quot;</span>
+<span class="nc" id="L434">                    + ((Node)object).toHtml()</span>
+                );
+        }
+<span class="fc" id="L437">    }</span>
+
+    protected void assertHiddenIDTagPresent(FormTag formTag, String name, String inputTagValue) {
+<span class="nc" id="L440">        InputTag inputTag = formTag.getInputTag(name);</span>
+<span class="nc" id="L441">        assertNotNull(&quot;Hidden Tag &quot;+name+&quot; should have been there&quot;, inputTag);</span>
+<span class="nc" id="L442">        assertStringEquals(&quot;Hidden Tag Contents&quot;, inputTagValue, inputTag.getAttribute(&quot;VALUE&quot;));</span>
+<span class="nc" id="L443">        assertStringEquals(&quot;Hidden Tag Type&quot;, &quot;hidden&quot;, inputTag.getAttribute(&quot;TYPE&quot;));</span>
+<span class="nc" id="L444">    }</span>
+
+    protected void assertNodeCount(String message, int expectedLength, Node[] nodes) {
+<span class="pc bpc" id="L447" title="1 of 2 branches missed.">        if (expectedLength!=nodes.length) {</span>
+<span class="nc" id="L448">            StringBuffer failMsg = new StringBuffer(message);</span>
+<span class="nc" id="L449">            failMsg.append(&quot;\n&quot;);</span>
+<span class="nc" id="L450">            failMsg.append(&quot;Number of nodes expected &quot;).append(expectedLength).append(&quot; \n&quot;);</span>
+<span class="nc" id="L451">            failMsg.append(&quot;but was : &quot;);</span>
+<span class="nc" id="L452">            failMsg.append(nodes.length).append(&quot;\n&quot;);</span>
+<span class="nc" id="L453">            failMsg.append(&quot;Nodes found are:\n&quot;);</span>
+<span class="nc bnc" id="L454" title="All 2 branches missed.">            for (int i=0;i&lt;nodes.length;i++) {</span>
+<span class="nc" id="L455">                failMsg.append(&quot;Node &quot;).append(i).append(&quot; : &quot;);</span>
+<span class="nc" id="L456">                failMsg.append(nodes[i].getClass().getName()).append(&quot;\n&quot;);</span>
+<span class="nc" id="L457">                failMsg.append(nodes[i].toString()).append(&quot;\n\n&quot;);</span>
+            }
+<span class="nc" id="L459">            fail(failMsg.toString());</span>
+        }
+<span class="fc" id="L461">    }</span>
+
+    /**
+     * Mainline for individual test cases.
+     * @param args Command line arguments. The following options
+     * are understood:
+     * &lt;pre&gt;
+     * -text  -- use junit.textui.TestRunner
+     * -awt   -- use junit.awtui.TestRunner
+     * -swing -- use junit.swingui.TestRunner (default)
+     * &lt;/pre&gt;
+     * All other options are passed on to the junit framework.
+     * Decides the test class by examiing the system properties looking
+     * for a property that starts with &quot;org.htmlparser.tests.&quot;, this is
+     * used as the name of the class (the value is ignored).
+     * Each class that subclasses ParserTestCase can inherit this mainline
+     * by adding a static block in their class similar to:
+     * &lt;pre&gt;
+     * static
+     * {
+     *     System.setProperty (&quot;org.htmlparser.tests.ParserTest&quot;, &quot;ParserTest&quot;);
+     * }
+     * &lt;/pre&gt;
+     */
+    public static void main(String[] args)
+    {
+        String runner;
+        int i;
+        String arguments[];
+        Properties properties;
+        Enumeration enumeration;
+        String name;
+        Class cls;
+
+<span class="nc" id="L495">        runner = null;</span>
+<span class="nc bnc" id="L496" title="All 4 branches missed.">        for (i = 0; (i &lt; args.length) &amp;&amp; (null == runner); i++)</span>
+        {
+<span class="nc bnc" id="L498" title="All 2 branches missed.">            if (args[i].equalsIgnoreCase (&quot;-text&quot;))</span>
+<span class="nc" id="L499">                runner = &quot;junit.textui.TestRunner&quot;;</span>
+<span class="nc bnc" id="L500" title="All 2 branches missed.">            else if (args[i].equalsIgnoreCase (&quot;-awt&quot;))</span>
+<span class="nc" id="L501">                runner = &quot;junit.awtui.TestRunner&quot;;</span>
+<span class="nc bnc" id="L502" title="All 2 branches missed.">            else if (args[i].equalsIgnoreCase (&quot;-swing&quot;))</span>
+<span class="nc" id="L503">                runner = &quot;junit.swingui.TestRunner&quot;;</span>
+        }
+<span class="nc bnc" id="L505" title="All 2 branches missed.">        if (null != runner)</span>
+        {
+            // remove it from the arguments
+<span class="nc" id="L508">            arguments = new String[args.length - 1];</span>
+<span class="nc" id="L509">            System.arraycopy (args, 0, arguments, 0, i - 1);</span>
+<span class="nc" id="L510">            System.arraycopy (args, i, arguments, i - 1, args.length - i);</span>
+<span class="nc" id="L511">            args = arguments;</span>
+<span class="nc" id="L512">        }</span>
+        else
+<span class="nc" id="L514">            runner = &quot;junit.swingui.TestRunner&quot;;</span>
+
+        // find the test class that has registered in the system properties
+<span class="nc" id="L517">        arguments = args; // default of no class name, works in GUI mode</span>
+<span class="nc" id="L518">        properties = System.getProperties ();</span>
+<span class="nc" id="L519">        enumeration = properties.propertyNames ();</span>
+<span class="nc bnc" id="L520" title="All 2 branches missed.">        while (enumeration.hasMoreElements ())</span>
+        {
+<span class="nc" id="L522">            name = (String)enumeration.nextElement ();</span>
+<span class="nc bnc" id="L523" title="All 2 branches missed.">            if (name.startsWith (&quot;org.htmlparser.tests.&quot;))</span>
+            {
+                // from http://www.mail-archive.com/commons-user%40jakarta.apache.org/msg02958.html
+                //
+                // The problem is within the UI test runners of JUnit. They bring
+                // with them a custom classloader, which causes the
+                // LogConfigurationException. Unfortunately Log4j doesn't work
+                // either.
+                //
+                // Solution: Disable &quot;Reload classes every run&quot; or start JUnit with
+                // command line option -noloading before the name of the Testsuite.
+                if (true)
+                {
+                    // append the test class
+<span class="nc" id="L537">                    arguments = new String[args.length + 2];</span>
+<span class="nc" id="L538">                    System.arraycopy (args, 0, arguments, 0, args.length);</span>
+<span class="nc" id="L539">                    arguments[arguments.length - 2] = &quot;-noloading&quot;;</span>
+<span class="nc" id="L540">                    arguments[arguments.length - 1] = name;</span>
+                }
+                else
+                {
+                    // append the test class
+                    arguments = new String[args.length + 1];
+                    System.arraycopy (args, 0, arguments, 0, args.length);
+                    arguments[args.length] = name;
+                }
+<span class="nc" id="L549">                break; // JUnit only handles one class on the command line</span>
+            }
+        }
+
+        // invoke main() of the test runner
+        try
+        {
+<span class="nc" id="L556">            cls = Class.forName (runner);</span>
+<span class="nc" id="L557">            java.lang.reflect.Method method = cls.getDeclaredMethod (</span>
+<span class="nc" id="L558">                &quot;main&quot;, new Class[] { String[].class });</span>
+<span class="nc" id="L559">            method.invoke (</span>
+<span class="nc" id="L560">                null,</span>
+<span class="nc" id="L561">                new Object[] { arguments });</span>
+<span class="nc" id="L562">        }</span>
+<span class="nc" id="L563">        catch (Throwable t)</span>
+        {
+<span class="nc" id="L565">            System.err.println (</span>
+<span class="nc" id="L566">                &quot;cannot run unit test (&quot;</span>
+<span class="nc" id="L567">                + t.getMessage ()</span>
+<span class="nc" id="L568">                + &quot;)&quot;);</span>
+        }
+<span class="nc" id="L570">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

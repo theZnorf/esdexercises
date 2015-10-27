@@ -9,7 +9,8 @@ import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
 @RunWith(Suite.class)
-@SuiteClasses({ EmptyRingBufferTest.class, RingBufferTest.class })
+@SuiteClasses({ EmptyRingBufferTest.class, RingBufferTest.class,
+    RingBufferWhiteBoxTest.class })
 public class AllTests {
 
 }

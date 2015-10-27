@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>ScriptScanner.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.scanners</a> &gt; <span class="el_source">ScriptScanner.java</span></div><h1>ScriptScanner.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Somik Raha
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/main/java/org/htmlparser/scanners/ScriptScanner.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.scanners;
+
+import java.util.Vector;
+
+import org.htmlparser.Attribute;
+import org.htmlparser.Node;
+import org.htmlparser.NodeFactory;
+import org.htmlparser.PrototypicalNodeFactory;
+import org.htmlparser.Remark;
+import org.htmlparser.Tag;
+import org.htmlparser.Text;
+import org.htmlparser.lexer.Cursor;
+import org.htmlparser.lexer.Lexer;
+import org.htmlparser.lexer.Page;
+import org.htmlparser.scanners.ScriptDecoder;
+import org.htmlparser.tags.ScriptTag;
+import org.htmlparser.util.NodeList;
+import org.htmlparser.util.ParserException;
+
+/**
+ * The ScriptScanner handles script CDATA.
+ */
+public class ScriptScanner
+    extends
+        CompositeTagScanner
+{
+    /**
+     * Strict parsing of CDATA flag.
+     * If this flag is set true, the parsing of script is performed without
+     * regard to quotes. This means that erroneous script such as:
+     * &lt;pre&gt;
+     * document.write(&quot;&amp;lt;/script&amp;gt&quot;);
+     * &lt;/pre&gt;
+     * will be parsed in strict accordance with appendix
+     * &lt;a href=&quot;http://www.w3.org/TR/html4/appendix/notes.html#notes-specifying-data&quot;&gt;
+     * B.3.2 Specifying non-HTML data&lt;/a&gt; of the
+     * &lt;a href=&quot;http://www.w3.org/TR/html4/&quot;&gt;HTML 4.01 Specification&lt;/a&gt; and
+     * hence will be split into two or more nodes. Correct javascript would
+     * escape the ETAGO:
+     * &lt;pre&gt;
+     * document.write(&quot;&amp;lt;\/script&amp;gt&quot;);
+     * &lt;/pre&gt;
+     * If true, CDATA parsing will stop at the first ETAGO (&quot;&amp;lt;/&quot;) no matter
+     * whether it is quoted or not. If false, balanced quotes (either single or
+     * double) will shield an ETAGO. Beacuse of the possibility of quotes within
+     * single or multiline comments, these are also parsed. In most cases,
+     * users prefer non-strict handling since there is so much broken script
+     * out in the wild.
+     */
+<span class="fc" id="L75">    public static boolean STRICT = true;</span>
+
+    /**
+     * Create a script scanner.
+     */
+<span class="fc" id="L80">    public ScriptScanner()</span>
+    {
+<span class="fc" id="L82">    }</span>
+
+    /**
+     * Scan for script.
+     * Accumulates text from the page, until &amp;lt;/[a-zA-Z] is encountered.
+     * @param tag The tag this scanner is responsible for.
+     * @param lexer The source of CDATA.
+     * @param stack The parse stack, &lt;em&gt;not used&lt;/em&gt;.
+     */
+    public Tag scan (Tag tag, Lexer lexer, NodeList stack)
+        throws ParserException
+    {
+        String language;
+        String code;
+        Node content;
+        int position;
+        Node node;
+        Attribute attribute;
+        Vector vector;
+
+<span class="pc bpc" id="L102" title="1 of 2 branches missed.">        if (tag instanceof ScriptTag)</span>
+        {
+<span class="fc" id="L104">            language = ((ScriptTag)tag).getLanguage ();</span>
+<span class="fc bfc" id="L105" title="All 2 branches covered.">            if ((null != language) &amp;&amp;</span>
+<span class="pc bpc" id="L106" title="1 of 2 branches missed.">                (language.equalsIgnoreCase (&quot;JScript.Encode&quot;) ||</span>
+<span class="pc bpc" id="L107" title="1 of 2 branches missed.">                 language.equalsIgnoreCase (&quot;VBScript.Encode&quot;)))</span>
+            {
+<span class="nc" id="L109">                code = ScriptDecoder.Decode (lexer.getPage (), lexer.getCursor ());</span>
+<span class="nc" id="L110">                ((ScriptTag)tag).setScriptCode (code);</span>
+            }
+        }
+<span class="fc bfc" id="L113" title="All 2 branches covered.">        content = lexer.parseCDATA (!STRICT);</span>
+<span class="fc" id="L114">        position = lexer.getPosition ();</span>
+<span class="fc" id="L115">        node = lexer.nextNode (false);</span>
+<span class="fc bfc" id="L116" title="All 2 branches covered.">        if (null != node)</span>
+<span class="pc bpc" id="L117" title="2 of 4 branches missed.">            if (!(node instanceof Tag) || !(   ((Tag)node).isEndTag ()</span>
+<span class="fc bfc" id="L118" title="All 2 branches covered.">                &amp;&amp; ((Tag)node).getTagName ().equals (tag.getIds ()[0])))</span>
+            {
+<span class="fc" id="L120">                lexer.setPosition (position);</span>
+<span class="fc" id="L121">                node = null;</span>
+            }
+
+        // build new end tag if required
+<span class="fc bfc" id="L125" title="All 2 branches covered.">        if (null == node)</span>
+        {
+<span class="fc" id="L127">            attribute = new Attribute (&quot;/script&quot;, null);</span>
+<span class="fc" id="L128">            vector = new Vector ();</span>
+<span class="fc" id="L129">            vector.addElement (attribute);</span>
+<span class="fc" id="L130">            node = lexer.getNodeFactory ().createTagNode (</span>
+<span class="fc" id="L131">                lexer.getPage (), position, position, vector);</span>
+        }
+<span class="fc" id="L133">        tag.setEndTag ((Tag)node);</span>
+<span class="fc bfc" id="L134" title="All 2 branches covered.">        if (null != content)</span>
+        {
+<span class="fc" id="L136">            tag.setChildren (new NodeList (content));</span>
+<span class="fc" id="L137">            content.setParent (tag);</span>
+        }
+<span class="fc" id="L139">        node.setParent (tag);</span>
+<span class="fc" id="L140">        tag.doSemanticAction ();</span>
+
+<span class="fc" id="L142">        return (tag);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

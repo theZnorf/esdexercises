@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>SelectTagTest.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tests.tagTests</a> &gt; <span class="el_source">SelectTagTest.java</span></div><h1>SelectTagTest.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Dhaval Udani
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/test/java/org/htmlparser/tests/tagTests/SelectTagTest.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tests.tagTests;
+
+import org.htmlparser.tags.OptionTag;
+import org.htmlparser.tags.SelectTag;
+import org.htmlparser.tests.ParserTestCase;
+import org.htmlparser.util.ParserException;
+
+public class SelectTagTest extends ParserTestCase
+{
+    static
+    {
+<span class="fc" id="L37">        System.setProperty (&quot;org.htmlparser.tests.tagTests.SelectTagTest&quot;, &quot;SelectTagTest&quot;);</span>
+<span class="fc" id="L38">    }</span>
+
+<span class="fc" id="L40">    private String testHTML = &quot;&lt;SELECT name=\&quot;Nominees\&quot;&gt;\n&quot;+</span>
+                                    &quot;&lt;option value=\&quot;Spouse\&quot;&gt;Spouse&quot;+
+                                    &quot;&lt;option value=\&quot;Father\&quot;&gt;&lt;/option&gt;\n&quot;+
+                                    &quot;&lt;option value=\&quot;Mother\&quot;&gt;Mother\n&quot; +
+                                    &quot;&lt;option value=\&quot;Son\&quot;&gt;\nSon\n&lt;/option&gt;&quot;+
+                                    &quot;&lt;option value=\&quot;Daughter\&quot;&gt;\nDaughter\n&quot;+
+                                    &quot;&lt;option value=\&quot;Nephew\&quot;&gt;\nNephew&lt;/option&gt;\n&quot;+
+                                    &quot;&lt;option value=\&quot;Niece\&quot;&gt;Niece\n&quot; +
+                                    &quot;&lt;/select&gt;&quot;;
+
+<span class="fc" id="L50">    private String correctedHTML = &quot;&lt;SELECT name=\&quot;Nominees\&quot;&gt;\n&quot;+</span>
+                                    &quot;&lt;option value=\&quot;Spouse\&quot;&gt;Spouse&lt;/option&gt;&quot;+
+                                    &quot;&lt;option value=\&quot;Father\&quot;&gt;&lt;/option&gt;\n&quot;+
+                                    &quot;&lt;option value=\&quot;Mother\&quot;&gt;Mother\n&lt;/option&gt;&quot; +
+                                    &quot;&lt;option value=\&quot;Son\&quot;&gt;\nSon\n&lt;/option&gt;&quot;+
+                                    &quot;&lt;option value=\&quot;Daughter\&quot;&gt;\nDaughter\n&lt;/option&gt;&quot;+
+                                    &quot;&lt;option value=\&quot;Nephew\&quot;&gt;\nNephew&lt;/option&gt;\n&quot;+
+                                    &quot;&lt;option value=\&quot;Niece\&quot;&gt;Niece\n&lt;/option&gt;&quot; +
+                                    &quot;&lt;/select&gt;&quot;;
+
+    private SelectTag selectTag;
+<span class="fc" id="L61">    private String html = &quot;&lt;Select name=\&quot;Remarks\&quot;&gt;&quot; +</span>
+                                    &quot;&lt;option value='option1'&gt;option1&lt;/option&gt;&quot; +
+                                    &quot;&lt;/Select&gt;&quot; +
+                                    &quot;&lt;Select name=\&quot;something\&quot;&gt;&quot; +
+                                        &quot;&lt;option value='option2'&gt;option2&lt;/option&gt;&quot; +
+                                    &quot;&lt;/Select&gt;&quot; +
+                                    &quot;&lt;Select&gt;&lt;/Select&gt;&quot; +
+                                    &quot;&lt;Select name=\&quot;Remarks\&quot;&gt;The death threats of the organization\n&quot; +
+                                    &quot;refused to intimidate the soldiers&lt;/Select&gt;&quot; +
+                                    &quot;&lt;Select name=\&quot;Remarks\&quot;&gt;The death threats of the LTTE\n&quot; +
+                                    &quot;refused to intimidate the Tamilians\n&lt;/Select&gt;&quot;;
+
+    public SelectTagTest(String name)
+    {
+<span class="fc" id="L75">        super(name);</span>
+<span class="fc" id="L76">    }</span>
+
+    protected void setUp() throws Exception{
+<span class="fc" id="L79">        super.setUp();</span>
+<span class="fc" id="L80">        createParser(testHTML);</span>
+<span class="fc" id="L81">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L82">        assertTrue(&quot;Node 1 should be Select Tag&quot;,node[0] instanceof SelectTag);</span>
+<span class="fc" id="L83">        selectTag = (SelectTag) node[0];</span>
+<span class="fc" id="L84">    }</span>
+
+    public void testToHTML() throws ParserException
+    {
+<span class="fc" id="L88">        assertStringEquals(&quot;HTML String&quot;, correctedHTML, selectTag.toHtml());</span>
+<span class="fc" id="L89">    }</span>
+
+    public void testGetOptionTags() {
+<span class="fc" id="L92">        OptionTag [] optionTags = selectTag.getOptionTags();</span>
+<span class="fc" id="L93">        assertEquals(&quot;option tag array length&quot;,7,optionTags.length);</span>
+<span class="fc" id="L94">        assertEquals(&quot;option tag 1&quot;,&quot;Spouse&quot;,optionTags[0].getOptionText());</span>
+<span class="fc" id="L95">        assertEquals(&quot;option tag 7&quot;,&quot;Niece\n&quot;,optionTags[6].getOptionText());</span>
+<span class="fc" id="L96">    }</span>
+
+    public void testScan() throws ParserException
+    {
+
+<span class="fc" id="L101">        createParser(html,&quot;http://www.google.com/test/index.html&quot;);</span>
+<span class="fc" id="L102">        parseAndAssertNodeCount(5);</span>
+
+        // check the Select node
+<span class="fc bfc" id="L105" title="All 2 branches covered.">        for(int j=0;j&lt;nodeCount;j++)</span>
+<span class="fc" id="L106">            assertTrue(node[j] instanceof SelectTag);</span>
+
+<span class="fc" id="L108">        SelectTag selectTag = (SelectTag)node[0];</span>
+<span class="fc" id="L109">        OptionTag [] optionTags = selectTag.getOptionTags();</span>
+<span class="fc" id="L110">        assertEquals(&quot;option tag array length&quot;,1,optionTags.length);</span>
+<span class="fc" id="L111">        assertEquals(&quot;option tag value&quot;,&quot;option1&quot;,optionTags[0].getOptionText());</span>
+<span class="fc" id="L112">    }</span>
+
+    /**
+     * Bug reproduction.
+     */
+    public void testSelectTagWithComments() throws Exception {
+<span class="fc" id="L118">        createParser(</span>
+<span class="fc" id="L119">            &quot;&lt;form&gt;&quot; +</span>
+            &quot;&lt;select&gt; &quot; +
+            &quot;&lt;!-- 1 --&gt;&lt;option selected&gt;123 &quot; +
+            &quot;&lt;option&gt;345 &quot; +
+            &quot;&lt;/select&gt; &quot; +
+            &quot;&lt;/form&gt;&quot;
+        );
+<span class="fc" id="L126">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L127">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

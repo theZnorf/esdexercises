@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>RingBufferTest.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (2) (27-Oct-2015 13:59:45)</a> &gt; <a href="../../index.html" class="el_group">SQE05-Profelt_RingBufferTest</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">at.fhhagenberg.sqe.exercise5</a> &gt; <span class="el_source">RingBufferTest.java</span></div><h1>RingBufferTest.java</h1><pre class="source lang-java linenums">/**
+ * @author Franz Profelt
+ * @id s1410567019
+ */
+package at.fhhagenberg.sqe.exercise5;
+
+import static org.junit.Assert.*;
+
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+import java.util.Random;
+
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
+
+<span class="fc" id="L18">public class RingBufferTest {</span>
+
+    static final int capacity = 10;
+<span class="fc" id="L21">    static final Integer[] testData = {0, 1, 2};</span>
+    
+    // Member
+    RingBuffer&lt;Integer&gt; buffer;
+    
+    @Rule
+<span class="fc" id="L27">    public final ExpectedException exception = ExpectedException.none();</span>
+    
+    @Before
+    public void setUp() throws Exception {
+        // create buffer
+<span class="fc" id="L32">        buffer = new RingBuffer&lt;&gt;(capacity);</span>
+        
+        // add testdata
+<span class="fc bfc" id="L35" title="All 2 branches covered.">        for (Integer i : testData)</span>
+<span class="fc" id="L36">            buffer.enqueue(i);</span>
+<span class="fc" id="L37">    }</span>
+
+    @Test
+    public void testAddingThreeRandomElements() {
+        // generate test elements
+<span class="fc" id="L42">        Random r = new Random();</span>
+<span class="fc" id="L43">        Integer[] elements = {r.nextInt(), r.nextInt(), r.nextInt()};</span>
+        
+        // add elements to buffer
+<span class="fc bfc" id="L46" title="All 2 branches covered.">        for (int i = 0; i &lt; elements.length; i++) {</span>
+            // check size
+<span class="fc" id="L48">            assertEquals(testData.length + i, buffer.size());</span>
+            
+            // enqueue item
+<span class="fc" id="L51">            buffer.enqueue(elements[i]);</span>
+        }
+        
+        // check size
+<span class="fc" id="L55">        assertEquals(testData.length + elements.length, buffer.size());</span>
+<span class="fc" id="L56">    }</span>
+
+    @Test
+    public void testRemovingAllTestData() {
+                
+        // remove all elements from buffer
+<span class="fc bfc" id="L62" title="All 2 branches covered.">        for (int i = 0; i &lt; testData.length; i++) {</span>
+            // check size
+<span class="fc" id="L64">            assertEquals(testData.length -i, buffer.size());</span>
+            
+            // dequeue element
+<span class="fc" id="L67">            assertEquals(testData[i], buffer.dequeue());    </span>
+        }
+        
+        // check size and empty method
+<span class="fc" id="L71">        assertEquals(0, buffer.size());</span>
+<span class="fc" id="L72">        assertTrue(buffer.isEmpty());</span>
+<span class="fc" id="L73">    }</span>
+
+    @Test
+    public void testExeedingCapacity() {
+        // fill buffer
+<span class="pc bpc" id="L78" title="1 of 2 branches missed.">        for (int i = 0; i &lt; capacity - testData.length; i++) {</span>
+            // check size
+<span class="fc" id="L80">            assertEquals(testData.length + i, buffer.size());</span>
+            
+            // enqueue element
+<span class="fc" id="L83">            buffer.enqueue(i);</span>
+        }
+        
+        // check size
+<span class="nc" id="L87">        assertEquals(capacity, buffer.size());</span>
+
+        // set expected exception
+<span class="nc" id="L90">        exception.expect(RuntimeException.class);</span>
+<span class="nc" id="L91">        exception.expectMessage(&quot;Ring buffer overflow&quot;);</span>
+        
+        // add another element
+<span class="nc" id="L94">        buffer.enqueue(0);</span>
+<span class="nc" id="L95">    }</span>
+    
+    @Test
+    public void testIteratingOverTestDataAndExeedingIterator() {
+<span class="fc" id="L99">        Iterator&lt;Integer&gt; iter = buffer.iterator();</span>
+        
+        // check iterator
+<span class="fc" id="L102">        assertNotNull(iter);</span>
+        
+        // iterate over all items
+<span class="pc bpc" id="L105" title="1 of 2 branches missed.">        for (int i = 0; i &lt; testData.length; i++) {</span>
+            
+            // check has next
+<span class="fc" id="L108">            assertTrue(iter.hasNext());</span>
+            
+            // check value
+<span class="fc" id="L111">            assertEquals(testData[i], iter.next());</span>
+        }
+        
+        // check has next
+<span class="nc" id="L115">        assertFalse(iter.hasNext());</span>
+        
+        // set expected exception
+<span class="nc" id="L118">        exception.expect(NoSuchElementException.class);</span>
+        // call next
+<span class="nc" id="L120">        iter.next();</span>
+<span class="nc" id="L121">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (2) (27-Oct-2015 13:59:45)</div></body></html>

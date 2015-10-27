@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>AssertXmlEqualsTest.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tests</a> &gt; <span class="el_source">AssertXmlEqualsTest.java</span></div><h1>AssertXmlEqualsTest.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Somik Raha
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/test/java/org/htmlparser/tests/AssertXmlEqualsTest.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tests;
+
+import junit.framework.TestSuite;
+
+
+public class AssertXmlEqualsTest extends ParserTestCase {
+
+    static
+    {
+<span class="fc" id="L35">        System.setProperty (&quot;org.htmlparser.tests.AssertXmlEqualsTest&quot;, &quot;AssertXmlEqualsTest&quot;);</span>
+<span class="fc" id="L36">    }</span>
+
+    public AssertXmlEqualsTest(String name) {
+<span class="fc" id="L39">        super(name);</span>
+<span class="fc" id="L40">    }</span>
+
+    public void testNestedTagWithText() throws Exception {
+<span class="fc" id="L43">        assertXmlEquals(&quot;nested with text&quot;,&quot;&lt;hello&gt;   &lt;hi&gt;My name is Nothing&lt;/hi&gt;&lt;/hello&gt;&quot;,&quot;&lt;hello&gt;&lt;hi&gt;My name is Nothing&lt;/hi&gt;  &lt;/hello&gt;&quot;);</span>
+<span class="fc" id="L44">    }</span>
+
+    public void testThreeTagsDifferent() throws Exception {
+<span class="fc" id="L47">        assertXmlEquals(&quot;two tags different&quot;,&quot;&lt;someTag&gt;&lt;/someTag&gt;&lt;someOtherTag&gt;&quot;,&quot;&lt;someTag/&gt;&lt;someOtherTag&gt;&quot;);</span>
+<span class="fc" id="L48">    }</span>
+
+    public void testOneTag() throws Exception {
+<span class="fc" id="L51">        assertXmlEquals(&quot;one tag&quot;,&quot;&lt;someTag&gt;&quot;,&quot;&lt;someTag&gt;&quot;);</span>
+<span class="fc" id="L52">    }</span>
+
+    public void testTwoTags() throws Exception {
+<span class="fc" id="L55">        assertXmlEquals(&quot;two tags&quot;,&quot;&lt;someTag&gt;&lt;/someTag&gt;&quot;,&quot;&lt;someTag&gt;&lt;/someTag&gt;&quot;);</span>
+<span class="fc" id="L56">    }</span>
+
+    public void testTwoTagsDifferent() throws Exception {
+<span class="fc" id="L59">        assertXmlEquals(&quot;two tags different&quot;,&quot;&lt;someTag&gt;&lt;/someTag&gt;&quot;,&quot;&lt;someTag/&gt;&quot;);</span>
+<span class="fc" id="L60">    }</span>
+
+    public void testTwoTagsDifferent2() throws Exception {
+<span class="fc" id="L63">        assertXmlEquals(&quot;two tags different&quot;,&quot;&lt;someTag/&gt;&quot;,&quot;&lt;someTag&gt;&lt;/someTag&gt;&quot;);</span>
+<span class="fc" id="L64">    }</span>
+
+    public void testTwoTagsWithSameAttributes() throws Exception {
+<span class="fc" id="L67">        assertXmlEquals(&quot;attributes&quot;,&quot;&lt;tag name=\&quot;John\&quot; age=\&quot;22\&quot; sex=\&quot;M\&quot;/&gt;&quot;,&quot;&lt;tag sex=\&quot;M\&quot; name=\&quot;John\&quot; age=\&quot;22\&quot;/&gt;&quot;);</span>
+<span class="fc" id="L68">    }</span>
+
+    public void testTagWithText() throws Exception {
+<span class="fc" id="L71">        assertXmlEquals(&quot;text&quot;,&quot;&lt;hello&gt;   My name is Nothing&lt;/hello&gt;&quot;,&quot;&lt;hello&gt;My name is Nothing  &lt;/hello&gt;&quot;);</span>
+<span class="fc" id="L72">    }</span>
+
+    public void testStringWithLineBreaks() throws Exception {
+<span class="fc" id="L75">        assertXmlEquals(&quot;string with line breaks&quot;,&quot;testing &amp; refactoring&quot;,&quot;testing &amp;\nrefactoring&quot;);</span>
+<span class="fc" id="L76">    }</span>
+
+    public static TestSuite suite() {
+<span class="nc" id="L79">        TestSuite suite = new TestSuite(&quot;XML Tests&quot;);</span>
+<span class="nc" id="L80">        suite.addTestSuite(AssertXmlEqualsTest.class);</span>
+<span class="nc" id="L81">        return (suite);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

@@ -1,0 +1,337 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>Attributes.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.sax</a> &gt; <span class="el_source">Attributes.java</span></div><h1>Attributes.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/main/java/org/htmlparser/sax/Attributes.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.sax;
+
+import java.util.Vector;
+
+import org.htmlparser.Attribute;
+import org.htmlparser.Tag;
+import org.xml.sax.helpers.NamespaceSupport;
+
+/**
+ * Provides access to the tag attributes.
+ */
+public class Attributes
+    implements
+        org.xml.sax.Attributes
+{
+    /**
+     * The tag from which attributes are exposed.
+     */
+    protected Tag mTag;
+    
+    /**
+     * The utility class that converts namespaces.
+     */
+    protected NamespaceSupport mSupport;
+
+    /**
+     * Elements of the qname.
+     * Allocated once for all uses of {@link #mSupport}.
+     */
+    protected String[] mParts;
+
+    /**
+     * Create an attibute access object.
+     * @param tag The tag to expose.
+     * @param support The namespace converter.
+     * @param parts The elements of the qualified name.
+     */
+<span class="nc" id="L63">    public Attributes (Tag tag, NamespaceSupport support, String[] parts)</span>
+    {
+<span class="nc" id="L65">        mTag = tag;</span>
+<span class="nc" id="L66">        mSupport = support;</span>
+<span class="nc" id="L67">        mParts = parts;</span>
+<span class="nc" id="L68">    }</span>
+    
+
+    ////////////////////////////////////////////////////////////////////
+    // Indexed access.
+    ////////////////////////////////////////////////////////////////////
+
+
+    /**
+     * Return the number of attributes in the list.
+     *
+     * &lt;p&gt;Once you know the number of attributes, you can iterate
+     * through the list.&lt;/p&gt;
+     *
+     * @return The number of attributes in the list.
+     * @see #getURI(int)
+     * @see #getLocalName(int)
+     * @see #getQName(int)
+     * @see #getType(int)
+     * @see #getValue(int)
+     */
+    public int getLength ()
+    {
+<span class="nc" id="L91">        return (mTag.getAttributesEx ().size () - 1);</span>
+    }
+
+
+    /**
+     * Look up an attribute's Namespace URI by index.
+     *
+     * @param index The attribute index (zero-based).
+     * @return The Namespace URI, or the empty string if none
+     *         is available, or null if the index is out of
+     *         range.
+     * @see #getLength
+     */
+    public String getURI (int index)
+    {
+<span class="nc" id="L106">        mSupport.processName (getQName (index), mParts, true);</span>
+<span class="nc" id="L107">        return (mParts[0]);</span>
+    }
+
+
+    /**
+     * Look up an attribute's local name by index.
+     *
+     * @param index The attribute index (zero-based).
+     * @return The local name, or the empty string if Namespace
+     *         processing is not being performed, or null
+     *         if the index is out of range.
+     * @see #getLength
+     */
+    public String getLocalName (int index)
+    {
+<span class="nc" id="L122">        mSupport.processName (getQName (index), mParts, true);</span>
+<span class="nc" id="L123">        return (mParts[1]);</span>
+    }
+
+
+    /**
+     * Look up an attribute's XML qualified (prefixed) name by index.
+     *
+     * @param index The attribute index (zero-based).
+     * @return The XML qualified name, or the empty string
+     *         if none is available, or null if the index
+     *         is out of range.
+     * @see #getLength
+     */
+    public String getQName (int index)
+    {
+        Attribute attribute;
+        String ret;
+        
+<span class="nc" id="L141">        attribute = (Attribute)(mTag.getAttributesEx ().elementAt (index + 1));</span>
+<span class="nc bnc" id="L142" title="All 2 branches missed.">        if (attribute.isWhitespace ())</span>
+<span class="nc" id="L143">            ret = &quot;#text&quot;;</span>
+        else
+<span class="nc" id="L145">            ret = attribute.getName ();</span>
+        
+<span class="nc" id="L147">        return (ret);</span>
+    }
+
+    /**
+     * Look up an attribute's type by index.
+     *
+     * &lt;p&gt;The attribute type is one of the strings &quot;CDATA&quot;, &quot;ID&quot;,
+     * &quot;IDREF&quot;, &quot;IDREFS&quot;, &quot;NMTOKEN&quot;, &quot;NMTOKENS&quot;, &quot;ENTITY&quot;, &quot;ENTITIES&quot;,
+     * or &quot;NOTATION&quot; (always in upper case).&lt;/p&gt;
+     *
+     * &lt;p&gt;If the parser has not read a declaration for the attribute,
+     * or if the parser does not report attribute types, then it must
+     * return the value &quot;CDATA&quot; as stated in the XML 1.0 Recommendation
+     * (clause 3.3.3, &quot;Attribute-Value Normalization&quot;).&lt;/p&gt;
+     *
+     * &lt;p&gt;For an enumerated attribute that is not a notation, the
+     * parser will report the type as &quot;NMTOKEN&quot;.&lt;/p&gt;
+     *
+     * @param index The attribute index (zero-based).
+     * @return The attribute's type as a string, or null if the
+     *         index is out of range.
+     * @see #getLength
+     */
+    public String getType (int index)
+    {
+<span class="nc" id="L172">        return (&quot;CDATA&quot;);</span>
+    }
+
+
+    /**
+     * Look up an attribute's value by index.
+     *
+     * &lt;p&gt;If the attribute value is a list of tokens (IDREFS,
+     * ENTITIES, or NMTOKENS), the tokens will be concatenated
+     * into a single string with each token separated by a
+     * single space.&lt;/p&gt;
+     *
+     * @param index The attribute index (zero-based).
+     * @return The attribute's value as a string, or null if the
+     *         index is out of range.
+     * @see #getLength
+     */
+    public String getValue (int index)
+    {
+        Attribute attribute;
+        String ret;
+        
+<span class="nc" id="L194">        attribute = (Attribute)(mTag.getAttributesEx ().elementAt (index + 1));</span>
+<span class="nc" id="L195">        ret = attribute.getValue ();</span>
+<span class="nc bnc" id="L196" title="All 2 branches missed.">        if (null == ret)</span>
+<span class="nc" id="L197">            ret = &quot;&quot;;</span>
+
+<span class="nc" id="L199">        return (ret);</span>
+    }
+
+
+    ////////////////////////////////////////////////////////////////////
+    // Name-based query.
+    ////////////////////////////////////////////////////////////////////
+
+
+    /**
+     * Look up the index of an attribute by Namespace name.
+     *
+     * @param uri The Namespace URI, or the empty string if
+     *        the name has no Namespace URI.
+     * @param localName The attribute's local name.
+     * @return The index of the attribute, or -1 if it does not
+     *         appear in the list.
+     */
+    public int getIndex (String uri, String localName)
+    {
+        Vector attributes;
+        int size;
+        Attribute attribute;
+        String string;
+        int ret;
+
+<span class="nc" id="L225">        ret = -1;</span>
+
+<span class="nc" id="L227">        attributes = mTag.getAttributesEx ();</span>
+<span class="nc bnc" id="L228" title="All 2 branches missed.">        if (null != attributes)</span>
+        {
+<span class="nc" id="L230">            size = attributes.size ();</span>
+<span class="nc bnc" id="L231" title="All 2 branches missed.">            for (int i = 1; i &lt; size; i++)</span>
+            {
+<span class="nc" id="L233">                attribute = (Attribute)attributes.elementAt (i);</span>
+<span class="nc" id="L234">                string = attribute.getName ();</span>
+<span class="nc bnc" id="L235" title="All 2 branches missed.">                if (null != string) // not whitespace</span>
+                {
+<span class="nc" id="L237">                    mSupport.processName (string, mParts, true);</span>
+<span class="nc" id="L238">                    if (  uri.equals (mParts[0])</span>
+<span class="nc bnc" id="L239" title="All 2 branches missed.">                        &amp; localName.equalsIgnoreCase (mParts[1]))</span>
+                    {
+<span class="nc" id="L241">                        ret = i;</span>
+<span class="nc" id="L242">                        i = size; // exit fast</span>
+                    }
+                }
+            }
+        }
+
+<span class="nc" id="L248">        return (ret);</span>
+    }
+
+
+    /**
+     * Look up the index of an attribute by XML qualified (prefixed) name.
+     *
+     * @param qName The qualified (prefixed) name.
+     * @return The index of the attribute, or -1 if it does not
+     *         appear in the list.
+     */
+    public int getIndex (String qName)
+    {
+<span class="nc" id="L261">        mSupport.processName (qName, mParts, true);</span>
+<span class="nc" id="L262">        return (getIndex (mParts[0], mParts[1]));</span>
+    }
+
+
+    /**
+     * Look up an attribute's type by Namespace name.
+     *
+     * &lt;p&gt;See {@link #getType(int) getType(int)} for a description
+     * of the possible types.&lt;/p&gt;
+     *
+     * @param uri The Namespace URI, or the empty String if the
+     *        name has no Namespace URI.
+     * @param localName The local name of the attribute.
+     * @return The attribute type as a string, or null if the
+     *         attribute is not in the list or if Namespace
+     *         processing is not being performed.
+     */
+    public String getType (String uri, String localName)
+    {
+<span class="nc" id="L281">        return (null);</span>
+    }
+
+
+    /**
+     * Look up an attribute's type by XML qualified (prefixed) name.
+     *
+     * &lt;p&gt;See {@link #getType(int) getType(int)} for a description
+     * of the possible types.&lt;/p&gt;
+     *
+     * @param qName The XML qualified name.
+     * @return The attribute type as a string, or null if the
+     *         attribute is not in the list or if qualified names
+     *         are not available.
+     */
+    public String getType (String qName)
+    {
+<span class="nc" id="L298">        return (null);</span>
+    }
+
+
+    /**
+     * Look up an attribute's value by Namespace name.
+     *
+     * &lt;p&gt;See {@link #getValue(int) getValue(int)} for a description
+     * of the possible values.&lt;/p&gt;
+     *
+     * @param uri The Namespace URI, or the empty String if the
+     *        name has no Namespace URI.
+     * @param localName The local name of the attribute.
+     * @return The attribute value as a string, or null if the
+     *         attribute is not in the list.
+     */
+    public String getValue (String uri, String localName)
+    {
+<span class="nc" id="L316">        return (mTag.getAttribute (localName));</span>
+    }
+
+
+    /**
+     * Look up an attribute's value by XML qualified (prefixed) name.
+     *
+     * &lt;p&gt;See {@link #getValue(int) getValue(int)} for a description
+     * of the possible values.&lt;/p&gt;
+     *
+     * @param qName The XML qualified name.
+     * @return The attribute value as a string, or null if the
+     *         attribute is not in the list or if qualified names
+     *         are not available.
+     */
+    public String getValue (String qName)
+    {
+<span class="nc" id="L333">        mSupport.processName (qName, mParts, true);</span>
+<span class="nc" id="L334">        return (getValue (mParts[0], mParts[1]));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

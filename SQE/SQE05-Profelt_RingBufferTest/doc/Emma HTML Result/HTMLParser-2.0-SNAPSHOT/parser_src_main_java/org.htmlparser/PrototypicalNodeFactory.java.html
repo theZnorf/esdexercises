@@ -1,0 +1,546 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>PrototypicalNodeFactory.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser</a> &gt; <span class="el_source">PrototypicalNodeFactory.java</span></div><h1>PrototypicalNodeFactory.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/main/java/org/htmlparser/PrototypicalNodeFactory.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser;
+
+import java.io.Serializable;
+import java.util.Hashtable;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.Vector;
+
+import org.htmlparser.lexer.Page;
+import org.htmlparser.nodes.TextNode;
+import org.htmlparser.nodes.RemarkNode;
+import org.htmlparser.nodes.TagNode;
+import org.htmlparser.tags.AppletTag;
+import org.htmlparser.tags.BaseHrefTag;
+import org.htmlparser.tags.BodyTag;
+import org.htmlparser.tags.Bullet;
+import org.htmlparser.tags.BulletList;
+import org.htmlparser.tags.DefinitionList;
+import org.htmlparser.tags.DefinitionListBullet;
+import org.htmlparser.tags.Div;
+import org.htmlparser.tags.DoctypeTag;
+import org.htmlparser.tags.FormTag;
+import org.htmlparser.tags.FrameSetTag;
+import org.htmlparser.tags.FrameTag;
+import org.htmlparser.tags.HeadingTag;
+import org.htmlparser.tags.HeadTag;
+import org.htmlparser.tags.Html;
+import org.htmlparser.tags.ImageTag;
+import org.htmlparser.tags.InputTag;
+import org.htmlparser.tags.JspTag;
+import org.htmlparser.tags.LabelTag;
+import org.htmlparser.tags.LinkTag;
+import org.htmlparser.tags.MetaTag;
+import org.htmlparser.tags.ObjectTag;
+import org.htmlparser.tags.OptionTag;
+import org.htmlparser.tags.ParagraphTag;
+import org.htmlparser.tags.ProcessingInstructionTag;
+import org.htmlparser.tags.ScriptTag;
+import org.htmlparser.tags.SelectTag;
+import org.htmlparser.tags.Span;
+import org.htmlparser.tags.StyleTag;
+import org.htmlparser.tags.TableColumn;
+import org.htmlparser.tags.TableHeader;
+import org.htmlparser.tags.TableRow;
+import org.htmlparser.tags.TableTag;
+import org.htmlparser.tags.TextareaTag;
+import org.htmlparser.tags.TitleTag;
+
+/**
+ * A node factory based on the prototype pattern.
+ * This factory uses the prototype pattern to generate new nodes.
+ * These are cloned as needed to form new {@link Text}, {@link Remark} and
+ * {@link Tag} nodes.
+ * &lt;p&gt;Text and remark nodes are generated from prototypes accessed
+ * via the {@link #setTextPrototype(Text) textPrototype} and
+ * {@link #setRemarkPrototype(Remark) remarkPrototype} properties respectively.
+ * Tag nodes are generated as follows:
+ * &lt;p&gt;Prototype tags, in the form of undifferentiated tags, are held in a hash
+ * table. On a request for a tag, the attributes are examined for the name
+ * of the tag to be created. If a prototype of that name has been registered
+ * (exists in the hash table), it is cloned and the clone is given the
+ * characteristics ({@link Attribute Attributes}, start and end position)
+ * of the requested tag.&lt;/p&gt;
+ * &lt;p&gt;In the case that no tag has been registered under that name,
+ * a generic tag is created from the prototype acessed via the
+ * {@link #setTagPrototype(Tag) tagPrototype} property.&lt;/p&gt;
+ * &lt;p&gt;The hash table of registered tags can be automatically populated with
+ * all the known tags from the {@link org.htmlparser.tags} package when
+ * the factory is constructed, or it can start out empty and be populated
+ * explicitly.&lt;/p&gt;
+ * &lt;p&gt;Here is an example of how to override all text issued from
+ * {@link org.htmlparser.nodes.TextNode#toPlainTextString()
+ * Text.toPlainTextString()},
+ * in this case decoding (converting character references),
+ * which illustrates the use of setting the text prototype:
+ * &lt;pre&gt;
+ * PrototypicalNodeFactory factory = new PrototypicalNodeFactory ();
+ * factory.setTextPrototype (
+ *     // create a inner class that is a subclass of TextNode
+ *     new TextNode () {
+ *         public String toPlainTextString()
+ *         {
+ *             String original = super.toPlainTextString ();
+ *             return (org.htmlparser.util.Translate.decode (original));
+ *         }
+ *     });
+ * Parser parser = new Parser ();
+ * parser.setNodeFactory (factory);
+ * &lt;/pre&gt;&lt;/p&gt;
+ * &lt;p&gt;Here is an example of using a custom link tag, in this case just
+ * printing the URL, which illustrates registering a tag:
+ * &lt;pre&gt;
+ *
+ * class PrintingLinkTag extends LinkTag
+ * {
+ *     public void doSemanticAction ()
+ *         throws
+ *             ParserException
+ *     {
+ *         System.out.println (getLink ());
+ *     }
+ * }
+ * PrototypicalNodeFactory factory = new PrototypicalNodeFactory ();
+ * factory.registerTag (new PrintingLinkTag ());
+ * Parser parser = new Parser ();
+ * parser.setNodeFactory (factory);
+ * &lt;/pre&gt;&lt;/p&gt;
+ */
+public class PrototypicalNodeFactory
+    implements
+        Serializable,
+        NodeFactory
+{
+    /**
+     * The prototypical text node.
+     */
+    protected Text mText;
+
+    /**
+     * The prototypical remark node.
+     */
+    protected Remark mRemark;
+
+    /**
+     * The prototypical tag node.
+     */
+    protected Tag mTag;
+
+    /**
+     * The list of tags to return.
+     * The list is keyed by tag name.
+     */
+    protected Map mBlastocyst;
+
+    /**
+     * Create a new factory with all tags registered.
+     * Equivalent to
+     * {@link #PrototypicalNodeFactory() PrototypicalNodeFactory(false)}.
+     */
+    public PrototypicalNodeFactory ()
+    {
+<span class="fc" id="L168">        this (false);</span>
+<span class="fc" id="L169">    }</span>
+
+    /**
+     * Create a new factory.
+     * @param empty If &lt;code&gt;true&lt;/code&gt;, creates an empty factory,
+     * otherwise create a new factory with all tags registered.
+     */
+<span class="fc" id="L176">    public PrototypicalNodeFactory (boolean empty)</span>
+    {
+<span class="fc" id="L178">        clear ();</span>
+<span class="fc" id="L179">        mText = new TextNode (null, 0, 0);</span>
+<span class="fc" id="L180">        mRemark = new RemarkNode (null, 0, 0);</span>
+<span class="fc" id="L181">        mTag = new TagNode (null, 0, 0, null);</span>
+<span class="fc bfc" id="L182" title="All 2 branches covered.">        if (!empty)</span>
+<span class="fc" id="L183">            registerTags ();</span>
+<span class="fc" id="L184">    }</span>
+
+    /**
+     * Create a new factory with the given tag as the only registered tag.
+     * @param tag The single tag to register in the otherwise empty factory.
+     */
+    public PrototypicalNodeFactory (Tag tag)
+    {
+<span class="fc" id="L192">        this (true);</span>
+<span class="fc" id="L193">        registerTag (tag);</span>
+<span class="fc" id="L194">    }</span>
+
+    /**
+     * Create a new factory with the given tags registered.
+     * @param tags The tags to register in the otherwise empty factory.
+     */
+    public PrototypicalNodeFactory (Tag[] tags)
+    {
+<span class="fc" id="L202">        this (true);</span>
+<span class="fc bfc" id="L203" title="All 2 branches covered.">        for (int i = 0; i &lt; tags.length; i++)</span>
+<span class="fc" id="L204">            registerTag (tags[i]);</span>
+<span class="fc" id="L205">    }</span>
+
+    /**
+     * Adds a tag to the registry.
+     * @param id The name under which to register the tag.
+     * &lt;strong&gt;For proper operation, the id should be uppercase so it
+     * will be matched by a Map lookup.&lt;/strong&gt;
+     * @param tag The tag to be returned from a {@link #createTagNode} call.
+     * @return The tag previously registered with that id if any,
+     * or &lt;code&gt;null&lt;/code&gt; if none.
+     */
+    public Tag put (String id, Tag tag)
+    {
+<span class="fc" id="L218">        return ((Tag)mBlastocyst.put (id, tag));</span>
+    }
+
+    /**
+     * Gets a tag from the registry.
+     * @param id The name of the tag to return.
+     * @return The tag registered under the &lt;code&gt;id&lt;/code&gt; name,
+     * or &lt;code&gt;null&lt;/code&gt; if none.
+     */
+    public Tag get (String id)
+    {
+<span class="nc" id="L229">        return ((Tag)mBlastocyst.get (id));</span>
+    }
+
+    /**
+     * Remove a tag from the registry.
+     * @param id The name of the tag to remove.
+     * @return The tag that was registered with that &lt;code&gt;id&lt;/code&gt;,
+     * or &lt;code&gt;null&lt;/code&gt; if none.
+     */
+    public Tag remove (String id)
+    {
+<span class="fc" id="L240">        return ((Tag)mBlastocyst.remove (id));</span>
+    }
+
+    /**
+     * Clean out the registry.
+     */
+    public void clear ()
+    {
+<span class="fc" id="L248">        mBlastocyst = new Hashtable ();</span>
+<span class="fc" id="L249">    }</span>
+
+    /**
+     * Get the list of tag names.
+     * @return The names of the tags currently registered.
+     */
+    public Set getTagNames ()
+    {
+<span class="nc" id="L257">        return (mBlastocyst.keySet ());</span>
+    }
+
+    /**
+     * Register a tag.
+     * Registers the given tag under every {@link Tag#getIds() id} that the
+     * tag has (i.e. all names returned by {@link Tag#getIds() tag.getIds()}.
+     * &lt;p&gt;&lt;strong&gt;For proper operation, the ids are converted to uppercase so
+     * they will be matched by a Map lookup.&lt;/strong&gt;
+     * @param tag The tag to register.
+     */
+    public void registerTag (Tag tag)
+    {
+        String[] ids;
+
+<span class="fc" id="L272">        ids = tag.getIds ();</span>
+<span class="fc bfc" id="L273" title="All 2 branches covered.">        for (int i = 0; i &lt; ids.length; i++)</span>
+<span class="fc" id="L274">            put (ids[i].toUpperCase (Locale.ENGLISH), tag);</span>
+<span class="fc" id="L275">    }</span>
+
+    /**
+     * Unregister a tag.
+     * Unregisters the given tag from every {@link Tag#getIds() id} the tag has.
+     * &lt;p&gt;&lt;strong&gt;The ids are converted to uppercase to undo the operation
+     * of registerTag.&lt;/strong&gt;
+     * @param tag The tag to unregister.
+     */
+    public void unregisterTag (Tag tag)
+    {
+        String[] ids;
+
+<span class="fc" id="L288">        ids = tag.getIds ();</span>
+<span class="fc bfc" id="L289" title="All 2 branches covered.">        for (int i = 0; i &lt; ids.length; i++)</span>
+<span class="fc" id="L290">            remove (ids[i].toUpperCase (Locale.ENGLISH));</span>
+<span class="fc" id="L291">    }</span>
+
+    /**
+     * Register all known tags in the tag package.
+     * Registers tags from the {@link org.htmlparser.tags tag package} by
+     * calling {@link #registerTag(Tag) registerTag()}.
+     * @return 'this' nodefactory as a convenience.
+     */
+    public PrototypicalNodeFactory registerTags ()
+    {
+<span class="fc" id="L301">        registerTag (new AppletTag ());</span>
+<span class="fc" id="L302">        registerTag (new BaseHrefTag ());</span>
+<span class="fc" id="L303">        registerTag (new Bullet ());</span>
+<span class="fc" id="L304">        registerTag (new BulletList ());</span>
+<span class="fc" id="L305">        registerTag (new DefinitionList ());</span>
+<span class="fc" id="L306">        registerTag (new DefinitionListBullet ());</span>
+<span class="fc" id="L307">        registerTag (new DoctypeTag ());</span>
+<span class="fc" id="L308">        registerTag (new FormTag ());</span>
+<span class="fc" id="L309">        registerTag (new FrameSetTag ());</span>
+<span class="fc" id="L310">        registerTag (new FrameTag ());</span>
+<span class="fc" id="L311">        registerTag (new HeadingTag ());</span>
+<span class="fc" id="L312">        registerTag (new ImageTag ());</span>
+<span class="fc" id="L313">        registerTag (new InputTag ());</span>
+<span class="fc" id="L314">        registerTag (new JspTag ());</span>
+<span class="fc" id="L315">        registerTag (new LabelTag ());</span>
+<span class="fc" id="L316">        registerTag (new LinkTag ());</span>
+<span class="fc" id="L317">        registerTag (new MetaTag ());</span>
+<span class="fc" id="L318">        registerTag (new ObjectTag ());</span>
+<span class="fc" id="L319">        registerTag (new OptionTag ());</span>
+<span class="fc" id="L320">        registerTag (new ParagraphTag ());</span>
+<span class="fc" id="L321">        registerTag (new ProcessingInstructionTag ());</span>
+<span class="fc" id="L322">        registerTag (new ScriptTag ());</span>
+<span class="fc" id="L323">        registerTag (new SelectTag ());</span>
+<span class="fc" id="L324">        registerTag (new StyleTag ());</span>
+<span class="fc" id="L325">        registerTag (new TableColumn ());</span>
+<span class="fc" id="L326">        registerTag (new TableHeader ());</span>
+<span class="fc" id="L327">        registerTag (new TableRow ());</span>
+<span class="fc" id="L328">        registerTag (new TableTag ());</span>
+<span class="fc" id="L329">        registerTag (new TextareaTag ());</span>
+<span class="fc" id="L330">        registerTag (new TitleTag ());</span>
+<span class="fc" id="L331">        registerTag (new Div ());</span>
+<span class="fc" id="L332">        registerTag (new Span ());</span>
+<span class="fc" id="L333">        registerTag (new BodyTag ());</span>
+<span class="fc" id="L334">        registerTag (new HeadTag ());</span>
+<span class="fc" id="L335">        registerTag (new Html ());</span>
+        
+
+<span class="fc" id="L338">        return (this);</span>
+    }
+
+    /**
+     * Get the object that is cloned to generate text nodes.
+     * @return The prototype for {@link Text} nodes.
+     * @see #setTextPrototype
+     */
+    public Text getTextPrototype ()
+    {
+<span class="fc" id="L348">        return (mText);</span>
+    }
+
+    /**
+     * Set the object to be used to generate text nodes.
+     * @param text The prototype for {@link Text} nodes.
+     * If &lt;code&gt;null&lt;/code&gt; the prototype is set to the default
+     * ({@link TextNode}).
+     * @see #getTextPrototype
+     */
+    public void setTextPrototype (Text text)
+    {
+<span class="nc bnc" id="L360" title="All 2 branches missed.">        if (null == text)</span>
+<span class="nc" id="L361">            mText = new TextNode (null, 0, 0);</span>
+        else
+<span class="nc" id="L363">            mText = text;</span>
+<span class="nc" id="L364">    }</span>
+
+    /**
+     * Get the object that is cloned to generate remark nodes.
+     * @return The prototype for {@link Remark} nodes.
+     * @see #setRemarkPrototype
+     */
+    public Remark getRemarkPrototype ()
+    {
+<span class="fc" id="L373">        return (mRemark);</span>
+    }
+
+    /**
+     * Set the object to be used to generate remark nodes.
+     * @param remark The prototype for {@link Remark} nodes.
+     * If &lt;code&gt;null&lt;/code&gt; the prototype is set to the default
+     * ({@link RemarkNode}).
+     * @see #getRemarkPrototype
+     */
+    public void setRemarkPrototype (Remark remark)
+    {
+<span class="nc bnc" id="L385" title="All 2 branches missed.">        if (null == remark)</span>
+<span class="nc" id="L386">            mRemark = new RemarkNode (null, 0, 0);</span>
+        else
+<span class="nc" id="L388">            mRemark = remark;</span>
+<span class="nc" id="L389">    }</span>
+
+    /**
+     * Get the object that is cloned to generate tag nodes.
+     * Clones of this object are returned from {@link #createTagNode} when no
+     * specific tag is found in the list of registered tags.
+     * @return The prototype for {@link Tag} nodes.
+     * @see #setTagPrototype
+     */
+    public Tag getTagPrototype ()
+    {
+<span class="fc" id="L400">        return (mTag);</span>
+    }
+
+    /**
+     * Set the object to be used to generate tag nodes.
+     * Clones of this object are returned from {@link #createTagNode} when no
+     * specific tag is found in the list of registered tags.
+     * @param tag The prototype for {@link Tag} nodes.
+     * If &lt;code&gt;null&lt;/code&gt; the prototype is set to the default
+     * ({@link TagNode}).
+     * @see #getTagPrototype
+     */
+    public void setTagPrototype (Tag tag)
+    {
+<span class="nc bnc" id="L414" title="All 2 branches missed.">        if (null == tag)</span>
+<span class="nc" id="L415">            mTag = new TagNode (null, 0, 0, null);</span>
+        else
+<span class="nc" id="L417">            mTag = tag;</span>
+<span class="nc" id="L418">    }</span>
+
+    //
+    // NodeFactory interface
+    //
+
+    /**
+     * Create a new string node.
+     * @param page The page the node is on.
+     * @param start The beginning position of the string.
+     * @param end The ending position of the string.
+     * @return A text node comprising the indicated characters from the page.
+     */
+    public Text createStringNode (Page page, int start, int end)
+    {
+        Text ret;
+
+        try
+        {
+<span class="fc" id="L437">            ret = (Text)(getTextPrototype ().clone ());</span>
+<span class="fc" id="L438">            ret.setPage (page);</span>
+<span class="fc" id="L439">            ret.setStartPosition (start);</span>
+<span class="fc" id="L440">            ret.setEndPosition (end);</span>
+<span class="fc" id="L441">        }</span>
+<span class="nc" id="L442">        catch (CloneNotSupportedException cnse)</span>
+        {
+<span class="nc" id="L444">            ret = new TextNode (page, start, end);</span>
+        }
+
+<span class="fc" id="L447">        return (ret);</span>
+    }
+
+    /**
+     * Create a new remark node.
+     * @param page The page the node is on.
+     * @param start The beginning position of the remark.
+     * @param end The ending positiong of the remark.
+     * @return A remark node comprising the indicated characters from the page.
+     */
+    public Remark createRemarkNode (Page page, int start, int end)
+    {
+        Remark ret;
+
+        try
+        {
+<span class="fc" id="L463">            ret = (Remark)(getRemarkPrototype ().clone ());</span>
+<span class="fc" id="L464">            ret.setPage (page);</span>
+<span class="fc" id="L465">            ret.setStartPosition (start);</span>
+<span class="fc" id="L466">            ret.setEndPosition (end);</span>
+<span class="fc" id="L467">        }</span>
+<span class="nc" id="L468">        catch (CloneNotSupportedException cnse)</span>
+        {
+<span class="nc" id="L470">            ret = new RemarkNode (page, start, end);</span>
+        }
+
+<span class="fc" id="L473">        return (ret);</span>
+    }
+
+    /**
+     * Create a new tag node.
+     * Note that the attributes vector contains at least one element,
+     * which is the tag name (standalone attribute) at position zero.
+     * This can be used to decide which type of node to create, or
+     * gate other processing that may be appropriate.
+     * @param page The page the node is on.
+     * @param start The beginning position of the tag.
+     * @param end The ending positiong of the tag.
+     * @param attributes The attributes contained in this tag.
+     * @return A tag node comprising the indicated characters from the page.
+     */
+    public Tag createTagNode (Page page, int start, int end, Vector attributes)
+    {
+        Attribute attribute;
+        String id;
+        Tag prototype;
+        Tag ret;
+
+<span class="fc" id="L495">        ret = null;</span>
+
+<span class="pc bpc" id="L497" title="1 of 2 branches missed.">        if (0 != attributes.size ())</span>
+        {
+<span class="fc" id="L499">            attribute = (Attribute)attributes.elementAt (0);</span>
+<span class="fc" id="L500">            id = attribute.getName ();</span>
+<span class="pc bpc" id="L501" title="1 of 2 branches missed.">            if (null != id)</span>
+            {
+                try
+                {
+<span class="fc" id="L505">                    id = id.toUpperCase (Locale.ENGLISH);</span>
+<span class="fc bfc" id="L506" title="All 2 branches covered.">                    if (!id.startsWith (&quot;/&quot;))</span>
+                    {
+<span class="fc bfc" id="L508" title="All 2 branches covered.">                        if (id.endsWith (&quot;/&quot;))</span>
+<span class="fc" id="L509">                            id = id.substring (0, id.length () - 1);</span>
+<span class="fc" id="L510">                        prototype = (Tag)mBlastocyst.get (id);</span>
+<span class="fc bfc" id="L511" title="All 2 branches covered.">                        if (null != prototype)</span>
+                        {
+<span class="fc" id="L513">                            ret = (Tag)prototype.clone ();</span>
+<span class="fc" id="L514">                            ret.setPage (page);</span>
+<span class="fc" id="L515">                            ret.setStartPosition (start);</span>
+<span class="fc" id="L516">                            ret.setEndPosition (end);</span>
+<span class="fc" id="L517">                            ret.setAttributesEx (attributes);</span>
+                        }
+                    }
+<span class="fc" id="L520">                }</span>
+<span class="nc" id="L521">                catch (CloneNotSupportedException cnse)</span>
+                {
+                    // default to creating a generic one
+                }
+            }
+        }
+<span class="fc bfc" id="L527" title="All 2 branches covered.">        if (null == ret)</span>
+        {   // generate a generic node
+            try
+            {
+<span class="fc" id="L531">                ret = (Tag)getTagPrototype ().clone ();</span>
+<span class="fc" id="L532">                ret.setPage (page);</span>
+<span class="fc" id="L533">                ret.setStartPosition (start);</span>
+<span class="fc" id="L534">                ret.setEndPosition (end);</span>
+<span class="fc" id="L535">                ret.setAttributesEx (attributes);</span>
+<span class="fc" id="L536">            }</span>
+<span class="nc" id="L537">            catch (CloneNotSupportedException cnse)</span>
+            {
+<span class="nc" id="L539">                ret = new TagNode (page, start, end, attributes);</span>
+            }
+        }
+
+<span class="fc" id="L543">        return (ret);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

@@ -1,0 +1,687 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>TagTest.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tests.tagTests</a> &gt; <span class="el_source">TagTest.java</span></div><h1>TagTest.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Somik Raha
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/test/java/org/htmlparser/tests/tagTests/TagTest.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tests.tagTests;
+
+import org.htmlparser.Attribute;
+
+import org.htmlparser.Node;
+import org.htmlparser.PrototypicalNodeFactory;
+import org.htmlparser.Tag;
+import org.htmlparser.Text;
+import org.htmlparser.tags.BodyTag;
+import org.htmlparser.tags.Div;
+import org.htmlparser.tags.Html;
+import org.htmlparser.tags.LinkTag;
+import org.htmlparser.tests.ParserTestCase;
+import org.htmlparser.util.NodeIterator;
+import org.htmlparser.util.ParserException;
+
+public class TagTest extends ParserTestCase
+{
+    static
+    {
+<span class="fc" id="L46">        System.setProperty (&quot;org.htmlparser.tests.tagTests.TagTest&quot;, &quot;TagTest&quot;);</span>
+    }
+
+<span class="fc" id="L49">    private static final boolean JSP_TESTS_ENABLED = false;</span>
+
+    public TagTest(String name) {
+<span class="fc" id="L52">        super(name);</span>
+<span class="fc" id="L53">    }</span>
+
+    /**
+     * The bug being reproduced is this : &lt;BR&gt;
+     * &amp;lt;BODY aLink=#ff0000 bgColor=#ffffff link=#0000cc onload=setfocus() text=#000000 &lt;BR&gt;
+     * vLink=#551a8b&amp;gt;
+     * The above line is incorrectly parsed in that, the BODY tag is not identified.
+     */
+    public void testBodyTagBug1() throws ParserException {
+<span class="fc" id="L62">        String body = &quot;&lt;BODY aLink=#ff0000 bgColor=#ffffff link=#0000cc &quot;</span>
+            + &quot;onload=setfocus() text=#000000\nvLink=#551a8b&gt;&quot;;
+<span class="fc" id="L64">        createParser(body);</span>
+<span class="fc" id="L65">        parseAndAssertNodeCount(1);</span>
+        // The node should be a body Tag
+<span class="fc" id="L67">        assertTrue(&quot;Node should be a BodyTag&quot;,node[0] instanceof BodyTag);</span>
+<span class="fc" id="L68">        BodyTag tag = (BodyTag)node[0];</span>
+<span class="fc" id="L69">        String text = tag.toHtml ();</span>
+<span class="fc" id="L70">        assertEquals(&quot;Contents of the tag&quot;,body + &quot;&lt;/BODY&gt;&quot;,text);</span>
+<span class="fc" id="L71">    }</span>
+
+    /**
+     * The following should be identified as a tag : &lt;BR&gt;
+     *  &amp;lt;MYTAG abcd\n&quot;+
+     *      &quot;efgh\n&quot;+
+     *      &quot;ijkl\n&quot;+
+     *      &quot;mnop&amp;gt;
+     * Creation date: (6/17/2001 5:27:42 PM)
+     */
+    public void testLargeTagBug() throws ParserException {
+<span class="fc" id="L82">        String mytag = &quot;MYTAG abcd\n&quot;+</span>
+            &quot;efgh\n&quot;+
+            &quot;ijkl\n&quot;+
+            &quot;mnop&quot;;
+<span class="fc" id="L86">        createParser(</span>
+<span class="fc" id="L87">            &quot;&lt;&quot; + mytag + &quot;&gt;&quot;</span>
+        );
+<span class="fc" id="L89">        parseAndAssertNodeCount(1);</span>
+        // The node should be an Tag
+<span class="fc" id="L91">        assertTrue(&quot;Node should be a Tag&quot;,node[0] instanceof Tag);</span>
+<span class="fc" id="L92">        Tag tag = (Tag)node[0];</span>
+<span class="fc" id="L93">        assertEquals(&quot;Contents of the tag&quot;,mytag,tag.getText());</span>
+
+
+<span class="fc" id="L96">    }</span>
+    /**
+     * Bug reported by Gordon Deudney 2002-03-15
+     * Nested JSP Tags were not working
+     */
+    public void testNestedTags() throws ParserException
+    {
+        if (JSP_TESTS_ENABLED)
+        {
+            String s = &quot;input type=\&quot;text\&quot; value=\&quot;&lt;%=\&quot;test\&quot;%&gt;\&quot; name=\&quot;text\&quot;&quot;;
+            String line = &quot;&lt;&quot;+s+&quot;&gt;&quot;;
+            createParser(line);
+            parseAndAssertNodeCount(1);
+            assertTrue(&quot;The node found should have been an Tag&quot;,node[0] instanceof Tag);
+            Tag tag = (Tag) node[0];
+            assertEquals(&quot;Tag Contents&quot;,s,tag.getText());
+        }
+<span class="fc" id="L113">    }</span>
+
+    /**
+     * Test parseParameter method
+     * Created by Kaarle Kaila (august 2001)
+     * the tag name is here G
+     */
+    public void testParseParameter3() throws ParserException {
+        Tag tag;
+<span class="fc" id="L122">        Node node=null;</span>
+<span class="fc" id="L123">        String lin1 = &quot;&lt;DIV class=\&quot;userData\&quot; id=\&quot;oLayout\&quot; name=\&quot;oLayout\&quot;&gt;&lt;/DIV&gt;&quot;;</span>
+<span class="fc" id="L124">        createParser(lin1);</span>
+<span class="fc" id="L125">        NodeIterator en = parser.elements();</span>
+
+        try {
+
+<span class="pc bpc" id="L129" title="1 of 2 branches missed.">            if (en.hasMoreNodes()) {</span>
+<span class="fc" id="L130">                node = en.nextNode();</span>
+
+<span class="fc" id="L132">                tag = (Tag)node;</span>
+<span class="fc" id="L133">                String classValue= tag.getAttribute (&quot;CLASS&quot;);</span>
+<span class="fc" id="L134">                assertEquals (&quot;The class value should be &quot;,&quot;userData&quot;,classValue);</span>
+            }
+
+<span class="fc" id="L137">        }</span>
+<span class="nc" id="L138">        catch (ClassCastException ce) {</span>
+<span class="nc" id="L139">            fail(&quot;Bad class element = &quot; + node.getClass().getName());</span>
+        }
+<span class="fc" id="L141">    }</span>
+
+    /**
+     * Test parseParameter method
+     * Created by Kaarle Kaila (august 2001)
+     * the tag name is here A (and should be eaten up by linkScanner)
+     */
+    public void testParseParameterA() throws ParserException {
+        Tag tag;
+        Tag etag;
+        Text snode;
+<span class="fc" id="L152">        Node node=null;</span>
+<span class="fc" id="L153">        String lin1 = &quot;&lt;A href=\&quot;http://www.iki.fi/kaila\&quot; myParameter yourParameter=\&quot;Kaarle Kaaila\&quot;&gt;Kaarle's homepage&lt;/A&gt;&lt;p&gt;Paragraph&lt;/p&gt;&quot;;</span>
+<span class="fc" id="L154">        createParser(lin1);</span>
+<span class="fc" id="L155">        NodeIterator en = parser.elements();</span>
+        String a,href,myValue,nice;
+
+        try {
+
+<span class="pc bpc" id="L160" title="1 of 2 branches missed.">            if (en.hasMoreNodes()) {</span>
+<span class="fc" id="L161">                node = en.nextNode();</span>
+
+<span class="fc" id="L163">                tag = (Tag)node;</span>
+<span class="fc" id="L164">                a = ((Attribute)(tag.getAttributesEx ().elementAt (0))).getName ();</span>
+<span class="fc" id="L165">                href = tag.getAttribute (&quot;HREF&quot;);</span>
+<span class="fc" id="L166">                myValue = tag.getAttribute (&quot;MYPARAMETER&quot;);</span>
+<span class="fc" id="L167">                nice = tag.getAttribute (&quot;YOURPARAMETER&quot;);</span>
+<span class="fc" id="L168">                assertEquals (&quot;Link tag (A)&quot;,&quot;A&quot;,a);</span>
+<span class="fc" id="L169">                assertEquals (&quot;href value&quot;,&quot;http://www.iki.fi/kaila&quot;,href);</span>
+<span class="fc" id="L170">                assertEquals (&quot;myparameter value&quot;,null,myValue);</span>
+<span class="fc" id="L171">                assertEquals (&quot;yourparameter value&quot;,&quot;Kaarle Kaaila&quot;,nice);</span>
+            }
+<span class="pc bpc" id="L173" title="1 of 2 branches missed.">            if (!(node instanceof LinkTag)) {</span>
+                // linkscanner has eaten up this piece
+<span class="nc bnc" id="L175" title="All 2 branches missed.">                if ( en.hasMoreNodes()) {</span>
+<span class="nc" id="L176">                    node = en.nextNode();</span>
+<span class="nc" id="L177">                    snode = (Text)node;</span>
+<span class="nc" id="L178">                    assertEquals(&quot;Value of element&quot;,&quot;Kaarle's homepage&quot;,snode.getText());</span>
+                }
+
+<span class="nc bnc" id="L181" title="All 2 branches missed.">                if (en.hasMoreNodes()) {</span>
+<span class="nc" id="L182">                    node = en.nextNode();</span>
+<span class="nc" id="L183">                    etag = (Tag)node;</span>
+<span class="nc" id="L184">                    assertEquals(&quot;endtag of link&quot;,&quot;/A&quot;, etag.getText());</span>
+                }
+            }
+            // testing rest
+<span class="pc bpc" id="L188" title="1 of 2 branches missed.">            if (en.hasMoreNodes()) {</span>
+<span class="fc" id="L189">                node = en.nextNode();</span>
+
+<span class="fc" id="L191">                tag = (Tag)node;</span>
+<span class="fc" id="L192">                assertEquals(&quot;following paragraph begins&quot;,tag.getText(),&quot;p&quot;);</span>
+            }
+<span class="pc bpc" id="L194" title="1 of 2 branches missed.">            if (en.hasMoreNodes()) {</span>
+<span class="nc" id="L195">                node = en.nextNode();</span>
+<span class="nc" id="L196">                snode = (Text)node;</span>
+<span class="nc" id="L197">                assertEquals(&quot;paragraph contents&quot;,&quot;Paragraph&quot;,snode.getText());</span>
+            }
+<span class="pc bpc" id="L199" title="1 of 2 branches missed.">            if (en.hasMoreNodes()) {</span>
+<span class="nc" id="L200">                node = en.nextNode();</span>
+<span class="nc" id="L201">                etag = (Tag)node;</span>
+<span class="nc" id="L202">                assertEquals(&quot;paragrapg endtag&quot;,&quot;/p&quot;,etag.getText());</span>
+            }
+
+<span class="nc" id="L205">        }</span>
+<span class="nc" id="L206">        catch (ClassCastException ce) {</span>
+<span class="nc" id="L207">            fail(&quot;Bad class element = &quot; + node.getClass().getName());</span>
+        }
+<span class="fc" id="L209">    }</span>
+
+    /**
+     * Test parseParameter method
+     * Created by Kaarle Kaila (august 2001)
+     * the tag name is here G
+     */
+    public void testParseParameterG() throws ParserException{
+        Tag tag;
+        Tag etag;
+        Text snode;
+<span class="fc" id="L220">        Node node=null;</span>
+<span class="fc" id="L221">        String lin1 = &quot;&lt;G href=\&quot;http://www.iki.fi/kaila\&quot; myParameter yourParameter=\&quot;Kaila\&quot;&gt;Kaarle's homepage&lt;/G&gt;&lt;p&gt;Paragraph&lt;/p&gt;&quot;;</span>
+<span class="fc" id="L222">        createParser(lin1);</span>
+<span class="fc" id="L223">        NodeIterator en = parser.elements();</span>
+        String a,href,myValue,nice;
+
+        try {
+
+<span class="pc bpc" id="L228" title="1 of 2 branches missed.">            if (en.hasMoreNodes()) {</span>
+<span class="fc" id="L229">                node = en.nextNode();</span>
+
+<span class="fc" id="L231">                tag = (Tag)node;</span>
+<span class="fc" id="L232">                a = ((Attribute)(tag.getAttributesEx ().elementAt (0))).getName ();</span>
+<span class="fc" id="L233">                href = tag.getAttribute (&quot;HREF&quot;);</span>
+<span class="fc" id="L234">                myValue = tag.getAttribute (&quot;MYPARAMETER&quot;);</span>
+<span class="fc" id="L235">                nice = tag.getAttribute (&quot;YOURPARAMETER&quot;);</span>
+<span class="fc" id="L236">                assertEquals (&quot;The tagname should be G&quot;,a,&quot;G&quot;);</span>
+<span class="fc" id="L237">                assertEquals (&quot;Check the http address&quot;,href,&quot;http://www.iki.fi/kaila&quot;);</span>
+<span class="fc" id="L238">                assertEquals (&quot;myValue is not null&quot;,myValue,null);</span>
+<span class="fc" id="L239">                assertEquals (&quot;The second parameter value&quot;,nice,&quot;Kaila&quot;);</span>
+            }
+<span class="pc bpc" id="L241" title="1 of 2 branches missed.">            if (en.hasMoreNodes()) {</span>
+<span class="fc" id="L242">                node = en.nextNode();</span>
+<span class="fc" id="L243">                snode = (Text)node;</span>
+<span class="fc" id="L244">                assertEquals(&quot;The text of the element&quot;,snode.getText(),&quot;Kaarle's homepage&quot;);</span>
+            }
+
+<span class="pc bpc" id="L247" title="1 of 2 branches missed.">            if (en.hasMoreNodes()) {</span>
+<span class="fc" id="L248">                node = en.nextNode();</span>
+<span class="fc" id="L249">                etag = (Tag)node;</span>
+<span class="fc" id="L250">                assertEquals(&quot;Endtag is G&quot;,&quot;/G&quot;, etag.getText());</span>
+            }
+            // testing rest
+<span class="pc bpc" id="L253" title="1 of 2 branches missed.">            if (en.hasMoreNodes()) {</span>
+<span class="fc" id="L254">                node = en.nextNode();</span>
+
+<span class="fc" id="L256">                tag = (Tag)node;</span>
+<span class="fc" id="L257">                assertEquals(&quot;Follow up by p-tag&quot;,&quot;p&quot;, tag.getText());</span>
+            }
+<span class="pc bpc" id="L259" title="1 of 2 branches missed.">            if (en.hasMoreNodes()) {</span>
+<span class="nc" id="L260">                node = en.nextNode();</span>
+<span class="nc" id="L261">                snode = (Text)node;</span>
+<span class="nc" id="L262">                assertEquals(&quot;Verify the paragraph text&quot;,&quot;Paragraph&quot;, snode.getText());</span>
+            }
+<span class="pc bpc" id="L264" title="1 of 2 branches missed.">            if (en.hasMoreNodes()) {</span>
+<span class="nc" id="L265">                node = en.nextNode();</span>
+<span class="nc" id="L266">                etag = (Tag)node;</span>
+<span class="nc" id="L267">                assertEquals(&quot;Still patragraph endtag&quot;,&quot;/p&quot;, etag.getText());</span>
+            }
+
+<span class="nc" id="L270">        } catch (ClassCastException ce) {</span>
+<span class="nc" id="L271">            fail(&quot;Bad class element = &quot; + node.getClass().getName());</span>
+        }
+<span class="fc" id="L273">    }</span>
+
+
+   /**
+    * Test parseParameter method
+    * Created by Kaarle Kaila (august 2002)
+    * the tag name is here A (and should be eaten up by linkScanner)
+    * Tests elements where = sign is surrounded by spaces
+    */
+    public void testParseParameterSpace() throws ParserException{
+        Tag tag;
+        Tag etag;
+        Text snode;
+<span class="fc" id="L286">        Node node=null;</span>
+<span class="fc" id="L287">        String lin1 = &quot;&lt;A yourParameter = \&quot;Kaarle\&quot;&gt;Kaarle's homepage&lt;/A&gt;&quot;;</span>
+<span class="fc" id="L288">        createParser(lin1);</span>
+<span class="fc" id="L289">        NodeIterator en = parser.elements();</span>
+        String a,nice;
+
+        try {
+
+<span class="pc bpc" id="L294" title="1 of 2 branches missed.">            if (en.hasMoreNodes()) {</span>
+<span class="fc" id="L295">                node = en.nextNode();</span>
+
+<span class="fc" id="L297">                tag = (Tag)node;</span>
+<span class="fc" id="L298">                a = ((Attribute)(tag.getAttributesEx ().elementAt (0))).getName ();</span>
+<span class="fc" id="L299">                nice = tag.getAttribute (&quot;YOURPARAMETER&quot;);</span>
+<span class="fc" id="L300">                assertEquals (&quot;Link tag (A)&quot;,a,&quot;A&quot;);</span>
+<span class="fc" id="L301">                assertEquals (&quot;yourParameter value&quot;,&quot;Kaarle&quot;,nice);</span>
+            }
+<span class="pc bpc" id="L303" title="1 of 2 branches missed.">            if (!(node instanceof LinkTag)) {</span>
+                // linkscanner has eaten up this piece
+<span class="nc bnc" id="L305" title="All 2 branches missed.">                if ( en.hasMoreNodes()) {</span>
+<span class="nc" id="L306">                    node = en.nextNode();</span>
+<span class="nc" id="L307">                    snode = (Text)node;</span>
+<span class="nc" id="L308">                    assertEquals(&quot;Value of element&quot;,&quot;Kaarle's homepage&quot;,snode.getText());</span>
+                }
+
+<span class="nc bnc" id="L311" title="All 2 branches missed.">                if (en.hasMoreNodes()) {</span>
+<span class="nc" id="L312">                    node = en.nextNode();</span>
+<span class="nc" id="L313">                    etag = (Tag)node;</span>
+<span class="nc" id="L314">                    assertEquals(&quot;Still patragraph endtag&quot;,&quot;/A&quot;,etag.getText());</span>
+                }
+            }
+            // testing rest
+
+<span class="nc" id="L319">        } catch (ClassCastException ce) {</span>
+<span class="nc" id="L320">            fail(&quot;Bad class element = &quot; + node.getClass().getName());</span>
+        }
+<span class="fc" id="L322">    }</span>
+
+    /**
+     * Reproduction of a bug reported by Annette Doyle
+     * This is actually a pretty good example of dirty html - we are in a fix
+     * here, bcos the font tag (the first one) has an erroneous inverted comma. In Tag,
+     * we ignore anything in inverted commas, and dont if its outside. This kind of messes
+     * up our parsing almost completely.
+     */
+    public void testStrictParsing() throws ParserException {
+<span class="fc" id="L332">        String testHTML =</span>
+<span class="fc" id="L333">        &quot;&lt;div align=\&quot;center\&quot;&gt;&quot; +</span>
+            &quot;&lt;font face=\&quot;Arial,\&quot;helvetica,\&quot; sans-serif=\&quot;sans-serif\&quot; size=\&quot;2\&quot; color=\&quot;#FFFFFF\&quot;&gt;&quot; +
+                &quot;&lt;a href=\&quot;/index.html\&quot; link=\&quot;#000000\&quot; vlink=\&quot;#000000\&quot;&gt;&lt;font color=\&quot;#FFFFFF\&quot;&gt;Home&lt;/font&gt;&lt;/a&gt;\n&quot;+
+                &quot;&lt;a href=\&quot;/cia/notices.html\&quot; link=\&quot;#000000\&quot; vlink=\&quot;#000000\&quot;&gt;&lt;font color=\&quot;#FFFFFF\&quot;&gt;Notices&lt;/font&gt;&lt;/a&gt;\n&quot;+
+                &quot;&lt;a href=\&quot;/cia/notices.html#priv\&quot; link=\&quot;#000000\&quot; vlink=\&quot;#000000\&quot;&gt;&lt;font color=\&quot;#FFFFFF\&quot;&gt;Privacy&lt;/font&gt;&lt;/a&gt;\n&quot;+
+                &quot;&lt;a href=\&quot;/cia/notices.html#sec\&quot; link=\&quot;#000000\&quot; vlink=\&quot;#000000\&quot;&gt;&lt;font color=\&quot;#FFFFFF\&quot;&gt;Security&lt;/font&gt;&lt;/a&gt;\n&quot;+
+                &quot;&lt;a href=\&quot;/cia/contact.htm\&quot; link=\&quot;#000000\&quot; vlink=\&quot;#000000\&quot;&gt;&lt;font color=\&quot;#FFFFFF\&quot;&gt;Contact Us&lt;/font&gt;&lt;/a&gt;\n&quot;+
+                &quot;&lt;a href=\&quot;/cia/sitemap.html\&quot; link=\&quot;#000000\&quot; vlink=\&quot;#000000\&quot;&gt;&lt;font color=\&quot;#FFFFFF\&quot;&gt;Site Map&lt;/font&gt;&lt;/a&gt;\n&quot;+
+                &quot;&lt;a href=\&quot;/cia/siteindex.html\&quot; link=\&quot;#000000\&quot; vlink=\&quot;#000000\&quot;&gt;&lt;font color=\&quot;#FFFFFF\&quot;&gt;Index&lt;/font&gt;&lt;/a&gt;\n&quot;+
+                &quot;&lt;a href=\&quot;/search\&quot; link=\&quot;#000000\&quot; vlink=\&quot;#000000\&quot;&gt;&lt;font color=\&quot;#FFFFFF\&quot;&gt;Search&lt;/font&gt;&lt;/a&gt;\n&quot;+
+            &quot;&lt;/font&gt;&quot; +
+        &quot;&lt;/div&gt;&quot;;
+
+<span class="fc" id="L346">        createParser(testHTML,&quot;http://www.cia.gov&quot;);</span>
+<span class="fc" id="L347">        parseAndAssertNodeCount(1);</span>
+        // Check the tags
+<span class="fc" id="L349">        assertType(&quot;node&quot;,Div.class,node[0]);</span>
+<span class="fc" id="L350">        Div div = (Div)node[0];</span>
+<span class="fc" id="L351">        Tag fontTag = (Tag)div.children().nextNode();</span>
+        // an alternate interpretation: assertEquals(&quot;Second tag should be corrected&quot;,&quot;font face=\&quot;Arial,helvetica,\&quot; sans-serif=\&quot;sans-serif\&quot; size=\&quot;2\&quot; color=\&quot;#FFFFFF\&quot;&quot;,fontTag.getText());
+<span class="fc" id="L353">        assertEquals(&quot;Second tag should be corrected&quot;,&quot;font face=\&quot;Arial,\&quot;helvetica,\&quot; sans-serif=\&quot;sans-serif\&quot; size=\&quot;2\&quot; color=\&quot;#FFFFFF\&quot;&quot;,fontTag.getText());</span>
+<span class="fc" id="L354">        assertEquals(&quot;font sans-serif parameter&quot;,&quot;sans-serif&quot;,fontTag.getAttribute(&quot;SANS-SERIF&quot;));</span>
+        // an alternate interpretation: assertEquals(&quot;font face parameter&quot;,&quot;Arial,helvetica,&quot;,table.get(&quot;FACE&quot;));
+        // another: assertEquals(&quot;font face parameter&quot;,&quot;Arial,\&quot;helvetica,&quot;,table.get(&quot;FACE&quot;));
+<span class="fc" id="L357">        assertEquals(&quot;font face parameter&quot;,&quot;Arial,&quot;,fontTag.getAttribute(&quot;FACE&quot;));</span>
+<span class="fc" id="L358">    }</span>
+
+    public void testToHTML() throws ParserException {
+<span class="fc" id="L361">        String tag1 = &quot;&lt;MYTAG abcd\n&quot;+</span>
+            &quot;efgh\n&quot;+
+            &quot;ijkl\n&quot;+
+            &quot;mnop&gt;&quot;;
+<span class="fc" id="L365">        String testHTML = tag1 +</span>
+<span class="fc" id="L366">            &quot;\n&quot;+</span>
+<span class="fc" id="L367">            &quot;&lt;TITLE&gt;Hello&lt;/TITLE&gt;\n&quot;+</span>
+<span class="fc" id="L368">            &quot;&lt;A HREF=\&quot;Hello.html\&quot;&gt;Hey&lt;/A&gt;&quot;;</span>
+<span class="fc" id="L369">        createParser(testHTML);</span>
+<span class="fc" id="L370">        parser.setNodeFactory (new PrototypicalNodeFactory (true));</span>
+<span class="fc" id="L371">        parseAndAssertNodeCount(9);</span>
+        // The node should be an Tag
+<span class="fc" id="L373">        assertTrue(&quot;1st Node should be a Tag&quot;,node[0] instanceof Tag);</span>
+<span class="fc" id="L374">        Tag tag = (Tag)node[0];</span>
+<span class="fc" id="L375">        assertStringEquals(&quot;toHTML()&quot;,tag1,tag.toHtml());</span>
+<span class="fc" id="L376">        assertTrue(&quot;3rd Node should be a Tag&quot;,node[2] instanceof Tag);</span>
+<span class="fc" id="L377">        assertTrue(&quot;5th Node should be a Tag&quot;,node[6] instanceof Tag);</span>
+<span class="fc" id="L378">        tag = (Tag)node[2];</span>
+<span class="fc" id="L379">        assertEquals(&quot;Raw String of the tag&quot;,&quot;&lt;TITLE&gt;&quot;,tag.toHtml());</span>
+<span class="fc" id="L380">        tag = (Tag)node[6];</span>
+<span class="fc" id="L381">        assertEquals(&quot;Raw String of the tag&quot;,&quot;&lt;A HREF=\&quot;Hello.html\&quot;&gt;&quot;,tag.toHtml());</span>
+<span class="fc" id="L382">    }</span>
+
+
+    /**
+     * Test parseParameter method
+     * Created by Kaarle Kaila (22 Oct 2001)
+     * This test just wants the text in the element
+     */
+    public void testWithoutParseParameter() throws ParserException{
+        Node node;
+<span class="fc" id="L392">        String testHTML = &quot;&lt;A href=\&quot;http://www.iki.fi/kaila\&quot; myParameter yourParameter=\&quot;Kaarle\&quot;&gt;Kaarle's homepage&lt;/A&gt;&lt;p&gt;Paragraph&lt;/p&gt;&quot;;</span>
+<span class="fc" id="L393">        createParser(testHTML);</span>
+<span class="fc" id="L394">        NodeIterator en = parser.elements();</span>
+<span class="fc" id="L395">        String result=&quot;&quot;;</span>
+<span class="fc bfc" id="L396" title="All 2 branches covered.">        while (en.hasMoreNodes()) {</span>
+<span class="fc" id="L397">            node = en.nextNode();</span>
+<span class="fc" id="L398">            result += node.toHtml();</span>
+        }
+<span class="fc" id="L400">        assertStringEquals(&quot;Check collected contents to original&quot;, testHTML, result);</span>
+<span class="fc" id="L401">    }</span>
+
+    /**
+    * Test parseParameter method
+    * Created by Kaarle Kaila (09 Jan 2003)
+    * This test just wants the text in the element
+    */
+   public void testEmptyTagParseParameter() throws ParserException{
+       Node node;
+<span class="fc" id="L410">       String testHTML = &quot;&lt;INPUT name=\&quot;foo\&quot; value=\&quot;foobar\&quot; type=\&quot;text\&quot; /&gt;&quot;;</span>
+
+<span class="fc" id="L412">       createParser(testHTML);</span>
+<span class="fc" id="L413">       NodeIterator en = parser.elements();</span>
+<span class="fc" id="L414">       String result=&quot;&quot;;</span>
+<span class="fc bfc" id="L415" title="All 2 branches covered.">       while (en.hasMoreNodes()) {</span>
+<span class="fc" id="L416">           node = en.nextNode();</span>
+<span class="fc" id="L417">           result = node.toHtml();</span>
+       }
+<span class="fc" id="L419">       assertStringEquals(&quot;Check collected contents to original&quot;, testHTML, result);</span>
+<span class="fc" id="L420">    }</span>
+
+
+    public void testStyleSheetTag() throws ParserException{
+<span class="fc" id="L424">        String testHTML1 = new String(&quot;&lt;link rel src=\&quot;af.css\&quot;/&gt;&quot;);</span>
+<span class="fc" id="L425">        createParser(testHTML1,&quot;http://www.google.com/test/index.html&quot;);</span>
+<span class="fc" id="L426">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L427">        assertTrue(&quot;Node should be a tag&quot;,node[0] instanceof Tag);</span>
+<span class="fc" id="L428">        Tag tag = (Tag)node[0];</span>
+<span class="fc" id="L429">        assertEquals(&quot;StyleSheet Source&quot;,&quot;af.css&quot;,tag.getAttribute(&quot;src&quot;));</span>
+<span class="fc" id="L430">    }</span>
+
+    /**
+     * Bug report by Cedric Rosa, causing null pointer exceptions when encountering a broken tag,
+     * and if this has no further lines to parse
+     */
+    public void testBrokenTag() throws ParserException{
+<span class="fc" id="L437">        String testHTML1 = new String(&quot;&lt;br&quot;);</span>
+<span class="fc" id="L438">        createParser(testHTML1);</span>
+<span class="fc" id="L439">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L440">        assertTrue(&quot;Node should be a tag&quot;,node[0] instanceof Tag);</span>
+<span class="fc" id="L441">        Tag tag = (Tag)node[0];</span>
+<span class="fc" id="L442">        assertEquals(&quot;Node contents&quot;,&quot;br&quot;,tag.getText());</span>
+<span class="fc" id="L443">    }</span>
+
+    public void testTagInsideTag() throws ParserException {
+<span class="fc" id="L446">        String testHTML = new String(&quot;&lt;META name=\&quot;Hello\&quot; value=\&quot;World &lt;/I&gt;\&quot;&gt;&quot;);</span>
+<span class="fc" id="L447">        createParser(testHTML);</span>
+<span class="fc" id="L448">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L449">        assertTrue(&quot;Node should be a tag&quot;,node[0] instanceof Tag);</span>
+<span class="fc" id="L450">        Tag tag = (Tag)node[0];</span>
+<span class="fc" id="L451">        assertEquals(&quot;Node contents&quot;,&quot;META name=\&quot;Hello\&quot; value=\&quot;World &lt;/I&gt;\&quot;&quot;,tag.getText());</span>
+<span class="fc" id="L452">        assertEquals(&quot;Meta Content&quot;,&quot;World &lt;/I&gt;&quot;,tag.getAttribute(&quot;value&quot;));</span>
+
+<span class="fc" id="L454">    }</span>
+
+    public void testIncorrectInvertedCommas() throws ParserException {
+<span class="fc" id="L457">        String content = &quot;DORIER-APPRILL E., GERVAIS-LAMBONY P., MORICONI-EBRARD F., NAVEZ-BOUCHANINE F.&quot;;</span>
+<span class="fc" id="L458">        String author = &quot;Author&quot;;</span>
+<span class="fc" id="L459">        String guts = &quot;META NAME=\&quot;&quot; + author + &quot;\&quot; CONTENT = \&quot;&quot; + content + &quot;\&quot;&quot;;</span>
+<span class="fc" id="L460">        String testHTML = &quot;&lt;&quot; + guts + &quot;&gt;&quot;;</span>
+<span class="fc" id="L461">        createParser(testHTML);</span>
+<span class="fc" id="L462">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L463">        assertTrue(&quot;Node should be a tag&quot;,node[0] instanceof Tag);</span>
+<span class="fc" id="L464">        Tag tag = (Tag)node[0];</span>
+<span class="fc" id="L465">        assertStringEquals(&quot;Node contents&quot;,guts,tag.getText());</span>
+<span class="fc" id="L466">        assertEquals(&quot;Meta Content&quot;,author,tag.getAttribute(&quot;NAME&quot;));</span>
+        
+        //
+        // Big todo here:
+        // This involves a change in the lexer state machine from
+        // six states to probably 8, or perhaps a half dozen 'substates'
+        // on state zero...
+        // we shy away from this at the moment:
+//        assertEquals(&quot;Meta Content&quot;,content,tag.getAttribute(&quot;CONTENT&quot;));
+<span class="fc" id="L475">    }</span>
+
+    public void testIncorrectInvertedCommas2() throws ParserException {
+<span class="fc" id="L478">        String guts = &quot;META NAME=\&quot;Keywords\&quot; CONTENT=Moscou, modernisation, politique urbaine, sp\u00e9cificit\u00e9s culturelles, municipalit\u00e9, Moscou, modernisation, urban politics, cultural specificities, municipality\&quot;&quot;;</span>
+<span class="fc" id="L479">        String testHTML = &quot;&lt;&quot; + guts + &quot;&gt;&quot;;</span>
+<span class="fc" id="L480">        createParser(testHTML);</span>
+<span class="fc" id="L481">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L482">        assertTrue(&quot;Node should be a tag&quot;,node[0] instanceof Tag);</span>
+<span class="fc" id="L483">        Tag tag = (Tag)node[0];</span>
+<span class="fc" id="L484">        assertStringEquals(&quot;Node contents&quot;,guts,tag.getText());</span>
+<span class="fc" id="L485">    }</span>
+
+    public void testIncorrectInvertedCommas3() throws ParserException {
+<span class="fc" id="L488">        String testHTML = new String(&quot;&lt;meta name=\&quot;description\&quot; content=\&quot;Une base de donn\u00e9es sur les th\u00e8ses de g\&quot;ographie soutenues en France \&quot;&gt;&quot;);</span>
+<span class="fc" id="L489">        createParser(testHTML);</span>
+<span class="fc" id="L490">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L491">        assertTrue(&quot;Node should be a tag&quot;,node[0] instanceof Tag);</span>
+<span class="fc" id="L492">        Tag tag = (Tag)node[0];</span>
+<span class="fc" id="L493">        assertEquals(&quot;Node contents&quot;,&quot;meta name=\&quot;description\&quot; content=\&quot;Une base de donn\u00e9es sur les th\u00e8ses de g\&quot;ographie soutenues en France \&quot;&quot;,tag.getText());</span>
+<span class="fc" id="L494">    }</span>
+
+    /**
+     * Ignore empty tags.
+     */
+    public void testEmptyTag() throws ParserException {
+<span class="fc" id="L500">        String testHTML = &quot;&lt;html&gt;&lt;body&gt;&lt;&gt;text&lt;/body&gt;&lt;/html&gt;&quot;;</span>
+<span class="fc" id="L501">        createParser(testHTML);</span>
+<span class="fc" id="L502">        parser.setNodeFactory (new PrototypicalNodeFactory (true));</span>
+<span class="fc" id="L503">        parseAndAssertNodeCount(5);</span>
+<span class="fc" id="L504">        assertTrue(&quot;Third node should be a string node&quot;,node[2] instanceof Text);</span>
+<span class="fc" id="L505">        Text stringNode = (Text)node[2];</span>
+<span class="fc" id="L506">        assertEquals(&quot;Third node has incorrect text&quot;,&quot;&lt;&gt;text&quot;,stringNode.getText());</span>
+<span class="fc" id="L507">    }</span>
+
+    /**
+     * Ignore empty tags.
+     */
+    public void testEmptyTag2() throws ParserException {
+<span class="fc" id="L513">        String testHTML = &quot;&lt;html&gt;&lt;body&gt;text&lt;&gt;&lt;/body&gt;&lt;/html&gt;&quot;;</span>
+<span class="fc" id="L514">        createParser(testHTML);</span>
+<span class="fc" id="L515">        parser.setNodeFactory (new PrototypicalNodeFactory (true));</span>
+<span class="fc" id="L516">        parseAndAssertNodeCount(5);</span>
+<span class="fc" id="L517">        assertTrue(&quot;Third node should be a string node&quot;,node[2] instanceof Text);</span>
+<span class="fc" id="L518">        Text stringNode = (Text)node[2];</span>
+<span class="fc" id="L519">        assertEquals(&quot;Third node has incorrect text&quot;,&quot;text&lt;&gt;&quot;,stringNode.getText());</span>
+<span class="fc" id="L520">    }</span>
+
+    /**
+     * Ignore empty tags.
+     */
+    public void testEmptyTag3() throws ParserException {
+<span class="fc" id="L526">        String testHTML = &quot;&lt;html&gt;&lt;body&gt;text&lt;&gt;text&lt;/body&gt;&lt;/html&gt;&quot;;</span>
+<span class="fc" id="L527">        createParser(testHTML);</span>
+<span class="fc" id="L528">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L529">        assertTrue(&quot;Only node should be an HTML node&quot;,node[0] instanceof Html);</span>
+<span class="fc" id="L530">        Html html = (Html)node[0];</span>
+<span class="pc bpc" id="L531" title="1 of 2 branches missed.">        assertTrue(&quot;HTML node should have one child&quot;,1 == html.getChildCount ());</span>
+<span class="fc" id="L532">        assertTrue(&quot;Only node should be an BODY node&quot;,html.getChild(0) instanceof BodyTag);</span>
+<span class="fc" id="L533">        BodyTag body = (BodyTag)html.getChild(0);</span>
+<span class="pc bpc" id="L534" title="1 of 2 branches missed.">        assertTrue(&quot;BODY node should have one child&quot;,1 == body.getChildCount ());</span>
+<span class="fc" id="L535">        assertTrue(&quot;Only node should be a string node&quot;,body.getChild(0) instanceof Text);</span>
+<span class="fc" id="L536">        Text stringNode = (Text)body.getChild(0);</span>
+<span class="fc" id="L537">        assertEquals(&quot;Third node has incorrect text&quot;,&quot;text&lt;&gt;text&quot;,stringNode.getText());</span>
+<span class="fc" id="L538">    }</span>
+
+    /**
+     * Ignore empty tags.
+     */
+    public void testEmptyTag4() throws ParserException {
+<span class="fc" id="L544">        String testHTML = &quot;&lt;html&gt;&lt;body&gt;text\n&lt;&gt;text&lt;/body&gt;&lt;/html&gt;&quot;;</span>
+<span class="fc" id="L545">        createParser(testHTML);</span>
+<span class="fc" id="L546">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L547">        assertTrue(&quot;Only node should be an HTML node&quot;,node[0] instanceof Html);</span>
+<span class="fc" id="L548">        Html html = (Html)node[0];</span>
+<span class="pc bpc" id="L549" title="1 of 2 branches missed.">        assertTrue(&quot;HTML node should have one child&quot;,1 == html.getChildCount ());</span>
+<span class="fc" id="L550">        assertTrue(&quot;Only node should be an BODY node&quot;,html.getChild(0) instanceof BodyTag);</span>
+<span class="fc" id="L551">        BodyTag body = (BodyTag)html.getChild(0);</span>
+<span class="pc bpc" id="L552" title="1 of 2 branches missed.">        assertTrue(&quot;BODY node should have one child&quot;,1 == body.getChildCount ());</span>
+<span class="fc" id="L553">        assertTrue(&quot;Only node should be a string node&quot;,body.getChild(0) instanceof Text);</span>
+<span class="fc" id="L554">        Text stringNode = (Text)body.getChild(0);</span>
+<span class="fc" id="L555">        String actual = stringNode.getText();</span>
+<span class="fc" id="L556">        assertEquals(&quot;Third node has incorrect text&quot;,&quot;text\n&lt;&gt;text&quot;,actual);</span>
+<span class="fc" id="L557">    }</span>
+
+    /**
+     * Ignore empty tags.
+     */
+    public void testEmptyTag5() throws ParserException {
+<span class="fc" id="L563">        String testHTML = &quot;&lt;html&gt;&lt;body&gt;text&lt;\n&gt;text&lt;/body&gt;&lt;/html&gt;&quot;;</span>
+<span class="fc" id="L564">        createParser(testHTML);</span>
+<span class="fc" id="L565">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L566">        assertTrue(&quot;Only node should be an HTML node&quot;,node[0] instanceof Html);</span>
+<span class="fc" id="L567">        Html html = (Html)node[0];</span>
+<span class="pc bpc" id="L568" title="1 of 2 branches missed.">        assertTrue(&quot;HTML node should have one child&quot;,1 == html.getChildCount ());</span>
+<span class="fc" id="L569">        assertTrue(&quot;Only node should be an BODY node&quot;,html.getChild(0) instanceof BodyTag);</span>
+<span class="fc" id="L570">        BodyTag body = (BodyTag)html.getChild(0);</span>
+<span class="pc bpc" id="L571" title="1 of 2 branches missed.">        assertTrue(&quot;BODY node should have one child&quot;,1 == body.getChildCount ());</span>
+<span class="fc" id="L572">        assertTrue(&quot;Only node should be a string node&quot;,body.getChild(0) instanceof Text);</span>
+<span class="fc" id="L573">        Text stringNode = (Text)body.getChild(0);</span>
+<span class="fc" id="L574">        String actual = stringNode.getText();</span>
+<span class="fc" id="L575">        assertEquals(&quot;Third node has incorrect text&quot;,&quot;text&lt;\n&gt;text&quot;,actual);</span>
+<span class="fc" id="L576">    }</span>
+
+    /**
+     * Ignore empty tags.
+     */
+    public void testEmptyTag6() throws ParserException {
+<span class="fc" id="L582">        String testHTML = &quot;&lt;html&gt;&lt;body&gt;text&lt;&gt;\ntext&lt;/body&gt;&lt;/html&gt;&quot;;</span>
+<span class="fc" id="L583">        createParser(testHTML);</span>
+<span class="fc" id="L584">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L585">        assertTrue(&quot;Only node should be an HTML node&quot;,node[0] instanceof Html);</span>
+<span class="fc" id="L586">        Html html = (Html)node[0];</span>
+<span class="pc bpc" id="L587" title="1 of 2 branches missed.">        assertTrue(&quot;HTML node should have one child&quot;,1 == html.getChildCount ());</span>
+<span class="fc" id="L588">        assertTrue(&quot;Only node should be an BODY node&quot;,html.getChild(0) instanceof BodyTag);</span>
+<span class="fc" id="L589">        BodyTag body = (BodyTag)html.getChild(0);</span>
+<span class="pc bpc" id="L590" title="1 of 2 branches missed.">        assertTrue(&quot;BODY node should have one child&quot;,1 == body.getChildCount ());</span>
+<span class="fc" id="L591">        assertTrue(&quot;Only node should be a string node&quot;,body.getChild(0) instanceof Text);</span>
+<span class="fc" id="L592">        Text stringNode = (Text)body.getChild(0);</span>
+<span class="fc" id="L593">        String actual = stringNode.getText();</span>
+<span class="fc" id="L594">        assertEquals(&quot;Third node has incorrect text&quot;,&quot;text&lt;&gt;\ntext&quot;,actual);</span>
+<span class="fc" id="L595">    }</span>
+
+    public void testAttributesReconstruction() throws ParserException {
+<span class="fc" id="L598">        String expectedHTML = &quot;&lt;TEXTAREA name=\&quot;JohnDoe\&quot; &gt;&quot;;</span>
+<span class="fc" id="L599">        String testHTML = expectedHTML + &quot;&lt;/TEXTAREA&gt;&quot;;</span>
+<span class="fc" id="L600">        createParser(testHTML);</span>
+<span class="fc" id="L601">        parser.setNodeFactory (new PrototypicalNodeFactory (true));</span>
+<span class="fc" id="L602">        parseAndAssertNodeCount(2);</span>
+<span class="fc" id="L603">        assertTrue(&quot;First node should be an HTMLtag&quot;,node[0] instanceof Tag);</span>
+<span class="fc" id="L604">        Tag htmlTag = (Tag)node[0];</span>
+<span class="fc" id="L605">        assertStringEquals(&quot;Expected HTML&quot;,expectedHTML,htmlTag.toHtml());</span>
+<span class="fc" id="L606">    }</span>
+
+    public void testIgnoreState() throws ParserException
+    {
+<span class="fc" id="L610">        String testHTML = &quot;&lt;A \n&quot;+</span>
+        &quot;HREF=\&quot;/a?b=c&gt;d&amp;e=f&amp;g=h&amp;i=http://localhost/Testing/Report1.html\&quot;&gt;20020702 Report 1&lt;/A&gt;&quot;;
+<span class="fc" id="L612">        createParser(testHTML);</span>
+<span class="fc" id="L613">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L614">        assertTrue(&quot;Node should be a tag&quot;,node[0] instanceof Tag);</span>
+<span class="fc" id="L615">        Tag tag = (Tag)node[0];</span>
+<span class="fc" id="L616">        String href = tag.getAttribute(&quot;HREF&quot;);</span>
+<span class="fc" id="L617">        assertStringEquals(&quot;Resolved Link&quot;,&quot;/a?b=c&gt;d&amp;e=f&amp;g=h&amp;i=http://localhost/Testing/Report1.html&quot;,href);</span>
+<span class="fc" id="L618">    }</span>
+
+    /**
+     * See bug #726913 toHtml() method incomplete
+     */
+    public void testSetText() throws ParserException
+    {
+<span class="fc" id="L625">        String testHTML = &quot;&lt;LABEL ID=\&quot;JohnDoe\&quot;&gt;John Doe&lt;/LABEL&gt;&quot;;</span>
+<span class="fc" id="L626">        createParser(testHTML);</span>
+<span class="fc" id="L627">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L628">        org.htmlparser.tags.LabelTag htmlTag = (org.htmlparser.tags.LabelTag)node[0];</span>
+<span class="fc" id="L629">        String expectedHTML = &quot;&lt;LABEL ID=\&quot;JohnDoe\&quot;&gt;John Doe&lt;/LABEL&gt;&quot;;</span>
+<span class="fc" id="L630">        assertStringEquals(&quot;Expected HTML&quot;,expectedHTML,htmlTag.toHtml());</span>
+<span class="fc" id="L631">        assertStringEquals(&quot;Expected HTML&quot;,&quot;John Doe&quot;,htmlTag.getLabel());</span>
+
+<span class="fc" id="L633">        ((org.htmlparser.Text)((org.htmlparser.tags.CompositeTag)htmlTag).getChild(0)).setText(&quot;Jane Doe&quot;);</span>
+<span class="fc" id="L634">        expectedHTML = &quot;&lt;LABEL ID=\&quot;JohnDoe\&quot;&gt;Jane Doe&lt;/LABEL&gt;&quot;;</span>
+<span class="fc" id="L635">        assertStringEquals(&quot;Expected HTML&quot;,expectedHTML,htmlTag.toHtml());</span>
+<span class="fc" id="L636">        assertStringEquals(&quot;Expected HTML&quot;,&quot;Jane Doe&quot;,htmlTag.getLabel());</span>
+<span class="fc" id="L637">    }</span>
+
+    /**
+     * From oyoaha
+     */
+    public void testTabText () throws ParserException
+    {
+<span class="fc" id="L644">        String testHTML = &quot;&lt;a\thref=\&quot;http://cbc.ca\&quot;&gt;&quot;;</span>
+<span class="fc" id="L645">        createParser (testHTML);</span>
+<span class="fc" id="L646">        parseAndAssertNodeCount (1);</span>
+<span class="fc" id="L647">        assertTrue(&quot;Node should be a LinkTag&quot;, node[0] instanceof LinkTag);</span>
+<span class="fc" id="L648">        LinkTag tag = (LinkTag)node[0];</span>
+<span class="fc" id="L649">        String href = tag.getAttribute (&quot;HREF&quot;);</span>
+<span class="fc" id="L650">        assertStringEquals(&quot;Resolved Link&quot;,&quot;http://cbc.ca&quot;, href);</span>
+<span class="fc" id="L651">    }</span>
+
+    /**
+     * See bug #741026 registerScanners() mangles output HTML badly.
+     */
+    public void testHTMLOutputOfDifficultLinksWithRegisterScanners () throws ParserException
+    {
+        // straight out of a real world example
+<span class="fc" id="L659">        String html = &quot;&lt;a href=http://www.google.com/webhp?hl=en&gt;&quot;;</span>
+<span class="fc" id="L660">        createParser (html);</span>
+<span class="fc" id="L661">        String temp = null;</span>
+<span class="fc bfc" id="L662" title="All 2 branches covered.">        for (NodeIterator e = parser.elements (); e.hasMoreNodes ();)</span>
+        {
+<span class="fc" id="L664">            Node newNode = e.nextNode ();  // Get the next HTML Node</span>
+<span class="fc" id="L665">            temp = newNode.toHtml();</span>
+        }
+<span class="fc" id="L667">        assertNotNull (&quot;No nodes&quot;, temp);</span>
+<span class="fc" id="L668">        assertStringEquals (&quot;Incorrect HTML output: &quot;, html + &quot;&lt;/a&gt;&quot;, temp);</span>
+<span class="fc" id="L669">    }</span>
+
+    /**
+     * See bug #740411 setParsed() has no effect on output.
+     */
+    public void testParameterChange() throws ParserException
+    {
+<span class="fc" id="L676">        createParser(&quot;&lt;TABLE BORDER=0&gt;&quot;);</span>
+<span class="fc" id="L677">        parser.setNodeFactory (new PrototypicalNodeFactory (true));</span>
+<span class="fc" id="L678">        parseAndAssertNodeCount(1);</span>
+        // the node should be a Tag
+<span class="fc" id="L680">        assertTrue(&quot;Node should be a Tag&quot;,node[0] instanceof Tag);</span>
+<span class="fc" id="L681">        Tag tag = (Tag)node[0];</span>
+<span class="fc" id="L682">        assertEquals(&quot;Initial text should be&quot;,&quot;TABLE BORDER=0&quot;,tag.getText ());</span>
+<span class="fc" id="L683">        tag.setAttribute (&quot;BORDER&quot;,&quot;\&quot;1\&quot;&quot;);</span>
+<span class="fc" id="L684">        assertEquals(&quot;HTML should be&quot;,&quot;&lt;TABLE BORDER=\&quot;1\&quot;&gt;&quot;, tag.toHtml ());</span>
+<span class="fc" id="L685">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

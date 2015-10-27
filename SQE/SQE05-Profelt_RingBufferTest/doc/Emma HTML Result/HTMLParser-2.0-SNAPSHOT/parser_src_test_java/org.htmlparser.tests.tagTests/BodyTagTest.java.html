@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>BodyTagTest.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tests.tagTests</a> &gt; <span class="el_source">BodyTagTest.java</span></div><h1>BodyTagTest.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Somik Raha
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/test/java/org/htmlparser/tests/tagTests/BodyTagTest.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 13:37:00 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 5 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tests.tagTests;
+
+import java.util.Hashtable;
+import junit.framework.TestSuite;
+import org.htmlparser.Node;
+
+import org.htmlparser.PrototypicalNodeFactory;
+import org.htmlparser.Tag;
+import org.htmlparser.tags.BodyTag;
+import org.htmlparser.tags.Html;
+import org.htmlparser.tags.TitleTag;
+import org.htmlparser.tests.ParserTestCase;
+import org.htmlparser.util.NodeIterator;
+import org.htmlparser.util.ParserException;
+
+public class BodyTagTest extends ParserTestCase {
+
+    static
+    {
+<span class="fc" id="L45">        System.setProperty (&quot;org.htmlparser.tests.tagTests.BodyTagTest&quot;, &quot;BodyTagTest&quot;);</span>
+<span class="fc" id="L46">    }</span>
+
+    private BodyTag bodyTag;
+<span class="fc" id="L49">    private String html = &quot;&lt;body&gt;Yahoo!&lt;/body&gt;&quot;;</span>
+
+    public BodyTagTest(String name) {
+<span class="fc" id="L52">        super(name);</span>
+<span class="fc" id="L53">    }</span>
+
+    protected void setUp() throws Exception {
+<span class="fc" id="L56">        super.setUp();</span>
+<span class="fc" id="L57">        createParser(&quot;&lt;html&gt;&lt;head&gt;&lt;title&gt;body tag test&lt;/title&gt;&lt;/head&gt;&quot; + html + &quot;&lt;/html&gt;&quot;);</span>
+<span class="fc" id="L58">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L59">        assertTrue(&quot;Only node should be an HTML node&quot;,node[0] instanceof Html);</span>
+<span class="fc" id="L60">        Html html = (Html)node[0];</span>
+<span class="pc bpc" id="L61" title="1 of 2 branches missed.">        assertTrue(&quot;HTML node should have two children&quot;,2 == html.getChildCount ());</span>
+<span class="fc" id="L62">        assertTrue(&quot;Second node should be an BODY tag&quot;,html.getChild(1) instanceof BodyTag);</span>
+<span class="fc" id="L63">        bodyTag = (BodyTag)html.getChild(1);</span>
+<span class="fc" id="L64">    }</span>
+
+    public void testToPlainTextString() throws ParserException {
+        // check the label node
+<span class="fc" id="L68">        assertEquals(&quot;Body&quot;,&quot;Yahoo!&quot;,bodyTag.toPlainTextString());</span>
+<span class="fc" id="L69">    }</span>
+
+    public void testToHTML() throws ParserException {
+<span class="fc" id="L72">        assertStringEquals(&quot;Raw String&quot;, html, bodyTag.toHtml());</span>
+<span class="fc" id="L73">    }</span>
+
+    public void testAttributes ()
+    {
+        NodeIterator iterator;
+        Node node;
+
+        try
+        {
+<span class="fc" id="L82">            createParser(&quot;&lt;body style=\&quot;margin-top:4px; margin-left:20px;\&quot; title=\&quot;body\&quot;&gt;&quot;);</span>
+<span class="fc" id="L83">            parser.setNodeFactory (new PrototypicalNodeFactory (new BodyTag ()));</span>
+<span class="fc" id="L84">            iterator = parser.elements ();</span>
+<span class="fc" id="L85">            node = null;</span>
+<span class="fc bfc" id="L86" title="All 2 branches covered.">            while (iterator.hasMoreNodes ())</span>
+            {
+<span class="fc" id="L88">                node = iterator.nextNode ();</span>
+<span class="pc bpc" id="L89" title="1 of 2 branches missed.">                if (node instanceof BodyTag)</span>
+                {
+<span class="fc" id="L91">                    assertNotNull (&quot;no style attribute&quot;, ((BodyTag)node).getAttribute (&quot;STYLE&quot;));</span>
+<span class="fc" id="L92">                    assertNotNull (&quot;no title attribute&quot;, ((BodyTag)node).getAttribute (&quot;TITLE&quot;));</span>
+<span class="fc" id="L93">                }</span>
+                else
+<span class="nc" id="L95">                    fail (&quot;not a body tag&quot;);</span>
+<span class="pc bpc" id="L96" title="1 of 2 branches missed.">                assertTrue (&quot;more than one node&quot;, !iterator.hasMoreNodes ());</span>
+            }
+<span class="fc" id="L98">            assertNotNull (&quot;no elements&quot;, node);</span>
+<span class="fc" id="L99">        }</span>
+<span class="nc" id="L100">        catch (ParserException pe)</span>
+        {
+<span class="nc" id="L102">            fail (&quot;exception thrown &quot; + pe.getMessage ());</span>
+        }
+<span class="fc" id="L104">    }</span>
+
+    public void testSimpleBody() throws ParserException {
+<span class="fc" id="L107">        createParser(&quot;&lt;html&gt;&lt;head&gt;&lt;title&gt;Test 1&lt;/title&gt;&lt;/head&gt;&lt;body&gt;This is a body tag&lt;/body&gt;&lt;/html&gt;&quot;);</span>
+<span class="fc" id="L108">        parser.setNodeFactory (</span>
+<span class="fc" id="L109">            new PrototypicalNodeFactory (</span>
+                new Tag[]
+<span class="fc" id="L111">                {</span>
+<span class="fc" id="L112">                    new BodyTag (),</span>
+<span class="fc" id="L113">                    new TitleTag (),</span>
+                }));
+<span class="fc" id="L115">        parseAndAssertNodeCount(6);</span>
+<span class="fc" id="L116">        assertTrue(node[4] instanceof BodyTag);</span>
+        // check the body node
+<span class="fc" id="L118">        BodyTag bodyTag = (BodyTag) node[4];</span>
+<span class="fc" id="L119">        assertEquals(&quot;Body&quot;,&quot;This is a body tag&quot;,bodyTag.getBody());</span>
+<span class="fc" id="L120">        assertEquals(&quot;Body&quot;,&quot;&lt;body&gt;This is a body tag&lt;/body&gt;&quot;,bodyTag.toHtml());</span>
+<span class="fc" id="L121">    }</span>
+
+    public void testBodywithJsp() throws ParserException {
+<span class="fc" id="L124">        String body = &quot;&lt;body&gt;&lt;%=BodyValue%&gt;&lt;/body&gt;&quot;;</span>
+<span class="fc" id="L125">        createParser(&quot;&lt;html&gt;&lt;head&gt;&lt;title&gt;Test 1&lt;/title&gt;&lt;/head&gt;&quot; + body + &quot;&lt;/html&gt;&quot;);</span>
+<span class="fc" id="L126">        parser.setNodeFactory (new PrototypicalNodeFactory (new BodyTag ()));</span>
+<span class="fc" id="L127">        parseAndAssertNodeCount(8);</span>
+<span class="fc" id="L128">        assertTrue(node[6] instanceof BodyTag);</span>
+        // check the body node
+<span class="fc" id="L130">        BodyTag bodyTag = (BodyTag) node[6];</span>
+<span class="fc" id="L131">        assertStringEquals(&quot;Body&quot;,body,bodyTag.toHtml());</span>
+<span class="fc" id="L132">    }</span>
+
+    public void testBodyMixed() throws ParserException {
+<span class="fc" id="L135">        String body = &quot;&lt;body&gt;before jsp&lt;%=BodyValue%&gt;after jsp&lt;/body&gt;&quot;;</span>
+<span class="fc" id="L136">        createParser(&quot;&lt;html&gt;&lt;head&gt;&lt;title&gt;Test 1&lt;/title&gt;&lt;/head&gt;&quot; + body + &quot;&lt;/html&gt;&quot;);</span>
+<span class="fc" id="L137">        parser.setNodeFactory (</span>
+<span class="fc" id="L138">            new PrototypicalNodeFactory (</span>
+                new Tag[]
+<span class="fc" id="L140">                {</span>
+<span class="fc" id="L141">                    new BodyTag (),</span>
+<span class="fc" id="L142">                    new TitleTag (),</span>
+                }));
+<span class="fc" id="L144">        parseAndAssertNodeCount(6);</span>
+<span class="fc" id="L145">        assertTrue(node[4] instanceof BodyTag);</span>
+        // check the body node
+<span class="fc" id="L147">        BodyTag bodyTag = (BodyTag) node[4];</span>
+<span class="fc" id="L148">        assertEquals(&quot;Body&quot;,body,bodyTag.toHtml());</span>
+<span class="fc" id="L149">    }</span>
+
+    public void testBodyEnding() throws ParserException {
+<span class="fc" id="L152">        String body = &quot;&lt;body&gt;before jsp&lt;%=BodyValue%&gt;after jsp&quot;;</span>
+<span class="fc" id="L153">        createParser(&quot;&lt;html&gt;&quot; + body + &quot;&lt;/html&gt;&quot;);</span>
+<span class="fc" id="L154">        parser.setNodeFactory (new PrototypicalNodeFactory (new BodyTag ()));</span>
+<span class="fc" id="L155">        parseAndAssertNodeCount(3);</span>
+<span class="fc" id="L156">        assertTrue(node[1] instanceof BodyTag);</span>
+        // check the body node
+<span class="fc" id="L158">        BodyTag bodyTag = (BodyTag) node[1];</span>
+<span class="fc" id="L159">        assertEquals(&quot;Body&quot;,body + &quot;&lt;/body&gt;&quot;,bodyTag.toHtml());</span>
+<span class="fc" id="L160">    }</span>
+
+    public static TestSuite suite()
+    {
+<span class="nc" id="L164">        return new TestSuite(BodyTagTest.class);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

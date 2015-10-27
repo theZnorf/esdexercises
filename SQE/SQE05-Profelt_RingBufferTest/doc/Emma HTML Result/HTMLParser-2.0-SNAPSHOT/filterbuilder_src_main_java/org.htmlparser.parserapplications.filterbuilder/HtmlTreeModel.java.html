@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>HtmlTreeModel.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">filterbuilder/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.parserapplications.filterbuilder</a> &gt; <span class="el_source">HtmlTreeModel.java</span></div><h1>HtmlTreeModel.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/filterbuilder/src/main/java/org/htmlparser/parserapplications/filterbuilder/HtmlTreeModel.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.parserapplications.filterbuilder;
+
+import java.util.Vector;
+
+import javax.swing.tree.*;
+import javax.swing.event.*;
+
+import org.htmlparser.Node;
+import org.htmlparser.tags.Html;
+import org.htmlparser.util.NodeList;
+
+/**
+ * Quick and dirty tree model for HTML nodes.
+ */
+public class HtmlTreeModel implements TreeModel
+{
+    /**
+     * The list of tree listeners.
+     */
+    protected Vector mTreeListeners;
+    
+    /**
+     * The root {@link Node}.
+     */
+    protected Node mRoot;
+    
+    /**
+     * Create an HTML tree view.
+     * @param root The nodes at the root of the tree
+     * (the nodes are wrapped in an Html node that is never seen
+     * because it's the root, but this makes all downstream processing
+     * super-simple because every tree node is then a {@link Node},
+     * not sometimes a {@link NodeList} at the root).
+     */
+<span class="nc" id="L60">    public HtmlTreeModel (NodeList root)</span>
+    {
+<span class="nc" id="L62">        mTreeListeners = new Vector ();</span>
+        // for simplicity we encapsulate the nodelist in a Html tag
+<span class="nc" id="L64">        mRoot = new Html ();</span>
+<span class="nc" id="L65">        mRoot.setChildren (root);</span>
+<span class="nc" id="L66">    }    </span>
+
+    //
+    // TreeModel interface
+    //
+
+    /**
+     * Adds a listener for the TreeModelEvent posted after the tree changes.
+     * @param l {@inheritDoc}
+     */
+    public void addTreeModelListener (TreeModelListener l)
+    {
+<span class="nc" id="L78">        synchronized (mTreeListeners)</span>
+        {
+<span class="nc bnc" id="L80" title="All 2 branches missed.">            if (!mTreeListeners.contains(l))</span>
+<span class="nc" id="L81">                mTreeListeners.addElement(l);</span>
+        }        
+<span class="nc" id="L83">    }        </span>
+
+    /**
+     * Removes a listener previously added with addTreeModelListener().
+     * @param l {@inheritDoc}
+     */
+    public void removeTreeModelListener(TreeModelListener l)
+    {
+<span class="nc" id="L91">        synchronized (mTreeListeners)</span>
+        {
+<span class="nc" id="L93">            mTreeListeners.removeElement (l);</span>
+        }    
+<span class="nc" id="L95">    }</span>
+
+    /**
+     * Returns the child of parent at index index in the parent's child array.
+     * @param parent {@inheritDoc}
+     * @param index {@inheritDoc}
+     * @return {@inheritDoc}
+     */
+    public Object getChild (Object parent, int index)
+    {
+        Node node;
+        NodeList list;
+        Object ret;
+
+<span class="nc" id="L109">        node = (Node)parent;</span>
+<span class="nc" id="L110">        list = node.getChildren ();</span>
+<span class="nc bnc" id="L111" title="All 2 branches missed.">        if (null == list)</span>
+<span class="nc" id="L112">            throw new IllegalArgumentException (&quot;invalid parent for getChild()&quot;);</span>
+        else
+<span class="nc" id="L114">            ret = list.elementAt (index);</span>
+        
+<span class="nc" id="L116">        return (ret);</span>
+    }
+
+    /**
+     * Returns the number of children of parent.
+     * @param parent {@inheritDoc}
+     * @return {@inheritDoc}
+     */
+    public int getChildCount (Object parent)
+    {
+        Node node;
+        NodeList list;
+        int ret;
+
+<span class="nc" id="L130">        ret = 0;</span>
+
+<span class="nc" id="L132">        node = (Node)parent;</span>
+<span class="nc" id="L133">        list = node.getChildren ();</span>
+<span class="nc bnc" id="L134" title="All 2 branches missed.">        if (null != list)</span>
+<span class="nc" id="L135">            ret = list.size ();</span>
+        
+<span class="nc" id="L137">        return (ret);</span>
+    }
+
+
+    /**
+     * Returns the index of child in parent.
+     * @param parent {@inheritDoc}
+     * @param child {@inheritDoc}
+     * @return {@inheritDoc}
+     */
+    public int getIndexOfChild (Object parent, Object child)
+    {
+        Node node;
+        NodeList list;
+        int count;
+        int ret;
+
+<span class="nc" id="L154">        ret = -1;</span>
+
+<span class="nc" id="L156">        node = (Node)parent;</span>
+<span class="nc" id="L157">        list = node.getChildren ();</span>
+<span class="nc bnc" id="L158" title="All 2 branches missed.">        if (null != list)</span>
+        {
+<span class="nc" id="L160">            count = list.size ();</span>
+<span class="nc bnc" id="L161" title="All 2 branches missed.">            for (int i = 0; i &lt; count; i++)</span>
+<span class="nc bnc" id="L162" title="All 2 branches missed.">                if (child == list.elementAt (i))</span>
+                {
+<span class="nc" id="L164">                    ret = i;</span>
+<span class="nc" id="L165">                	break;</span>
+                }
+<span class="nc" id="L167">        }</span>
+        else
+<span class="nc" id="L169">            throw new IllegalArgumentException (&quot;invalid parent for getIndexOfChild()&quot;);</span>
+
+<span class="nc bnc" id="L171" title="All 2 branches missed.">        if (0 &gt; ret)</span>
+<span class="nc" id="L172">            throw new IllegalArgumentException (&quot;child not found in getIndexOfChild()&quot;);</span>
+
+<span class="nc" id="L174">        return (ret);</span>
+    }
+
+    /**
+     * Returns the root of the tree.
+     * @return {@inheritDoc}
+     */
+    public Object getRoot ()
+    {
+<span class="nc" id="L183">        return (mRoot);</span>
+    }    
+
+    /**
+     * Returns true if node is a leaf.
+     * @param node {@inheritDoc}
+     * @return {@inheritDoc}
+     */
+    public boolean isLeaf (Object node)
+    {
+        NodeList list;
+        boolean ret;
+
+<span class="nc" id="L196">        list = ((Node)node).getChildren ();</span>
+<span class="nc bnc" id="L197" title="All 2 branches missed.">        if (null == list)</span>
+<span class="nc" id="L198">            ret = true;</span>
+        else
+<span class="nc bnc" id="L200" title="All 2 branches missed.">            ret = 0 == list.size ();</span>
+
+<span class="nc" id="L202">        return (ret);</span>
+    }    
+
+    /**
+     * Messaged when the user has altered the value for the item identified by path to newValue.
+     * @param path {@inheritDoc}
+     * @param newValue {@inheritDoc}
+     */
+    public void valueForPathChanged (TreePath path, Object newValue)
+    {
+        TreeModelEvent event;
+        Vector v;
+
+<span class="nc" id="L215">        event = new TreeModelEvent (this, path);</span>
+<span class="nc" id="L216">        synchronized (mTreeListeners)</span>
+        {
+<span class="nc" id="L218">            v = (Vector)mTreeListeners.clone ();</span>
+        }
+        
+<span class="nc bnc" id="L221" title="All 2 branches missed.">        for (int i = 0; i &lt; v.size (); i++)</span>
+        {
+<span class="nc" id="L223">            TreeModelListener listener = (TreeModelListener)v.elementAt (i);</span>
+<span class="nc" id="L224">            listener.treeStructureChanged (event);</span>
+        }
+<span class="nc" id="L226">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

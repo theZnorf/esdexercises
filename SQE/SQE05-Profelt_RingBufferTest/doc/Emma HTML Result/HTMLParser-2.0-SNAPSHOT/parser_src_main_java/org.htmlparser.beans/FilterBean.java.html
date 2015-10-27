@@ -1,0 +1,457 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>FilterBean.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.beans</a> &gt; <span class="el_source">FilterBean.java</span></div><h1>FilterBean.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/main/java/org/htmlparser/beans/FilterBean.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.beans;
+
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
+import java.io.Serializable;
+import java.net.URLConnection;
+
+import org.htmlparser.NodeFilter;
+import org.htmlparser.Parser;
+import org.htmlparser.util.NodeList;
+import org.htmlparser.util.ParserException;
+import org.htmlparser.util.EncodingChangeException;
+
+/**
+ * Extract nodes from a URL using a filter.
+ * &lt;pre&gt;
+ * &lt;code&gt;
+ *     FilterBean fb = new FilterBean (&quot;http://cbc.ca&quot;);
+ *     fb.setFilters (new NodeFilter[] { new TagNameFilter (&quot;META&quot;) });
+ *     fb.setURL (&quot;http://cbc.ca&quot;);
+ *     System.out.println (fb.getNodes ().toHtml ());
+ * &lt;/code&gt;
+ * &lt;/pre&gt;
+ */
+public class FilterBean
+    implements
+        Serializable
+{
+    /**
+     * Property name in event where the URL contents changes.
+     */
+    public static final String PROP_NODES_PROPERTY = &quot;nodes&quot;;
+
+    /**
+     * Property name in event where the URL contents changes.
+     */
+    public static final String PROP_TEXT_PROPERTY = &quot;text&quot;;
+
+    /**
+     * Property name in event where the URL changes.
+     */
+    public static final String PROP_URL_PROPERTY = &quot;URL&quot;;
+
+    /**
+     * Property name in event where the connection changes.
+     */
+    public static final String PROP_CONNECTION_PROPERTY = &quot;connection&quot;;
+
+    /**
+     * Bound property support.
+     */
+    protected PropertyChangeSupport mPropertySupport;
+
+    /**
+     * The parser used to filter.
+     */
+    protected Parser mParser;
+
+    /**
+     * The filter set.
+     */
+    protected NodeFilter[] mFilters;
+
+    /**
+     * The nodes extracted from the URL.
+     */
+    protected NodeList mNodes;
+
+    /**
+     * The recursion behaviour for elements of the filter array.
+     * If &lt;code&gt;true&lt;/code&gt; the filters are applied recursively.
+     * @see org.htmlparser.util.NodeList#extractAllNodesThatMatch(NodeFilter, boolean).
+     */
+    protected boolean mRecursive;
+
+   /**
+     * Create a FilterBean object.
+     */
+<span class="nc" id="L104">    public FilterBean ()</span>
+    {
+<span class="nc" id="L106">        mPropertySupport = new PropertyChangeSupport (this);</span>
+<span class="nc" id="L107">        mParser = new Parser ();</span>
+<span class="nc" id="L108">        mFilters = null;</span>
+<span class="nc" id="L109">        mNodes = null;</span>
+<span class="nc" id="L110">        mRecursive = true;</span>
+<span class="nc" id="L111">    }</span>
+
+    //
+    // internals
+    //
+
+    /**
+     * Assign the &lt;code&gt;Nodes&lt;/code&gt; property, firing the property change.
+     * @param nodes The new value of the &lt;code&gt;Nodes&lt;/code&gt; property.
+     */
+    protected void updateNodes (NodeList nodes)
+    {
+        NodeList oldValue;
+        String oldText;
+        String newText;
+
+<span class="nc bnc" id="L127" title="All 4 branches missed.">        if ((null == mNodes) || !mNodes.equals (nodes))</span>
+        {
+<span class="nc" id="L129">            oldValue = mNodes;</span>
+<span class="nc bnc" id="L130" title="All 2 branches missed.">            if (null != oldValue)</span>
+<span class="nc" id="L131">                oldText = getText ();</span>
+            else
+<span class="nc" id="L133">                oldText = &quot;&quot;;</span>
+<span class="nc bnc" id="L134" title="All 2 branches missed.">            if (null == oldText)</span>
+<span class="nc" id="L135">                oldText = &quot;&quot;;</span>
+<span class="nc" id="L136">            mNodes = nodes;</span>
+<span class="nc bnc" id="L137" title="All 2 branches missed.">            if (null != mNodes) // TODO: fix this null problem</span>
+<span class="nc" id="L138">                newText = getText ();</span>
+            else // StringBean finds no nodes
+<span class="nc" id="L140">                newText = &quot;&quot;;</span>
+<span class="nc bnc" id="L141" title="All 2 branches missed.">            if (null == newText)</span>
+<span class="nc" id="L142">                newText = &quot;&quot;;</span>
+<span class="nc" id="L143">            mPropertySupport.firePropertyChange (</span>
+<span class="nc" id="L144">                PROP_NODES_PROPERTY, oldValue, nodes);</span>
+<span class="nc bnc" id="L145" title="All 2 branches missed.">            if (!newText.equals (oldText))</span>
+<span class="nc" id="L146">                mPropertySupport.firePropertyChange (</span>
+<span class="nc" id="L147">                    PROP_TEXT_PROPERTY, oldText, newText);</span>
+        }
+<span class="nc" id="L149">    }</span>
+
+    /**
+     * Apply each of the filters.
+     * The first filter is applied to the output of the parser.
+     * Subsequent filters are applied to the output of the prior filter.
+     * @return A list of nodes passed through all filters.
+     * If there are no filters, returns the entire page.
+     * @throws ParserException If an encoding change occurs
+     * or there is some other problem.
+     */
+    protected NodeList applyFilters ()
+        throws
+            ParserException
+    {
+        NodeFilter[] filters;
+        NodeList ret;
+
+<span class="nc" id="L167">        ret = mParser.parse (null);</span>
+<span class="nc" id="L168">        filters = getFilters ();</span>
+<span class="nc bnc" id="L169" title="All 2 branches missed.">        if (null != filters)</span>
+<span class="nc bnc" id="L170" title="All 2 branches missed.">            for (int i = 0; i &lt; filters.length; i++)</span>
+<span class="nc" id="L171">                ret = ret.extractAllNodesThatMatch (filters[i], mRecursive);</span>
+
+<span class="nc" id="L173">        return (ret);</span>
+    }
+
+    /**
+     * Fetch the URL contents and filter it.
+     * Only do work if there is a valid parser with it's URL set.
+     */
+    protected void setNodes ()
+    {
+        NodeList list;
+
+<span class="nc bnc" id="L184" title="All 2 branches missed.">        if (null != getURL ())</span>
+            try
+            {
+<span class="nc" id="L187">                list = applyFilters ();</span>
+<span class="nc" id="L188">                updateNodes (list);</span>
+<span class="nc" id="L189">            }</span>
+<span class="nc" id="L190">            catch (EncodingChangeException ece)</span>
+            {
+                try
+                {   // try again with the encoding now in force
+<span class="nc" id="L194">                    mParser.reset ();</span>
+<span class="nc" id="L195">                    list = applyFilters ();</span>
+<span class="nc" id="L196">                    updateNodes (list);</span>
+<span class="nc" id="L197">                }</span>
+<span class="nc" id="L198">                catch (ParserException pe)</span>
+                {
+<span class="nc" id="L200">                    updateNodes (new NodeList ());</span>
+                }
+             }
+<span class="nc" id="L203">            catch (ParserException pe)</span>
+            {
+<span class="nc" id="L205">                updateNodes (new NodeList ());</span>
+            }
+<span class="nc" id="L207">    }</span>
+
+    //
+    // Property change support.
+    //
+
+    /**
+     * Add a PropertyChangeListener to the listener list.
+     * The listener is registered for all properties.
+     * @param listener The PropertyChangeListener to be added.
+     */
+    public void addPropertyChangeListener (PropertyChangeListener listener)
+    {
+<span class="nc" id="L220">        mPropertySupport.addPropertyChangeListener (listener);</span>
+<span class="nc" id="L221">    }</span>
+
+    /**
+     * Remove a PropertyChangeListener from the listener list.
+     * This removes a registered PropertyChangeListener.
+     * @param listener The PropertyChangeListener to be removed.
+     */
+    public void removePropertyChangeListener (PropertyChangeListener listener)
+    {
+<span class="nc" id="L230">        mPropertySupport.removePropertyChangeListener (listener);</span>
+<span class="nc" id="L231">    }</span>
+
+    //
+    // Properties
+    //
+
+    /**
+     * Return the nodes of the URL matching the filter.
+     * This is the primary output of the bean.
+     * @return The nodes from the URL matching the current filter.
+     */
+    public NodeList getNodes ()
+    {
+<span class="nc bnc" id="L244" title="All 2 branches missed.">        if (null == mNodes)</span>
+<span class="nc" id="L245">            setNodes ();</span>
+
+<span class="nc" id="L247">        return (mNodes);</span>
+    }
+
+    /**
+     * Get the current URL.
+     * @return The URL from which text has been extracted, or &lt;code&gt;null&lt;/code&gt;
+     * if this property has not been set yet.
+     */
+    public String getURL ()
+    {
+<span class="nc bnc" id="L257" title="All 2 branches missed.">         return ((null != mParser) ? mParser.getURL () : null);</span>
+    }
+
+    /**
+     * Set the URL to extract strings from.
+     * The text from the URL will be fetched, which may be expensive, so this
+     * property should be set last.
+     * @param url The URL that text should be fetched from.
+     */
+    public void setURL (String url)
+    {
+        String old;
+        URLConnection conn;
+
+<span class="nc" id="L271">        old = getURL ();</span>
+<span class="nc" id="L272">        conn = getConnection ();</span>
+<span class="nc bnc" id="L273" title="All 6 branches missed.">        if (((null == old) &amp;&amp; (null != url)) || ((null != old)</span>
+<span class="nc bnc" id="L274" title="All 2 branches missed.">            &amp;&amp; !old.equals (url)))</span>
+        {
+            try
+            {
+<span class="nc bnc" id="L278" title="All 2 branches missed.">                if (null == mParser)</span>
+<span class="nc" id="L279">                    mParser = new Parser (url);</span>
+                else
+<span class="nc" id="L281">                    mParser.setURL (url);</span>
+<span class="nc" id="L282">                mPropertySupport.firePropertyChange (</span>
+<span class="nc" id="L283">                    PROP_URL_PROPERTY, old, getURL ());</span>
+<span class="nc" id="L284">                mPropertySupport.firePropertyChange (</span>
+<span class="nc" id="L285">                    PROP_CONNECTION_PROPERTY, conn, mParser.getConnection ());</span>
+<span class="nc" id="L286">                setNodes ();</span>
+<span class="nc" id="L287">            }</span>
+<span class="nc" id="L288">            catch (ParserException pe)</span>
+            {
+<span class="nc" id="L290">                updateNodes (new NodeList ());</span>
+            }
+        }
+<span class="nc" id="L293">    }</span>
+
+    /**
+     * Get the current connection.
+     * @return The connection that the parser has or &lt;code&gt;null&lt;/code&gt; if it
+     * hasn't been set or the parser hasn't been constructed yet.
+     */
+    public URLConnection getConnection ()
+    {
+<span class="nc bnc" id="L302" title="All 2 branches missed.">        return ((null != mParser) ? mParser.getConnection () : null);</span>
+    }
+
+    /**
+     * Set the parser's connection.
+     * The text from the URL will be fetched, which may be expensive, so this
+     * property should be set last.
+     * @param connection New value of property Connection.
+     */
+    public void setConnection (URLConnection connection)
+    {
+        String url;
+        URLConnection conn;
+
+<span class="nc" id="L316">        url = getURL ();</span>
+<span class="nc" id="L317">        conn = getConnection ();</span>
+<span class="nc bnc" id="L318" title="All 6 branches missed.">        if (((null == conn) &amp;&amp; (null != connection)) || ((null != conn)</span>
+<span class="nc bnc" id="L319" title="All 2 branches missed.">            &amp;&amp; !conn.equals (connection)))</span>
+        {
+            try
+            {
+<span class="nc bnc" id="L323" title="All 2 branches missed.">                if (null == mParser)</span>
+<span class="nc" id="L324">                    mParser = new Parser (connection);</span>
+                else
+<span class="nc" id="L326">                    mParser.setConnection (connection);</span>
+<span class="nc" id="L327">                mPropertySupport.firePropertyChange (</span>
+<span class="nc" id="L328">                    PROP_URL_PROPERTY, url, getURL ());</span>
+<span class="nc" id="L329">                mPropertySupport.firePropertyChange (</span>
+<span class="nc" id="L330">                    PROP_CONNECTION_PROPERTY, conn, mParser.getConnection ());</span>
+<span class="nc" id="L331">                setNodes ();</span>
+<span class="nc" id="L332">            }</span>
+<span class="nc" id="L333">            catch (ParserException pe)</span>
+            {
+<span class="nc" id="L335">                updateNodes (new NodeList ());</span>
+            }
+        }
+<span class="nc" id="L338">    }</span>
+
+    /**
+     * Get the current filter set.
+     * @return The current filters.
+     */
+    public NodeFilter[] getFilters ()
+    {
+<span class="nc" id="L346">        return (mFilters);</span>
+    }
+
+    /**
+     * Set the filters for the bean.
+     * If the parser has been set, it is reset and
+     * the nodes are refetched with the new filters.
+     * @param filters The filter set to use.
+     */
+    public void setFilters (NodeFilter[] filters)
+    {
+<span class="nc" id="L357">        mFilters = filters;</span>
+<span class="nc bnc" id="L358" title="All 2 branches missed.">        if (null != getParser ())</span>
+        {
+<span class="nc" id="L360">            getParser ().reset ();</span>
+<span class="nc" id="L361">            setNodes ();</span>
+        }
+<span class="nc" id="L363">    }</span>
+
+    /**
+     * Get the parser used to fetch nodes.
+     * @return The parser used by the bean.
+     */
+    public Parser getParser ()
+    {
+<span class="nc" id="L371">        return (mParser);</span>
+    }
+
+    /**
+     * Set the parser for the bean.
+     * The parser is used immediately to fetch the nodes,
+     * which for a null filter means all the nodes
+     * @param parser The parser to use.
+     */
+    public void setParser (Parser parser)
+    {
+<span class="nc" id="L382">        mParser = parser;</span>
+<span class="nc bnc" id="L383" title="All 2 branches missed.">        if (null != getFilters ())</span>
+<span class="nc" id="L384">            setNodes ();</span>
+<span class="nc" id="L385">    }</span>
+
+    /**
+     * Convenience method to apply a {@link StringBean} to the filter results.
+     * This may yield duplicate or multiple text elements if the node list
+     * contains nodes from two or more levels in the same nested tag heirarchy,
+     * but if the node list contains only one tag, it provides access to the
+     * text within the node.
+     * @return The textual contents of the nodes that pass through the filter set,
+     * as collected by the StringBean. 
+     */
+    public String getText ()
+    {
+        NodeList list;
+        StringBean sb;
+        String ret;
+
+<span class="nc" id="L402">        list = getNodes ();</span>
+<span class="nc bnc" id="L403" title="All 2 branches missed.">        if (0 != list.size ())</span>
+        {
+<span class="nc" id="L405">            sb = new StringBean ();</span>
+<span class="nc bnc" id="L406" title="All 2 branches missed.">            for (int i = 0; i &lt; list.size (); i++)</span>
+<span class="nc" id="L407">                list.elementAt (i).accept (sb);</span>
+<span class="nc" id="L408">            ret = sb.getStrings ();</span>
+<span class="nc" id="L409">        }</span>
+        else
+<span class="nc" id="L411">            ret = &quot;&quot;;</span>
+        
+<span class="nc" id="L413">        return (ret);</span>
+    }
+
+    /**
+     * Get the current recursion behaviour.
+     * @return The recursion (applies to children, children's children, etc)
+     * behavior currently being used.
+     */
+    public boolean getRecursive ()
+    {
+<span class="nc" id="L423">        return (mRecursive);</span>
+    }
+
+    /**
+     * Set the recursion behaviour.
+     * @param recursive If &lt;code&gt;true&lt;/code&gt; the
+     * &lt;code&gt;extractAllNodesThatMatch()&lt;/code&gt; call is performed recursively.
+     * @see org.htmlparser.util.NodeList#extractAllNodesThatMatch(NodeFilter, boolean).
+     */
+    public void setRecursive (boolean recursive)
+    {
+<span class="nc" id="L434">        mRecursive = recursive;</span>
+<span class="nc" id="L435">    }</span>
+
+    /**
+     * Unit test.
+     * @param args Pass arg[0] as the URL to process,
+     * and optionally a node name for filtering.
+     */
+    public static void main (String[] args)
+    {
+<span class="nc bnc" id="L444" title="All 2 branches missed.">        if (0 &gt;= args.length)</span>
+<span class="nc" id="L445">            System.out.println (&quot;Usage: java -classpath htmlparser.jar org.htmlparser.beans.FilterBean &lt;http://whatever_url&gt; [node name]&quot;);</span>
+        else
+        {
+<span class="nc" id="L448">            FilterBean fb = new FilterBean ();</span>
+<span class="nc bnc" id="L449" title="All 2 branches missed.">            if (1 &lt; args.length)</span>
+<span class="nc" id="L450">                fb.setFilters (new NodeFilter[] { new org.htmlparser.filters.TagNameFilter (args[1]) });</span>
+<span class="nc" id="L451">            fb.setURL (args[0]);</span>
+            //System.out.println (fb.getNodes ().toHtml ());
+<span class="nc" id="L453">            System.out.println (fb.getText ());</span>
+        }
+<span class="nc" id="L455">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

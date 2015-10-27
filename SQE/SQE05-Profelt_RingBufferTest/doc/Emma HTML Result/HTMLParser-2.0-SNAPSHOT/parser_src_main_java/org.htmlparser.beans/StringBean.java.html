@@ -1,0 +1,716 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>StringBean.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.beans</a> &gt; <span class="el_source">StringBean.java</span></div><h1>StringBean.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/main/java/org/htmlparser/beans/StringBean.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.beans;
+
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
+import java.io.Serializable;
+import java.net.URLConnection;
+
+import org.htmlparser.Parser;
+import org.htmlparser.Text;
+import org.htmlparser.tags.LinkTag;
+import org.htmlparser.Tag;
+import org.htmlparser.util.ParserException;
+import org.htmlparser.util.EncodingChangeException;
+import org.htmlparser.util.Translate;
+import org.htmlparser.visitors.NodeVisitor;
+
+/**
+ * Extract strings from a URL.
+ * &lt;p&gt;Text within &amp;lt;SCRIPT&amp;gt;&amp;lt;/SCRIPT&amp;gt; tags is removed.&lt;/p&gt;
+ * &lt;p&gt;The text within &amp;lt;PRE&amp;gt;&amp;lt;/PRE&amp;gt; tags is not altered.&lt;/p&gt;
+ * &lt;p&gt;The property &lt;code&gt;Strings&lt;/code&gt;, which is the output property is null
+ * until a URL is set. So a typical usage is:&lt;/p&gt;
+ * &lt;pre&gt;
+ *     StringBean sb = new StringBean ();
+ *     sb.setLinks (false);
+ *     sb.setReplaceNonBreakingSpaces (true);
+ *     sb.setCollapse (true);
+ *     sb.setURL (&quot;http://www.netbeans.org&quot;); // the HTTP is performed here
+ *     String s = sb.getStrings ();
+ * &lt;/pre&gt;
+ * You can also use the StringBean as a NodeVisitor on your own parser,
+ * in which case you have to refetch your page if you change one of the
+ * properties because it resets the Strings property:&lt;/p&gt;
+ * &lt;pre&gt;
+ *     StringBean sb = new StringBean ();
+ *     Parser parser = new Parser (&quot;http://cbc.ca&quot;);
+ *     parser.visitAllNodesWith (sb);
+ *     String s = sb.getStrings ();
+ *     sb.setLinks (true);
+ *     parser.reset ();
+ *     parser.visitAllNodesWith (sb);
+ *     String sl = sb.getStrings ();
+ * &lt;/pre&gt;
+ * According to Nick Burch, who contributed the patch, this is handy if you
+ * don't want StringBean to wander off and get the content itself, either
+ * because you already have it, it's not on a website etc.
+ */
+public class StringBean extends NodeVisitor implements Serializable
+{
+    /**
+     * Property name in event where the URL contents changes.
+     */
+    public static final String PROP_STRINGS_PROPERTY = &quot;strings&quot;;
+
+    /**
+     * Property name in event where the 'embed links' state changes.
+     */
+    public static final String PROP_LINKS_PROPERTY = &quot;links&quot;;
+
+    /**
+     * Property name in event where the URL changes.
+     */
+    public static final String PROP_URL_PROPERTY = &quot;URL&quot;;
+
+    /**
+     * Property name in event where the 'replace non-breaking spaces'
+     * state changes.
+     */
+    public static final String PROP_REPLACE_SPACE_PROPERTY =
+        &quot;replaceNonBreakingSpaces&quot;;
+
+    /**
+     * Property name in event where the 'collapse whitespace' state changes.
+     */
+    public static final String PROP_COLLAPSE_PROPERTY = &quot;collapse&quot;;
+
+    /**
+     * Property name in event where the connection changes.
+     */
+    public static final String PROP_CONNECTION_PROPERTY = &quot;connection&quot;;
+
+    /**
+     * A newline.
+     */
+<span class="fc" id="L110">    private static final String NEWLINE = System.getProperty (&quot;line.separator&quot;);</span>
+
+    /**
+     * The length of the NEWLINE.
+     */
+<span class="fc" id="L115">    private static final int NEWLINE_SIZE = NEWLINE.length ();</span>
+
+    /**
+     * Bound property support.
+     */
+    protected PropertyChangeSupport mPropertySupport;
+
+    /**
+     * The parser used to extract strings.
+     */
+    protected Parser mParser;
+
+    /**
+     * The strings extracted from the URL.
+     */
+    protected String mStrings;
+
+    /**
+     * If &lt;code&gt;true&lt;/code&gt; the link URLs are embedded in the text output.
+     */
+    protected boolean mLinks;
+
+    /**
+     * If &lt;code&gt;true&lt;/code&gt; regular space characters are substituted for
+     * non-breaking spaces in the text output.
+     */
+    protected boolean mReplaceSpace;
+
+    /**
+     * If &lt;code&gt;true&lt;/code&gt; sequences of whitespace characters are replaced
+     * with a single space character.
+     */
+    protected boolean mCollapse;
+
+    /**
+     * The state of the collapse processiung state machine.
+     */
+    protected int mCollapseState;
+
+    /**
+     * The buffer text is stored in while traversing the HTML.
+     */
+    protected StringBuffer mBuffer;
+
+    /**
+     * Set &lt;code&gt;true&lt;/code&gt; when traversing a SCRIPT tag.
+     */
+    protected boolean mIsScript;
+
+    /**
+     * Set &lt;code&gt;true&lt;/code&gt; when traversing a PRE tag.
+     */
+    protected boolean mIsPre;
+
+    /**
+     * Set &lt;code&gt;true&lt;/code&gt; when traversing a STYLE tag.
+     */
+    protected boolean mIsStyle;
+
+   /**
+     * Create a StringBean object.
+     * Default property values are set to 'do the right thing':
+     * &lt;p&gt;&lt;code&gt;Links&lt;/code&gt; is set &lt;code&gt;false&lt;/code&gt; so text appears like a
+     * browser would display it, albeit without the colour or underline clues
+     * normally associated with a link.&lt;/p&gt;
+     * &lt;p&gt;&lt;code&gt;ReplaceNonBreakingSpaces&lt;/code&gt; is set &lt;code&gt;true&lt;/code&gt;, so
+     * that printing the text works, but the extra information regarding these
+     * formatting marks is available if you set it false.&lt;/p&gt;
+     * &lt;p&gt;&lt;code&gt;Collapse&lt;/code&gt; is set &lt;code&gt;true&lt;/code&gt;, so text appears
+     * compact like a browser would display it.&lt;/p&gt;
+     */
+    public StringBean ()
+    {
+<span class="fc" id="L188">        super (true, true);</span>
+<span class="fc" id="L189">        mPropertySupport = new PropertyChangeSupport (this);</span>
+<span class="fc" id="L190">        mParser = new Parser ();</span>
+<span class="fc" id="L191">        mStrings = null;</span>
+<span class="fc" id="L192">        mLinks = false;</span>
+<span class="fc" id="L193">        mReplaceSpace = true;</span>
+<span class="fc" id="L194">        mCollapse = true;</span>
+<span class="fc" id="L195">        mCollapseState = 0;</span>
+<span class="fc" id="L196">        mBuffer = new StringBuffer (4096);</span>
+<span class="fc" id="L197">        mIsScript = false;</span>
+<span class="fc" id="L198">        mIsPre = false;</span>
+<span class="fc" id="L199">        mIsStyle = false;</span>
+<span class="fc" id="L200">    }</span>
+
+    //
+    // internals
+    //
+
+    /**
+     * Appends a newline to the buffer if there isn't one there already.
+     * Except if the buffer is empty.
+     */
+    protected void carriageReturn ()
+    {
+        int length;
+
+<span class="fc" id="L214">        length = mBuffer.length ();</span>
+<span class="pc bpc" id="L215" title="1 of 2 branches missed.">        if ((0 != length) // don't append newlines to the beginning of a buffer</span>
+<span class="nc bnc" id="L216" title="All 2 branches missed.">            &amp;&amp; ((NEWLINE_SIZE &lt;= length) // not enough chars to hold a NEWLINE</span>
+<span class="nc" id="L217">            &amp;&amp; (!mBuffer.substring (</span>
+<span class="nc bnc" id="L218" title="All 2 branches missed.">                length - NEWLINE_SIZE, length).equals (NEWLINE))))</span>
+<span class="nc" id="L219">            mBuffer.append (NEWLINE);</span>
+<span class="fc" id="L220">        mCollapseState = 0;</span>
+<span class="fc" id="L221">    }</span>
+
+    /**
+     * Add the given text collapsing whitespace.
+     * Use a little finite state machine:
+     * &lt;pre&gt;
+     * state 0: whitepace was last emitted character
+     * state 1: in whitespace
+     * state 2: in word
+     * A whitespace character moves us to state 1 and any other character
+     * moves us to state 2, except that state 0 stays in state 0 until
+     * a non-whitespace and going from whitespace to word we emit a space
+     * before the character:
+     *    input:     whitespace   other-character
+     * state\next
+     *    0               0             2
+     *    1               1        space then 2
+     *    2               1             2
+     * &lt;/pre&gt;
+     * @param buffer The buffer to append to.
+     * @param string The string to append.
+     */
+    protected void collapse (StringBuffer buffer, String string)
+    {
+        int chars;
+        char character;
+
+<span class="fc" id="L248">        chars = string.length ();</span>
+<span class="pc bpc" id="L249" title="1 of 2 branches missed.">        if (0 != chars)</span>
+        {
+<span class="fc bfc" id="L251" title="All 2 branches covered.">            for (int i = 0; i &lt; chars; i++)</span>
+            {
+<span class="fc" id="L253">                character = string.charAt (i);</span>
+<span class="fc bfc" id="L254" title="All 2 branches covered.">                switch (character)</span>
+                {
+                    // see HTML specification section 9.1 White space
+                    // http://www.w3.org/TR/html4/struct/text.html#h-9.1
+                    case '\u0020':
+                    case '\u0009':
+                    case '\u000C':
+                    case '\u200B':
+                    case '\r':
+                    case '\n':
+<span class="fc bfc" id="L264" title="All 2 branches covered.">                        if (0 != mCollapseState)</span>
+<span class="fc" id="L265">                            mCollapseState = 1;</span>
+<span class="fc" id="L266">                        break;</span>
+                    default:
+<span class="fc bfc" id="L268" title="All 2 branches covered.">                        if (1 == mCollapseState)</span>
+<span class="fc" id="L269">                            buffer.append (' ');</span>
+<span class="fc" id="L270">                        mCollapseState = 2;</span>
+<span class="fc" id="L271">                        buffer.append (character);</span>
+                }
+            }
+        }
+<span class="fc" id="L275">    }</span>
+
+    /**
+     * Extract the text from a page.
+     * @return The textual contents of the page.
+     * @exception ParserException If a parse error occurs.
+     */
+    protected String extractStrings ()
+        throws
+            ParserException
+    {
+        String ret;
+
+<span class="nc" id="L288">        mCollapseState = 0;</span>
+<span class="nc" id="L289">        mParser.visitAllNodesWith (this);</span>
+<span class="nc" id="L290">        ret = mBuffer.toString ();</span>
+<span class="nc" id="L291">        mBuffer = new StringBuffer(4096);</span>
+
+<span class="nc" id="L293">        return (ret);</span>
+    }
+
+    /**
+     * Assign the &lt;code&gt;Strings&lt;/code&gt; property, firing the property change.
+     * @param strings The new value of the &lt;code&gt;Strings&lt;/code&gt; property.
+     */
+    protected void updateStrings (String strings)
+    {
+        String oldValue;
+
+<span class="fc bfc" id="L304" title="All 4 branches covered.">        if ((null == mStrings) || !mStrings.equals (strings))</span>
+        {
+<span class="fc" id="L306">            oldValue = mStrings;</span>
+<span class="fc" id="L307">            mStrings = strings;</span>
+<span class="fc" id="L308">            mPropertySupport.firePropertyChange (</span>
+<span class="fc" id="L309">                PROP_STRINGS_PROPERTY, oldValue, strings);</span>
+        }
+<span class="fc" id="L311">    }</span>
+
+    /**
+     * Fetch the URL contents.
+     * Only do work if there is a valid parser with it's URL set.
+     */
+    protected void setStrings ()
+    {
+<span class="fc" id="L319">        mCollapseState = 0;</span>
+<span class="fc bfc" id="L320" title="All 2 branches covered.">        if (null != getURL ())</span>
+            try
+            {
+                try
+                {
+<span class="fc" id="L325">                    mParser.visitAllNodesWith (this);</span>
+<span class="fc" id="L326">                    updateStrings (mBuffer.toString ());</span>
+<span class="fc" id="L327">                }</span>
+                finally
+<span class="nc" id="L329">                {</span>
+<span class="pc" id="L330">                    mBuffer = new StringBuffer (4096);</span>
+<span class="nc" id="L331">                }</span>
+<span class="fc" id="L332">            }</span>
+<span class="nc" id="L333">            catch (EncodingChangeException ece)</span>
+            {
+<span class="nc" id="L335">                mIsPre = false;</span>
+<span class="nc" id="L336">                mIsScript = false;</span>
+<span class="nc" id="L337">                mIsStyle = false;</span>
+                try
+                {   // try again with the encoding now in force
+<span class="nc" id="L340">                    mParser.reset ();</span>
+<span class="nc" id="L341">                    mBuffer = new StringBuffer (4096);</span>
+<span class="nc" id="L342">                    mCollapseState = 0;</span>
+<span class="nc" id="L343">                    mParser.visitAllNodesWith (this);</span>
+<span class="nc" id="L344">                    updateStrings (mBuffer.toString ());</span>
+<span class="nc" id="L345">                }</span>
+<span class="nc" id="L346">                catch (ParserException pe)</span>
+                {
+<span class="nc" id="L348">                    updateStrings (pe.toString ());</span>
+                }
+                finally
+<span class="nc" id="L351">                {</span>
+<span class="nc" id="L352">                    mBuffer = new StringBuffer (4096);</span>
+<span class="nc" id="L353">                }</span>
+             }
+<span class="nc" id="L355">            catch (ParserException pe)</span>
+            {
+<span class="nc" id="L357">                updateStrings (pe.toString ());</span>
+<span class="nc" id="L358">            }</span>
+        else
+        {
+            // reset in case this StringBean is used as a visitor
+            // on another parser, not it's own
+<span class="fc" id="L363">            mStrings = null;</span>
+<span class="fc" id="L364">            mBuffer = new StringBuffer (4096);</span>
+        }
+<span class="fc" id="L366">    }</span>
+
+    /**
+     * Refetch the URL contents.
+     * Only need to worry if there is already a valid parser and it's
+     * been spent fetching the string contents.
+     */
+    private void resetStrings ()
+    {
+<span class="fc bfc" id="L375" title="All 2 branches covered.">        if (null != mStrings)</span>
+            try
+            {
+<span class="fc" id="L378">                mParser.setURL (getURL ());</span>
+<span class="fc" id="L379">                setStrings ();</span>
+<span class="fc" id="L380">            }</span>
+<span class="fc" id="L381">            catch (ParserException pe)</span>
+            {
+<span class="fc" id="L383">                updateStrings (pe.toString ());</span>
+            }
+<span class="fc" id="L385">    }</span>
+
+    //
+    // Property change support.
+    //
+
+    /**
+     * Add a PropertyChangeListener to the listener list.
+     * The listener is registered for all properties.
+     * @param listener The PropertyChangeListener to be added.
+     */
+    public void addPropertyChangeListener (PropertyChangeListener listener)
+    {
+<span class="fc" id="L398">        mPropertySupport.addPropertyChangeListener (listener);</span>
+<span class="fc" id="L399">    }</span>
+
+    /**
+     * Remove a PropertyChangeListener from the listener list.
+     * This removes a registered PropertyChangeListener.
+     * @param listener The PropertyChangeListener to be removed.
+     */
+    public void removePropertyChangeListener (PropertyChangeListener listener)
+    {
+<span class="nc" id="L408">        mPropertySupport.removePropertyChangeListener (listener);</span>
+<span class="nc" id="L409">    }</span>
+
+    //
+    // Properties
+    //
+
+    /**
+     * Return the textual contents of the URL.
+     * This is the primary output of the bean.
+     * @return The user visible (what would be seen in a browser) text.
+     */
+    public String getStrings ()
+    {
+<span class="pc bpc" id="L422" title="1 of 2 branches missed.">        if (null == mStrings)</span>
+<span class="nc bnc" id="L423" title="All 2 branches missed.">        if (0 == mBuffer.length ())</span>
+<span class="nc" id="L424">            setStrings ();</span>
+        else
+<span class="nc" id="L426">            updateStrings (mBuffer.toString ());</span>
+
+<span class="fc" id="L428">        return (mStrings);</span>
+    }
+
+    /**
+     * Get the current 'include links' state.
+     * @return &lt;code&gt;true&lt;/code&gt; if link text is included in the text extracted
+     * from the URL, &lt;code&gt;false&lt;/code&gt; otherwise.
+     */
+    public boolean getLinks ()
+    {
+<span class="nc" id="L438">        return (mLinks);</span>
+    }
+
+    /**
+     * Set the 'include links' state.
+     * If the setting is changed after the URL has been set, the text from the
+     * URL will be reacquired, which is possibly expensive.
+     * @param links Use &lt;code&gt;true&lt;/code&gt; if link text is to be included in the
+     * text extracted from the URL, &lt;code&gt;false&lt;/code&gt; otherwise.
+     */
+    public void setLinks (boolean links)
+    {
+<span class="fc" id="L450">        boolean oldValue = mLinks;</span>
+<span class="fc bfc" id="L451" title="All 2 branches covered.">        if (oldValue != links)</span>
+        {
+<span class="fc" id="L453">            mLinks = links;</span>
+<span class="fc" id="L454">            mPropertySupport.firePropertyChange (</span>
+<span class="fc" id="L455">                PROP_LINKS_PROPERTY, oldValue, links);</span>
+<span class="fc" id="L456">            resetStrings ();</span>
+        }
+<span class="fc" id="L458">    }</span>
+
+    /**
+     * Get the current URL.
+     * @return The URL from which text has been extracted, or &lt;code&gt;null&lt;/code&gt;
+     * if this property has not been set yet.
+     */
+    public String getURL ()
+    {
+<span class="pc bpc" id="L467" title="1 of 2 branches missed.">         return ((null != mParser) ? mParser.getURL () : null);</span>
+    }
+
+    /**
+     * Set the URL to extract strings from.
+     * The text from the URL will be fetched, which may be expensive, so this
+     * property should be set last.
+     * @param url The URL that text should be fetched from.
+     */
+    public void setURL (String url)
+    {
+        String old;
+        URLConnection conn;
+
+<span class="fc" id="L481">        old = getURL ();</span>
+<span class="fc" id="L482">        conn = getConnection ();</span>
+<span class="pc bpc" id="L483" title="2 of 6 branches missed.">        if (((null == old) &amp;&amp; (null != url)) || ((null != old)</span>
+<span class="pc bpc" id="L484" title="1 of 2 branches missed.">            &amp;&amp; !old.equals (url)))</span>
+        {
+            try
+            {
+<span class="pc bpc" id="L488" title="1 of 2 branches missed.">                if (null == mParser)</span>
+<span class="nc" id="L489">                    mParser = new Parser (url);</span>
+                else
+<span class="fc" id="L491">                    mParser.setURL (url);</span>
+<span class="fc" id="L492">                mPropertySupport.firePropertyChange (</span>
+<span class="fc" id="L493">                    PROP_URL_PROPERTY, old, getURL ());</span>
+<span class="fc" id="L494">                mPropertySupport.firePropertyChange (</span>
+<span class="fc" id="L495">                    PROP_CONNECTION_PROPERTY, conn, mParser.getConnection ());</span>
+<span class="fc" id="L496">                setStrings ();</span>
+<span class="fc" id="L497">            }</span>
+<span class="fc" id="L498">            catch (ParserException pe)</span>
+            {
+<span class="fc" id="L500">                updateStrings (pe.toString ());</span>
+            }
+        }
+<span class="fc" id="L503">    }</span>
+
+    /**
+     * Get the current 'replace non breaking spaces' state.
+     * @return &lt;code&gt;true&lt;/code&gt; if non-breaking spaces (character '&amp;#92;u00a0',
+     * numeric character reference &amp;amp;#160; or character entity
+     * reference &amp;amp;nbsp;) are to be replaced with normal
+     * spaces (character '&amp;#92;u0020').
+     */
+    public boolean getReplaceNonBreakingSpaces ()
+    {
+<span class="fc" id="L514">        return (mReplaceSpace);</span>
+    }
+
+    /**
+     * Set the 'replace non breaking spaces' state.
+     * If the setting is changed after the URL has been set, the text from the
+     * URL will be reacquired, which is possibly expensive.
+     * @param replace &lt;code&gt;true&lt;/code&gt; if non-breaking spaces
+     * (character '&amp;#92;u00a0', numeric character reference &amp;amp;#160;
+     * or character entity reference &amp;amp;nbsp;) are to be replaced with normal
+     * spaces (character '&amp;#92;u0020').
+     */
+    public void setReplaceNonBreakingSpaces (boolean replace)
+    {
+<span class="fc" id="L528">        boolean oldValue = mReplaceSpace;</span>
+<span class="pc bpc" id="L529" title="1 of 2 branches missed.">        if (oldValue != replace)</span>
+        {
+<span class="nc" id="L531">            mReplaceSpace = replace;</span>
+<span class="nc" id="L532">            mPropertySupport.firePropertyChange (PROP_REPLACE_SPACE_PROPERTY,</span>
+<span class="nc" id="L533">                oldValue, replace);</span>
+<span class="nc" id="L534">            resetStrings ();</span>
+        }
+<span class="fc" id="L536">    }</span>
+
+    /**
+     * Get the current 'collapse whitespace' state.
+     * If set to &lt;code&gt;true&lt;/code&gt; this emulates the operation of browsers
+     * in interpretting text where &lt;quote&gt;user agents should collapse input
+     * white space sequences when producing output inter-word space&lt;/quote&gt;.
+     * See HTML specification section 9.1 White space
+     * &lt;a href=&quot;http://www.w3.org/TR/html4/struct/text.html#h-9.1&quot;&gt;
+     * http://www.w3.org/TR/html4/struct/text.html#h-9.1&lt;/a&gt;.
+     * @return &lt;code&gt;true&lt;/code&gt; if sequences of whitespace (space '&amp;#92;u0020',
+     * tab '&amp;#92;u0009', form feed '&amp;#92;u000C', zero-width space '&amp;#92;u200B',
+     * carriage-return '\r' and NEWLINE '\n') are to be replaced with a single
+     * space.
+     */
+    public boolean getCollapse ()
+    {
+<span class="fc" id="L553">        return (mCollapse);</span>
+    }
+
+    /**
+     * Set the current 'collapse whitespace' state.
+     * If the setting is changed after the URL has been set, the text from the
+     * URL will be reacquired, which is possibly expensive.
+     * The internal state of the collapse state machine can be reset with
+     * code like this:
+     * &lt;code&gt;setCollapse (getCollapse ());&lt;/code&gt;
+     * @param collapse If &lt;code&gt;true&lt;/code&gt;, sequences of whitespace
+     * will be reduced to a single space.
+     */
+    public void setCollapse (boolean collapse)
+    {
+<span class="fc" id="L568">        mCollapseState = 0;</span>
+<span class="fc" id="L569">        boolean oldValue = mCollapse;</span>
+<span class="fc bfc" id="L570" title="All 2 branches covered.">        if (oldValue != collapse)</span>
+        {
+<span class="fc" id="L572">            mCollapse = collapse;</span>
+<span class="fc" id="L573">            mPropertySupport.firePropertyChange (</span>
+<span class="fc" id="L574">                    PROP_COLLAPSE_PROPERTY, oldValue, collapse);</span>
+<span class="fc" id="L575">            resetStrings ();</span>
+        }
+<span class="fc" id="L577">    }</span>
+
+    /**
+     * Get the current connection.
+     * @return The connection that the parser has or &lt;code&gt;null&lt;/code&gt; if it
+     * hasn't been set or the parser hasn't been constructed yet.
+     */
+    public URLConnection getConnection ()
+    {
+<span class="pc bpc" id="L586" title="1 of 2 branches missed.">        return ((null != mParser) ? mParser.getConnection () : null);</span>
+    }
+
+    /**
+     * Set the parser's connection.
+     * The text from the URL will be fetched, which may be expensive, so this
+     * property should be set last.
+     * @param connection New value of property Connection.
+     */
+    public void setConnection (URLConnection connection)
+    {
+        String url;
+        URLConnection conn;
+
+<span class="nc" id="L600">        url = getURL ();</span>
+<span class="nc" id="L601">        conn = getConnection ();</span>
+<span class="nc bnc" id="L602" title="All 4 branches missed.">        if (((null == conn) &amp;&amp; (null != connection))</span>
+<span class="nc bnc" id="L603" title="All 4 branches missed.">            || ((null != conn) &amp;&amp; !conn.equals (connection)))</span>
+        {
+            try
+            {
+<span class="nc bnc" id="L607" title="All 2 branches missed.">                if (null == mParser)</span>
+<span class="nc" id="L608">                    mParser = new Parser (connection);</span>
+                else
+<span class="nc" id="L610">                    mParser.setConnection (connection);</span>
+<span class="nc" id="L611">                mPropertySupport.firePropertyChange (</span>
+<span class="nc" id="L612">                    PROP_URL_PROPERTY, url, getURL ());</span>
+<span class="nc" id="L613">                mPropertySupport.firePropertyChange (</span>
+<span class="nc" id="L614">                    PROP_CONNECTION_PROPERTY, conn, mParser.getConnection ());</span>
+<span class="nc" id="L615">                setStrings ();</span>
+<span class="nc" id="L616">            }</span>
+<span class="nc" id="L617">            catch (ParserException pe)</span>
+            {
+<span class="nc" id="L619">                updateStrings (pe.toString ());</span>
+            }
+        }
+<span class="nc" id="L622">    }</span>
+
+    //
+    // NodeVisitor overrides
+    //
+
+    /**
+     * Appends the text to the output.
+     * @param string The text node.
+     */
+    public void visitStringNode (Text string)
+    {
+<span class="pc bpc" id="L634" title="1 of 4 branches missed.">        if (!mIsScript &amp;&amp; !mIsStyle)</span>
+        {
+<span class="fc" id="L636">            String text = string.getText ();</span>
+<span class="fc bfc" id="L637" title="All 2 branches covered.">            if (!mIsPre)</span>
+            {
+<span class="fc" id="L639">                text = Translate.decode (text);</span>
+<span class="pc bpc" id="L640" title="1 of 2 branches missed.">                if (getReplaceNonBreakingSpaces ())</span>
+<span class="fc" id="L641">                    text = text.replace ('\u00a0', ' ');</span>
+<span class="fc bfc" id="L642" title="All 2 branches covered.">                if (getCollapse ())</span>
+<span class="fc" id="L643">                    collapse (mBuffer, text);</span>
+                else
+<span class="fc" id="L645">                    mBuffer.append (text);</span>
+<span class="fc" id="L646">            }</span>
+            else
+<span class="fc" id="L648">                mBuffer.append (text);</span>
+        }
+<span class="fc" id="L650">    }</span>
+
+    /**
+     * Appends a NEWLINE to the output if the tag breaks flow, and
+     * possibly sets the state of the PRE and SCRIPT flags.
+     * @param tag The tag to examine.
+     */
+    public void visitTag (Tag tag)
+    {
+        String name;
+
+<span class="pc bpc" id="L661" title="1 of 2 branches missed.">        if (tag instanceof LinkTag)</span>
+<span class="nc bnc" id="L662" title="All 2 branches missed.">            if (getLinks ())</span>
+            { // appends the link as text between angle brackets to the output.
+<span class="nc" id="L664">                mBuffer.append (&quot;&lt;&quot;);</span>
+<span class="nc" id="L665">                mBuffer.append (((LinkTag)tag).getLink ());</span>
+<span class="nc" id="L666">                mBuffer.append (&quot;&gt;&quot;);</span>
+            }
+<span class="fc" id="L668">        name = tag.getTagName ();</span>
+<span class="fc bfc" id="L669" title="All 2 branches covered.">        if (name.equalsIgnoreCase (&quot;PRE&quot;))</span>
+<span class="fc" id="L670">            mIsPre = true;</span>
+<span class="fc bfc" id="L671" title="All 2 branches covered.">        else if (name.equalsIgnoreCase (&quot;SCRIPT&quot;))</span>
+<span class="fc" id="L672">            mIsScript = true;</span>
+<span class="pc bpc" id="L673" title="1 of 2 branches missed.">        else if (name.equalsIgnoreCase (&quot;STYLE&quot;))</span>
+<span class="nc" id="L674">            mIsStyle = true;</span>
+<span class="fc bfc" id="L675" title="All 2 branches covered.">        if (tag.breaksFlow ())</span>
+<span class="fc" id="L676">            carriageReturn ();</span>
+<span class="fc" id="L677">    }</span>
+
+    /**
+     * Resets the state of the PRE and SCRIPT flags.
+     * @param tag The end tag to process.
+     */
+    public void visitEndTag (Tag tag)
+    {
+        String name;
+
+<span class="fc" id="L687">        name = tag.getTagName ();</span>
+<span class="fc bfc" id="L688" title="All 2 branches covered.">        if (name.equalsIgnoreCase (&quot;PRE&quot;))</span>
+<span class="fc" id="L689">            mIsPre = false;</span>
+<span class="fc bfc" id="L690" title="All 2 branches covered.">        else if (name.equalsIgnoreCase (&quot;SCRIPT&quot;))</span>
+<span class="fc" id="L691">            mIsScript = false;</span>
+<span class="pc bpc" id="L692" title="1 of 2 branches missed.">        else if (name.equalsIgnoreCase (&quot;STYLE&quot;))</span>
+<span class="nc" id="L693">            mIsStyle = false;</span>
+<span class="fc" id="L694">    }</span>
+
+    /**
+     * Unit test.
+     * @param args Pass arg[0] as the URL to process.
+     */
+    public static void main (String[] args)
+    {
+<span class="nc bnc" id="L702" title="All 2 branches missed.">        if (0 &gt;= args.length)</span>
+<span class="nc" id="L703">            System.out.println (&quot;Usage: java -classpath htmlparser.jar&quot;</span>
+<span class="nc" id="L704">                + &quot; org.htmlparser.beans.StringBean &lt;http://whatever_url&gt;&quot;);</span>
+        else
+        {
+<span class="nc" id="L707">            StringBean sb = new StringBean ();</span>
+<span class="nc" id="L708">            sb.setLinks (false);</span>
+<span class="nc" id="L709">            sb.setReplaceNonBreakingSpaces (true);</span>
+<span class="nc" id="L710">            sb.setCollapse (true);</span>
+<span class="nc" id="L711">            sb.setURL (args[0]);</span>
+<span class="nc" id="L712">            System.out.println (sb.getStrings ());</span>
+        }
+<span class="nc" id="L714">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

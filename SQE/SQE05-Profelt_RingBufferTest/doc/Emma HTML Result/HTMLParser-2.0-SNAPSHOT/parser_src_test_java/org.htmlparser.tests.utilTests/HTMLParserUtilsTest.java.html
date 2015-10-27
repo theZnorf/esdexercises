@@ -1,0 +1,503 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>HTMLParserUtilsTest.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tests.utilTests</a> &gt; <span class="el_source">HTMLParserUtilsTest.java</span></div><h1>HTMLParserUtilsTest.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Somik Raha
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/test/java/org/htmlparser/tests/utilTests/HTMLParserUtilsTest.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tests.utilTests;
+
+import org.htmlparser.NodeFilter;
+import org.htmlparser.filters.*;
+import org.htmlparser.tags.*;
+import org.htmlparser.tests.ParserTestCase;
+import org.htmlparser.util.ParserUtils;
+
+public class HTMLParserUtilsTest extends ParserTestCase {
+
+    static
+    {
+<span class="fc" id="L38">        System.setProperty (&quot;org.htmlparser.tests.utilTests.HTMLParserUtilsTest&quot;, &quot;HTMLParserUtilsTest&quot;);</span>
+<span class="fc" id="L39">    }</span>
+
+    public HTMLParserUtilsTest(String name) {
+<span class="fc" id="L42">        super(name);</span>
+<span class="fc" id="L43">    }</span>
+
+    public void testRemoveTrailingSpaces() {
+<span class="fc" id="L46">        String text = &quot;Hello World  &quot;;</span>
+<span class="fc" id="L47">        assertStringEquals(</span>
+<span class="fc" id="L48">            &quot;modified text&quot;,</span>
+<span class="fc" id="L49">            &quot;Hello World&quot;,</span>
+<span class="fc" id="L50">            ParserUtils.removeTrailingBlanks(text)</span>
+        );
+<span class="fc" id="L52">    }</span>
+    
+    public void testButCharsMethods() {
+<span class="fc" id="L55">        String[] tmpSplitButChars = ParserUtils.splitButChars(&quot;&lt;DIV&gt;  +12.5, +3.4 &lt;/DIV&gt;&quot;, &quot;+.1234567890&quot;);</span>
+<span class="fc" id="L56">        assertStringEquals(</span>
+<span class="fc" id="L57">            &quot;modified text&quot;,</span>
+<span class="fc" id="L58">            &quot;+12.5*+3.4&quot;,</span>
+<span class="fc" id="L59">            new String(tmpSplitButChars[0] + '*' + tmpSplitButChars[1])</span>
+        );
+<span class="fc" id="L61">        assertStringEquals(</span>
+<span class="fc" id="L62">            &quot;modified text&quot;,</span>
+<span class="fc" id="L63">            &quot;+12.5&quot;,</span>
+<span class="fc" id="L64">            ParserUtils.trimButChars(&quot;&lt;DIV&gt;  +12.5 &lt;/DIV&gt;&quot;, &quot;+.1234567890&quot;)</span>
+        );
+<span class="fc" id="L66">        assertStringEquals(</span>
+<span class="fc" id="L67">            &quot;modified text&quot;,</span>
+<span class="fc" id="L68">            &quot;+12.5&quot;,</span>
+<span class="fc" id="L69">            ParserUtils.trimButChars(&quot;&lt;DIV&gt;  +1 2 . 5 &lt;/DIV&gt;&quot;, &quot;+.1234567890&quot;)</span>
+        );
+<span class="fc" id="L71">        assertStringEquals(</span>
+<span class="fc" id="L72">            &quot;modified text&quot;,</span>
+<span class="fc" id="L73">            &quot;+12.5&quot;,</span>
+<span class="fc" id="L74">            ParserUtils.trimButCharsBeginEnd(&quot;&lt;DIV&gt;  +12.5 &lt;/DIV&gt;&quot;, &quot;+.1234567890&quot;)</span>
+        );
+<span class="fc" id="L76">        assertStringEquals(</span>
+<span class="fc" id="L77">            &quot;modified text&quot;,</span>
+<span class="fc" id="L78">            &quot;+1 2 . 5&quot;,</span>
+<span class="fc" id="L79">            ParserUtils.trimButCharsBeginEnd(&quot;&lt;DIV&gt;  +1 2 . 5 &lt;/DIV&gt;&quot;, &quot;+.1234567890&quot;)</span>
+        );
+<span class="fc" id="L81">    }</span>
+    
+    public void testButDigitsMethods() {
+<span class="fc" id="L84">        String[] tmpSplitButDigits = ParserUtils.splitButDigits(&quot;&lt;DIV&gt;  +12.5, +3.4 &lt;/DIV&gt;&quot;, &quot;+.&quot;);</span>
+<span class="fc" id="L85">        assertStringEquals(</span>
+<span class="fc" id="L86">            &quot;modified text&quot;,</span>
+<span class="fc" id="L87">            &quot;+12.5*+3.4&quot;,</span>
+<span class="fc" id="L88">            new String(tmpSplitButDigits[0] + '*' + tmpSplitButDigits[1])</span>
+        );
+<span class="fc" id="L90">        assertStringEquals(</span>
+<span class="fc" id="L91">            &quot;modified text&quot;,</span>
+<span class="fc" id="L92">            &quot;+12.5&quot;,</span>
+<span class="fc" id="L93">            ParserUtils.trimButDigits(&quot;&lt;DIV&gt;  +12.5 &lt;/DIV&gt;&quot;, &quot;+.&quot;)</span>
+        );
+<span class="fc" id="L95">        assertStringEquals(</span>
+<span class="fc" id="L96">            &quot;modified text&quot;,</span>
+<span class="fc" id="L97">            &quot;+12.5&quot;,</span>
+<span class="fc" id="L98">            ParserUtils.trimButDigits(&quot;&lt;DIV&gt;  +1 2 . 5 &lt;/DIV&gt;&quot;, &quot;+.&quot;)</span>
+        );
+<span class="fc" id="L100">        assertStringEquals(</span>
+<span class="fc" id="L101">            &quot;modified text&quot;,</span>
+<span class="fc" id="L102">            &quot;+12.5&quot;,</span>
+<span class="fc" id="L103">            ParserUtils.trimButDigitsBeginEnd(&quot;&lt;DIV&gt;  +12.5 &lt;/DIV&gt;&quot;, &quot;+.&quot;)</span>
+        );
+<span class="fc" id="L105">        assertStringEquals(</span>
+<span class="fc" id="L106">            &quot;modified text&quot;,</span>
+<span class="fc" id="L107">            &quot;+1 2 . 5&quot;,</span>
+<span class="fc" id="L108">            ParserUtils.trimButDigitsBeginEnd(&quot;&lt;DIV&gt;  +1 2 . 5 &lt;/DIV&gt;&quot;, &quot;+.&quot;)</span>
+        );
+<span class="fc" id="L110">    }</span>
+    
+    public void testCharsMethods() {
+<span class="fc" id="L113">        String[] tmpSplitChars = ParserUtils.splitChars(&quot;&lt;DIV&gt;  +12.5, +3.4 &lt;/DIV&gt;&quot;, &quot; &lt;&gt;DIV/,&quot;);</span>
+<span class="fc" id="L114">        assertStringEquals(</span>
+<span class="fc" id="L115">            &quot;modified text&quot;,</span>
+<span class="fc" id="L116">            &quot;+12.5*+3.4&quot;,</span>
+<span class="fc" id="L117">            new String(tmpSplitChars[0] + '*' + tmpSplitChars[1])</span>
+        );
+<span class="fc" id="L119">        assertStringEquals(</span>
+<span class="fc" id="L120">            &quot;modified text&quot;,</span>
+<span class="fc" id="L121">            &quot;+12.5&quot;,</span>
+<span class="fc" id="L122">            ParserUtils.trimChars(&quot;&lt;DIV&gt;  +12.5 &lt;/DIV&gt;&quot;, &quot;&lt;&gt;DIV/ &quot;)</span>
+        );
+<span class="fc" id="L124">        assertStringEquals(</span>
+<span class="fc" id="L125">            &quot;modified text&quot;,</span>
+<span class="fc" id="L126">            &quot;Trimallchars&quot;,</span>
+<span class="fc" id="L127">            ParserUtils.trimChars(&quot;&lt;DIV&gt;  Trim all chars   &lt;/DIV&gt;&quot;, &quot;&lt;&gt;DIV/ &quot;)</span>
+        );
+<span class="fc" id="L129">        assertStringEquals(</span>
+<span class="fc" id="L130">            &quot;modified text&quot;,</span>
+<span class="fc" id="L131">            &quot;+12.5&quot;,</span>
+<span class="fc" id="L132">            ParserUtils.trimCharsBeginEnd(&quot;&lt;DIV&gt;  +12.5 &lt;/DIV&gt;&quot;, &quot;&lt;&gt;DIV/ &quot;)</span>
+        );
+<span class="fc" id="L134">        assertStringEquals(</span>
+<span class="fc" id="L135">            &quot;modified text&quot;,</span>
+<span class="fc" id="L136">            &quot;Trim all spaces but not the ones inside the string&quot;,</span>
+<span class="fc" id="L137">            ParserUtils.trimCharsBeginEnd(&quot;&lt;DIV&gt;  Trim all spaces but not the ones inside the string &lt;/DIV&gt;&quot;, &quot;&lt;&gt;DIV/ &quot;)</span>
+        );
+<span class="fc" id="L139">    }</span>
+    
+    public void testSpacesMethods() {
+<span class="fc" id="L142">        String[] tmpSplitSpaces = ParserUtils.splitSpaces(&quot;&lt;DIV&gt;  +12.5, +3.4 &lt;/DIV&gt;&quot;, &quot;&lt;&gt;DIV/,&quot;);</span>
+<span class="fc" id="L143">        assertStringEquals(</span>
+<span class="fc" id="L144">            &quot;modified text&quot;,</span>
+<span class="fc" id="L145">            &quot;+12.5*+3.4&quot;,</span>
+<span class="fc" id="L146">            new String(tmpSplitSpaces[0] + '*' + tmpSplitSpaces[1])</span>
+        );
+<span class="fc" id="L148">        assertStringEquals(</span>
+<span class="fc" id="L149">            &quot;modified text&quot;,</span>
+<span class="fc" id="L150">            &quot;+12.5&quot;,</span>
+<span class="fc" id="L151">            ParserUtils.trimSpaces(&quot;&lt;DIV&gt;  +12.5 &lt;/DIV&gt;&quot;, &quot;&lt;&gt;DIV/&quot;)</span>
+        );
+<span class="fc" id="L153">        assertStringEquals(</span>
+<span class="fc" id="L154">            &quot;modified text&quot;,</span>
+<span class="fc" id="L155">            &quot;Trimallspaces&quot;,</span>
+<span class="fc" id="L156">            ParserUtils.trimSpaces(&quot;&lt;DIV&gt;  Trim all spaces  &lt;/DIV&gt;&quot;, &quot;&lt;&gt;DIV/&quot;)</span>
+        );
+<span class="fc" id="L158">        assertStringEquals(</span>
+<span class="fc" id="L159">            &quot;modified text&quot;,</span>
+<span class="fc" id="L160">            &quot;+12.5&quot;,</span>
+<span class="fc" id="L161">            ParserUtils.trimSpacesBeginEnd(&quot;&lt;DIV&gt;  +12.5 &lt;/DIV&gt;&quot;, &quot;&lt;&gt;DIV/&quot;)</span>
+        );
+<span class="fc" id="L163">        assertStringEquals(</span>
+<span class="fc" id="L164">            &quot;modified text&quot;,</span>
+<span class="fc" id="L165">            &quot;Trim all spaces but not the ones inside the string&quot;,</span>
+<span class="fc" id="L166">            ParserUtils.trimSpacesBeginEnd(&quot;&lt;DIV&gt;  Trim all spaces but not the ones inside the string &lt;/DIV&gt;&quot;, &quot;&lt;&gt;DIV/&quot;)</span>
+        );
+<span class="fc" id="L168">        assertStringEquals(</span>
+<span class="fc" id="L169">            &quot;modified text&quot;,</span>
+<span class="fc" id="L170">            &quot;0&quot;,</span>
+<span class="fc" id="L171">            ParserUtils.trimSpacesBeginEnd(&quot;0&quot;, &quot;&quot;)</span>
+        );
+<span class="fc" id="L173">        assertStringEquals(</span>
+<span class="fc" id="L174">            &quot;modified text&quot;,</span>
+<span class="fc" id="L175">            &quot;verifying the last char x&quot;,</span>
+<span class="fc" id="L176">            ParserUtils.trimSpacesBeginEnd(&quot;verifying the last char x&quot;, &quot;&quot;)</span>
+        );
+<span class="fc" id="L178">        assertStringEquals(</span>
+<span class="fc" id="L179">            &quot;modified text&quot;,</span>
+<span class="fc" id="L180">            &quot;verifying the last char x&quot;,</span>
+<span class="fc" id="L181">            ParserUtils.trimSpacesBeginEnd(&quot;verifying the last char x &quot;, &quot;&quot;)</span>
+        );
+<span class="fc" id="L183">        assertStringEquals(</span>
+<span class="fc" id="L184">            &quot;modified text&quot;,</span>
+<span class="fc" id="L185">            &quot;x verifying the first char&quot;,</span>
+<span class="fc" id="L186">            ParserUtils.trimSpacesBeginEnd(&quot;x verifying the first char&quot;, &quot;&quot;)</span>
+        );
+<span class="fc" id="L188">        assertStringEquals(</span>
+<span class="fc" id="L189">            &quot;modified text&quot;,</span>
+<span class="fc" id="L190">            &quot;x verifying the first char&quot;,</span>
+<span class="fc" id="L191">            ParserUtils.trimSpacesBeginEnd(&quot; x verifying the first char&quot;, &quot;&quot;)</span>
+        );
+<span class="fc" id="L193">    }</span>
+    
+    public void testTagsMethods() {
+        try
+        {
+<span class="fc" id="L198">            String[] tmpSplitTags = ParserUtils.splitTags(&quot;Begin &lt;DIV&gt;&lt;DIV&gt;  +12.5 &lt;/DIV&gt;&lt;/DIV&gt; ALL OK&quot;, new String[] {&quot;DIV&quot;});</span>
+<span class="fc" id="L199">            assertStringEquals(</span>
+<span class="fc" id="L200">                &quot;modified text&quot;,</span>
+<span class="fc" id="L201">                &quot;Begin * ALL OK&quot;,</span>
+<span class="fc" id="L202">                new String(tmpSplitTags[0] + '*' + tmpSplitTags[1])</span>
+            );
+<span class="fc" id="L204">            tmpSplitTags = ParserUtils.splitTags(&quot;Begin &lt;DIV&gt;&lt;DIV&gt;  +12.5 &lt;/DIV&gt;&lt;/DIV&gt; ALL OK&quot;, new String[] {&quot;DIV&quot;}, false, false);</span>
+<span class="fc" id="L205">            assertStringEquals(</span>
+<span class="fc" id="L206">                &quot;modified text&quot;,</span>
+<span class="fc" id="L207">                &quot;Begin *&lt;DIV&gt;  +12.5 &lt;/DIV&gt;* ALL OK&quot;,</span>
+<span class="fc" id="L208">                new String(tmpSplitTags[0] + '*' + tmpSplitTags[1] + '*' + tmpSplitTags[2])</span>
+            );
+<span class="fc" id="L210">            tmpSplitTags = ParserUtils.splitTags(&quot;Begin &lt;DIV&gt;&lt;DIV&gt;  +12.5 &lt;/DIV&gt;&lt;/DIV&gt; ALL OK&quot;, new String[] {&quot;DIV&quot;}, true, false);</span>
+<span class="fc" id="L211">            assertStringEquals(</span>
+<span class="fc" id="L212">                &quot;modified text&quot;,</span>
+<span class="fc" id="L213">                &quot;Begin *  +12.5 * ALL OK&quot;,</span>
+<span class="fc" id="L214">                new String(tmpSplitTags[0] + '*' + tmpSplitTags[1] + '*' + tmpSplitTags[2])</span>
+            );
+<span class="fc" id="L216">            tmpSplitTags = ParserUtils.splitTags(&quot;Begin &lt;DIV&gt;&lt;DIV&gt;  +12.5 &lt;/DIV&gt;&lt;/DIV&gt; ALL OK&quot;, new String[] {&quot;DIV&quot;}, false, true);</span>
+<span class="fc" id="L217">            assertStringEquals(</span>
+<span class="fc" id="L218">                &quot;modified text&quot;,</span>
+<span class="fc" id="L219">                &quot;Begin * ALL OK&quot;,</span>
+<span class="fc" id="L220">                new String(tmpSplitTags[0] + '*' + tmpSplitTags[1])</span>
+            );
+<span class="fc" id="L222">            assertStringEquals(</span>
+<span class="fc" id="L223">                &quot;modified text&quot;,</span>
+<span class="fc" id="L224">                &quot; ALL OK&quot;,</span>
+<span class="fc" id="L225">                ParserUtils.trimTags(&quot;&lt;DIV&gt;&lt;DIV&gt;  +12.5 &lt;/DIV&gt;&lt;/DIV&gt; ALL OK&quot;, new String[] {&quot;DIV&quot;})</span>
+            );
+<span class="fc" id="L227">            assertStringEquals(</span>
+<span class="fc" id="L228">                &quot;modified text&quot;,</span>
+<span class="fc" id="L229">                &quot;&lt;DIV&gt;  +12.5 &lt;/DIV&gt; ALL OK&quot;,</span>
+<span class="fc" id="L230">                ParserUtils.trimTags(&quot;&lt;DIV&gt;&lt;DIV&gt;  +12.5 &lt;/DIV&gt;&lt;/DIV&gt; ALL OK&quot;, new String[] {&quot;DIV&quot;}, false, false)</span>
+            );
+<span class="fc" id="L232">            assertStringEquals(</span>
+<span class="fc" id="L233">                &quot;modified text&quot;,</span>
+<span class="fc" id="L234">                &quot;  +12.5  ALL OK&quot;,</span>
+<span class="fc" id="L235">                ParserUtils.trimTags(&quot;&lt;DIV&gt;&lt;DIV&gt;  +12.5 &lt;/DIV&gt;&lt;/DIV&gt; ALL OK&quot;, new String[] {&quot;DIV&quot;}, true, false)</span>
+            );
+<span class="fc" id="L237">            assertStringEquals(</span>
+<span class="fc" id="L238">                &quot;modified text&quot;,</span>
+<span class="fc" id="L239">                &quot; ALL OK&quot;,</span>
+<span class="fc" id="L240">                ParserUtils.trimTags(&quot;&lt;DIV&gt;&lt;DIV&gt;  +12.5 &lt;/DIV&gt;&lt;/DIV&gt; ALL OK&quot;, new String[] {&quot;DIV&quot;}, false, true)</span>
+            );
+            // Test trimAllTags method
+<span class="fc" id="L243">            assertStringEquals(</span>
+<span class="fc" id="L244">                &quot;modified text&quot;,</span>
+<span class="fc" id="L245">                &quot;  +12.5  ALL OK&quot;,</span>
+<span class="fc" id="L246">                ParserUtils.trimAllTags(&quot;&lt;DIV&gt;&lt;DIV&gt;  +12.5 &lt;/DIV&gt;&lt;/DIV&gt; ALL OK&quot;, false)</span>
+            );
+<span class="fc" id="L248">            assertStringEquals(</span>
+<span class="fc" id="L249">                &quot;modified text&quot;,</span>
+<span class="fc" id="L250">                &quot; ALL OK&quot;,</span>
+<span class="fc" id="L251">                ParserUtils.trimAllTags(&quot;&lt;DIV&gt;&lt;DIV&gt;  +12.5 &lt;/DIV&gt;&lt;/DIV&gt; ALL OK&quot;, true)</span>
+            );
+<span class="fc" id="L253">            assertStringEquals(</span>
+<span class="fc" id="L254">                &quot;modified text&quot;,</span>
+<span class="fc" id="L255">                &quot;  +12.5 &quot;,</span>
+<span class="fc" id="L256">                ParserUtils.trimAllTags(&quot;&lt;DIV&gt;&lt;DIV&gt;  +12.5 &lt;/DIV&gt;&lt;/DIV&gt;&quot;, false)</span>
+            );
+<span class="fc" id="L258">            assertStringEquals(</span>
+<span class="fc" id="L259">                &quot;modified text&quot;,</span>
+<span class="fc" id="L260">                &quot;&quot;,</span>
+<span class="fc" id="L261">                ParserUtils.trimAllTags(&quot;&lt;DIV&gt;&lt;DIV&gt;  +12.5 &lt;/DIV&gt;&lt;/DIV&gt;&quot;, true)</span>
+            );
+<span class="fc" id="L263">            assertStringEquals(</span>
+<span class="fc" id="L264">                &quot;modified text&quot;,</span>
+<span class="fc" id="L265">                &quot; YYY &quot;,</span>
+<span class="fc" id="L266">                ParserUtils.trimAllTags(&quot;&lt;XXX&gt; YYY &lt;ZZZ&gt;&quot;, false)</span>
+            );
+<span class="fc" id="L268">            assertStringEquals(</span>
+<span class="fc" id="L269">                &quot;modified text&quot;,</span>
+<span class="fc" id="L270">                &quot;YYY&quot;,</span>
+<span class="fc" id="L271">                ParserUtils.trimAllTags(&quot;YYY&quot;, false)</span>
+            );
+<span class="fc" id="L273">            assertStringEquals(</span>
+<span class="fc" id="L274">                &quot;modified text&quot;,</span>
+<span class="fc" id="L275">                &quot;&gt; OK &lt;&quot;,</span>
+<span class="fc" id="L276">                ParserUtils.trimAllTags(&quot;&gt; OK &lt;&quot;, true)</span>
+            );
+<span class="fc" id="L278">        }</span>
+<span class="nc" id="L279">        catch (Exception e)</span>
+        {
+<span class="nc" id="L281">            String msg = e.getMessage ();</span>
+<span class="nc bnc" id="L282" title="All 2 branches missed.">            if (null == msg)</span>
+<span class="nc" id="L283">                msg = e.getClass ().getName ();</span>
+<span class="nc" id="L284">            fail (msg);</span>
+        }
+<span class="fc" id="L286">    }</span>
+    
+    public void testTagsFilterMethods() {
+        try
+        {
+<span class="fc" id="L291">            NodeFilter filter = new TagNameFilter (&quot;DIV&quot;);</span>
+<span class="fc" id="L292">            String[] tmpSplitTags = ParserUtils.splitTags(&quot;Begin &lt;DIV&gt;&lt;DIV&gt;  +12.5 &lt;/DIV&gt;&lt;/DIV&gt; ALL OK&quot;, filter);</span>
+<span class="fc" id="L293">            assertStringEquals(</span>
+<span class="fc" id="L294">                &quot;modified text&quot;,</span>
+<span class="fc" id="L295">                &quot;Begin * ALL OK&quot;,</span>
+<span class="fc" id="L296">                new String(tmpSplitTags[0] + '*' + tmpSplitTags[1])</span>
+            );
+<span class="fc" id="L298">            tmpSplitTags = ParserUtils.splitTags(&quot;Begin &lt;DIV&gt;&lt;DIV&gt;  +12.5 &lt;/DIV&gt;&lt;/DIV&gt; ALL OK&quot;, filter, false, false);</span>
+<span class="fc" id="L299">            assertStringEquals(</span>
+<span class="fc" id="L300">                &quot;modified text&quot;,</span>
+<span class="fc" id="L301">                &quot;Begin *&lt;DIV&gt;  +12.5 &lt;/DIV&gt;* ALL OK&quot;,</span>
+<span class="fc" id="L302">                new String(tmpSplitTags[0] + '*' + tmpSplitTags[1] + '*' + tmpSplitTags[2])</span>
+            );
+<span class="fc" id="L304">            tmpSplitTags = ParserUtils.splitTags(&quot;Begin &lt;DIV&gt;&lt;DIV&gt;  +12.5 &lt;/DIV&gt;&lt;/DIV&gt; ALL OK&quot;, filter, true, false);</span>
+<span class="fc" id="L305">            assertStringEquals(</span>
+<span class="fc" id="L306">                &quot;modified text&quot;,</span>
+<span class="fc" id="L307">                &quot;Begin *  +12.5 * ALL OK&quot;,</span>
+<span class="fc" id="L308">                new String(tmpSplitTags[0] + '*' + tmpSplitTags[1] + '*' + tmpSplitTags[2])</span>
+            );
+<span class="fc" id="L310">            tmpSplitTags = ParserUtils.splitTags(&quot;Begin &lt;DIV&gt;&lt;DIV&gt;  +12.5 &lt;/DIV&gt;&lt;/DIV&gt; ALL OK&quot;, filter, false, true);</span>
+<span class="fc" id="L311">            assertStringEquals(</span>
+<span class="fc" id="L312">                &quot;modified text&quot;,</span>
+<span class="fc" id="L313">                &quot;Begin * ALL OK&quot;,</span>
+<span class="fc" id="L314">                new String(tmpSplitTags[0] + '*' + tmpSplitTags[1])</span>
+            );
+<span class="fc" id="L316">            assertStringEquals(</span>
+<span class="fc" id="L317">                &quot;modified text&quot;,</span>
+<span class="fc" id="L318">                &quot; ALL OK&quot;,</span>
+<span class="fc" id="L319">                ParserUtils.trimTags(&quot;&lt;DIV&gt;&lt;DIV&gt;  +12.5 &lt;/DIV&gt;&lt;/DIV&gt; ALL OK&quot;, filter)</span>
+            );
+<span class="fc" id="L321">            assertStringEquals(</span>
+<span class="fc" id="L322">                &quot;modified text&quot;,</span>
+<span class="fc" id="L323">                &quot;&lt;DIV&gt;  +12.5 &lt;/DIV&gt; ALL OK&quot;,</span>
+<span class="fc" id="L324">                ParserUtils.trimTags(&quot;&lt;DIV&gt;&lt;DIV&gt;  +12.5 &lt;/DIV&gt;&lt;/DIV&gt; ALL OK&quot;, filter, false, false)</span>
+            );
+<span class="fc" id="L326">            assertStringEquals(</span>
+<span class="fc" id="L327">                &quot;modified text&quot;,</span>
+<span class="fc" id="L328">                &quot;  +12.5  ALL OK&quot;,</span>
+<span class="fc" id="L329">                ParserUtils.trimTags(&quot;&lt;DIV&gt;&lt;DIV&gt;  +12.5 &lt;/DIV&gt;&lt;/DIV&gt; ALL OK&quot;, filter, true, false)</span>
+            );
+<span class="fc" id="L331">            assertStringEquals(</span>
+<span class="fc" id="L332">                &quot;modified text&quot;,</span>
+<span class="fc" id="L333">                &quot; ALL OK&quot;,</span>
+<span class="fc" id="L334">                ParserUtils.trimTags(&quot;&lt;DIV&gt;&lt;DIV&gt;  +12.5 &lt;/DIV&gt;&lt;/DIV&gt; ALL OK&quot;, filter, false, true)</span>
+            );
+<span class="fc" id="L336">            NodeFilter filterTableRow = new TagNameFilter(&quot;TR&quot;);</span>
+<span class="fc" id="L337">            NodeFilter filterTableColumn = new TagNameFilter(&quot;TD&quot;);</span>
+<span class="fc" id="L338">            OrFilter filterOr = new OrFilter(filterTableRow, filterTableColumn);</span>
+<span class="fc" id="L339">            assertStringEquals(</span>
+<span class="fc" id="L340">                &quot;modified text&quot;,</span>
+<span class="fc" id="L341">                &quot; ALL OK&quot;,</span>
+<span class="fc" id="L342">                ParserUtils.trimTags(&quot;&lt;TR&gt;&lt;TD&gt;  +12.5 &lt;/TD&gt;&lt;/TR&gt; ALL OK&quot;, filterOr)</span>
+            );
+<span class="fc" id="L344">            assertStringEquals(</span>
+<span class="fc" id="L345">                &quot;modified text&quot;,</span>
+<span class="fc" id="L346">                &quot;&lt;TD&gt;  +12.5 &lt;/TD&gt; ALL OK&quot;,</span>
+<span class="fc" id="L347">                ParserUtils.trimTags(&quot;&lt;TR&gt;&lt;TD&gt;  +12.5 &lt;/TD&gt;&lt;/TR&gt; ALL OK&quot;, filterOr, false, false)</span>
+            );
+<span class="fc" id="L349">            assertStringEquals(</span>
+<span class="fc" id="L350">                &quot;modified text&quot;,</span>
+<span class="fc" id="L351">                &quot;  +12.5  ALL OK&quot;,</span>
+<span class="fc" id="L352">                ParserUtils.trimTags(&quot;&lt;TR&gt;&lt;TD&gt;  +12.5 &lt;/TD&gt;&lt;/TR&gt; ALL OK&quot;, filterOr, true, false)</span>
+            );
+<span class="fc" id="L354">            assertStringEquals(</span>
+<span class="fc" id="L355">                &quot;modified text&quot;,</span>
+<span class="fc" id="L356">                &quot; ALL OK&quot;,</span>
+<span class="fc" id="L357">                ParserUtils.trimTags(&quot;&lt;TR&gt;&lt;TD&gt;  +12.5 &lt;/TD&gt;&lt;/TR&gt; ALL OK&quot;, filterOr, false, true)</span>
+            );
+<span class="fc" id="L359">        }</span>
+<span class="nc" id="L360">        catch (Exception e)</span>
+        {
+<span class="nc" id="L362">            String msg = e.getMessage ();</span>
+<span class="nc bnc" id="L363" title="All 2 branches missed.">            if (null == msg)</span>
+<span class="nc" id="L364">                msg = e.getClass ().getName ();</span>
+<span class="nc" id="L365">            fail (msg);</span>
+        }
+<span class="fc" id="L367">    }</span>
+    
+    public void testTagsClassMethods() {
+        try
+        {
+<span class="fc" id="L372">            NodeFilter filter = new NodeClassFilter (Div.class);</span>
+<span class="fc" id="L373">            String[] tmpSplitTags = ParserUtils.splitTags(&quot;Begin &lt;DIV&gt;&lt;DIV&gt;  +12.5 &lt;/DIV&gt;&lt;/DIV&gt; ALL OK&quot;, filter);</span>
+<span class="fc" id="L374">            assertStringEquals(</span>
+<span class="fc" id="L375">                &quot;modified text&quot;,</span>
+<span class="fc" id="L376">                &quot;Begin * ALL OK&quot;,</span>
+<span class="fc" id="L377">                new String(tmpSplitTags[0] + '*' + tmpSplitTags[1])</span>
+            );
+<span class="fc" id="L379">            tmpSplitTags = ParserUtils.splitTags(&quot;Begin &lt;DIV&gt;&lt;DIV&gt;  +12.5 &lt;/DIV&gt;&lt;/DIV&gt; ALL OK&quot;, filter, false, false);</span>
+<span class="fc" id="L380">            assertStringEquals(</span>
+<span class="fc" id="L381">                &quot;modified text&quot;,</span>
+<span class="fc" id="L382">                &quot;Begin *&lt;DIV&gt;  +12.5 &lt;/DIV&gt;* ALL OK&quot;,</span>
+<span class="fc" id="L383">                new String(tmpSplitTags[0] + '*' + tmpSplitTags[1] + '*' + tmpSplitTags[2])</span>
+            );
+<span class="fc" id="L385">            tmpSplitTags = ParserUtils.splitTags(&quot;Begin &lt;DIV&gt;&lt;DIV&gt;  +12.5 &lt;/DIV&gt;&lt;/DIV&gt; ALL OK&quot;, filter, true, false);</span>
+<span class="fc" id="L386">            assertStringEquals(</span>
+<span class="fc" id="L387">                &quot;modified text&quot;,</span>
+<span class="fc" id="L388">                &quot;Begin *  +12.5 * ALL OK&quot;,</span>
+<span class="fc" id="L389">                new String(tmpSplitTags[0] + '*' + tmpSplitTags[1] + '*' + tmpSplitTags[2])</span>
+            );
+<span class="fc" id="L391">            tmpSplitTags = ParserUtils.splitTags(&quot;Begin &lt;DIV&gt;&lt;DIV&gt;  +12.5 &lt;/DIV&gt;&lt;/DIV&gt; ALL OK&quot;, filter, false, true);</span>
+<span class="fc" id="L392">            assertStringEquals(</span>
+<span class="fc" id="L393">                &quot;modified text&quot;,</span>
+<span class="fc" id="L394">                &quot;Begin * ALL OK&quot;,</span>
+<span class="fc" id="L395">                new String(tmpSplitTags[0] + '*' + tmpSplitTags[1])</span>
+            );
+<span class="fc" id="L397">            assertStringEquals(</span>
+<span class="fc" id="L398">                &quot;modified text&quot;,</span>
+<span class="fc" id="L399">                &quot; ALL OK&quot;,</span>
+<span class="fc" id="L400">                ParserUtils.trimTags(&quot;&lt;DIV&gt;&lt;DIV&gt;  +12.5 &lt;/DIV&gt;&lt;/DIV&gt; ALL OK&quot;, filter)</span>
+            );
+<span class="fc" id="L402">            assertStringEquals(</span>
+<span class="fc" id="L403">                &quot;modified text&quot;,</span>
+<span class="fc" id="L404">                &quot;&lt;DIV&gt;  +12.5 &lt;/DIV&gt; ALL OK&quot;,</span>
+<span class="fc" id="L405">                ParserUtils.trimTags(&quot;&lt;DIV&gt;&lt;DIV&gt;  +12.5 &lt;/DIV&gt;&lt;/DIV&gt; ALL OK&quot;, filter, false, false)</span>
+            );
+<span class="fc" id="L407">            assertStringEquals(</span>
+<span class="fc" id="L408">                &quot;modified text&quot;,</span>
+<span class="fc" id="L409">                &quot;  +12.5  ALL OK&quot;,</span>
+<span class="fc" id="L410">                ParserUtils.trimTags(&quot;&lt;DIV&gt;&lt;DIV&gt;  +12.5 &lt;/DIV&gt;&lt;/DIV&gt; ALL OK&quot;, filter, true, false)</span>
+            );
+<span class="fc" id="L412">            assertStringEquals(</span>
+<span class="fc" id="L413">                &quot;modified text&quot;,</span>
+<span class="fc" id="L414">                &quot; ALL OK&quot;,</span>
+<span class="fc" id="L415">                ParserUtils.trimTags(&quot;&lt;DIV&gt;&lt;DIV&gt;  +12.5 &lt;/DIV&gt;&lt;/DIV&gt; ALL OK&quot;, filter, false, true)</span>
+            );
+<span class="fc" id="L417">            NodeFilter filterTableRow = new NodeClassFilter(TableRow.class);</span>
+<span class="fc" id="L418">            NodeFilter filterTableColumn = new NodeClassFilter(TableColumn.class);</span>
+<span class="fc" id="L419">            OrFilter filterOr = new OrFilter(filterTableRow, filterTableColumn);</span>
+<span class="fc" id="L420">            assertStringEquals(</span>
+<span class="fc" id="L421">                &quot;modified text&quot;,</span>
+<span class="fc" id="L422">                &quot; ALL OK&quot;,</span>
+<span class="fc" id="L423">                ParserUtils.trimTags(&quot;&lt;TR&gt;&lt;TD&gt;  +12.5 &lt;/TD&gt;&lt;/TR&gt; ALL OK&quot;, filterOr)</span>
+            );
+<span class="fc" id="L425">            assertStringEquals(</span>
+<span class="fc" id="L426">                &quot;modified text&quot;,</span>
+<span class="fc" id="L427">                &quot;&lt;TD&gt;  +12.5 &lt;/TD&gt; ALL OK&quot;,</span>
+<span class="fc" id="L428">                ParserUtils.trimTags(&quot;&lt;TR&gt;&lt;TD&gt;  +12.5 &lt;/TD&gt;&lt;/TR&gt; ALL OK&quot;, filterOr, false, false)</span>
+            );
+<span class="fc" id="L430">            assertStringEquals(</span>
+<span class="fc" id="L431">                &quot;modified text&quot;,</span>
+<span class="fc" id="L432">                &quot;  +12.5  ALL OK&quot;,</span>
+<span class="fc" id="L433">                ParserUtils.trimTags(&quot;&lt;TR&gt;&lt;TD&gt;  +12.5 &lt;/TD&gt;&lt;/TR&gt; ALL OK&quot;, filterOr, true, false)</span>
+            );
+<span class="fc" id="L435">            assertStringEquals(</span>
+<span class="fc" id="L436">                &quot;modified text&quot;,</span>
+<span class="fc" id="L437">                &quot; ALL OK&quot;,</span>
+<span class="fc" id="L438">                ParserUtils.trimTags(&quot;&lt;TR&gt;&lt;TD&gt;  +12.5 &lt;/TD&gt;&lt;/TR&gt; ALL OK&quot;, filterOr, false, true)</span>
+            );
+<span class="fc" id="L440">        }</span>
+<span class="nc" id="L441">        catch (Exception e)</span>
+        {
+<span class="nc" id="L443">            String msg = e.getMessage ();</span>
+<span class="nc bnc" id="L444" title="All 2 branches missed.">            if (null == msg)</span>
+<span class="nc" id="L445">                msg = e.getClass ().getName ();</span>
+<span class="nc" id="L446">            fail (msg);</span>
+        }
+<span class="fc" id="L448">    }</span>
+    
+    public void testTagsComplexMethods() {
+        try
+        {
+<span class="fc" id="L453">            NodeFilter filterLink = new NodeClassFilter (LinkTag.class);</span>
+<span class="fc" id="L454">            NodeFilter filterDiv = new NodeClassFilter (Div.class);</span>
+<span class="fc" id="L455">            OrFilter filterLinkDiv = new OrFilter (filterLink, filterDiv);</span>
+<span class="fc" id="L456">            NodeFilter filterTable = new NodeClassFilter (TableColumn.class);</span>
+<span class="fc" id="L457">            OrFilter filter = new OrFilter (filterLinkDiv, filterTable);</span>
+<span class="fc" id="L458">            String[] tmpSplitTags = ParserUtils.splitTags(&quot;OutsideLeft&lt;A&gt;AInside&lt;/A&gt;&lt;DIV&gt;&lt;DIV&gt;DivInside&lt;/DIV&gt;&lt;/DIV&gt;&lt;TD&gt;TableColoumnInside&lt;/TD&gt;OutsideRight&quot;, filter);</span>
+<span class="fc" id="L459">            assertStringEquals(</span>
+<span class="fc" id="L460">                &quot;modified text&quot;,</span>
+<span class="fc" id="L461">                &quot;OutsideLeft*OutsideRight&quot;,</span>
+<span class="fc" id="L462">                new String(tmpSplitTags[0] + '*' + tmpSplitTags[1])</span>
+            );
+<span class="fc" id="L464">            tmpSplitTags = ParserUtils.splitTags(&quot;OutsideLeft&lt;A&gt;AInside&lt;/A&gt;&lt;DIV&gt;&lt;DIV&gt;DivInside&lt;/DIV&gt;&lt;/DIV&gt;&lt;TD&gt;TableColoumnInside&lt;/TD&gt;OutsideRight&quot;, filter, false, false);</span>
+<span class="fc" id="L465">            assertStringEquals(</span>
+<span class="fc" id="L466">                &quot;modified text&quot;,</span>
+<span class="fc" id="L467">                &quot;OutsideLeft*AInside*&lt;DIV&gt;DivInside&lt;/DIV&gt;*TableColoumnInside*OutsideRight&quot;,</span>
+<span class="fc" id="L468">                new String(tmpSplitTags[0] + '*' + tmpSplitTags[1] + '*' + tmpSplitTags[2] + '*' + tmpSplitTags[3] + '*' + tmpSplitTags[4])</span>
+            );
+<span class="fc" id="L470">            tmpSplitTags = ParserUtils.splitTags(&quot;OutsideLeft&lt;A&gt;AInside&lt;/A&gt;&lt;DIV&gt;&lt;DIV&gt;DivInside&lt;/DIV&gt;&lt;/DIV&gt;&lt;TD&gt;TableColoumnInside&lt;/TD&gt;OutsideRight&quot;, filter, true, false);</span>
+<span class="fc" id="L471">            assertStringEquals(</span>
+<span class="fc" id="L472">                &quot;modified text&quot;,</span>
+<span class="fc" id="L473">                &quot;OutsideLeft*AInside*DivInside*TableColoumnInside*OutsideRight&quot;,</span>
+<span class="fc" id="L474">                new String(tmpSplitTags[0] + '*' + tmpSplitTags[1] + '*' + tmpSplitTags[2] + '*' + tmpSplitTags[3] + '*' + tmpSplitTags[4])</span>
+            );
+<span class="fc" id="L476">            tmpSplitTags = ParserUtils.splitTags(&quot;OutsideLeft&lt;A&gt;AInside&lt;/A&gt;&lt;DIV&gt;&lt;DIV&gt;DivInside&lt;/DIV&gt;&lt;/DIV&gt;&lt;TD&gt;TableColoumnInside&lt;/TD&gt;OutsideRight&quot;, filter, false, true);</span>
+<span class="fc" id="L477">            assertStringEquals(</span>
+<span class="fc" id="L478">                &quot;modified text&quot;,</span>
+<span class="fc" id="L479">                &quot;OutsideLeft*OutsideRight&quot;,</span>
+<span class="fc" id="L480">                new String(tmpSplitTags[0] + '*' + tmpSplitTags[1])</span>
+            );
+<span class="fc" id="L482">            tmpSplitTags = ParserUtils.splitTags(&quot;OutsideLeft&lt;A&gt;AInside&lt;DIV&gt;&lt;DIV&gt;DivInside&lt;/DIV&gt;&lt;/DIV&gt;&lt;/A&gt;&lt;TD&gt;TableColoumnInside&lt;/TD&gt;OutsideRight&quot;, new String[] {&quot;DIV&quot;, &quot;TD&quot;, &quot;A&quot;});</span>
+<span class="fc" id="L483">            assertStringEquals(</span>
+<span class="fc" id="L484">                &quot;modified text&quot;,</span>
+<span class="fc" id="L485">                &quot;OutsideLeft*OutsideRight&quot;,</span>
+<span class="fc" id="L486">                new String(tmpSplitTags[0] + '*' + tmpSplitTags[1])</span>
+            );
+<span class="fc" id="L488">            assertStringEquals(</span>
+<span class="fc" id="L489">                &quot;modified text&quot;,</span>
+<span class="fc" id="L490">                &quot;OutsideLeftOutsideRight&quot;,</span>
+<span class="fc" id="L491">                ParserUtils.trimTags(&quot;OutsideLeft&lt;A&gt;AInside&lt;DIV&gt;&lt;DIV&gt;DivInside&lt;/DIV&gt;&lt;/DIV&gt;&lt;/A&gt;&lt;TD&gt;TableColoumnInside&lt;/TD&gt;OutsideRight&quot;, new String[] {&quot;DIV&quot;, &quot;TD&quot;, &quot;A&quot;})</span>
+            );
+<span class="fc" id="L493">        }</span>
+<span class="nc" id="L494">        catch (Exception e)</span>
+        {
+<span class="nc" id="L496">            String msg = e.getMessage ();</span>
+<span class="nc bnc" id="L497" title="All 2 branches missed.">            if (null == msg)</span>
+<span class="nc" id="L498">                msg = e.getClass ().getName ();</span>
+<span class="nc" id="L499">            fail (msg);</span>
+        }
+<span class="fc" id="L501">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

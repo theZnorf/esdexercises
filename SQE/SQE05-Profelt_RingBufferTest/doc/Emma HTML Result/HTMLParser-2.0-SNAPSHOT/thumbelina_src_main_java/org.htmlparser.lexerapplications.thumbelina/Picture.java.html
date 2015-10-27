@@ -1,0 +1,487 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>Picture.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">thumbelina/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.lexerapplications.thumbelina</a> &gt; <span class="el_source">Picture.java</span></div><h1>Picture.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/thumbelina/src/main/java/org/htmlparser/lexerapplications/thumbelina/Picture.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.lexerapplications.thumbelina;
+
+import java.awt.Component;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
+import java.awt.image.ImageObserver;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+
+/**
+ * Class to track pictures within the frame.
+ * Maintains an image, an area and the URL for it.
+ */
+public class Picture
+    extends
+        Rectangle
+    implements
+        Runnable,
+        ImageObserver,
+        Tile
+{
+    /**
+     * Copy buffer size.
+     * Resources are moved to disk in chunks this size or less.
+     */
+<span class="nc" id="L58">    protected final int TRANSFER_SIZE = 4096;</span>
+
+    /**
+     * The origin for new points from the zero args constructor.
+     */
+<span class="nc" id="L63">    public static final Point ORIGIN = new Point (0, 0);</span>
+
+    /**
+     * The URL for the picture.
+     */
+    protected URL mURL;
+
+    /**
+     * The object to notify about picture events;
+     */
+    public PictureListener mListener;
+
+    /**
+     * Flag indicating the image is valid.
+     */
+    protected boolean mValid;
+
+    /**
+     * The upper left hand corner of the image.
+     * This doesn't change, even if the image is cropped.
+     * For example, if the left half of the image is obscured by another,
+     * the &lt;code&gt;Rectangle&lt;/code&gt; fields &lt;code&gt;x&lt;/code&gt;, &lt;code&gt;y&lt;/code&gt;,
+     * &lt;code&gt;width&lt;/code&gt; and &lt;code&gt;height&lt;/code&gt; will change, but the
+     * origin remains the same.
+     */
+    protected Point mOrigin;
+
+    /**
+     * The lower right hand corner of the image.
+     * This doesn't change, even if the image is cropped.
+     * For example, if the right half of the image is obscured by another,
+     * the &lt;code&gt;Rectangle&lt;/code&gt; fields
+     * &lt;code&gt;width&lt;/code&gt; and &lt;code&gt;height&lt;/code&gt; will change, but the
+     * extent remains the same.
+     */
+    protected Point mExtent;
+
+    /**
+     * The cached image.
+     */
+    protected Image mImage;
+
+    /**
+     * The local file containing the picture.
+     */
+    protected File mLocalFile;
+
+    /**
+     * Construct a picture over the rectangle given.
+     * @param r The coordinates of the area.
+     */
+<span class="nc" id="L114">    public Picture (URL url, PictureListener listener, final Rectangle r)</span>
+    {
+//        super (r);
+<span class="nc" id="L117">        setIdentity (url);</span>
+<span class="nc" id="L118">        mListener = listener;</span>
+<span class="nc" id="L119">        setValid (true);</span>
+<span class="nc bnc" id="L120" title="All 2 branches missed.">        if (null != r)</span>
+        {
+<span class="nc" id="L122">            setOrigin (new Point (r.x, r.y));</span>
+<span class="nc" id="L123">            setExtent (new Point (r.width, r.height));</span>
+<span class="nc" id="L124">        }</span>
+        else
+        {
+<span class="nc" id="L127">            setOrigin (ORIGIN);</span>
+<span class="nc" id="L128">            setExtent (ORIGIN);</span>
+        }
+<span class="nc" id="L130">        mImage = null;</span>
+<span class="nc" id="L131">        mLocalFile = null;</span>
+<span class="nc" id="L132">    }</span>
+
+    /**
+     * Getter for property origin.
+     * @return Value of property origin.
+     */
+    public Point getOrigin ()
+    {
+<span class="nc" id="L140">        return (mOrigin);</span>
+    }
+
+    /**
+     * Setter for property origin.
+     * @param origin New value of property origin.
+     */
+    public void setOrigin (final Point origin)
+    {
+<span class="nc" id="L149">        x = origin.x;</span>
+<span class="nc" id="L150">        y = origin.y;</span>
+<span class="nc" id="L151">        mOrigin = origin;</span>
+<span class="nc" id="L152">    }</span>
+
+    /**
+     * Getter for property extent.
+     * @return Value of property extent.
+     */
+    public Point getExtent ()
+    {
+<span class="nc" id="L160">        return (mExtent);</span>
+    }
+
+    /**
+     * Setter for property extent.
+     * @param extent New value of property extent.
+     */
+    public void setExtent (final Point extent)
+    {
+<span class="nc" id="L169">        width = extent.x;</span>
+<span class="nc" id="L170">        height = extent.y;</span>
+<span class="nc" id="L171">        mExtent = extent;</span>
+<span class="nc" id="L172">    }</span>
+
+    /**
+     * Getter for property image.
+     * @return Value of property image.
+     */
+    public Image getImage ()
+    {
+        long size;
+        byte[] bytes;
+        FileInputStream in;
+        Image ret;
+
+<span class="nc" id="L185">        ret = null;</span>
+<span class="nc bnc" id="L186" title="All 4 branches missed.">        if ((null == mImage) &amp;&amp; getValid ())</span>
+        {
+<span class="nc bnc" id="L188" title="All 2 branches missed.">            if (null != mLocalFile)</span>
+            {
+<span class="nc" id="L190">                size = mLocalFile.length ();</span>
+                try
+                {
+<span class="nc bnc" id="L193" title="All 2 branches missed.">                    if (size &gt; Integer.MAX_VALUE)</span>
+<span class="nc" id="L194">                        setValid (false);</span>
+                    else
+                    {
+<span class="nc" id="L197">                        bytes = new byte[(int)size];</span>
+                        try
+                        {
+<span class="nc" id="L200">                            in = new FileInputStream (mLocalFile);</span>
+<span class="nc" id="L201">                            in.read (bytes);</span>
+<span class="nc" id="L202">                            in.close ();</span>
+<span class="nc" id="L203">                            mImage = Toolkit.getDefaultToolkit ().createImage (bytes);</span>
+<span class="nc" id="L204">                        }</span>
+<span class="nc" id="L205">                        catch (IOException ioe)</span>
+                        {
+<span class="nc" id="L207">                            System.err.println (getIdentity ().toString () + &quot; is corrupt on disk&quot;);</span>
+<span class="nc" id="L208">                            setValid (false);</span>
+                        }
+                    }
+<span class="nc" id="L211">                }</span>
+<span class="nc" id="L212">                catch (OutOfMemoryError oome)</span>
+                {
+<span class="nc" id="L214">                    System.err.println (getIdentity ().toString () + &quot; is too big for available memory&quot;);</span>
+<span class="nc" id="L215">                    setValid (false);</span>
+                }
+            }
+        }
+
+<span class="nc" id="L220">        return (mImage);</span>
+    }
+
+    //
+    // Runnable interface
+    //
+
+    public void run ()
+    {
+        String suffix;
+        File file;
+        byte[] data;
+        InputStream in;
+        FileOutputStream out;
+        int read;
+        URL url;
+        Image image;
+
+<span class="nc" id="L238">        suffix = mURL.toString ();</span>
+<span class="nc" id="L239">        Thread.currentThread ().setName (suffix);</span>
+<span class="nc" id="L240">        suffix = suffix.substring (suffix.lastIndexOf (&quot;.&quot;));</span>
+        try
+        {
+<span class="nc" id="L243">            file = File.createTempFile (&quot;thumbelina&quot;, suffix);</span>
+<span class="nc" id="L244">            file.deleteOnExit ();</span>
+<span class="nc" id="L245">            data = new byte [TRANSFER_SIZE];</span>
+            try
+            {
+<span class="nc" id="L248">                in = mURL.openStream ();</span>
+                try
+                {
+<span class="nc" id="L251">                    out = new FileOutputStream (file);</span>
+                    try
+                    {
+<span class="nc bnc" id="L254" title="All 2 branches missed.">                        while (-1 != (read = in.read (data, 0, data.length)))</span>
+<span class="nc" id="L255">                            out.write (data, 0, read);</span>
+<span class="nc" id="L256">                        mLocalFile = file;</span>
+<span class="nc" id="L257">                        image = getImage ();</span>
+<span class="nc" id="L258">                        setExtent (new Point (image.getWidth (this), image.getHeight (this)));</span>
+<span class="nc bnc" id="L259" title="All 2 branches missed.">                        if (null != mListener)</span>
+<span class="nc" id="L260">                            mListener.pictureReceived (this);</span>
+<span class="nc" id="L261">                    }</span>
+                    finally
+<span class="nc" id="L263">                    {</span>
+<span class="nc" id="L264">                        out.close ();</span>
+<span class="nc" id="L265">                    }</span>
+<span class="nc" id="L266">                }</span>
+<span class="nc" id="L267">                catch (FileNotFoundException fnfe)</span>
+                {
+<span class="nc" id="L269">                    fnfe.printStackTrace ();</span>
+                }
+                finally
+<span class="nc" id="L272">                {</span>
+<span class="nc" id="L273">                    in.close ();</span>
+<span class="nc" id="L274">                }</span>
+<span class="nc" id="L275">            }</span>
+<span class="nc" id="L276">            catch (FileNotFoundException fnfe)</span>
+            {
+<span class="nc" id="L278">                System.err.println (&quot;broken link &quot; + fnfe.getMessage () + &quot; ignored&quot;);</span>
+            }
+<span class="nc" id="L280">        }</span>
+<span class="nc" id="L281">        catch (IOException ioe)</span>
+        {
+<span class="nc" id="L283">            System.err.println (&quot;I/O problem: &quot; + ioe.getMessage ());</span>
+<span class="nc" id="L284">            file = null;</span>
+        }
+<span class="nc" id="L286">    }</span>
+
+    //
+    // Tile interface
+    //
+
+    /*
+     * Returns true if this picture is valid.
+     * @return &lt;code&gt;true&lt;/code&gt; when the picture has not been marked invalid.
+     */
+    public boolean getValid ()
+    {
+<span class="nc" id="L298">        return (mValid);</span>
+    }
+
+    /**
+     * Sets the validity of the picture.
+     * @param valid If &lt;code&gt;true&lt;/code&gt; the picture is marked valid,
+     * false otherwise.
+     */
+    public void setValid (boolean valid)
+    {
+<span class="nc" id="L308">        mValid = valid;</span>
+        // but be sure to release the image memory
+<span class="nc" id="L310">        mImage = null;</span>
+<span class="nc" id="L311">    }</span>
+
+    /**
+     * Getter for property identity.
+     * @return Value of property identity.
+     */
+    public Object getIdentity ()
+    {
+<span class="nc" id="L319">        return (mURL);</span>
+    }
+
+    /**
+     * Setter for property identity.
+     * @param object New value of property identity.
+     */
+    public void setIdentity (Object object)
+    {
+<span class="nc" id="L328">        mURL = (URL)object;</span>
+<span class="nc" id="L329">    }</span>
+
+    /**
+     * Reset the picture to uncropped size.
+     */
+    public void reset ()
+    {
+<span class="nc" id="L336">        setBounds (mOrigin.x, mOrigin.y, mExtent.x, mExtent.y);</span>
+<span class="nc" id="L337">    }</span>
+
+// for now
+    public void setBounds (Rectangle r)
+    {
+<span class="nc bnc" id="L342" title="All 4 branches missed.">        if ((r.width &lt; 0) || (r.height &lt; 0))</span>
+<span class="nc" id="L343">            System.out.println (&quot;oops&quot;);</span>
+<span class="nc" id="L344">        super.setBounds (r);</span>
+<span class="nc" id="L345">    }</span>
+
+    public void setBounds (int x, int y, int width, int height)
+    {
+<span class="nc bnc" id="L349" title="All 4 branches missed.">        if ((width &lt; 0) || (height &lt; 0))</span>
+<span class="nc" id="L350">            System.out.println (&quot;oops&quot;);</span>
+<span class="nc" id="L351">        super.setBounds (x, y, width, height);</span>
+<span class="nc" id="L352">    }</span>
+
+    //
+    // ImageObserver interface
+    //
+
+    /**
+     * This method is called when information about an image which was
+     * previously requested using an asynchronous interface becomes
+     * available.  Asynchronous interfaces are method calls such as
+     * getWidth(ImageObserver) and drawImage(img, x, y, ImageObserver)
+     * which take an ImageObserver object as an argument.  Those methods
+     * register the caller as interested either in information about
+     * the overall image itself (in the case of getWidth(ImageObserver))
+     * or about an output version of an image (in the case of the
+     * drawImage(img, x, y, [w, h,] ImageObserver) call).
+     *
+     * &lt;p&gt;This method
+     * should return true if further updates are needed or false if the
+     * required information has been acquired.  The image which was being
+     * tracked is passed in using the img argument.  Various constants
+     * are combined to form the infoflags argument which indicates what
+     * information about the image is now available.  The interpretation
+     * of the x, y, width, and height arguments depends on the contents
+     * of the infoflags argument.
+     * &lt;p&gt;
+     * The &lt;code&gt;infoflags&lt;/code&gt; argument should be the bitwise inclusive
+     * &lt;b&gt;OR&lt;/b&gt; of the following flags: &lt;code&gt;WIDTH&lt;/code&gt;,
+     * &lt;code&gt;HEIGHT&lt;/code&gt;, &lt;code&gt;PROPERTIES&lt;/code&gt;, &lt;code&gt;SOMEBITS&lt;/code&gt;,
+     * &lt;code&gt;FRAMEBITS&lt;/code&gt;, &lt;code&gt;ALLBITS&lt;/code&gt;, &lt;code&gt;ERROR&lt;/code&gt;,
+     * &lt;code&gt;ABORT&lt;/code&gt;.
+     *
+     * @param     image   the image being observed.
+     * @param     infoflags   the bitwise inclusive OR of the following
+     *               flags:  &lt;code&gt;WIDTH&lt;/code&gt;, &lt;code&gt;HEIGHT&lt;/code&gt;,
+     *               &lt;code&gt;PROPERTIES&lt;/code&gt;, &lt;code&gt;SOMEBITS&lt;/code&gt;,
+     *               &lt;code&gt;FRAMEBITS&lt;/code&gt;, &lt;code&gt;ALLBITS&lt;/code&gt;,
+     *               &lt;code&gt;ERROR&lt;/code&gt;, &lt;code&gt;ABORT&lt;/code&gt;.
+     * @param     x   the &lt;i&gt;x&lt;/i&gt; coordinate.
+     * @param     y   the &lt;i&gt;y&lt;/i&gt; coordinate.
+     * @param     width    the width.
+     * @param     height   the height.
+     * @return    &lt;code&gt;false&lt;/code&gt; if the infoflags indicate that the
+     *            image is completely loaded; &lt;code&gt;true&lt;/code&gt; otherwise.
+     *
+     * @see #WIDTH
+     * @see #HEIGHT
+     * @see #PROPERTIES
+     * @see #SOMEBITS
+     * @see #FRAMEBITS
+     * @see #ALLBITS
+     * @see #ERROR
+     * @see #ABORT
+     * @see Image#getWidth
+     * @see Image#getHeight
+     * @see java.awt.Graphics#drawImage
+     */
+    public synchronized boolean imageUpdate (
+        final Image image,
+        final int infoflags,
+        final int x,
+        final int y,
+        final int width,
+        final int height)
+    {
+        boolean done;
+        boolean error;
+        boolean abort;
+
+<span class="nc" id="L421">        mImage = image;</span>
+<span class="nc bnc" id="L422" title="All 2 branches missed.">        done = (0 != (infoflags &amp; ImageObserver.ALLBITS));</span>
+<span class="nc bnc" id="L423" title="All 2 branches missed.">        abort = (0 != (infoflags &amp; ImageObserver.ABORT));</span>
+<span class="nc bnc" id="L424" title="All 2 branches missed.">        error = (0 != (infoflags &amp; ImageObserver.ERROR));</span>
+<span class="nc bnc" id="L425" title="All 6 branches missed.">        if (done || abort || error)</span>
+<span class="nc" id="L426">            synchronized (mImage)</span>
+            {
+<span class="nc bnc" id="L428" title="All 2 branches missed.">                if (!done)</span>
+                {
+<span class="nc" id="L430">                    System.err.println (getIdentity ().toString () + &quot; is invalid&quot;);</span>
+<span class="nc" id="L431">                    mImage = null;</span>
+<span class="nc" id="L432">                    setValid (false);</span>
+<span class="nc" id="L433">                }</span>
+                else
+                {
+<span class="nc" id="L436">                    setExtent (new Point (mImage.getWidth (null), mImage.getHeight (null)));</span>
+<span class="nc bnc" id="L437" title="All 2 branches missed.">                    if (null != mListener)</span>
+<span class="nc" id="L438">                        mListener.pictureReady (this);</span>
+                }
+
+            }
+
+<span class="nc bnc" id="L443" title="All 2 branches missed.">        return (!done);</span>
+     }
+
+    /**
+     * Create a string representation of the picture.
+     * @return A string that shows this picture URL and size.
+     */
+    public String toString ()
+    {
+        StringBuffer ret;
+
+<span class="nc" id="L454">        ret = new StringBuffer ();</span>
+<span class="nc" id="L455">        ret.append (getIdentity ().toString ());</span>
+<span class="nc" id="L456">        ret.append (&quot;[x=&quot;);</span>
+<span class="nc" id="L457">        ret.append (Integer.toString (x));</span>
+<span class="nc" id="L458">        ret.append (&quot;,y=&quot;);</span>
+<span class="nc" id="L459">        ret.append (Integer.toString (y));</span>
+<span class="nc" id="L460">        ret.append (&quot;,width=&quot;);</span>
+<span class="nc" id="L461">        ret.append (Integer.toString (width));</span>
+<span class="nc" id="L462">        ret.append (&quot;,height=&quot;);</span>
+<span class="nc" id="L463">        ret.append (Integer.toString (height));</span>
+<span class="nc" id="L464">        ret.append (&quot;]&quot;);</span>
+
+<span class="nc" id="L466">        return (ret.toString ());</span>
+    }
+}
+
+/*
+ * Revision Control Modification History
+ *
+ * $Log: Picture.java,v $
+ * Revision 1.2  2003/12/16 02:29:56  derrickoswald
+ * Javadoc changes and additions. Stylesheet, overview, build instructions and todo list.
+ * Added HTMLTaglet, an inline Javadoc taglet for embedding HTML into javadocs.
+ *
+ * Revision 1.1  2003/09/21 18:20:56  derrickoswald
+ * Thumbelina
+ * Created a lexer GUI application to extract images behind thumbnails.
+ * Added a task in the ant build script - thumbelina - to create the jar file.
+ * You need JDK 1.4.x to build it.  It can be run on JDK 1.3.x in crippled mode.
+ * Usage: java -Xmx256M thumbelina.jar [URL]
+ *
+ *
+ */
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

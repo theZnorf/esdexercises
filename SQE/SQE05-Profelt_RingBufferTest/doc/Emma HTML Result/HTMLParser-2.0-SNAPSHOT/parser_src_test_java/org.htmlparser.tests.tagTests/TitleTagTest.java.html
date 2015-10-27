@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>TitleTagTest.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tests.tagTests</a> &gt; <span class="el_source">TitleTagTest.java</span></div><h1>TitleTagTest.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Somik Raha
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/test/java/org/htmlparser/tests/tagTests/TitleTagTest.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tests.tagTests;
+
+import org.htmlparser.PrototypicalNodeFactory;
+import org.htmlparser.Tag;
+import org.htmlparser.tags.BaseHrefTag;
+import org.htmlparser.tags.HeadTag;
+import org.htmlparser.tags.Html;
+import org.htmlparser.tags.MetaTag;
+import org.htmlparser.tags.StyleTag;
+import org.htmlparser.tags.TitleTag;
+import org.htmlparser.tests.ParserTestCase;
+import org.htmlparser.util.ParserException;
+
+public class TitleTagTest extends ParserTestCase {
+
+    static
+    {
+<span class="fc" id="L43">        System.setProperty (&quot;org.htmlparser.tests.tagTests.TitleTagTest&quot;, &quot;TitleTagTest&quot;);</span>
+<span class="fc" id="L44">    }</span>
+
+    private TitleTag titleTag;
+<span class="fc" id="L47">    private String prefix = &quot;&lt;html&gt;&lt;head&gt;&quot;;</span>
+<span class="fc" id="L48">    private String tag1 = &quot;&lt;title&gt;Yahoo!&lt;/title&gt;&quot;;</span>
+<span class="fc" id="L49">    private String tag2 = &quot;&lt;base href=http://www.yahoo.com/ target=_top&gt;&quot;;</span>
+<span class="fc" id="L50">    private String tag3 = &quot;&lt;meta http-equiv=\&quot;PICS-Label\&quot; content='(PICS-1.1 \&quot;http://www.icra.org/ratingsv02.html\&quot; l r (cz 1 lz 1 nz 1 oz 1 vz 1) gen true for \&quot;http://www.yahoo.com\&quot; r (cz 1 lz 1 nz 1 oz 1 vz 1) \&quot;http://www.rsac.org/ratingsv01.html\&quot; l r (n 0 s 0 v 0 l 0) gen true for \&quot;http://www.yahoo.com\&quot; r (n 0 s 0 v 0 l 0))'&gt;&quot;;</span>
+<span class="fc" id="L51">    private String tag4 = &quot;&lt;style&gt;a.h{background-color:#ffee99}&lt;/style&gt;&quot;;</span>
+<span class="fc" id="L52">    private String suffix = &quot;&lt;/head&gt;&quot;;</span>
+
+    public TitleTagTest(String name) {
+<span class="fc" id="L55">        super(name);</span>
+<span class="fc" id="L56">    }</span>
+    protected void setUp() throws Exception {
+<span class="fc" id="L58">        super.setUp();</span>
+<span class="fc" id="L59">        createParser(prefix + tag1 + tag2 + tag3 + tag4 + suffix);</span>
+<span class="fc" id="L60">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L61">        assertTrue(&quot;Only node should be an HTML node&quot;,node[0] instanceof Html);</span>
+<span class="fc" id="L62">        Html html = (Html)node[0];</span>
+<span class="pc bpc" id="L63" title="1 of 2 branches missed.">        assertTrue(&quot;HTML node should have one child&quot;,1 == html.getChildCount ());</span>
+<span class="fc" id="L64">        assertTrue(&quot;Only node should be an HEAD node&quot;,html.getChild(0) instanceof HeadTag);</span>
+<span class="fc" id="L65">        HeadTag head = (HeadTag)html.getChild(0);</span>
+<span class="pc bpc" id="L66" title="1 of 2 branches missed.">        assertTrue(&quot;HEAD node should have four children&quot;,4 == head.getChildCount ());</span>
+<span class="fc" id="L67">        assertTrue(&quot;First child should be a title tag&quot;,head.getChild(0) instanceof TitleTag);</span>
+<span class="fc" id="L68">        titleTag = (TitleTag)head.getChild(0);</span>
+<span class="fc" id="L69">    }</span>
+    public void testToPlainTextString() throws ParserException {
+        // check the title node
+<span class="fc" id="L72">        assertEquals(&quot;Title&quot;,&quot;Yahoo!&quot;,titleTag.toPlainTextString());</span>
+<span class="fc" id="L73">    }</span>
+
+    public void testToHTML() throws ParserException {
+<span class="fc" id="L76">        assertStringEquals(&quot;Raw String&quot;,tag1,titleTag.toHtml());</span>
+<span class="fc" id="L77">    }</span>
+
+    public void testToString() throws ParserException  {
+<span class="fc" id="L80">        assertEquals(&quot;Title&quot;,&quot;TITLE: Yahoo!&quot;,titleTag.toString());</span>
+<span class="fc" id="L81">    }</span>
+
+    public void testScan() throws ParserException {
+<span class="fc" id="L84">        createParser(&quot;&lt;html&gt;&lt;head&gt;&lt;title&gt;Yahoo!&lt;/title&gt;&lt;base href=http://www.yahoo.com/ target=_top&gt;&lt;meta http-equiv=\&quot;PICS-Label\&quot; content='(PICS-1.1 \&quot;http://www.icra.org/ratingsv02.html\&quot; l r (cz 1 lz 1 nz 1 oz 1 vz 1) gen true for \&quot;http://www.yahoo.com\&quot; r (cz 1 lz 1 nz 1 oz 1 vz 1) \&quot;http://www.rsac.org/ratingsv01.html\&quot; l r (n 0 s 0 v 0 l 0) gen true for \&quot;http://www.yahoo.com\&quot; r (n 0 s 0 v 0 l 0))'&gt;&lt;style&gt;a.h{background-color:#ffee99}&lt;/style&gt;&lt;/head&gt;&quot;);</span>
+<span class="fc" id="L85">        parser.setNodeFactory (</span>
+<span class="fc" id="L86">            new PrototypicalNodeFactory (</span>
+                new Tag[]
+<span class="fc" id="L88">                {</span>
+<span class="fc" id="L89">                    new TitleTag (),</span>
+<span class="fc" id="L90">                    new StyleTag (),</span>
+<span class="fc" id="L91">                    new MetaTag (),</span>
+                }));
+<span class="fc" id="L93">        parseAndAssertNodeCount(7);</span>
+<span class="fc" id="L94">        assertTrue(node[2] instanceof TitleTag);</span>
+        // check the title node
+<span class="fc" id="L96">        TitleTag titleTag = (TitleTag) node[2];</span>
+<span class="fc" id="L97">        assertEquals(&quot;Title&quot;,&quot;Yahoo!&quot;,titleTag.getTitle());</span>
+<span class="fc" id="L98">    }</span>
+
+    /**
+     * Testcase to reproduce a bug reported by Cedric Rosa,
+     * on not ending the title tag correctly, we would get
+     * null pointer exceptions..
+     */
+    public void testIncompleteTitle() throws ParserException {
+<span class="fc" id="L106">        String text =</span>
+<span class="fc" id="L107">            &quot;&lt;HTML&gt;\n&quot;+</span>
+            &quot;&lt;HEAD&gt;\n&quot;+
+            // note the missing angle bracket on the close title:
+            &quot;&lt;TITLE&gt;SISTEMA TERRA, VOL. VI , No. 1-3, December 1997&lt;/TITLE\n&quot;+
+            &quot;&lt;/HEAD&gt;\n&quot;+
+            &quot;&lt;BODY&gt;\n&quot;+
+            &quot;The body.\n&quot;+
+            &quot;&lt;/BODY&gt;\n&quot;+
+            &quot;&lt;/HTML&gt;&quot;;        
+<span class="fc" id="L116">        createParser(text);</span>
+<span class="fc" id="L117">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L118">        assertTrue (&quot;Only node is a html tag&quot;,node[0] instanceof Html);</span>
+<span class="fc" id="L119">        Html html = (Html)node[0];</span>
+<span class="fc" id="L120">        assertEquals (&quot;Html node has five children&quot;, 5, html.getChildCount ());</span>
+<span class="fc" id="L121">        assertTrue (&quot;Second child is a head tag&quot;, html.childAt (1) instanceof HeadTag);</span>
+<span class="fc" id="L122">        HeadTag head = (HeadTag)html.childAt (1);</span>
+<span class="fc" id="L123">        assertEquals (&quot;Head node has two children&quot;, 2, head.getChildCount ());</span>
+<span class="fc" id="L124">        assertTrue (&quot;Second child is a title tag&quot;, head.childAt (1) instanceof TitleTag);</span>
+<span class="fc" id="L125">        TitleTag titleTag = (TitleTag)head.childAt (1);</span>
+<span class="fc" id="L126">        assertEquals(&quot;Title&quot;,&quot;SISTEMA TERRA, VOL. VI , No. 1-3, December 1997&quot;,titleTag.getTitle());</span>
+// Note: this will fail because of the extra &gt; inserted to finish the /TITLE tag:
+//        assertStringEquals (&quot;toHtml&quot;, text, html.toHtml ());
+<span class="fc" id="L129">    }</span>
+
+    /**
+     * If there are duplicates of the title tag, the parser crashes.
+     * This bug was reported by Claude Duguay
+     */
+    public void testDoubleTitleTag() throws ParserException{
+<span class="fc" id="L136">        createParser(</span>
+<span class="fc" id="L137">        &quot;&lt;html&gt;&lt;head&gt;&lt;TITLE&gt;\n&quot;+</span>
+        &quot;&lt;html&gt;&lt;head&gt;&lt;TITLE&gt;\n&quot;+
+        &quot;Double tags can hang the code\n&quot;+
+        &quot;&lt;/TITLE&gt;&lt;/head&gt;&lt;body&gt;\n&quot;+
+        &quot;&lt;body&gt;&lt;html&gt;&quot;);
+<span class="fc" id="L142">        parser.setNodeFactory (new PrototypicalNodeFactory (new TitleTag ()));</span>
+<span class="fc" id="L143">        parseAndAssertNodeCount(9);</span>
+<span class="fc" id="L144">        assertTrue(&quot;Third tag should be a title tag&quot;,node[2] instanceof TitleTag);</span>
+<span class="fc" id="L145">        TitleTag titleTag = (TitleTag)node[2];</span>
+<span class="fc" id="L146">        assertEquals(&quot;Title&quot;,&quot;\n&quot;,titleTag.getTitle());</span>
+<span class="fc" id="L147">        assertTrue(&quot;Fourth tag should be a title tag&quot;,node[3] instanceof TitleTag);</span>
+<span class="fc" id="L148">        titleTag = (TitleTag)node[3];</span>
+<span class="fc" id="L149">        assertEquals(&quot;Title&quot;,&quot;\nDouble tags can hang the code\n&quot;,titleTag.getTitle());</span>
+<span class="fc" id="L150">    }</span>
+
+    /**
+     * Testcase based on Claude Duguay's report. This proves
+     * that the parser throws exceptions when faced with malformed html
+     */
+    public void testNoEndTitleTag() throws ParserException {
+<span class="fc" id="L157">        createParser(</span>
+<span class="fc" id="L158">        &quot;&lt;TITLE&gt;KRP VALIDATION&lt;PROCESS/TITLE&gt;&quot;);</span>
+<span class="fc" id="L159">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L160">        TitleTag titleTag = (TitleTag)node[0];</span>
+<span class="fc" id="L161">        assertEquals(&quot;Expected title&quot;,&quot;KRP VALIDATION&quot;,titleTag.getTitle());</span>
+<span class="fc" id="L162">    }</span>
+
+    public void testTitleTagContainsJspTag() throws ParserException {
+<span class="fc" id="L165">        String title = &quot;&lt;title&gt;&lt;%=gTitleString%&gt;&lt;/title&gt;&quot;;</span>
+<span class="fc" id="L166">        createParser(&quot;&lt;html&gt;&lt;head&gt;&quot; + title + &quot;&lt;base href=http://www.yahoo.com/ target=_top&gt;&lt;meta http-equiv=\&quot;PICS-Label\&quot; content='(PICS-1.1 \&quot;http://www.icra.org/ratingsv02.html\&quot; l r (cz 1 lz 1 nz 1 oz 1 vz 1) gen true for \&quot;http://www.yahoo.com\&quot; r (cz 1 lz 1 nz 1 oz 1 vz 1) \&quot;http://www.rsac.org/ratingsv01.html\&quot; l r (n 0 s 0 v 0 l 0) gen true for \&quot;http://www.yahoo.com\&quot; r (n 0 s 0 v 0 l 0))'&gt;&lt;style&gt;a.h{background-color:#ffee99}&lt;/style&gt;&lt;/head&gt;&quot;);</span>
+<span class="fc" id="L167">        parser.setNodeFactory (</span>
+<span class="fc" id="L168">            new PrototypicalNodeFactory (</span>
+                new Tag[]
+<span class="fc" id="L170">                {</span>
+<span class="fc" id="L171">                    new TitleTag (),</span>
+<span class="fc" id="L172">                    new BaseHrefTag (),</span>
+<span class="fc" id="L173">                    new MetaTag (),</span>
+<span class="fc" id="L174">                    new StyleTag (),</span>
+                }));
+<span class="fc" id="L176">        parseAndAssertNodeCount(7);</span>
+<span class="fc" id="L177">        assertTrue(node[2] instanceof TitleTag);</span>
+<span class="fc" id="L178">        TitleTag titleTag = (TitleTag) node[2];</span>
+<span class="fc" id="L179">        assertStringEquals(&quot;HTML Rendering&quot;,title,titleTag.toHtml());</span>
+<span class="fc" id="L180">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

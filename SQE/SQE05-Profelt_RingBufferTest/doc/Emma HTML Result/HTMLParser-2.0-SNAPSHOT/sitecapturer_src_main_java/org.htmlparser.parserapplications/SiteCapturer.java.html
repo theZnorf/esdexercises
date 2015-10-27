@@ -1,0 +1,830 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>SiteCapturer.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">sitecapturer/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.parserapplications</a> &gt; <span class="el_source">SiteCapturer.java</span></div><h1>SiteCapturer.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/sitecapturer/src/main/java/org/htmlparser/parserapplications/SiteCapturer.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-17 21:02:25 -0400 (Sun, 17 Sep 2006) $
+// $Revision: 8 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.parserapplications;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.ArrayList;
+import java.util.HashSet;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
+
+import org.htmlparser.NodeFilter;
+import org.htmlparser.Parser;
+import org.htmlparser.PrototypicalNodeFactory;
+import org.htmlparser.filters.AndFilter;
+import org.htmlparser.filters.HasAttributeFilter;
+import org.htmlparser.filters.NodeClassFilter;
+import org.htmlparser.tags.BaseHrefTag;
+import org.htmlparser.tags.FrameTag;
+import org.htmlparser.tags.ImageTag;
+import org.htmlparser.tags.LinkTag;
+import org.htmlparser.tags.MetaTag;
+import org.htmlparser.util.EncodingChangeException;
+import org.htmlparser.util.NodeIterator;
+import org.htmlparser.util.NodeList;
+import org.htmlparser.util.ParserException;
+
+/**
+ * Save a web site locally.
+ * Illustrative program to save a web site contents locally.
+ * It was created to demonstrate URL rewriting in it's simplest form.
+ * It uses customized tags in the NodeFactory to alter the URLs.
+ * This program has a number of limitations:
+ * &lt;ul&gt;
+ * &lt;li&gt;it doesn't capture forms, this would involve too many assumptions&lt;/li&gt;
+ * &lt;li&gt;it doesn't capture script references, so funky onMouseOver and other
+ * non-static content will not be faithfully reproduced&lt;/li&gt;
+ * &lt;li&gt;it doesn't handle style sheets&lt;/li&gt;
+ * &lt;li&gt;it doesn't dig into attributes that might reference resources, so
+ * for example, background images won't necessarily be captured&lt;/li&gt;
+ * &lt;li&gt;worst of all, it gets confused when a URL both has content and is
+ * the prefix for other content,
+ * i.e. http://whatever.com/top and http://whatever.com/top/sub.html both
+ * yield content, since this cannot be faithfully replicated to a static
+ * directory structure (this happens a lot with servlet based sites)&lt;/li&gt;
+ *&lt;/ul&gt;
+ */
+public class SiteCapturer
+{
+    /**
+     * The web site to capture.
+     * This is used as the base URL in deciding whether to adjust a link
+     * and whether to capture a page or not.
+     */
+    protected String mSource;
+
+    /**
+     * The local directory to capture to.
+     * This is used as a base prefix for files saved locally.
+     */
+    protected String mTarget;
+
+    /**
+     * The list of pages to capture.
+     * Links are added to this list as they are discovered, and removed in
+     * sequential order (FIFO queue) leading to a breadth
+     * first traversal of the web site space.
+     */
+    protected ArrayList mPages;
+
+    /**
+     * The set of pages already captured.
+     * Used to avoid repeated acquisition of the same page.
+     */
+    protected HashSet mFinished;
+
+    /**
+     * The list of resources to copy.
+     * Images and other resources are added to this list as they are discovered.
+     */
+    protected ArrayList mImages;
+
+    /**
+     * The set of resources already copied.
+     * Used to avoid repeated acquisition of the same images and other resources.
+     */
+    protected HashSet mCopied;
+
+    /**
+     * The parser to use for processing.
+     */
+    protected Parser mParser;
+
+    /**
+     * If &lt;code&gt;true&lt;/code&gt;, save resources locally too,
+     * otherwise, leave resource links pointing to original page.
+     */
+    protected boolean mCaptureResources;
+
+    /**
+     * The filter to apply to the nodes retrieved.
+     */
+    protected NodeFilter mFilter;
+
+    /**
+     * Copy buffer size.
+     * Resources are moved to disk in chunks this size or less.
+     */
+<span class="nc" id="L139">    protected final int TRANSFER_SIZE = 4096;</span>
+
+    /**
+     * Create a web site capturer.
+     */
+<span class="nc" id="L144">    public SiteCapturer ()</span>
+    {
+        PrototypicalNodeFactory factory;
+
+<span class="nc" id="L148">        mSource = null;</span>
+<span class="nc" id="L149">        mTarget = null;</span>
+<span class="nc" id="L150">        mPages = new ArrayList ();</span>
+<span class="nc" id="L151">        mFinished = new HashSet ();</span>
+<span class="nc" id="L152">        mImages = new ArrayList ();</span>
+<span class="nc" id="L153">        mCopied = new HashSet ();</span>
+<span class="nc" id="L154">        mParser = new Parser ();</span>
+<span class="nc" id="L155">        factory = new PrototypicalNodeFactory ();</span>
+<span class="nc" id="L156">        factory.registerTag (new LocalLinkTag ());</span>
+<span class="nc" id="L157">        factory.registerTag (new LocalFrameTag ());</span>
+<span class="nc" id="L158">        factory.registerTag (new LocalBaseHrefTag ());</span>
+<span class="nc" id="L159">        factory.registerTag (new LocalImageTag ());</span>
+<span class="nc" id="L160">        mParser.setNodeFactory (factory);</span>
+<span class="nc" id="L161">        mCaptureResources = true;</span>
+<span class="nc" id="L162">        mFilter = null;</span>
+<span class="nc" id="L163">    }</span>
+
+    /**
+     * Getter for property source.
+     * @return Value of property source.
+     */
+    public String getSource ()
+    {
+<span class="nc" id="L171">        return (mSource);</span>
+    }
+    
+    /**
+     * Setter for property source.
+     * This is the base URL to capture. URL's that don't start with this prefix
+     * are ignored (left as is), while the ones with this URL as a base are
+     * re-homed to the local target.
+     * @param source New value of property source.
+     */
+    public void setSource (String source)
+    {
+<span class="nc bnc" id="L183" title="All 2 branches missed.">        if (source.endsWith (&quot;/&quot;))</span>
+<span class="nc" id="L184">            source = source.substring (0, source.length () - 1);</span>
+<span class="nc" id="L185">        mSource = source;</span>
+<span class="nc" id="L186">    }</span>
+    
+    /**
+     * Getter for property target.
+     * @return Value of property target.
+     */
+    public String getTarget ()
+    {
+<span class="nc" id="L194">        return (mTarget);</span>
+    }
+    
+    /**
+     * Setter for property target.
+     * This is the local directory under which to save the site's pages.
+     * @param target New value of property target.
+     */
+    public void setTarget (String target)
+    {
+<span class="nc" id="L204">        mTarget = target;</span>
+<span class="nc" id="L205">    }</span>
+
+    /**
+     * Getter for property captureResources.
+     * If &lt;code&gt;true&lt;/code&gt;, the images and other resources referenced by
+     * the site and within the base URL tree are also copied locally to the
+     * target directory. If &lt;code&gt;false&lt;/code&gt;, the image links are left 'as
+     * is', still refering to the original site.
+     * @return Value of property captureResources.
+     */
+    public boolean getCaptureResources ()
+    {
+<span class="nc" id="L217">        return (mCaptureResources);</span>
+    }
+    
+    /**
+     * Setter for property captureResources.
+     * @param capture New value of property captureResources.
+     */
+    public void setCaptureResources (boolean capture)
+    {
+<span class="nc" id="L226">        mCaptureResources = capture;</span>
+<span class="nc" id="L227">    }</span>
+    
+    
+    /** Getter for property filter.
+     * @return Value of property filter.
+     *
+     */
+    public NodeFilter getFilter ()
+    {
+<span class="nc" id="L236">        return (mFilter);</span>
+    }
+    
+    /** Setter for property filter.
+     * @param filter New value of property filter.
+     *
+     */
+    public void setFilter (NodeFilter filter)
+    {
+<span class="nc" id="L245">        mFilter = filter;</span>
+<span class="nc" id="L246">    }</span>
+    
+    /**
+     * Returns &lt;code&gt;true&lt;/code&gt; if the link is one we are interested in.
+     * @param link The link to be checked.
+     * @return &lt;code&gt;true&lt;/code&gt; if the link has the source URL as a prefix
+     * and doesn't contain '?' or '#'; the former because we won't be able to
+     * handle server side queries in the static target directory structure and
+     * the latter because presumably the full page with that reference has
+     * already been captured previously. This performs a case insensitive
+     * comparison, which is cheating really, but it's cheap.
+     */
+    protected boolean isToBeCaptured (String link)
+    {
+<span class="nc" id="L260">        return (</span>
+<span class="nc bnc" id="L261" title="All 2 branches missed.">            link.toLowerCase ().startsWith (getSource ().toLowerCase ())</span>
+<span class="nc bnc" id="L262" title="All 2 branches missed.">            &amp;&amp; (-1 == link.indexOf (&quot;?&quot;))</span>
+<span class="nc bnc" id="L263" title="All 2 branches missed.">            &amp;&amp; (-1 == link.indexOf (&quot;#&quot;)));</span>
+    }
+
+    /**
+     * Returns &lt;code&gt;true&lt;/code&gt; if the link contains text/html content.
+     * @param link The URL to check for content type.
+     * @return &lt;code&gt;true&lt;/code&gt; if the HTTP header indicates the type is
+     * &quot;text/html&quot;.
+     * @exception ParserException If the supplied URL can't be read from.
+     */
+    protected boolean isHtml (String link)
+        throws
+            ParserException
+    {
+        URL url;
+        URLConnection connection;
+        String type;
+        boolean ret;
+
+<span class="nc" id="L282">        ret = false;</span>
+        try
+        {
+<span class="nc" id="L285">            url = new URL (link);</span>
+<span class="nc" id="L286">            connection = url.openConnection ();</span>
+<span class="nc" id="L287">            type = connection.getContentType ();</span>
+<span class="nc bnc" id="L288" title="All 2 branches missed.">            if (type == null)</span>
+<span class="nc" id="L289">                ret = false;</span>
+            else
+<span class="nc" id="L291">                ret = type.startsWith (&quot;text/html&quot;);</span>
+<span class="nc" id="L292">        }</span>
+<span class="nc" id="L293">        catch (Exception e)</span>
+        {
+<span class="nc" id="L295">            throw new ParserException (&quot;URL &quot; + link + &quot; has a problem&quot;, e);</span>
+        }
+        
+<span class="nc" id="L298">        return (ret);</span>
+    }
+
+    /**
+     * Converts a link to local.
+     * A relative link can be used to construct both a URL and a file name.
+     * Basically, the operation is to strip off the base url, if any,
+     * and then prepend as many dot-dots as necessary to make
+     * it relative to the current page.
+     * A bit of a kludge handles the root page specially by calling it
+     * index.html, even though that probably isn't it's real file name.
+     * This isn't pretty, but it works for me.
+     * @param link The link to make relative.
+     * @param current The current page URL, or empty if it's an absolute URL
+     * that needs to be converted.
+     * @return The URL relative to the current page.
+     */
+    protected String makeLocalLink (String link, String current)
+    {
+        int i;
+        int j;
+        String ret;
+
+<span class="nc bnc" id="L321" title="All 6 branches missed.">        if (link.equals (getSource ()) || (!getSource ().endsWith (&quot;/&quot;) &amp;&amp; link.equals (getSource () + &quot;/&quot;)))</span>
+<span class="nc" id="L322">            ret = &quot;index.html&quot;; // handle the root page specially</span>
+<span class="nc bnc" id="L323" title="All 2 branches missed.">        else if (link.startsWith (getSource ())</span>
+<span class="nc bnc" id="L324" title="All 2 branches missed.">                &amp;&amp; (link.length () &gt; getSource ().length ()))</span>
+<span class="nc" id="L325">            ret = link.substring (getSource ().length () + 1);</span>
+        else
+<span class="nc" id="L327">            ret = link; // give up</span>
+            
+        // make it relative to the current page by prepending &quot;../&quot; for
+        // each '/' in the current local path
+<span class="nc bnc" id="L331" title="All 2 branches missed.">        if ((null != current)</span>
+<span class="nc bnc" id="L332" title="All 2 branches missed.">            &amp;&amp; link.startsWith (getSource ())</span>
+<span class="nc bnc" id="L333" title="All 2 branches missed.">            &amp;&amp; (current.length () &gt; getSource ().length ()))</span>
+        {
+<span class="nc" id="L335">            current = current.substring (getSource ().length () + 1);</span>
+<span class="nc" id="L336">            i = 0;</span>
+<span class="nc bnc" id="L337" title="All 2 branches missed.">            while (-1 != (j = current.indexOf ('/', i)))</span>
+            {
+<span class="nc" id="L339">                ret = &quot;../&quot; + ret;</span>
+<span class="nc" id="L340">                i = j + 1;</span>
+            }
+        }
+
+<span class="nc" id="L344">        return (ret);</span>
+    }
+
+    /**
+     * Unescape a URL to form a file name.
+     * Very crude.
+     * @param raw The escaped URI.
+     * @return The native URI.
+     */
+    protected String decode (String raw)
+    {
+        int length;
+        int start;
+        int index;
+        int value;
+        StringBuffer ret;
+        
+<span class="nc" id="L361">        ret = new StringBuffer (raw.length ());</span>
+
+<span class="nc" id="L363">        length = raw.length ();</span>
+<span class="nc" id="L364">        start = 0;</span>
+<span class="nc bnc" id="L365" title="All 2 branches missed.">        while (-1 != (index = raw.indexOf ('%', start)))</span>
+        {   // append the part up to the % sign
+<span class="nc" id="L367">            ret.append (raw.substring (start, index));</span>
+            // there must be two hex digits after the percent sign
+<span class="nc bnc" id="L369" title="All 2 branches missed.">            if (index + 2 &lt; length)</span>
+            {
+                try
+                {
+<span class="nc" id="L373">                    value = Integer.parseInt (raw.substring (index + 1, index + 3), 16);</span>
+<span class="nc" id="L374">                    ret.append ((char)value);</span>
+<span class="nc" id="L375">                    start = index + 3;</span>
+<span class="nc" id="L376">                }</span>
+<span class="nc" id="L377">                catch (NumberFormatException nfe)</span>
+                {
+<span class="nc" id="L379">                    ret.append ('%');</span>
+<span class="nc" id="L380">                    start = index + 1;</span>
+                }
+<span class="nc" id="L382">            }</span>
+            else
+            {   // this case is actually illegal in a URI, but...
+<span class="nc" id="L385">                ret.append ('%');</span>
+<span class="nc" id="L386">                start = index + 1;</span>
+            }
+        }
+<span class="nc" id="L389">        ret.append (raw.substring (start));</span>
+        
+<span class="nc" id="L391">        return (ret.toString ());</span>
+    }
+
+    /**
+     * Copy a resource (image) locally.
+     * Removes one element from the 'to be copied' list and saves the
+     * resource it points to locally as a file.
+     */
+    protected void copy ()
+    {
+        String link;
+        String raw;
+        String name;
+        File file;
+        File dir;
+        URL source;
+        byte[] data;
+        InputStream in;
+        FileOutputStream out;
+        int read;
+
+<span class="nc" id="L412">        link = (String)mImages.remove (0);</span>
+<span class="nc" id="L413">        mCopied.add (link);</span>
+
+<span class="nc bnc" id="L415" title="All 2 branches missed.">        if (getCaptureResources ())</span>
+        {
+<span class="nc" id="L417">            raw = makeLocalLink (link, &quot;&quot;);</span>
+<span class="nc" id="L418">            name = decode (raw);</span>
+<span class="nc" id="L419">            file = new File (getTarget (), name);</span>
+<span class="nc" id="L420">            System.out.println (&quot;copying &quot; + link + &quot; to &quot; + file.getAbsolutePath ());</span>
+            // ensure directory exists
+<span class="nc" id="L422">            dir = file.getParentFile ();</span>
+<span class="nc bnc" id="L423" title="All 2 branches missed.">            if (!dir.exists ())</span>
+<span class="nc" id="L424">                dir.mkdirs ();</span>
+            try
+            {
+<span class="nc" id="L427">                source = new URL (link);</span>
+<span class="nc" id="L428">                data = new byte [TRANSFER_SIZE];</span>
+                try
+                {
+<span class="nc" id="L431">                    in = source.openStream ();</span>
+                    try
+                    {
+<span class="nc" id="L434">                        out = new FileOutputStream (file);</span>
+                        try
+                        {
+<span class="nc bnc" id="L437" title="All 2 branches missed.">                            while (-1 != (read = in.read (data, 0, data.length)))</span>
+<span class="nc" id="L438">                                out.write (data, 0, read);</span>
+<span class="nc" id="L439">                        }</span>
+                        finally
+<span class="nc" id="L441">                        {</span>
+<span class="nc" id="L442">                            out.close ();</span>
+<span class="nc" id="L443">                        }</span>
+<span class="nc" id="L444">                    }</span>
+<span class="nc" id="L445">                    catch (FileNotFoundException fnfe)</span>
+                    {
+<span class="nc" id="L447">                        fnfe.printStackTrace ();</span>
+                    }
+                    finally
+<span class="nc" id="L450">                    {</span>
+<span class="nc" id="L451">                        in.close ();</span>
+<span class="nc" id="L452">                    }</span>
+<span class="nc" id="L453">                }</span>
+<span class="nc" id="L454">                catch (FileNotFoundException fnfe)</span>
+                {
+<span class="nc" id="L456">                    System.err.println (&quot;broken link &quot; + fnfe.getMessage () + &quot; ignored&quot;);</span>
+                }
+<span class="nc" id="L458">            }</span>
+<span class="nc" id="L459">            catch (MalformedURLException murle)</span>
+            {
+<span class="nc" id="L461">                murle.printStackTrace ();</span>
+            }
+<span class="nc" id="L463">            catch (IOException ioe)</span>
+            {
+<span class="nc" id="L465">                ioe.printStackTrace ();</span>
+            }
+        }
+<span class="nc" id="L468">    }</span>
+ 
+    /**
+     * Process a single page.
+     * @param filter The filter to apply to the collected nodes.
+     * @exception ParserException If a parse error occurs.
+     */
+    protected void process (NodeFilter filter)
+        throws
+            ParserException
+    {
+        String url;
+        int bookmark;
+        NodeList list;
+        NodeList robots;
+        MetaTag robot;
+        String content;
+        File file;
+        File dir;
+        PrintWriter out;
+
+        // get the next URL and add it to the done pile
+<span class="nc" id="L490">        url = (String)mPages.remove (0);</span>
+<span class="nc" id="L491">        System.out.println (&quot;processing &quot; + url);</span>
+<span class="nc" id="L492">        mFinished.add (url);</span>
+
+        try
+        {
+<span class="nc" id="L496">            bookmark = mPages.size ();</span>
+            // fetch the page and gather the list of nodes
+<span class="nc" id="L498">            mParser.setURL (url);</span>
+            try
+            {
+<span class="nc" id="L501">                list = new NodeList ();</span>
+<span class="nc bnc" id="L502" title="All 2 branches missed.">                for (NodeIterator e = mParser.elements (); e.hasMoreNodes (); )</span>
+<span class="nc" id="L503">                    list.add (e.nextNode ()); // URL conversion occurs in the tags</span>
+<span class="nc" id="L504">            }</span>
+<span class="nc" id="L505">            catch (EncodingChangeException ece)</span>
+            {
+                // fix bug #998195 SiteCatpurer just crashed
+                // try again with the encoding now set correctly
+                // hopefully mPages, mImages, mCopied and mFinished won't be corrupted
+<span class="nc" id="L510">                mParser.reset ();</span>
+<span class="nc" id="L511">                list = new NodeList ();</span>
+<span class="nc bnc" id="L512" title="All 2 branches missed.">                for (NodeIterator e = mParser.elements (); e.hasMoreNodes (); )</span>
+<span class="nc" id="L513">                    list.add (e.nextNode ());</span>
+            }
+
+            // handle robots meta tag according to http://www.robotstxt.org/wc/meta-user.html
+            // &lt;meta name=&quot;robots&quot; content=&quot;index,follow&quot; /&gt;
+            // &lt;meta name=&quot;robots&quot; content=&quot;noindex,nofollow&quot; /&gt;
+<span class="nc" id="L519">            robots = list.extractAllNodesThatMatch (</span>
+<span class="nc" id="L520">                new AndFilter (</span>
+<span class="nc" id="L521">                    new NodeClassFilter (MetaTag.class),</span>
+<span class="nc" id="L522">                    new HasAttributeFilter (&quot;name&quot;, &quot;robots&quot;)), true);</span>
+<span class="nc bnc" id="L523" title="All 2 branches missed.">            if (0 != robots.size ())</span>
+            {
+<span class="nc" id="L525">                robot = (MetaTag)robots.elementAt (0);</span>
+<span class="nc" id="L526">                content = robot.getAttribute (&quot;content&quot;).toLowerCase ();</span>
+<span class="nc bnc" id="L527" title="All 4 branches missed.">                if ((-1 != content.indexOf (&quot;none&quot;)) || (-1 != content.indexOf (&quot;nofollow&quot;)))</span>
+                    // reset mPages
+<span class="nc bnc" id="L529" title="All 2 branches missed.">                    for (int i = bookmark; i &lt; mPages.size (); i++)</span>
+<span class="nc" id="L530">                        mPages.remove (i);</span>
+<span class="nc bnc" id="L531" title="All 4 branches missed.">                if ((-1 != content.indexOf (&quot;none&quot;)) || (-1 != content.indexOf (&quot;noindex&quot;)))</span>
+<span class="nc" id="L532">                    return;</span>
+            }
+    
+<span class="nc bnc" id="L535" title="All 2 branches missed.">            if (null != filter)</span>
+<span class="nc" id="L536">                list.keepAllNodesThatMatch (filter, true);</span>
+
+            // save the page locally
+<span class="nc" id="L539">            file = new File (getTarget (), makeLocalLink (url, &quot;&quot;));</span>
+<span class="nc" id="L540">            dir = file.getParentFile ();</span>
+<span class="nc bnc" id="L541" title="All 2 branches missed.">            if (!dir.exists ())</span>
+<span class="nc" id="L542">                dir.mkdirs ();</span>
+<span class="nc bnc" id="L543" title="All 2 branches missed.">            else if (!dir.isDirectory ())</span>
+            {
+<span class="nc" id="L545">                dir = new File (dir.getParentFile (), dir.getName () + &quot;.content&quot;);</span>
+<span class="nc bnc" id="L546" title="All 2 branches missed.">                if (!dir.exists ())</span>
+<span class="nc" id="L547">                    dir.mkdirs ();</span>
+<span class="nc" id="L548">                file = new File (dir, file.getName ());</span>
+            }
+                
+            try
+            {
+<span class="nc" id="L553">                out = new PrintWriter (new FileOutputStream (file));</span>
+<span class="nc bnc" id="L554" title="All 2 branches missed.">                for (int i = 0; i &lt; list.size (); i++)</span>
+<span class="nc" id="L555">                    out.print (list.elementAt (i).toHtml ());</span>
+<span class="nc" id="L556">                out.close ();</span>
+<span class="nc" id="L557">            }</span>
+<span class="nc" id="L558">            catch (FileNotFoundException fnfe)</span>
+            {
+<span class="nc" id="L560">                fnfe.printStackTrace ();</span>
+            }
+<span class="nc" id="L562">        }</span>
+<span class="nc" id="L563">        catch (ParserException pe)</span>
+        {
+            String message;
+            
+            // this exception handling is suboptimal,
+            // but it recognizes resources that aren't text/html
+<span class="nc" id="L569">            message = pe.getMessage ();</span>
+<span class="nc bnc" id="L570" title="All 4 branches missed.">            if ((null != message) &amp;&amp; (message.endsWith (&quot;does not contain text&quot;)))</span>
+            {
+<span class="nc bnc" id="L572" title="All 2 branches missed.">                if (!mCopied.contains (url))</span>
+<span class="nc bnc" id="L573" title="All 2 branches missed.">                    if (!mImages.contains (url))</span>
+<span class="nc" id="L574">                        mImages.add (url);</span>
+<span class="nc" id="L575">                mFinished.remove (url);</span>
+<span class="nc" id="L576">            }</span>
+            else
+<span class="nc" id="L578">                throw pe;</span>
+        }
+<span class="nc" id="L580">    }</span>
+
+    /**
+     * Link tag that rewrites the HREF.
+     * The HREF is changed to a local target if it matches the source.
+     */
+<span class="nc" id="L586">    class LocalLinkTag extends LinkTag</span>
+    {
+        public void doSemanticAction ()
+            throws
+                ParserException
+        {
+            boolean html;
+            String link;
+
+            // get the link
+<span class="nc" id="L596">            link = getLink ();</span>
+            // check if it needs to be captured
+<span class="nc bnc" id="L598" title="All 2 branches missed.">            if (isToBeCaptured (link))</span>
+            {
+                // add the link to a list to be processed
+<span class="nc bnc" id="L601" title="All 2 branches missed.">                if (mFinished.contains (link))</span>
+<span class="nc" id="L602">                    html = true;</span>
+<span class="nc bnc" id="L603" title="All 2 branches missed.">                else if (mPages.contains (link))</span>
+<span class="nc" id="L604">                    html = true;</span>
+<span class="nc bnc" id="L605" title="All 2 branches missed.">                else if (mCopied.contains (link))</span>
+<span class="nc" id="L606">                    html = false;</span>
+<span class="nc bnc" id="L607" title="All 2 branches missed.">                else if (mImages.contains (link))</span>
+<span class="nc" id="L608">                    html = false;</span>
+                else
+                {   // this test is expensive, do it reluctantly
+<span class="nc" id="L611">                    html = isHtml (link);</span>
+<span class="nc bnc" id="L612" title="All 2 branches missed.">                    if (html)</span>
+<span class="nc" id="L613">                        mPages.add (link);</span>
+                    else
+<span class="nc" id="L615">                        mImages.add (link);</span>
+                }
+                // alter the link
+<span class="nc bnc" id="L618" title="All 6 branches missed.">                if (html || (!html &amp;&amp; getCaptureResources ()))</span>
+<span class="nc" id="L619">                    link = makeLocalLink (link, mParser.getLexer ().getPage ().getUrl ());</span>
+<span class="nc" id="L620">                setLink (link);</span>
+            }
+<span class="nc" id="L622">        }</span>
+    }
+
+    /**
+     * Frame tag that rewrites the SRC URLs.
+     * The SRC URLs are mapped to local targets if they match the source.
+     */
+<span class="nc" id="L629">    class LocalFrameTag extends FrameTag</span>
+    {
+        public void doSemanticAction ()
+            throws
+                ParserException
+        {
+            boolean html;
+            String link;
+
+            // get the link
+<span class="nc" id="L639">            link = getFrameLocation ();</span>
+            // check if it needs to be captured
+<span class="nc bnc" id="L641" title="All 2 branches missed.">            if (isToBeCaptured (link))</span>
+            {
+                // add the link to a list to be processed
+<span class="nc bnc" id="L644" title="All 2 branches missed.">                if (mFinished.contains (link))</span>
+<span class="nc" id="L645">                    html = true;</span>
+<span class="nc bnc" id="L646" title="All 2 branches missed.">                else if (mPages.contains (link))</span>
+<span class="nc" id="L647">                    html = true;</span>
+<span class="nc bnc" id="L648" title="All 2 branches missed.">                else if (mCopied.contains (link))</span>
+<span class="nc" id="L649">                    html = false;</span>
+<span class="nc bnc" id="L650" title="All 2 branches missed.">                else if (mImages.contains (link))</span>
+<span class="nc" id="L651">                    html = false;</span>
+                else
+                {   // this test is expensive, do it reluctantly
+<span class="nc" id="L654">                    html = isHtml (link);</span>
+<span class="nc bnc" id="L655" title="All 2 branches missed.">                    if (html)</span>
+<span class="nc" id="L656">                        mPages.add (link);</span>
+                    else
+<span class="nc" id="L658">                        mImages.add (link);</span>
+                }
+                // alter the link
+<span class="nc bnc" id="L661" title="All 6 branches missed.">                if (html || (!html &amp;&amp; getCaptureResources ()))</span>
+<span class="nc" id="L662">                    link = makeLocalLink (link, mParser.getLexer ().getPage ().getUrl ());</span>
+<span class="nc" id="L663">                setFrameLocation (link);</span>
+            }
+<span class="nc" id="L665">        }</span>
+    }
+
+    /**
+     * Image tag that rewrites the SRC URL.
+     * If resources are being captured the SRC is mapped to a local target if
+     * it matches the source, otherwise it is convered to a full URL to point
+     * back to the original site.
+     */
+<span class="nc" id="L674">    class LocalImageTag extends ImageTag</span>
+    {
+        public void doSemanticAction ()
+            throws
+                ParserException
+        {
+            String image;
+            
+            // get the image url
+<span class="nc" id="L683">            image = getImageURL ();</span>
+            // check if it needs to be captured
+<span class="nc bnc" id="L685" title="All 2 branches missed.">            if (isToBeCaptured (image))</span>
+            {   // add the image to the list needing to be copied
+<span class="nc bnc" id="L687" title="All 2 branches missed.">                if (!mCopied.contains (image))</span>
+<span class="nc bnc" id="L688" title="All 2 branches missed.">                    if (!mImages.contains (image))</span>
+<span class="nc" id="L689">                        mImages.add (image);</span>
+<span class="nc bnc" id="L690" title="All 2 branches missed.">                if (getCaptureResources ())</span>
+<span class="nc" id="L691">                    image = makeLocalLink (image, mParser.getLexer ().getPage ().getUrl ());</span>
+                // alter the link
+<span class="nc" id="L693">                setImageURL (image);</span>
+            }
+<span class="nc" id="L695">        }</span>
+    }
+
+    /**
+     * Base tag that doesn't show.
+     * The toHtml() method is overridden to return an empty string,
+     * effectively shutting off the base reference.
+     */
+<span class="nc" id="L703">    class LocalBaseHrefTag extends BaseHrefTag</span>
+    {
+        // we don't want to have a base pointing back at the source page
+        public String toHtml ()
+        {
+<span class="nc" id="L708">            return (&quot;&quot;);</span>
+        }
+    }
+
+    /**
+     * Perform the capture.
+     */
+    public void capture ()
+    {
+       
+<span class="nc" id="L718">        mPages.clear ();</span>
+<span class="nc" id="L719">        mPages.add (getSource ());</span>
+<span class="nc bnc" id="L720" title="All 2 branches missed.">        while (0 != mPages.size ())</span>
+            try
+            {
+<span class="nc" id="L723">                process (getFilter ());</span>
+<span class="nc bnc" id="L724" title="All 2 branches missed.">                while (0 != mImages.size ())</span>
+<span class="nc" id="L725">                    copy ();</span>
+<span class="nc" id="L726">            }</span>
+<span class="nc" id="L727">            catch (ParserException pe)</span>
+            {   // this exception handling is suboptimal,
+                // but it messages correctly about broken links
+                Throwable throwable;
+                
+<span class="nc" id="L732">                throwable = pe.getThrowable ();</span>
+<span class="nc bnc" id="L733" title="All 2 branches missed.">                if (null != throwable)</span>
+                {
+<span class="nc" id="L735">                    throwable = throwable.getCause ();</span>
+<span class="nc bnc" id="L736" title="All 2 branches missed.">                    if (throwable instanceof FileNotFoundException)</span>
+<span class="nc" id="L737">                        System.err.println (&quot;broken link &quot; + ((FileNotFoundException)throwable).getMessage () + &quot; ignored&quot;);</span>
+                    else
+<span class="nc" id="L739">                        pe.printStackTrace ();</span>
+<span class="nc" id="L740">                }</span>
+                else
+<span class="nc" id="L742">                    pe.printStackTrace ();</span>
+            }
+<span class="nc" id="L744">    }</span>
+
+    /**
+     * Mainline to capture a web site locally.
+     * @param args The command line arguments.
+     * There are three arguments the web site to capture, the local directory
+     * to save it to, and a flag (true or false) to indicate whether resources
+     * such as images and video are to be captured as well.
+     * These are requested via dialog boxes if not supplied.
+     * @exception MalformedURLException If the supplied URL is invalid.
+     * @exception IOException If an error occurs reading the page or resources.
+     */
+    public static void main (String[] args)
+        throws
+            MalformedURLException,
+            IOException
+    {
+        SiteCapturer worker;
+        String url;
+        JFileChooser chooser;
+        URL source;
+        String path;
+        File target;
+        Boolean capture;
+        int ret;
+        
+<span class="nc" id="L770">        worker = new SiteCapturer ();</span>
+<span class="nc bnc" id="L771" title="All 2 branches missed.">        if (0 &gt;= args.length)</span>
+        {
+<span class="nc" id="L773">            url = (String)JOptionPane.showInputDialog (</span>
+<span class="nc" id="L774">                null,</span>
+<span class="nc" id="L775">                &quot;Enter the URL to capture:&quot;,</span>
+<span class="nc" id="L776">                &quot;Web Site&quot;,</span>
+<span class="nc" id="L777">                JOptionPane.PLAIN_MESSAGE,</span>
+<span class="nc" id="L778">                null,</span>
+<span class="nc" id="L779">                null,</span>
+<span class="nc" id="L780">                &quot;http://htmlparser.sourceforge.net&quot;);</span>
+<span class="nc bnc" id="L781" title="All 2 branches missed.">            if (null != url)</span>
+<span class="nc" id="L782">                worker.setSource (url);</span>
+            else
+<span class="nc" id="L784">                System.exit (1);</span>
+<span class="nc" id="L785">        }</span>
+        else
+<span class="nc" id="L787">            worker.setSource (args[0]);</span>
+<span class="nc bnc" id="L788" title="All 2 branches missed.">        if (1 &gt;= args.length)</span>
+        {
+<span class="nc" id="L790">            url = worker.getSource ();</span>
+<span class="nc" id="L791">            source = new URL (url);</span>
+<span class="nc" id="L792">            path = new File (new File (&quot;.&quot; + File.separator), source.getHost () + File.separator).getCanonicalPath ();</span>
+<span class="nc" id="L793">            target = new File (path);</span>
+<span class="nc" id="L794">            chooser = new JFileChooser (target);</span>
+<span class="nc" id="L795">            chooser.setDialogType (JFileChooser.SAVE_DIALOG);</span>
+<span class="nc" id="L796">            chooser.setFileSelectionMode (JFileChooser.DIRECTORIES_ONLY);</span>
+<span class="nc" id="L797">            chooser.setSelectedFile (target); // this doesn't frickin' work</span>
+<span class="nc" id="L798">            chooser.setMultiSelectionEnabled (false);</span>
+<span class="nc" id="L799">            chooser.setDialogTitle (&quot;Target Directory&quot;);</span>
+<span class="nc" id="L800">            ret = chooser.showSaveDialog (null);</span>
+<span class="nc bnc" id="L801" title="All 2 branches missed.">            if (ret == JFileChooser.APPROVE_OPTION)</span>
+<span class="nc" id="L802">                worker.setTarget (chooser.getSelectedFile ().getAbsolutePath ());</span>
+            else
+<span class="nc" id="L804">                System.exit (1);</span>
+<span class="nc" id="L805">        }</span>
+        else
+<span class="nc" id="L807">            worker.setTarget (args[1]);</span>
+<span class="nc bnc" id="L808" title="All 2 branches missed.">        if (2 &gt;= args.length)</span>
+        {
+<span class="nc" id="L810">            capture = (Boolean)JOptionPane.showInputDialog (</span>
+<span class="nc" id="L811">                null,</span>
+<span class="nc" id="L812">                &quot;Should resources be captured:&quot;,</span>
+<span class="nc" id="L813">                &quot;Capture Resources&quot;,</span>
+<span class="nc" id="L814">                JOptionPane.PLAIN_MESSAGE,</span>
+<span class="nc" id="L815">                null,</span>
+<span class="nc" id="L816">                new Object[] { Boolean.TRUE, Boolean.FALSE},</span>
+<span class="nc" id="L817">                Boolean.TRUE);</span>
+<span class="nc bnc" id="L818" title="All 2 branches missed.">            if (null != capture)</span>
+<span class="nc" id="L819">                worker.setCaptureResources (capture.booleanValue ());</span>
+            else
+<span class="nc" id="L821">                System.exit (1);</span>
+<span class="nc" id="L822">        }</span>
+        else
+<span class="nc" id="L824">            worker.setCaptureResources ((Boolean.valueOf (args[2]).booleanValue ()));</span>
+<span class="nc" id="L825">        worker.capture ();</span>
+        
+<span class="nc" id="L827">        System.exit (0);</span>
+<span class="nc" id="L828">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

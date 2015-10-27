@@ -1,0 +1,585 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>PageAttribute.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">lexer/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.lexer</a> &gt; <span class="el_source">PageAttribute.java</span></div><h1>PageAttribute.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/lexer/src/main/java/org/htmlparser/lexer/PageAttribute.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.lexer;
+
+import org.htmlparser.Attribute;
+
+/**
+ * An attribute within a tag on a page.
+ * This attribute is similar to Attribute but 'lazy loaded' from the
+ * &lt;code&gt;Page&lt;/code&gt; by providing the page and cursor offsets
+ * into the page for the name and value. This is done for speed, since
+ * if the name and value are not needed we can avoid the cost and memory
+ * overhead of creating the strings.
+ * &lt;p&gt;
+ * Thus the property getters, defer to the base class unless the property
+ * is null, in which case an attempt is made to read it from the underlying
+ * page. Optimizations in the predicates and length calculation defer the
+ * actual instantiation of strings until absolutely needed.
+ */
+public class PageAttribute
+    extends
+        Attribute
+{
+    /**
+     * The page this attribute is extracted from.
+     */
+    protected Page mPage;
+
+    /**
+     * The starting offset of the name within the page.
+     * If negative, the name is considered &lt;code&gt;null&lt;/code&gt;.
+     */
+    protected int mNameStart;
+
+    /**
+     * The ending offset of the name within the page.
+     */
+    protected int mNameEnd;
+
+    /**
+     * The starting offset of the value within the page.
+     * If negative, the value is considered &lt;code&gt;null&lt;/code&gt;.
+     */
+    protected int mValueStart;
+
+    /**
+     * The ending offset of the name within the page.
+     */
+    protected int mValueEnd;
+
+    /**
+     * Create an attribute.
+     * @param page The page containing the attribute.
+     * @param name_start The starting offset of the name within the page.
+     * If this is negative, the name is considered null.
+     * @param name_end The ending offset of the name within the page.
+     * @param value_start he starting offset of the value within the page.
+     * If this is negative, the value is considered null.
+     * @param value_end The ending offset of the value within the page.
+     * @param quote The quote, if any, surrounding the value of the attribute,
+     * (i.e. ' or &quot;), or zero if none.
+     */
+<span class="fc" id="L86">    public PageAttribute (Page page, int name_start, int name_end, int value_start, int value_end, char quote)</span>
+    {
+<span class="fc" id="L88">        mPage = page;</span>
+<span class="fc" id="L89">        mNameStart = name_start;</span>
+<span class="fc" id="L90">        mNameEnd = name_end;</span>
+<span class="fc" id="L91">        mValueStart = value_start;</span>
+<span class="fc" id="L92">        mValueEnd = value_end;</span>
+<span class="fc" id="L93">        setName (null);</span>
+<span class="fc" id="L94">        setAssignment (null);</span>
+<span class="fc" id="L95">        setValue (null);</span>
+<span class="fc" id="L96">        setQuote (quote);</span>
+<span class="fc" id="L97">    }</span>
+
+    //
+    // provide same constructors as super class
+    //
+
+    private void init ()
+    {
+<span class="fc" id="L105">        mPage = null;</span>
+<span class="fc" id="L106">        mNameStart = -1;</span>
+<span class="fc" id="L107">        mNameEnd = -1;</span>
+<span class="fc" id="L108">        mValueStart = -1;</span>
+<span class="fc" id="L109">        mValueEnd = -1;</span>
+<span class="fc" id="L110">    }</span>
+
+    /**
+     * Create an attribute with the name, assignment string, value and quote given.
+     * If the quote value is zero, assigns the value using {@link #setRawValue}
+     * which sets the quote character to a proper value if necessary.
+     * @param name The name of this attribute.
+     * @param assignment The assignment string of this attribute.
+     * @param value The value of this attribute.
+     * @param quote The quote around the value of this attribute.
+     */
+    public PageAttribute (String name, String assignment, String value, char quote)
+    {
+<span class="fc" id="L123">        super (name, assignment, value, quote);</span>
+<span class="fc" id="L124">        init ();</span>
+<span class="fc" id="L125">    }</span>
+
+    /**
+     * Create an attribute with the name, value and quote given.
+     * Uses an equals sign as the assignment string if the value is not
+     * &lt;code&gt;null&lt;/code&gt;, and calls {@link #setRawValue} to get the
+     * correct quoting if &lt;code&gt;quote&lt;/code&gt; is zero.
+     * @param name The name of this attribute.
+     * @param value The value of this attribute.
+     * @param quote The quote around the value of this attribute.
+     */
+    public PageAttribute (String name, String value, char quote)
+    {
+<span class="nc" id="L138">        super (name, value, quote);</span>
+<span class="nc" id="L139">        init ();</span>
+<span class="nc" id="L140">    }</span>
+
+    /**
+     * Create a whitespace attribute with the value given.
+     * @param value The value of this attribute.
+     * @exception IllegalArgumentException if the value contains other than
+     * whitespace. To set a real value use {@link #PageAttribute(String,String)}.
+     */
+    public PageAttribute (String value)
+        throws
+            IllegalArgumentException
+    {
+<span class="fc" id="L152">        super (value);</span>
+<span class="fc" id="L153">        init ();</span>
+<span class="fc" id="L154">    }</span>
+
+    /**
+     * Create an attribute with the name and value given.
+     * Uses an equals sign as the assignment string if the value is not
+     * &lt;code&gt;null&lt;/code&gt;, and calls {@link #setRawValue} to get the
+     * correct quoting.
+     * @param name The name of this attribute.
+     * @param value The value of this attribute.
+     */
+    public PageAttribute (String name, String value)
+    {
+<span class="fc" id="L166">        super (name, value);</span>
+<span class="fc" id="L167">        init ();</span>
+<span class="fc" id="L168">    }</span>
+
+    /**
+     * Create an attribute with the name, assignment string and value given.
+     * Calls {@link #setRawValue} to get the correct quoting.
+     * @param name The name of this attribute.
+     * @param assignment The assignment string of this attribute.
+     * @param value The value of this attribute.
+     */
+    public PageAttribute (String name, String assignment, String value)
+    {
+<span class="fc" id="L179">        super (name, assignment, value);</span>
+<span class="fc" id="L180">        init ();</span>
+<span class="fc" id="L181">    }</span>
+
+    /**
+     * Create an empty attribute.
+     * This will provide &quot;&quot; from the {@link #toString} and 
+     * {@link #toString(StringBuffer)} methods.
+     */
+    public PageAttribute ()
+    {
+<span class="fc" id="L190">        super ();</span>
+<span class="fc" id="L191">        init ();</span>
+<span class="fc" id="L192">    }</span>
+
+    /**
+     * Get the name of this attribute.
+     * The part before the equals sign, or the contents of the
+     * stand-alone attribute.
+     * @return The name, or &lt;code&gt;null&lt;/code&gt; if it's just a whitepace
+     * 'attribute'.
+     */
+    public String getName ()
+    {
+        String ret;
+
+<span class="fc" id="L205">        ret = super.getName ();</span>
+<span class="fc bfc" id="L206" title="All 2 branches covered.">        if (null == ret)</span>
+        {
+<span class="pc bpc" id="L208" title="1 of 4 branches missed.">            if ((null != mPage) &amp;&amp; (0 &lt;= mNameStart))</span>
+            {
+<span class="fc" id="L210">                ret = mPage.getText (mNameStart, mNameEnd);</span>
+<span class="fc" id="L211">                setName (ret); // cache the value</span>
+            }
+        }
+
+<span class="fc" id="L215">        return (ret);</span>
+    }
+
+    /**
+     * Get the name of this attribute.
+     * @param buffer The buffer to place the name in.
+     * @see #getName()
+     */
+    public void getName (StringBuffer buffer)
+    {
+        String name;
+
+<span class="fc" id="L227">        name = super.getName ();</span>
+<span class="fc bfc" id="L228" title="All 2 branches covered.">        if (null == name)</span>
+        {
+<span class="fc bfc" id="L230" title="All 4 branches covered.">            if ((null != mPage) &amp;&amp; (0 &lt;= mNameStart))</span>
+<span class="fc" id="L231">                mPage.getText (buffer, mNameStart, mNameEnd);</span>
+<span class="fc" id="L232">        }</span>
+        else
+<span class="fc" id="L234">            buffer.append (name);</span>
+<span class="fc" id="L235">    }</span>
+
+    /**
+     * Get the assignment string of this attribute.
+     * This is usually just an equals sign, but in poorly formed attributes it
+     * can include whitespace on either or both sides of an equals sign.
+     * @return The assignment string.
+     */
+    public String getAssignment ()
+    {
+        String ret;
+
+<span class="nc" id="L247">        ret = super.getAssignment ();</span>
+<span class="nc bnc" id="L248" title="All 2 branches missed.">        if (null == ret)</span>
+        {
+<span class="nc bnc" id="L250" title="All 6 branches missed.">            if ((null != mPage) &amp;&amp; (0 &lt;= mNameEnd) &amp;&amp; (0 &lt;= mValueStart))</span>
+            {
+<span class="nc" id="L252">                ret = mPage.getText (mNameEnd, mValueStart);</span>
+                // remove a possible quote included in the assignment
+                // since mValueStart points at the real start of the value
+<span class="nc bnc" id="L255" title="All 4 branches missed.">                if (ret.endsWith (&quot;\&quot;&quot;) || ret.endsWith (&quot;'&quot;))</span>
+<span class="nc" id="L256">                    ret = ret.substring (0, ret.length () - 1);</span>
+<span class="nc" id="L257">                setAssignment (ret); // cache the value</span>
+            }
+        }
+
+<span class="nc" id="L261">        return (ret);</span>
+    }
+
+    /**
+     * Get the assignment string of this attribute.
+     * @param buffer The buffer to place the assignment string in.
+     * @see #getAssignment()
+     */
+    public void getAssignment (StringBuffer buffer)
+    {
+        int length;
+        char ch;
+        String assignment;
+
+<span class="fc" id="L275">        assignment = super.getAssignment ();</span>
+<span class="fc bfc" id="L276" title="All 2 branches covered.">        if (null == assignment)</span>
+        {
+<span class="fc bfc" id="L278" title="All 6 branches covered.">            if ((null != mPage) &amp;&amp; (0 &lt;= mNameEnd) &amp;&amp; (0 &lt;= mValueStart))</span>
+            {
+<span class="fc" id="L280">                mPage.getText (buffer, mNameEnd, mValueStart);</span>
+                // remove a possible quote included in the assignment
+                // since mValueStart points at the real start of the value
+<span class="fc" id="L283">                length = buffer.length () - 1;</span>
+<span class="fc" id="L284">                ch = buffer.charAt (length);</span>
+<span class="fc bfc" id="L285" title="All 4 branches covered.">                if (('\'' == ch) || ('&quot;' == ch))</span>
+<span class="fc" id="L286">                    buffer.setLength (length);</span>
+            }
+<span class="fc" id="L288">        }</span>
+        else
+<span class="fc" id="L290">            buffer.append (assignment);</span>
+<span class="fc" id="L291">    }</span>
+
+    /**
+     * Get the value of the attribute.
+     * The part after the equals sign, or the text if it's just a whitepace
+     * 'attribute'.
+     * &lt;em&gt;NOTE:&lt;/em&gt; This does not include any quotes that may have enclosed
+     * the value when it was read. To get the un-stripped value use
+     * {@link  #getRawValue}.
+     * @return The value, or &lt;code&gt;null&lt;/code&gt; if it's a stand-alone or
+     * empty attribute, or the text if it's just a whitepace 'attribute'.
+     */
+    public String getValue ()
+    {
+        String ret;
+
+<span class="fc" id="L307">        ret = super.getValue ();</span>
+<span class="fc bfc" id="L308" title="All 2 branches covered.">        if (null == ret)</span>
+        {
+<span class="pc bpc" id="L310" title="1 of 4 branches missed.">            if ((null != mPage) &amp;&amp; (0 &lt;= mValueEnd))</span>
+            {
+<span class="fc" id="L312">                ret = mPage.getText (mValueStart, mValueEnd);</span>
+<span class="fc" id="L313">                setValue (ret); // cache the value</span>
+            }
+        }
+
+<span class="fc" id="L317">        return (ret);</span>
+    }
+
+    /**
+     * Get the value of the attribute.
+     * @param buffer The buffer to place the value in.
+     * @see #getValue()
+     */
+    public void getValue (StringBuffer buffer)
+    {
+        String value;
+
+<span class="nc" id="L329">        value = super.getValue ();</span>
+<span class="nc bnc" id="L330" title="All 2 branches missed.">        if (null == value)</span>
+        {
+<span class="nc bnc" id="L332" title="All 4 branches missed.">            if ((null != mPage) &amp;&amp; (0 &lt;= mValueEnd))</span>
+<span class="nc" id="L333">                mPage.getText (buffer, mNameStart, mNameEnd);</span>
+<span class="nc" id="L334">        }</span>
+        else
+<span class="nc" id="L336">            buffer.append (value);</span>
+<span class="nc" id="L337">    }</span>
+
+    /**
+     * Get the raw value of the attribute.
+     * The part after the equals sign, or the text if it's just a whitepace
+     * 'attribute'. This includes the quotes around the value if any.
+     * @return The value, or &lt;code&gt;null&lt;/code&gt; if it's a stand-alone attribute,
+     * or the text if it's just a whitepace 'attribute'.
+     */
+    public String getRawValue ()
+    {
+        char quote;
+        StringBuffer buffer;
+        String ret;
+
+<span class="fc" id="L352">        ret = getValue ();</span>
+<span class="pc bpc" id="L353" title="2 of 4 branches missed.">        if (null != ret &amp;&amp; (0 != (quote = getQuote ())))</span>
+        {
+<span class="fc" id="L355">            buffer = new StringBuffer (ret.length() + 2);</span>
+<span class="fc" id="L356">            buffer.append (quote);</span>
+<span class="fc" id="L357">            buffer.append (ret);</span>
+<span class="fc" id="L358">            buffer.append (quote);</span>
+<span class="fc" id="L359">            ret = buffer.toString ();</span>
+        }
+
+<span class="fc" id="L362">        return (ret);</span>
+    }
+
+    /**
+     * Get the raw value of the attribute.
+     * The part after the equals sign, or the text if it's just a whitepace
+     * 'attribute'. This includes the quotes around the value if any.
+     * @param buffer The string buffer to append the attribute value to.
+     * @see #getRawValue()
+     */
+    public void getRawValue (StringBuffer buffer)
+    {
+        char quote;
+
+<span class="fc bfc" id="L376" title="All 2 branches covered.">        if (null == mValue)</span>
+        {
+<span class="fc bfc" id="L378" title="All 2 branches covered.">            if (0 &lt;= mValueEnd)</span>
+            {
+<span class="fc bfc" id="L380" title="All 2 branches covered.">                if (0 != (quote = getQuote ()))</span>
+<span class="fc" id="L381">                    buffer.append (quote);</span>
+<span class="fc bfc" id="L382" title="All 2 branches covered.">                if (mValueStart != mValueEnd)</span>
+<span class="fc" id="L383">                    mPage.getText (buffer, mValueStart, mValueEnd);</span>
+<span class="fc bfc" id="L384" title="All 2 branches covered.">                if (0 != quote)</span>
+<span class="fc" id="L385">                    buffer.append (quote);</span>
+            }
+<span class="fc" id="L387">        }</span>
+        else
+        {
+<span class="fc bfc" id="L390" title="All 2 branches covered.">            if (0 != (quote = getQuote ()))</span>
+<span class="fc" id="L391">                buffer.append (quote);</span>
+<span class="fc" id="L392">            buffer.append (mValue);</span>
+<span class="fc bfc" id="L393" title="All 2 branches covered.">            if (0 != quote)</span>
+<span class="fc" id="L394">                buffer.append (quote);</span>
+        }
+<span class="fc" id="L396">    }</span>
+
+    /**
+     * Get the page this attribute is anchored to, if any.
+     * @return The page used to construct this attribute, or null if this
+     * is just a regular attribute.
+     */
+    public Page getPage ()
+    {
+<span class="nc" id="L405">        return (mPage);</span>
+    }
+
+    /**
+     * Set the page this attribute is anchored to.
+     * @param page The page to be used to construct this attribute.
+     * Note: If you set this you probably also want to uncache the property
+     * values by setting them to null.
+     */
+    public void setPage (Page page)
+    {
+<span class="nc" id="L416">        mPage = page;</span>
+<span class="nc" id="L417">    }</span>
+
+    /**
+     * Get the starting position of the attribute name.
+     * @return The offset into the page at which the name begins.
+     */
+    public int getNameStartPosition ()
+    {
+<span class="nc" id="L425">        return (mNameStart);</span>
+    }
+
+    /**
+     * Set the starting position of the attribute name.
+     * @param start The new offset into the page at which the name begins.
+     */
+    public void setNameStartPosition (int start)
+    {
+<span class="nc" id="L434">        mNameStart = start;</span>
+<span class="nc" id="L435">        setName (null); // uncache value</span>
+<span class="nc" id="L436">    }</span>
+
+    /**
+     * Get the ending position of the attribute name.
+     * @return The offset into the page at which the name ends.
+     */
+    public int getNameEndPosition ()
+    {
+<span class="nc" id="L444">        return (mNameEnd);</span>
+    }
+
+    /**
+     * Set the ending position of the attribute name.
+     * @param end The new offset into the page at which the name ends.
+     */
+    public void setNameEndPosition (int end)
+    {
+<span class="nc" id="L453">        mNameEnd = end;</span>
+<span class="nc" id="L454">        setName (null); // uncache value</span>
+<span class="nc" id="L455">        setAssignment (null); // uncache value</span>
+<span class="nc" id="L456">    }</span>
+
+    /**
+     * Get the starting position of the attribute value.
+     * @return The offset into the page at which the value begins.
+     */
+    public int getValueStartPosition ()
+    {
+<span class="nc" id="L464">        return (mValueStart);</span>
+    }
+
+    /**
+     * Set the starting position of the attribute value.
+     * @param start The new offset into the page at which the value begins.
+     */
+    public void setValueStartPosition (int start)
+    {
+<span class="nc" id="L473">        mValueStart = start;</span>
+<span class="nc" id="L474">        setAssignment (null); // uncache value</span>
+<span class="nc" id="L475">        setValue (null); // uncache value</span>
+<span class="nc" id="L476">    }</span>
+
+    /**
+     * Get the ending position of the attribute value.
+     * @return The offset into the page at which the value ends.
+     */
+    public int getValueEndPosition ()
+    {
+<span class="nc" id="L484">        return (mValueEnd);</span>
+    }
+
+    /**
+     * Set the ending position of the attribute value.
+     * @param end The new offset into the page at which the value ends.
+     */
+    public void setValueEndPosition (int end)
+    {
+<span class="nc" id="L493">        mValueEnd = end;</span>
+<span class="nc" id="L494">        setValue (null); // uncache value</span>
+<span class="nc" id="L495">    }</span>
+
+    /**
+     * Predicate to determine if this attribute is whitespace.
+     * @return &lt;code&gt;true&lt;/code&gt; if this attribute is whitespace,
+     * &lt;code&gt;false&lt;/code&gt; if it is a real attribute.
+     */
+    public boolean isWhitespace ()
+    {
+<span class="fc bfc" id="L504" title="All 6 branches covered.">        return (((null == super.getName ()) &amp;&amp; (null == mPage))</span>
+<span class="fc bfc" id="L505" title="All 2 branches covered.">            || ((null != mPage) &amp;&amp; (0 &gt; mNameStart)));</span>
+    }
+
+    /**
+     * Predicate to determine if this attribute has no equals sign (or value).
+     * @return &lt;code&gt;true&lt;/code&gt; if this attribute is a standalone attribute.
+     * &lt;code&gt;false&lt;/code&gt; if has an equals sign.
+     */
+    public boolean isStandAlone ()
+    {
+<span class="fc bfc" id="L515" title="All 4 branches covered.">        return (!isWhitespace () // not whitespace</span>
+<span class="fc bfc" id="L516" title="All 2 branches covered.">            &amp;&amp; (null == super.getAssignment ()) // and no explicit assignment provided</span>
+<span class="fc bfc" id="L517" title="All 2 branches covered.">            &amp;&amp; !isValued () // and has no value</span>
+<span class="fc bfc" id="L518" title="All 2 branches covered.">            &amp;&amp; ((null == mPage) // and either its not coming from a page</span>
+                // or it is coming from a page and it doesn't have an assignment part
+<span class="pc bpc" id="L520" title="2 of 4 branches missed.">                || ((null != mPage) &amp;&amp; (0 &lt;= mNameEnd) &amp;&amp; (0 &gt; mValueStart))));</span>
+    }
+
+    /**
+     * Predicate to determine if this attribute has an equals sign but no value.
+     * @return &lt;code&gt;true&lt;/code&gt; if this attribute is an empty attribute.
+     * &lt;code&gt;false&lt;/code&gt; if has an equals sign and a value.
+     */
+    public boolean isEmpty ()
+    {
+<span class="fc bfc" id="L530" title="All 4 branches covered.">        return (!isWhitespace () // not whitespace</span>
+<span class="fc bfc" id="L531" title="All 2 branches covered.">            &amp;&amp; !isStandAlone () // and not standalone</span>
+<span class="fc bfc" id="L532" title="All 2 branches covered.">            &amp;&amp; (null == super.getValue ()) // and no explicit value provided</span>
+<span class="pc bpc" id="L533" title="1 of 2 branches missed.">            &amp;&amp; ((null == mPage) // and either its not coming from a page</span>
+                // or it is coming from a page and has no value
+<span class="pc bpc" id="L535" title="1 of 2 branches missed.">                || ((null != mPage) &amp;&amp; (0 &gt; mValueEnd))));</span>
+    }
+
+    /**
+     * Predicate to determine if this attribute has a value.
+     * @return &lt;code&gt;true&lt;/code&gt; if this attribute has a value.
+     * &lt;code&gt;false&lt;/code&gt; if it is empty or standalone.
+     */
+    public boolean isValued ()
+    {
+<span class="fc bfc" id="L545" title="All 2 branches covered.">        return ((null != super.getValue ()) // an explicit value provided</span>
+            // or it is coming from a page and has a non-empty value
+<span class="pc bpc" id="L547" title="1 of 8 branches missed.">            || ((null != mPage) &amp;&amp; ((0 &lt;= mValueStart) &amp;&amp; (0 &lt;= mValueEnd)) &amp;&amp; (mValueStart != mValueEnd)));</span>
+    }
+
+    /**
+     * Get the length of the string value of this attribute.
+     * @return The number of characters required to express this attribute.
+     */
+    public int getLength ()
+    {
+        String name;
+        String assignment;
+        String value;
+        char quote;
+        int ret;
+
+<span class="fc" id="L562">        ret = 0;</span>
+<span class="fc" id="L563">        name = super.getName ();</span>
+<span class="fc bfc" id="L564" title="All 2 branches covered.">        if (null != name)</span>
+<span class="fc" id="L565">            ret += name.length ();</span>
+<span class="pc bpc" id="L566" title="1 of 6 branches missed.">        else if ((null != mPage) &amp;&amp; (0 &lt;= mNameStart) &amp;&amp; (0 &lt;= mNameEnd))</span>
+<span class="fc" id="L567">            ret += mNameEnd - mNameStart;</span>
+<span class="fc" id="L568">        assignment = super.getAssignment ();</span>
+<span class="fc bfc" id="L569" title="All 2 branches covered.">        if (null != assignment)</span>
+<span class="fc" id="L570">            ret += assignment.length ();</span>
+<span class="fc bfc" id="L571" title="All 6 branches covered.">        else if ((null != mPage) &amp;&amp; (0 &lt;= mNameEnd) &amp;&amp; (0 &lt;= mValueStart))</span>
+<span class="fc" id="L572">            ret += mValueStart - mNameEnd;</span>
+<span class="fc" id="L573">        value = super.getValue ();</span>
+<span class="fc bfc" id="L574" title="All 2 branches covered.">        if (null != value)</span>
+<span class="fc" id="L575">            ret += value.length ();</span>
+<span class="fc bfc" id="L576" title="All 6 branches covered.">        else if ((null != mPage) &amp;&amp; (0 &lt;= mValueStart) &amp;&amp; (0 &lt;= mValueEnd))</span>
+<span class="fc" id="L577">            ret += mValueEnd - mValueStart;</span>
+<span class="fc" id="L578">        quote = getQuote ();</span>
+<span class="fc bfc" id="L579" title="All 2 branches covered.">        if (0 != quote)</span>
+<span class="fc" id="L580">            ret += 2;</span>
+        
+<span class="fc" id="L582">        return (ret);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

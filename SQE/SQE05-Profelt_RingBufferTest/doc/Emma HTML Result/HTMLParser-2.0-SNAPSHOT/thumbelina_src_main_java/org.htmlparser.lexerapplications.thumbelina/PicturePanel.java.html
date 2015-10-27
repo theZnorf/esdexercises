@@ -1,0 +1,689 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>PicturePanel.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">thumbelina/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.lexerapplications.thumbelina</a> &gt; <span class="el_source">PicturePanel.java</span></div><h1>PicturePanel.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/thumbelina/src/main/java/org/htmlparser/lexerapplications/thumbelina/PicturePanel.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.lexerapplications.thumbelina;
+
+import java.awt.Canvas;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Image;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
+import java.awt.event.HierarchyEvent;
+import java.awt.event.HierarchyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.image.ImageObserver;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Iterator;
+import javax.swing.JPanel;
+import javax.swing.JViewport;
+import javax.swing.Scrollable;
+import javax.swing.border.BevelBorder;
+
+/**
+ * Hold and display a group of pictures.
+ * @author  derrick
+ */
+public class PicturePanel
+    extends
+        JPanel
+    implements
+        MouseListener,
+        Scrollable,
+        ComponentListener,
+        HierarchyListener
+{
+    class Watcher implements ImageObserver
+    {
+        Component mTarget;
+        Image mImage;
+        int mX;
+        int mY;
+        int m_x;
+        int m_y;
+        public boolean drawn;
+
+<span class="nc" id="L74">        public Watcher (Component component, Image image,</span>
+            int x, int y, int _x, int _y)
+<span class="nc" id="L76">        {</span>
+<span class="nc" id="L77">            mTarget = component;</span>
+<span class="nc" id="L78">            mImage = image;</span>
+<span class="nc" id="L79">            mX = x;</span>
+<span class="nc" id="L80">            mY = y;</span>
+<span class="nc" id="L81">            m_x = _x;</span>
+<span class="nc" id="L82">            m_y = _y;</span>
+<span class="nc" id="L83">            drawn = false;</span>
+<span class="nc" id="L84">        }</span>
+
+        public boolean imageUpdate (Image image, int infoflags, int x, int y, int width, int height)
+        {
+            int w;
+            int h;
+            boolean ret;
+
+<span class="nc bnc" id="L92" title="All 2 branches missed.">            if (0 != (infoflags &amp; ImageObserver.ALLBITS))</span>
+            {
+<span class="nc" id="L94">                Graphics graphics = mTarget.getGraphics ();</span>
+<span class="nc bnc" id="L95" title="All 2 branches missed.">                if (null != graphics)</span>
+                {
+<span class="nc" id="L97">                    w = image.getWidth (null);</span>
+<span class="nc" id="L98">                    h = image.getHeight (null);</span>
+<span class="nc" id="L99">                    graphics.drawImage (image,</span>
+<span class="nc" id="L100">                        mX, mY, mX + w, mY + h,</span>
+<span class="nc" id="L101">                        m_x, m_y, w, h,</span>
+<span class="nc" id="L102">                        null);</span>
+<span class="nc" id="L103">                    drawn = true;</span>
+                }
+<span class="nc" id="L105">                ret = false;</span>
+<span class="nc" id="L106">            }</span>
+            else
+<span class="nc" id="L108">                ret = true;</span>
+
+<span class="nc" id="L110">            return (ret);</span>
+        }
+    }
+
+    /**
+     * Scrolling unit increment (both directions).
+     */
+    protected static final int UNIT_INCREMENT = 10;
+
+    /**
+     * Scrolling block increment (both directions).
+     */
+    protected static final int BLOCK_INCREMENT = 100;
+
+    /**
+     * The thumbelina object in use.
+     */
+    protected Thumbelina mThumbelina;
+
+    /**
+     * The display mosaic.
+     */
+    protected TileSet mMosaic;
+
+    /**
+     * The preferred size of this component.
+     * &lt;code&gt;null&lt;/code&gt; initially, caches the results of
+     * &lt;code&gt;calculatePreferredSize ()&lt;/code&gt;.
+     */
+    protected Dimension mPreferredSize;
+
+    /**
+     * Creates a new instance of PicturePanel
+     * @param thumbelina The &lt;code&gt;Thumeblina&lt;/code&gt; this panel is associated
+     * with.
+     */
+<span class="nc" id="L146">    public PicturePanel (final Thumbelina thumbelina)</span>
+    {
+<span class="nc" id="L148">        mThumbelina = thumbelina;</span>
+<span class="nc" id="L149">        mMosaic = new TileSet ();</span>
+<span class="nc" id="L150">        mPreferredSize = null;</span>
+<span class="nc" id="L151">        setDoubleBuffered (false);</span>
+<span class="nc" id="L152">        setBorder (new BevelBorder (BevelBorder.LOWERED));</span>
+<span class="nc" id="L153">        addMouseListener (this);</span>
+<span class="nc" id="L154">        addHierarchyListener (this);</span>
+<span class="nc" id="L155">    }</span>
+
+    /**
+     * Clears the panel, discarding any existing images.
+     */
+    public void reset ()
+    {
+<span class="nc" id="L162">        mMosaic = new TileSet ();</span>
+<span class="nc" id="L163">        repaint ();</span>
+<span class="nc" id="L164">    }</span>
+
+    /**
+     * Move the given picture to the top of the Z order.
+     * Adds it, even it if it doesn't exist.
+     * Also puts the URL in the url text of the status bar.
+     * @param tile The tile being brought forward.
+     */
+    public void bringToTop (final Tile tile)
+    {
+        Rectangle rectangle;
+
+<span class="nc" id="L176">        mMosaic.bringToTop (tile);</span>
+<span class="nc" id="L177">        rectangle = tile.getBounds ();</span>
+<span class="nc" id="L178">        repaint (rectangle.x, rectangle.y, rectangle.width, rectangle.height);</span>
+<span class="nc" id="L179">        mThumbelina.mUrlText.setText (tile.getIdentity ().toString ());</span>
+<span class="nc" id="L180">    }</span>
+
+    /**
+     * Find a picture with the given URL in the panel.
+     * This should really only be used to discover if the picture is still
+     * visible. There could be more than one picture with the given URL
+     * because it may be partially obscured by another picture, in which
+     * case the pieces are each given their own picture object, but all
+     * point at the same &lt;code&gt;URL&lt;/code&gt; and &lt;code&gt;Image&lt;/code&gt;.
+     * @param url The url to locate.
+     * @return The first picture encountered in the panel,
+     * or null if the picture was not found.
+     */
+    public Picture find (final String url)
+    {
+        Iterator&lt;Tile&gt; iterator;
+        Picture picture;
+        Picture ret;
+
+<span class="nc" id="L199">        ret = null;</span>
+<span class="nc" id="L200">        iterator = mMosaic.getTiles ();</span>
+<span class="nc bnc" id="L201" title="All 4 branches missed.">        while ((null == ret) &amp;&amp; iterator.hasNext ())</span>
+        {
+<span class="nc" id="L203">            picture = (Picture)iterator.next ();</span>
+<span class="nc bnc" id="L204" title="All 2 branches missed.">            if (url.equals (picture.getIdentity ().toString ()))</span>
+<span class="nc" id="L205">                ret = picture;</span>
+        }
+
+<span class="nc" id="L208">        return (ret);</span>
+    }
+
+    /**
+     * Draw an image on screen.
+     * @param picture The picture to draw.
+     * @param add If &lt;code&gt;true&lt;/code&gt;, the picture is added to the history.
+     */
+    protected void draw (final Picture picture, final boolean add)
+    {
+        Component parent;
+        boolean dolayout;
+        Dimension before;
+        Dimension after;
+
+<span class="nc" id="L223">        parent = getParent ();</span>
+<span class="nc" id="L224">        dolayout = false;</span>
+<span class="nc" id="L225">        synchronized (mMosaic)</span>
+        {
+<span class="nc bnc" id="L227" title="All 2 branches missed.">            if (parent instanceof JViewport)</span>
+            {
+<span class="nc" id="L229">                before = getPreferredSize ();</span>
+<span class="nc" id="L230">                mMosaic.add (picture);</span>
+<span class="nc" id="L231">                after = calculatePreferredSize ();</span>
+<span class="nc bnc" id="L232" title="All 2 branches missed.">                if (after.width &gt; before.width)</span>
+<span class="nc" id="L233">                    dolayout = true;</span>
+                else
+<span class="nc" id="L235">                    after.width = before.width;</span>
+<span class="nc bnc" id="L236" title="All 2 branches missed.">                if (after.height &gt; before.height)</span>
+<span class="nc" id="L237">                    dolayout = true;</span>
+                else
+<span class="nc" id="L239">                    after.height = before.height;</span>
+<span class="nc bnc" id="L240" title="All 2 branches missed.">                if (dolayout)</span>
+<span class="nc" id="L241">                    mPreferredSize = after;</span>
+<span class="nc" id="L242">            }</span>
+            else
+<span class="nc" id="L244">                mMosaic.add (picture);</span>
+        }
+<span class="nc bnc" id="L246" title="All 2 branches missed.">        if (dolayout)</span>
+        {
+<span class="nc" id="L248">            revalidate ();</span>
+<span class="nc" id="L249">            invalidate ();</span>
+<span class="nc" id="L250">            validate ();</span>
+        }
+        //System.out.print (&quot;&quot; + picture.x + &quot;,&quot; + picture.y + &quot;,&quot; + picture.width + &quot;,&quot; + picture.height);
+<span class="nc" id="L253">        repaint (picture.x, picture.y, picture.width, picture.height);</span>
+<span class="nc bnc" id="L254" title="All 2 branches missed.">        if (add)</span>
+<span class="nc" id="L255">            mThumbelina.addHistory (picture.getIdentity ().toString ());</span>
+<span class="nc" id="L256">    }</span>
+
+    /**
+     * Updates this component.
+     * @param graphics The graphics context in which to update the component.
+     */
+    public void update (final Graphics graphics)
+    {
+<span class="nc" id="L264">        paint (graphics);</span>
+<span class="nc" id="L265">    }</span>
+
+    /**
+     * Adjust the graphics clip region to account for insets.
+     * @param graphics The graphics object to set the clip region for.
+     **/
+    public void adjustClipForInsets (final Graphics graphics)
+    {
+        Dimension dim;
+        Insets insets;
+        Rectangle clip;
+
+<span class="nc" id="L277">        dim = getSize ();</span>
+<span class="nc" id="L278">        insets = getInsets ();</span>
+<span class="nc" id="L279">        clip = graphics.getClipBounds ();</span>
+<span class="nc bnc" id="L280" title="All 2 branches missed.">        if (clip.x &lt; insets.left)</span>
+<span class="nc" id="L281">            clip.x = insets.left;</span>
+<span class="nc bnc" id="L282" title="All 2 branches missed.">        if (clip.y &lt; insets.top)</span>
+<span class="nc" id="L283">            clip.y = insets.top;</span>
+<span class="nc bnc" id="L284" title="All 2 branches missed.">        if (clip.x + clip.width &gt; dim.width - insets.right)</span>
+<span class="nc" id="L285">            clip.width = dim.width - insets.right - clip.x;</span>
+<span class="nc bnc" id="L286" title="All 2 branches missed.">        if (clip.y + clip.height &gt; dim.height - insets.bottom)</span>
+<span class="nc" id="L287">            clip.height = dim.height - insets.bottom - clip.y;</span>
+<span class="nc" id="L288">        graphics.setClip (clip.x, clip.y, clip.width, clip.height);</span>
+<span class="nc" id="L289">    }</span>
+
+    /**
+     * Paints this component.
+     * Runs through the list of tiles and for every one that intersects
+     * the clip region performs a &lt;code&gt;drawImage()&lt;/code&gt;.
+     * @param graphics The graphics context used to paint with.
+     */
+    public void paint (final Graphics graphics)
+    {
+        Rectangle clip;
+        Iterator&lt;Tile&gt; iterator;
+        HashSet&lt;Image&gt; set; // just so we don't draw things twice
+        Picture picture;
+        Rectangle rectangle;
+        Image image;
+        Point origin;
+        int width;
+        int height;
+
+        //adjustClipForInsets (graphics);
+<span class="nc" id="L310">        clip = graphics.getClipBounds ();</span>
+<span class="nc" id="L311">        synchronized (mMosaic)</span>
+        {
+            Rectangle s;
+<span class="nc" id="L314">            s = graphics.getClipBounds ();</span>
+            //System.out.print (&quot;&quot; + s.x + &quot;,&quot; + s.y + &quot;,&quot; + s.width + &quot;,&quot; + s.height + &quot; &quot;);
+<span class="nc" id="L316">            super.paint (graphics);</span>
+<span class="nc bnc" id="L317" title="All 2 branches missed.">            if (0 != mMosaic.getTileCount ())</span>
+            {
+<span class="nc" id="L319">                super.paint (graphics);</span>
+<span class="nc" id="L320">                iterator = mMosaic.getTiles ();</span>
+<span class="nc" id="L321">                set = new HashSet&lt;Image&gt; ();</span>
+<span class="nc bnc" id="L322" title="All 2 branches missed.">                while (iterator.hasNext ())</span>
+                {
+<span class="nc" id="L324">                    picture = (Picture)iterator.next ();</span>
+<span class="nc bnc" id="L325" title="All 2 branches missed.">                    if (picture.getValid ())</span>
+                    {
+<span class="nc" id="L327">                        rectangle = picture.getBounds ();</span>
+<span class="nc bnc" id="L328" title="All 4 branches missed.">                        if ((null == clip) || (clip.intersects (rectangle)))</span>
+                        {
+<span class="nc" id="L330">                            image = picture.getImage ();</span>
+<span class="nc bnc" id="L331" title="All 2 branches missed.">                            if (!set.contains (image))</span>
+                            {
+<span class="nc" id="L333">                                set.add (image);</span>
+<span class="nc" id="L334">                                origin = picture.getOrigin ();</span>
+<span class="nc" id="L335">                                Watcher observer = new Watcher (</span>
+<span class="nc" id="L336">                                    this, image,</span>
+<span class="nc" id="L337">                                    origin.x, origin.y, 0, 0);</span>
+<span class="nc" id="L338">                                width = image.getWidth (observer);</span>
+<span class="nc" id="L339">                                height = image.getHeight (observer);</span>
+<span class="nc bnc" id="L340" title="All 2 branches missed.">                                if (prepareImage (image, observer))</span>
+<span class="nc bnc" id="L341" title="All 2 branches missed.">                                    if (!observer.drawn)</span>
+<span class="nc" id="L342">                                        graphics.drawImage (image,</span>
+<span class="nc" id="L343">                                            origin.x, origin.y,</span>
+<span class="nc" id="L344">                                            origin.x + width, origin.y + height,</span>
+<span class="nc" id="L345">                                            0, 0, width, height,</span>
+<span class="nc" id="L346">                                            null);</span>
+                                    else
+<span class="nc" id="L348">                                        System.out.println (&quot;* *** *** ** * already drawn!!!&quot;);</span>
+                            }
+                        }
+                    }
+                }
+            }
+        }
+<span class="nc" id="L355">    }</span>
+
+
+    /**
+     * Get the preferred size of the component.
+     * @return The dimension of this component.
+     */
+    public Dimension getPreferredSize ()
+    {
+<span class="nc bnc" id="L364" title="All 2 branches missed.">        if (null == mPreferredSize)</span>
+<span class="nc" id="L365">            setPreferredSize (calculatePreferredSize ());</span>
+        else
+<span class="nc bnc" id="L367" title="All 4 branches missed.">            if ((0 == mPreferredSize.width) || (0 == mPreferredSize.height))</span>
+<span class="nc" id="L368">                setPreferredSize (calculatePreferredSize ());</span>
+<span class="nc" id="L369">        return (mPreferredSize);</span>
+    }
+
+    /**
+     * Sets the preferred size of this component.
+     * @param dimension The new value to use for
+     * &lt;code&gt;getPreferredSize()&lt;/code&gt; until recalculated.
+     */
+    public void setPreferredSize (final Dimension dimension)
+    {
+<span class="nc" id="L379">        mPreferredSize = dimension;</span>
+<span class="nc" id="L380">    }</span>
+
+    /**
+     * Compute the preferred size of the component.
+     * Computes the minimum bounding rectangle covering all the pictures in
+     * the panel. It then does some funky stuff to handle
+     * embedding in the view port of a scroll pane, basically asking
+     * up the ancestor heirarchy what size is available, and filling it.
+     * @return The optimal dimension for this component.
+     */
+    protected Dimension calculatePreferredSize ()
+    {
+        Iterator&lt;Tile&gt; iterator;
+        int x;
+        int y;
+        Tile picture;
+        Rectangle rectangle;
+        Component parent;
+        Insets insets;
+        Dimension ret;
+
+<span class="nc" id="L401">        iterator = mMosaic.getTiles ();</span>
+<span class="nc" id="L402">        x = 0;</span>
+<span class="nc" id="L403">        y = 0;</span>
+<span class="nc" id="L404">        picture = null;</span>
+<span class="nc bnc" id="L405" title="All 2 branches missed.">        while (iterator.hasNext ())</span>
+        {
+<span class="nc" id="L407">            picture = iterator.next ();</span>
+<span class="nc" id="L408">            rectangle = picture.getBounds ();</span>
+<span class="nc bnc" id="L409" title="All 2 branches missed.">            if (rectangle.x + rectangle.width &gt; x)</span>
+<span class="nc" id="L410">                x = rectangle.x + rectangle.width;</span>
+<span class="nc bnc" id="L411" title="All 2 branches missed.">            if (rectangle.y + rectangle.height &gt; y)</span>
+<span class="nc" id="L412">                y = rectangle.y + rectangle.height;</span>
+        }
+<span class="nc" id="L414">        parent = getParent ();</span>
+<span class="nc bnc" id="L415" title="All 2 branches missed.">        if (parent instanceof JViewport)</span>
+        {
+<span class="nc" id="L417">            ret = parent.getSize ();</span>
+<span class="nc" id="L418">            insets = ((JViewport)parent).getInsets ();</span>
+<span class="nc" id="L419">            ret.width -= insets.left + insets.right;</span>
+<span class="nc" id="L420">            ret.height -= insets.top + insets.bottom;</span>
+<span class="nc bnc" id="L421" title="All 4 branches missed.">            if ((0 != ret.width) || (0 != ret.height))</span>
+<span class="nc" id="L422">                ret.width -= 2; // ... I dunno why, it just needs it</span>
+<span class="nc bnc" id="L423" title="All 2 branches missed.">            if (ret.width &lt; x)</span>
+<span class="nc" id="L424">                ret.width = x;</span>
+<span class="nc bnc" id="L425" title="All 2 branches missed.">            if (ret.height &lt; y)</span>
+<span class="nc" id="L426">                ret.height = y;</span>
+<span class="nc" id="L427">        }</span>
+        else
+        {
+<span class="nc" id="L430">            insets = getInsets ();</span>
+<span class="nc" id="L431">            x += insets.left + insets.right;</span>
+<span class="nc" id="L432">            y += insets.top + insets.bottom;</span>
+<span class="nc" id="L433">            ret = new Dimension (x, y);</span>
+        }
+
+<span class="nc" id="L436">        return (ret);</span>
+    }
+
+    //
+    // MouseListener Interface
+    //
+
+    /**
+     * Invoked when the mouse button has been clicked
+     * (pressed and released) on a component.
+     * &lt;i&gt;Not used.&lt;/i&gt;
+     * @param event The object providing details of the mouse event.
+     */
+    public void mouseClicked (final MouseEvent event)
+    {
+<span class="nc" id="L451">    }</span>
+
+    /**
+     *Invoked when a mouse button has been released on a component.
+     * &lt;i&gt;Not used.&lt;/i&gt;
+     * @param event The object providing details of the mouse event.
+     */
+    public void mouseReleased (final MouseEvent event)
+    {
+<span class="nc" id="L460">    }</span>
+
+    /**
+     * Invoked when the mouse enters a component.
+     * &lt;i&gt;Not used.&lt;/i&gt;
+     * @param event The object providing details of the mouse event.
+     */
+    public void mouseEntered (final MouseEvent event)
+    {
+<span class="nc" id="L469">    }</span>
+
+    /**
+     * Invoked when the mouse exits a component.
+     * &lt;i&gt;Not used.&lt;/i&gt;
+     * @param event The object providing details of the mouse event.
+     */
+    public void mouseExited (final MouseEvent event)
+    {
+<span class="nc" id="L478">    }</span>
+
+    /**
+     * Handle left click on a picture by bringing it to the top.
+     * @param event The object providing details of the mouse event.
+     */
+    public void mousePressed (final MouseEvent event)
+    {
+        Tile tile;
+
+<span class="nc bnc" id="L488" title="All 2 branches missed.">        if (!event.isMetaDown ())</span>
+        {
+<span class="nc" id="L490">            tile = mMosaic.tileAt (event.getX (), event.getY ());</span>
+<span class="nc bnc" id="L491" title="All 2 branches missed.">            if (null != tile)</span>
+<span class="nc" id="L492">                bringToTop (tile);</span>
+        }
+<span class="nc" id="L494">    }</span>
+
+    //
+    // Scrollable interface
+    //
+
+    /**
+     * Returns the preferred size of the viewport for a view component.
+     * For example the preferredSize of a JList component is the size
+     * required to accommodate all of the cells in its list however the
+     * value of preferredScrollableViewportSize is the size required for
+     * JList.getVisibleRowCount() rows.   A component without any properties
+     * that would effect the viewport size should just return
+     * getPreferredSize() here.
+     *
+     * @return The preferredSize of a JViewport whose view is this Scrollable.
+     * @see JViewport#getPreferredSize
+     */
+    public Dimension getPreferredScrollableViewportSize ()
+    {
+<span class="nc" id="L514">        return (getPreferredSize ());</span>
+    }
+
+
+    /**
+     * Components that display logical rows or columns should compute
+     * the scroll increment that will completely expose one new row
+     * or column, depending on the value of orientation.  Ideally,
+     * components should handle a partially exposed row or column by
+     * returning the distance required to completely expose the item.
+     * &lt;p&gt;
+     * Scrolling containers, like JScrollPane, will use this method
+     * each time the user requests a unit scroll.
+     *
+     * @param visibleRect The view area visible within the viewport
+     * @param orientation Either SwingConstants.VERTICAL or
+     * SwingConstants.HORIZONTAL.
+     * @param direction Less than zero to scroll up/left,
+     * greater than zero for down/right.
+     * @return The &quot;unit&quot; increment for scrolling in the specified direction.
+     *         This value should always be positive.
+     */
+    public int getScrollableUnitIncrement (
+        final Rectangle visibleRect,
+        final int orientation,
+        final int direction)
+    {
+<span class="nc" id="L541">        return (UNIT_INCREMENT);</span>
+    }
+
+
+    /**
+     * Components that display logical rows or columns should compute
+     * the scroll increment that will completely expose one block
+     * of rows or columns, depending on the value of orientation.
+     * &lt;p&gt;
+     * Scrolling containers, like JScrollPane, will use this method
+     * each time the user requests a block scroll.
+     *
+     * @param visibleRect The view area visible within the viewport
+     * @param orientation Either SwingConstants.VERTICAL or
+     * SwingConstants.HORIZONTAL.
+     * @param direction Less than zero to scroll up/left,
+     * greater than zero for down/right.
+     * @return The &quot;block&quot; increment for scrolling in the specified direction.
+     *         This value should always be positive.
+     */
+    public int getScrollableBlockIncrement (
+        final Rectangle visibleRect,
+        final int orientation,
+        final int direction)
+    {
+<span class="nc" id="L566">        return (BLOCK_INCREMENT);</span>
+    }
+
+
+    /**
+     * Return true if a viewport should always force the width of this
+     * &lt;code&gt;Scrollable&lt;/code&gt; to match the width of the viewport.
+     * For example a normal
+     * text view that supported line wrapping would return true here, since it
+     * would be undesirable for wrapped lines to disappear beyond the right
+     * edge of the viewport.  Note that returning true for a Scrollable
+     * whose ancestor is a JScrollPane effectively disables horizontal
+     * scrolling.
+     * &lt;p&gt;
+     * Scrolling containers, like JViewport, will use this method each
+     * time they are validated.
+     *
+     * @return &lt;code&gt;true&lt;/code&gt; if a viewport should force the Scrollables
+     * width to match its own.
+     */
+    public boolean getScrollableTracksViewportWidth ()
+    {
+<span class="nc" id="L588">        return (false);</span>
+    }
+
+    /**
+     * Return true if a viewport should always force the height of this
+     * Scrollable to match the height of the viewport.  For example a
+     * columnar text view that flowed text in left to right columns
+     * could effectively disable vertical scrolling by returning
+     * true here.
+     * &lt;p&gt;
+     * Scrolling containers, like JViewport, will use this method each
+     * time they are validated.
+     *
+     * @return &lt;code&gt;true&lt;/code&gt; if a viewport should force the Scrollables
+     * height to match its own.
+     */
+    public boolean getScrollableTracksViewportHeight ()
+    {
+<span class="nc" id="L606">        return (false);</span>
+    }
+
+    //
+    // ComponentListener interface
+    //
+
+    /**
+     * Invoked when the container's size changes.
+     * Un-caches the preferred size.
+     * @param event The resize event.
+     */
+    public void componentResized (final ComponentEvent event)
+    {
+<span class="nc" id="L620">        setPreferredSize (null);</span>
+<span class="nc" id="L621">    }</span>
+
+    /**
+     * Invoked when the component's position changes.
+     * &lt;i&gt;Not used.&lt;/I&gt;
+     * @param event The component event.
+     */
+    public void componentMoved (final ComponentEvent event)
+    {
+<span class="nc" id="L630">    }</span>
+
+    /**
+     * Invoked when the component has been made visible.
+     * &lt;i&gt;Not used.&lt;/I&gt;
+     * @param event The component event.
+     */
+    public void componentShown (final ComponentEvent event)
+    {
+<span class="nc" id="L639">    }</span>
+
+    /**
+     * Invoked when the component has been made invisible.
+     * &lt;i&gt;Not used.&lt;/I&gt;
+     * @param event The component event.
+     */
+    public void componentHidden (final ComponentEvent event)
+    {
+<span class="nc" id="L648">    }</span>
+
+    //
+    // HierarchyListener interface
+    //
+
+    /**
+     * Handles this components ancestor being added to a container.
+     * Registers this component as a listener for size changes on the
+     * ancestor so that we may un-cache the prefereed size and force
+     * a recalculation.
+     * @param event The heirarchy event.
+     */
+    public void hierarchyChanged (final HierarchyEvent event)
+    {
+<span class="nc bnc" id="L663" title="All 2 branches missed.">        if (0 != (event.getChangeFlags () &amp; HierarchyEvent.PARENT_CHANGED))</span>
+        {
+<span class="nc" id="L665">            Component dad = event.getChanged ();</span>
+<span class="nc" id="L666">            Component parent = getParent ();</span>
+<span class="nc bnc" id="L667" title="All 4 branches missed.">            if ((null != parent) &amp;&amp; (parent.getParent () == dad))</span>
+<span class="nc" id="L668">                dad.addComponentListener (this);</span>
+        }
+<span class="nc" id="L670">    }</span>
+}
+
+/*
+ * Revision Control Modification History
+ *
+ * $Log: PicturePanel.java,v $
+ * Revision 1.2  2005/04/12 11:27:41  derrickoswald
+ * Documentation revamp part two.
+ *
+ * Revision 1.1  2003/09/21 18:20:56  derrickoswald
+ * Thumbelina
+ * Created a lexer GUI application to extract images behind thumbnails.
+ * Added a task in the ant build script - thumbelina - to create the jar file.
+ * You need JDK 1.4.x to build it.  It can be run on JDK 1.3.x in crippled mode.
+ * Usage: java -Xmx256M thumbelina.jar [URL]
+ *
+ *
+ */
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>LinkBean.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.beans</a> &gt; <span class="el_source">LinkBean.java</span></div><h1>LinkBean.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/main/java/org/htmlparser/beans/LinkBean.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.beans;
+
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
+import java.io.Serializable;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.Vector;
+
+import org.htmlparser.NodeFilter;
+import org.htmlparser.Parser;
+import org.htmlparser.filters.NodeClassFilter;
+import org.htmlparser.tags.LinkTag;
+import org.htmlparser.util.EncodingChangeException;
+import org.htmlparser.util.NodeList;
+import org.htmlparser.util.ParserException;
+
+/**
+ * Extract links from a URL.
+ */
+public class LinkBean extends Object implements Serializable
+{
+    /**
+     * Property name in event where the URL contents changes.
+     */
+    public static final String PROP_LINKS_PROPERTY = &quot;links&quot;;
+
+    /**
+     * Property name in event where the URL changes.
+     */
+    public static final String PROP_URL_PROPERTY = &quot;URL&quot;;
+
+    /**
+     * Bound property support.
+     */
+    protected PropertyChangeSupport mPropertySupport;
+
+    /**
+     * The strings extracted from the URL.
+     */
+    protected URL[] mLinks;
+
+    /**
+     * The parser used to extract strings.
+     */
+    protected Parser mParser;
+
+    /** Creates new LinkBean */
+<span class="fc" id="L75">    public LinkBean ()</span>
+    {
+<span class="fc" id="L77">        mPropertySupport = new PropertyChangeSupport (this);</span>
+<span class="fc" id="L78">        mLinks = null;</span>
+<span class="fc" id="L79">        mParser = new Parser ();</span>
+<span class="fc" id="L80">    }</span>
+
+    //
+    // internals
+    //
+
+    /**
+     * Internal routine to extract all the links from the parser.
+     * @return A list of all links on the page as URLs.
+     * @exception ParserException If the parse fails.
+     */
+    protected URL[] extractLinks () throws ParserException
+    {
+        NodeFilter filter;
+        NodeList list;
+        Vector vector;
+        LinkTag link;
+        URL[] ret;
+
+<span class="fc" id="L99">        mParser.reset ();</span>
+<span class="fc" id="L100">        filter = new NodeClassFilter (LinkTag.class);</span>
+        try
+        {
+<span class="fc" id="L103">            list = mParser.extractAllNodesThatMatch (filter);</span>
+<span class="fc" id="L104">        }</span>
+<span class="nc" id="L105">        catch (EncodingChangeException ece)</span>
+        {
+<span class="nc" id="L107">            mParser.reset ();</span>
+<span class="nc" id="L108">            list = mParser.extractAllNodesThatMatch (filter);</span>
+        }
+<span class="fc" id="L110">        vector = new Vector();</span>
+<span class="pc bpc" id="L111" title="1 of 2 branches missed.">        for (int i = 0; i &lt; list.size (); i++)</span>
+            try
+            {
+<span class="nc" id="L114">                link = (LinkTag)list.elementAt (i);</span>
+<span class="nc" id="L115">                vector.add(new URL (link.getLink ()));</span>
+<span class="nc" id="L116">            }</span>
+<span class="nc" id="L117">            catch (MalformedURLException murle)</span>
+            {
+                //vector.remove (i);
+                //i--;
+            }
+<span class="fc" id="L122">        ret = new URL[vector.size ()];</span>
+<span class="fc" id="L123">        vector.copyInto (ret);</span>
+
+<span class="fc" id="L125">        return (ret);</span>
+    }
+
+    /**
+     * Determine if two arrays of URL's are the same.
+     * @param array1 One array of URL's
+     * @param array2 Another array of URL's
+     * @return &lt;code&gt;true&lt;/code&gt; if the URL's match in number and value,
+     * &lt;code&gt;false&lt;/code&gt; otherwise.
+     */
+    protected boolean equivalent (URL[] array1, URL[] array2)
+    {
+        boolean ret;
+
+<span class="nc" id="L139">        ret = false;</span>
+<span class="nc bnc" id="L140" title="All 4 branches missed.">        if ((null == array1) &amp;&amp; (null == array2))</span>
+<span class="nc" id="L141">            ret = true;</span>
+<span class="nc bnc" id="L142" title="All 4 branches missed.">        else if ((null != array1) &amp;&amp; (null != array2))</span>
+<span class="nc bnc" id="L143" title="All 2 branches missed.">            if (array1.length == array2.length)</span>
+            {
+<span class="nc" id="L145">                ret = true;</span>
+<span class="nc bnc" id="L146" title="All 4 branches missed.">                for (int i = 0; i &lt; array1.length &amp;&amp; ret; i++)</span>
+<span class="nc bnc" id="L147" title="All 2 branches missed.">                    if (!(array1[i] == array2[i]))</span>
+<span class="nc" id="L148">                        ret = false;</span>
+            }
+
+<span class="nc" id="L151">        return (ret);</span>
+    }
+
+    //
+    // Property change support.
+    //
+
+    /**
+     * Add a PropertyChangeListener to the listener list.
+     * The listener is registered for all properties.
+     * @param listener The PropertyChangeListener to be added.
+     */
+    public void addPropertyChangeListener (PropertyChangeListener listener)
+    {
+<span class="fc" id="L165">        mPropertySupport.addPropertyChangeListener (listener);</span>
+<span class="fc" id="L166">    }</span>
+
+    /**
+     * Remove a PropertyChangeListener from the listener list.
+     * This removes a registered PropertyChangeListener.
+     * @param listener The PropertyChangeListener to be removed.
+     */
+    public void removePropertyChangeListener (PropertyChangeListener listener)
+    {
+<span class="nc" id="L175">        mPropertySupport.removePropertyChangeListener (listener);</span>
+<span class="nc" id="L176">    }</span>
+
+    //
+    // Properties
+    //
+
+    /**
+     * Refetch the URL contents.
+     */
+    private void setLinks ()
+    {
+        String url;
+        URL[] urls;
+        URL[] oldValue;
+
+<span class="nc" id="L191">        url = getURL ();</span>
+<span class="nc bnc" id="L192" title="All 2 branches missed.">        if (null != url)</span>
+            try
+            {
+<span class="nc" id="L195">                urls = extractLinks ();</span>
+<span class="nc bnc" id="L196" title="All 2 branches missed.">                if (!equivalent (mLinks, urls))</span>
+                {
+<span class="nc" id="L198">                    oldValue = mLinks;</span>
+<span class="nc" id="L199">                    mLinks = urls;</span>
+<span class="nc" id="L200">                    mPropertySupport.firePropertyChange (</span>
+<span class="nc" id="L201">                        PROP_LINKS_PROPERTY, oldValue, mLinks);</span>
+                }
+<span class="nc" id="L203">            }</span>
+<span class="nc" id="L204">            catch (ParserException hpe)</span>
+            {
+<span class="nc" id="L206">                mLinks = null;</span>
+            }
+<span class="nc" id="L208">    }</span>
+
+    /**
+     * Getter for property links.
+     * @return Value of property links.
+     */
+    public URL[] getLinks ()
+    {
+<span class="fc bfc" id="L216" title="All 2 branches covered.">        if (null == mLinks)</span>
+            try
+            {
+<span class="fc" id="L219">                mLinks = extractLinks ();</span>
+<span class="fc" id="L220">                mPropertySupport.firePropertyChange (</span>
+<span class="fc" id="L221">                    PROP_LINKS_PROPERTY, null, mLinks);</span>
+<span class="fc" id="L222">            }</span>
+<span class="nc" id="L223">            catch (ParserException hpe)</span>
+            {
+<span class="nc" id="L225">                mLinks = null;</span>
+            }
+
+<span class="fc" id="L228">        return (mLinks);</span>
+    }
+
+
+    /**
+     * Getter for property URL.
+     * @return Value of property URL.
+     */
+    public String getURL ()
+    {
+<span class="fc" id="L238">        return (mParser.getURL ());</span>
+    }
+
+    /**
+     * Setter for property URL.
+     * @param url New value of property URL.
+     */
+    public void setURL (String url)
+    {
+        String old;
+
+<span class="fc" id="L249">        old = getURL ();</span>
+<span class="pc bpc" id="L250" title="4 of 6 branches missed.">        if (((null == old) &amp;&amp; (null != url)) || ((null != old)</span>
+<span class="nc bnc" id="L251" title="All 2 branches missed.">            &amp;&amp; !old.equals (url)))</span>
+        {
+            try
+            {
+<span class="nc" id="L255">                mParser.setURL (url);</span>
+<span class="nc" id="L256">                mPropertySupport.firePropertyChange (</span>
+<span class="nc" id="L257">                    PROP_URL_PROPERTY, old, getURL ());</span>
+<span class="nc" id="L258">                setLinks ();</span>
+<span class="nc" id="L259">            }</span>
+<span class="fc" id="L260">            catch (ParserException hpe)</span>
+            {
+                // failed... now what
+            }
+        }
+<span class="fc" id="L265">    }</span>
+
+    /**
+     * Getter for property Connection.
+     * @return Value of property Connection.
+     */
+    public URLConnection getConnection ()
+    {
+<span class="nc" id="L273">        return (mParser.getConnection ());</span>
+    }
+
+    /**
+     * Setter for property Connection.
+     * @param connection New value of property Connection.
+     */
+    public void setConnection (URLConnection connection)
+    {
+        try
+        {
+<span class="nc" id="L284">            mParser.setConnection (connection);</span>
+<span class="nc" id="L285">            setLinks ();</span>
+<span class="nc" id="L286">        }</span>
+<span class="nc" id="L287">        catch (ParserException hpe)</span>
+        {
+            // failed... now what
+        }
+<span class="nc" id="L291">    }</span>
+
+    /**
+     * Unit test.
+     * @param args Pass arg[0] as the URL to process.
+     */
+    public static void main (String[] args)
+    {
+<span class="nc bnc" id="L299" title="All 2 branches missed.">        if (0 &gt;= args.length)</span>
+<span class="nc" id="L300">            System.out.println (&quot;Usage: java -classpath htmlparser.jar&quot;</span>
+<span class="nc" id="L301">                + &quot; org.htmlparser.beans.LinkBean &lt;http://whatever_url&gt;&quot;);</span>
+        else
+        {
+<span class="nc" id="L304">            LinkBean lb = new LinkBean ();</span>
+<span class="nc" id="L305">            lb.setURL (args[0]);</span>
+<span class="nc" id="L306">            URL[] urls = lb.getLinks ();</span>
+<span class="nc bnc" id="L307" title="All 2 branches missed.">            for (int i = 0; i &lt; urls.length; i++)</span>
+<span class="nc" id="L308">                System.out.println (urls[i]);</span>
+        }
+<span class="nc" id="L310">    }</span>
+}
+
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

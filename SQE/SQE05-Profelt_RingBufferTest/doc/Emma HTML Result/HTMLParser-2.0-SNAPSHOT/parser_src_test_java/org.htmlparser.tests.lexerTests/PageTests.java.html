@@ -1,0 +1,412 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>PageTests.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tests.lexerTests</a> &gt; <span class="el_source">PageTests.java</span></div><h1>PageTests.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/test/java/org/htmlparser/tests/lexerTests/PageTests.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tests.lexerTests;
+
+import java.io.IOException;
+import java.net.URL;
+import java.net.URLConnection;
+
+import org.htmlparser.lexer.Page;
+import org.htmlparser.tests.ParserTestCase;
+import org.htmlparser.util.ParserException;
+
+public class PageTests extends ParserTestCase
+{
+    static
+    {
+<span class="fc" id="L40">        System.setProperty (&quot;org.htmlparser.tests.lexerTests.PageTests&quot;, &quot;PageTests&quot;);</span>
+    }
+
+    /**
+     * The default charset.
+     * This should be &lt;code&gt;ISO-8859-1&lt;/code&gt;,
+     * see RFC 2616 (http://www.ietf.org/rfc/rfc2616.txt?number=2616) section 3.7.1
+     * Another alias is &quot;8859_1&quot;.
+     */
+    public static final String DEFAULT_CHARSET = &quot;ISO-8859-1&quot;;
+
+    /**
+     * Base URI for absolute URL tests.
+     */
+    static final String BASEURI = &quot;http://a/b/c/d;p?q&quot;;
+
+    /**
+     * Page for absolute URL tests.
+     */
+    public static Page mPage;
+    static
+    {
+<span class="fc" id="L62">        mPage = new Page ();</span>
+<span class="fc" id="L63">        mPage.setBaseUrl (BASEURI);</span>
+<span class="fc" id="L64">    }</span>
+        
+    /**
+     * Test the third level page class.
+     */
+    public PageTests (String name)
+    {
+<span class="fc" id="L71">        super (name);</span>
+<span class="fc" id="L72">    }</span>
+
+    /**
+     * Test initialization with a null value.
+     */
+    public void testNull () throws ParserException
+    {
+        try
+        {
+<span class="nc" id="L81">            new Page ((URLConnection)null);</span>
+<span class="nc" id="L82">            assertTrue (&quot;null value in constructor&quot;, false);</span>
+<span class="nc" id="L83">        }</span>
+<span class="fc" id="L84">        catch (IllegalArgumentException iae)</span>
+        {
+            // expected outcome
+        }
+
+        try
+        {
+<span class="nc" id="L91">            new Page ((String)null);</span>
+<span class="nc" id="L92">            assertTrue (&quot;null value in constructor&quot;, false);</span>
+<span class="nc" id="L93">        }</span>
+<span class="fc" id="L94">        catch (IllegalArgumentException iae)</span>
+        {
+            // expected outcome
+        }
+<span class="fc" id="L98">    }</span>
+
+    /**
+     * Test initialization with a real value.
+     */
+    public void testURLConnection () throws ParserException, IOException
+    {
+        String link;
+        URL url;
+
+<span class="nc" id="L108">        link = &quot;http://www.ibm.com/jp/&quot;;</span>
+<span class="nc" id="L109">        url = new URL (link);</span>
+<span class="nc" id="L110">        new Page (url.openConnection ());</span>
+<span class="nc" id="L111">    }</span>
+
+    /**
+     * Test initialization with non-existant URL.
+     */
+    public void testBadURLConnection () throws IOException
+    {
+        String link;
+        URL url;
+
+<span class="fc" id="L121">        link = &quot;http://www.bigbogosity.org/&quot;;</span>
+<span class="fc" id="L122">        url = new URL (link);</span>
+        try
+        {
+<span class="nc" id="L125">           new Page (url.openConnection ());</span>
+<span class="nc" id="L126">        }</span>
+<span class="fc" id="L127">        catch (ParserException pe)</span>
+        {
+            // expected response
+        }
+<span class="fc" id="L131">    }</span>
+
+    //
+    // Tests from Appendix C Examples of Resolving Relative URI References
+    // RFC 2396 Uniform Resource Identifiers (URI): Generic Syntax
+    // T. Berners-Lee et al.
+    // http://www.ietf.org/rfc/rfc2396.txt
+
+    // Within an object with a well-defined base URI of
+    // http://a/b/c/d;p?q
+    // the relative URI would be resolved as follows:
+
+    // C.1.  Normal Examples
+    //  g:h           =  g:h
+    //  g             =  http://a/b/c/g
+    //  ./g           =  http://a/b/c/g
+    //  g/            =  http://a/b/c/g/
+    //  /g            =  http://a/g
+    //  //g           =  http://g
+    //  ?y            =  http://a/b/c/?y
+    //  g?y           =  http://a/b/c/g?y
+    //  #s            =  (current document)#s
+    //  g#s           =  http://a/b/c/g#s
+    //  g?y#s         =  http://a/b/c/g?y#s
+    //  ;x            =  http://a/b/c/;x
+    //  g;x           =  http://a/b/c/g;x
+    //  g;x?y#s       =  http://a/b/c/g;x?y#s
+    //  .             =  http://a/b/c/
+    //  ./            =  http://a/b/c/
+    //  ..            =  http://a/b/
+    //  ../           =  http://a/b/
+    //  ../g          =  http://a/b/g
+    //  ../..         =  http://a/
+    //  ../../        =  http://a/
+    //  ../../g       =  http://a/g
+
+    public void test1 () throws ParserException
+    {
+<span class="fc" id="L169">        assertEquals (&quot;test1 failed&quot;, &quot;https:h&quot;, mPage.getAbsoluteURL (&quot;https:h&quot;));</span>
+<span class="fc" id="L170">    }</span>
+    public void test2 () throws ParserException
+    {
+<span class="fc" id="L173">        assertEquals (&quot;test2 failed&quot;, &quot;http://a/b/c/g&quot;, mPage.getAbsoluteURL (&quot;g&quot;));</span>
+<span class="fc" id="L174">    }</span>
+    public void test3 () throws ParserException
+    {
+<span class="fc" id="L177">        assertEquals (&quot;test3 failed&quot;, &quot;http://a/b/c/g&quot;, mPage.getAbsoluteURL (&quot;./g&quot;));</span>
+<span class="fc" id="L178">    }</span>
+    public void test4 () throws ParserException
+    {
+<span class="fc" id="L181">        assertEquals (&quot;test4 failed&quot;, &quot;http://a/b/c/g/&quot;, mPage.getAbsoluteURL (&quot;g/&quot;));</span>
+<span class="fc" id="L182">    }</span>
+    public void test5 () throws ParserException
+    {
+<span class="fc" id="L185">        assertEquals (&quot;test5 failed&quot;, &quot;http://a/g&quot;, mPage.getAbsoluteURL (&quot;/g&quot;));</span>
+<span class="fc" id="L186">    }</span>
+    public void test6 () throws ParserException
+    {
+<span class="fc" id="L189">        assertEquals (&quot;test6 failed&quot;, &quot;http://g&quot;, mPage.getAbsoluteURL (&quot;//g&quot;));</span>
+<span class="fc" id="L190">    }</span>
+    public void test7 () throws ParserException
+    {
+<span class="fc" id="L193">        assertEquals (&quot;test7 strict failed&quot;, &quot;http://a/b/c/?y&quot;, mPage.getAbsoluteURL (&quot;?y&quot;, true));</span>
+<span class="fc" id="L194">        assertEquals (&quot;test7 non-strict failed&quot;, &quot;http://a/b/c/d;p?y&quot;, mPage.getAbsoluteURL (&quot;?y&quot;));</span>
+<span class="fc" id="L195">    }</span>
+    public void test8 () throws ParserException
+    {
+<span class="fc" id="L198">        assertEquals (&quot;test8 failed&quot;, &quot;http://a/b/c/g?y&quot;, mPage.getAbsoluteURL (&quot;g?y&quot;));</span>
+<span class="fc" id="L199">    }</span>
+    public void test9 () throws ParserException
+    {
+<span class="fc" id="L202">        assertEquals (&quot;test9 failed&quot;, &quot;https:h&quot;, mPage.getAbsoluteURL (&quot;https:h&quot;));</span>
+<span class="fc" id="L203">    }</span>
+    public void test10 () throws ParserException
+    {
+<span class="fc" id="L206">        assertEquals (&quot;test10 failed&quot;, &quot;https:h&quot;, mPage.getAbsoluteURL (&quot;https:h&quot;));</span>
+<span class="fc" id="L207">    }</span>
+    //  #s            =  (current document)#s
+    public void test11 () throws ParserException
+    {
+<span class="fc" id="L211">        assertEquals (&quot;test11 failed&quot;, &quot;http://a/b/c/g#s&quot;, mPage.getAbsoluteURL (&quot;g#s&quot;));</span>
+<span class="fc" id="L212">    }</span>
+    public void test12 () throws ParserException
+    {
+<span class="fc" id="L215">        assertEquals (&quot;test12 failed&quot;, &quot;http://a/b/c/g?y#s&quot;, mPage.getAbsoluteURL (&quot;g?y#s&quot;));</span>
+<span class="fc" id="L216">    }</span>
+    public void test13 () throws ParserException
+    {
+<span class="fc" id="L219">        assertEquals (&quot;test13 failed&quot;, &quot;http://a/b/c/;x&quot;, mPage.getAbsoluteURL (&quot;;x&quot;));</span>
+<span class="fc" id="L220">    }</span>
+    public void test14 () throws ParserException
+    {
+<span class="fc" id="L223">        assertEquals (&quot;test14 failed&quot;, &quot;http://a/b/c/g;x&quot;, mPage.getAbsoluteURL (&quot;g;x&quot;));</span>
+<span class="fc" id="L224">    }</span>
+    public void test15 () throws ParserException
+    {
+<span class="fc" id="L227">        assertEquals (&quot;test15 failed&quot;, &quot;http://a/b/c/g;x?y#s&quot;, mPage.getAbsoluteURL (&quot;g;x?y#s&quot;));</span>
+<span class="fc" id="L228">    }</span>
+    public void test16 () throws ParserException
+    {
+<span class="fc" id="L231">        assertEquals (&quot;test16 failed&quot;, &quot;http://a/b/c/&quot;, mPage.getAbsoluteURL (&quot;.&quot;));</span>
+<span class="fc" id="L232">    }</span>
+    public void test17 () throws ParserException
+    {
+<span class="fc" id="L235">        assertEquals (&quot;test17 failed&quot;, &quot;http://a/b/c/&quot;, mPage.getAbsoluteURL (&quot;./&quot;));</span>
+<span class="fc" id="L236">    }</span>
+    public void test18 () throws ParserException
+    {
+<span class="fc" id="L239">        assertEquals (&quot;test18 failed&quot;, &quot;http://a/b/&quot;, mPage.getAbsoluteURL (&quot;..&quot;));</span>
+<span class="fc" id="L240">    }</span>
+    public void test19 () throws ParserException
+    {
+<span class="fc" id="L243">        assertEquals (&quot;test19 failed&quot;, &quot;http://a/b/&quot;, mPage.getAbsoluteURL (&quot;../&quot;));</span>
+<span class="fc" id="L244">    }</span>
+    public void test20 () throws ParserException
+    {
+<span class="fc" id="L247">        assertEquals (&quot;test20 failed&quot;, &quot;http://a/b/g&quot;, mPage.getAbsoluteURL (&quot;../g&quot;));</span>
+<span class="fc" id="L248">    }</span>
+    public void test21 () throws ParserException
+    {
+<span class="fc" id="L251">        assertEquals (&quot;test21 failed&quot;, &quot;http://a/&quot;, mPage.getAbsoluteURL (&quot;../..&quot;));</span>
+<span class="fc" id="L252">    }</span>
+    public void test22 () throws ParserException
+    {
+<span class="fc" id="L255">        assertEquals (&quot;test22 failed&quot;, &quot;http://a/g&quot;, mPage.getAbsoluteURL (&quot;../../g&quot;));</span>
+<span class="fc" id="L256">    }</span>
+
+    // C.2.  Abnormal Examples
+    //   Although the following abnormal examples are unlikely to occur in
+    //   normal practice, all URI parsers should be capable of resolving them
+    //   consistently.  Each example uses the same base as above.
+    //
+    //   An empty reference refers to the start of the current document.
+    //
+    //      &lt;&gt;            =  (current document)
+    //
+    //   Parsers must be careful in handling the case where there are more
+    //   relative path &quot;..&quot; segments than there are hierarchical levels in the
+    //   base URI's path.  Note that the &quot;..&quot; syntax cannot be used to change
+    //   the authority component of a URI.
+    //
+    //      ../../../g    =  http://a/../g
+    //      ../../../../g =  http://a/../../g
+    //
+    //   In practice, some implementations strip leading relative symbolic
+    //   elements (&quot;.&quot;, &quot;..&quot;) after applying a relative URI calculation, based
+    //   on the theory that compensating for obvious author errors is better
+    //   than allowing the request to fail.  Thus, the above two references
+    //   will be interpreted as &quot;http://a/g&quot; by some implementations.
+    //
+    //   Similarly, parsers must avoid treating &quot;.&quot; and &quot;..&quot; as special when
+    //   they are not complete components of a relative path.
+    //
+    //      /./g          =  http://a/./g
+    //      /../g         =  http://a/../g
+    //      g.            =  http://a/b/c/g.
+    //      .g            =  http://a/b/c/.g
+    //      g..           =  http://a/b/c/g..
+    //      ..g           =  http://a/b/c/..g
+    //
+    //   Less likely are cases where the relative URI uses unnecessary or
+    //   nonsensical forms of the &quot;.&quot; and &quot;..&quot; complete path segments.
+    //
+    //      ./../g        =  http://a/b/g
+    //      ./g/.         =  http://a/b/c/g/
+    //      g/./h         =  http://a/b/c/g/h
+    //      g/../h        =  http://a/b/c/h
+    //      g;x=1/./y     =  http://a/b/c/g;x=1/y
+    //      g;x=1/../y    =  http://a/b/c/y
+    //
+    //   All client applications remove the query component from the base URI
+    //   before resolving relative URI.  However, some applications fail to
+    //   separate the reference's query and/or fragment components from a
+    //   relative path before merging it with the base path.  This error is
+    //   rarely noticed, since typical usage of a fragment never includes the
+    //   hierarchy (&quot;/&quot;) character, and the query component is not normally
+    //   used within relative references.
+    //
+    //      g?y/./x       =  http://a/b/c/g?y/./x
+    //      g?y/../x      =  http://a/b/c/g?y/../x
+    //      g#s/./x       =  http://a/b/c/g#s/./x
+    //      g#s/../x      =  http://a/b/c/g#s/../x
+    //
+    //   Some parsers allow the scheme name to be present in a relative URI if
+    //   it is the same as the base URI scheme.  This is considered to be a
+    //   loophole in prior specifications of partial URI [RFC1630]. Its use
+    //   should be avoided.
+    //
+    //      http:g        =  http:g           ; for validating parsers
+    //                    |  http://a/b/c/g   ; for backwards compatibility
+
+//    public void test23 () throws HTMLParserException
+//    {
+//        assertEquals (&quot;test23 failed&quot;, &quot;http://a/../g&quot;, mPage.getAbsoluteURL (&quot;../../../g&quot;));
+//    }
+//    public void test24 () throws HTMLParserException
+//    {
+//        assertEquals (&quot;test24 failed&quot;, &quot;http://a/../../g&quot;, mPage.getAbsoluteURL (&quot;../../../../g&quot;));
+//    }
+    public void test23 () throws ParserException
+    {
+<span class="fc" id="L332">        assertEquals (&quot;test23 failed&quot;, &quot;http://a/g&quot;, mPage.getAbsoluteURL (&quot;../../../g&quot;));</span>
+<span class="fc" id="L333">    }</span>
+    public void test24 () throws ParserException
+    {
+<span class="fc" id="L336">        assertEquals (&quot;test24 failed&quot;, &quot;http://a/g&quot;, mPage.getAbsoluteURL (&quot;../../../../g&quot;));</span>
+<span class="fc" id="L337">    }</span>
+    public void test25 () throws ParserException
+    {
+<span class="fc" id="L340">        assertEquals (&quot;test25 failed&quot;, &quot;http://a/./g&quot;, mPage.getAbsoluteURL (&quot;/./g&quot;));</span>
+<span class="fc" id="L341">    }</span>
+    public void test26 () throws ParserException
+    {
+<span class="fc" id="L344">        assertEquals (&quot;test26 failed&quot;, &quot;http://a/../g&quot;, mPage.getAbsoluteURL (&quot;/../g&quot;));</span>
+<span class="fc" id="L345">    }</span>
+    public void test27 () throws ParserException
+    {
+<span class="fc" id="L348">        assertEquals (&quot;test27 failed&quot;, &quot;http://a/b/c/g.&quot;, mPage.getAbsoluteURL (&quot;g.&quot;));</span>
+<span class="fc" id="L349">    }</span>
+    public void test28 () throws ParserException
+    {
+<span class="fc" id="L352">        assertEquals (&quot;test28 failed&quot;, &quot;http://a/b/c/.g&quot;, mPage.getAbsoluteURL (&quot;.g&quot;));</span>
+<span class="fc" id="L353">    }</span>
+    public void test29 () throws ParserException
+    {
+<span class="fc" id="L356">        assertEquals (&quot;test29 failed&quot;, &quot;http://a/b/c/g..&quot;, mPage.getAbsoluteURL (&quot;g..&quot;));</span>
+<span class="fc" id="L357">    }</span>
+    public void test30 () throws ParserException
+    {
+<span class="fc" id="L360">        assertEquals (&quot;test30 failed&quot;, &quot;http://a/b/c/..g&quot;, mPage.getAbsoluteURL (&quot;..g&quot;));</span>
+<span class="fc" id="L361">    }</span>
+    public void test31 () throws ParserException
+    {
+<span class="fc" id="L364">        assertEquals (&quot;test31 failed&quot;, &quot;http://a/b/g&quot;, mPage.getAbsoluteURL (&quot;./../g&quot;));</span>
+<span class="fc" id="L365">    }</span>
+    public void test32 () throws ParserException
+    {
+<span class="fc" id="L368">        assertEquals (&quot;test32 failed&quot;, &quot;http://a/b/c/g/&quot;, mPage.getAbsoluteURL (&quot;./g/.&quot;));</span>
+<span class="fc" id="L369">    }</span>
+    public void test33 () throws ParserException
+    {
+<span class="fc" id="L372">        assertEquals (&quot;test33 failed&quot;, &quot;http://a/b/c/g/h&quot;, mPage.getAbsoluteURL (&quot;g/./h&quot;));</span>
+<span class="fc" id="L373">    }</span>
+    public void test34 () throws ParserException
+    {
+<span class="fc" id="L376">        assertEquals (&quot;test34 failed&quot;, &quot;http://a/b/c/h&quot;, mPage.getAbsoluteURL (&quot;g/../h&quot;));</span>
+<span class="fc" id="L377">    }</span>
+    public void test35 () throws ParserException
+    {
+<span class="fc" id="L380">        assertEquals (&quot;test35 failed&quot;, &quot;http://a/b/c/g;x=1/y&quot;, mPage.getAbsoluteURL (&quot;g;x=1/./y&quot;));</span>
+<span class="fc" id="L381">    }</span>
+    public void test36 () throws ParserException
+    {
+<span class="fc" id="L384">        assertEquals (&quot;test36 failed&quot;, &quot;http://a/b/c/y&quot;, mPage.getAbsoluteURL (&quot;g;x=1/../y&quot;));</span>
+<span class="fc" id="L385">    }</span>
+    public void test37 () throws ParserException
+    {
+<span class="fc" id="L388">        assertEquals (&quot;test37 failed&quot;, &quot;http://a/b/c/g?y/./x&quot;, mPage.getAbsoluteURL (&quot;g?y/./x&quot;));</span>
+<span class="fc" id="L389">    }</span>
+    public void test38 () throws ParserException
+    {
+<span class="fc" id="L392">        assertEquals (&quot;test38 failed&quot;, &quot;http://a/b/c/g?y/../x&quot;, mPage.getAbsoluteURL (&quot;g?y/../x&quot;));</span>
+<span class="fc" id="L393">    }</span>
+    public void test39 () throws ParserException
+    {
+<span class="fc" id="L396">        assertEquals (&quot;test39 failed&quot;, &quot;http://a/b/c/g#s/./x&quot;, mPage.getAbsoluteURL (&quot;g#s/./x&quot;));</span>
+<span class="fc" id="L397">    }</span>
+    public void test40 () throws ParserException
+    {
+<span class="fc" id="L400">        assertEquals (&quot;test40 failed&quot;, &quot;http://a/b/c/g#s/../x&quot;, mPage.getAbsoluteURL (&quot;g#s/../x&quot;));</span>
+<span class="fc" id="L401">    }</span>
+//    public void test41 () throws HTMLParserException
+//    {
+//        assertEquals (&quot;test41 failed&quot;, &quot;http:g&quot;, mPage.getAbsoluteURL (&quot;http:g&quot;));
+//    }
+    public void test41 () throws ParserException
+    {
+<span class="fc" id="L408">        assertEquals (&quot;test41 failed&quot;, &quot;http://a/b/c/g&quot;, mPage.getAbsoluteURL (&quot;http:g&quot;));</span>
+<span class="fc" id="L409">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

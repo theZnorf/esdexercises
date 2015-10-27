@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>ScriptCommentTest.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tests.visitorsTests</a> &gt; <span class="el_source">ScriptCommentTest.java</span></div><h1>ScriptCommentTest.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Jim Arnell
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/test/java/org/htmlparser/tests/visitorsTests/ScriptCommentTest.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tests.visitorsTests;
+
+import org.htmlparser.tags.CompositeTag;
+import org.htmlparser.tags.ScriptTag;
+import org.htmlparser.Tag;
+import org.htmlparser.tests.ParserTestCase;
+import org.htmlparser.visitors.NodeVisitor;
+
+public class ScriptCommentTest extends ParserTestCase
+{
+    static
+    {
+<span class="fc" id="L38">        System.setProperty (&quot;org.htmlparser.tests.visitorsTests.ScriptCommentTest&quot;, &quot;ScriptCommentTest&quot;);</span>
+<span class="fc" id="L39">    }</span>
+    
+<span class="fc" id="L41">    private String workingScriptTag =</span>
+<span class="fc" id="L42">        &quot;&lt;script language='javascript'&gt;&quot;</span>
+        + &quot;// I cant handle single quotations\n&quot;
+        + &quot;&lt;/script&gt;&quot;;
+
+<span class="fc" id="L46">    private String workingHtml =</span>
+<span class="fc" id="L47">        this.workingScriptTag</span>
+<span class="fc" id="L48">        + &quot;&lt;HTML&gt;&quot;</span>
+<span class="fc" id="L49">        + &quot;&lt;/HTML&gt;&quot;;</span>
+
+<span class="fc" id="L51">    private String failingScriptTag =</span>
+<span class="fc" id="L52">        &quot;&lt;script language='javascript'&gt;&quot;</span>
+        + &quot;// I can't handle single quotations.\n&quot;
+        + &quot;&lt;/script&gt;&quot;;
+
+<span class="fc" id="L56">    private String failingHtml =</span>
+<span class="fc" id="L57">        this.failingScriptTag</span>
+<span class="fc" id="L58">        + &quot;&lt;HTML&gt;&quot;</span>
+<span class="fc" id="L59">        + &quot;&lt;/HTML&gt;&quot;;</span>
+
+<span class="fc" id="L61">    private String failingHtml2 =</span>
+<span class="fc" id="L62">        &quot;&lt;HTML&gt;&quot;</span>
+<span class="fc" id="L63">        + this.failingScriptTag</span>
+<span class="fc" id="L64">        + &quot;&lt;/HTML&gt;&quot;;</span>
+
+<span class="fc" id="L66">    private String anotherFailingScriptTag =</span>
+<span class="fc" id="L67">        &quot;&lt;script language='javascript'&gt;&quot;</span>
+        + &quot;/* I can't handle single quotations. */&quot;
+        + &quot;&lt;/script&gt;&quot;;
+
+    public ScriptCommentTest(String name) {
+<span class="fc" id="L72">        super(name);</span>
+<span class="fc" id="L73">    }</span>
+
+    public void testTagWorking() throws Exception {
+<span class="fc" id="L76">        createParser(this.workingHtml);</span>
+<span class="fc" id="L77">        ScriptVisitor visitor = new ScriptVisitor();</span>
+<span class="fc" id="L78">        this.parser.visitAllNodesWith(visitor);</span>
+<span class="fc" id="L79">        String scriptNodeHtml = visitor.scriptTag.toHtml();</span>
+<span class="fc" id="L80">        assertEquals(&quot;Script parsing worked&quot;, this.workingScriptTag, scriptNodeHtml);</span>
+<span class="fc" id="L81">   }</span>
+
+    public void testScriptTagNotWorkingOuter() throws Exception {
+<span class="fc" id="L84">        createParser(this.failingHtml);</span>
+<span class="fc" id="L85">        ScriptVisitor visitor = new ScriptVisitor();</span>
+<span class="fc" id="L86">        this.parser.visitAllNodesWith(visitor);</span>
+<span class="fc" id="L87">        String scriptNodeHtml = visitor.scriptTag.toHtml();</span>
+<span class="fc" id="L88">        assertEquals(&quot;Script parsing not working&quot;, this.failingScriptTag, scriptNodeHtml);</span>
+<span class="fc" id="L89">    }</span>
+
+    public void testScriptTagNotWorkingInner() throws Exception {
+<span class="fc" id="L92">        createParser(this.failingHtml2);</span>
+<span class="fc" id="L93">        ScriptVisitor visitor = new ScriptVisitor();</span>
+<span class="fc" id="L94">        this.parser.visitAllNodesWith(visitor);</span>
+<span class="fc" id="L95">        String scriptNodeHtml = visitor.scriptTag.toHtml();</span>
+<span class="fc" id="L96">        assertEquals(&quot;Script parsing not working&quot;, this.failingScriptTag, scriptNodeHtml);</span>
+<span class="fc" id="L97">    }</span>
+
+    public void testScriptTagNotWorkingMultiLine() throws Exception {
+<span class="fc" id="L100">        createParser(this.anotherFailingScriptTag);</span>
+<span class="fc" id="L101">        ScriptVisitor visitor = new ScriptVisitor();</span>
+<span class="fc" id="L102">        this.parser.visitAllNodesWith(visitor);</span>
+<span class="fc" id="L103">        String scriptNodeHtml = visitor.scriptTag.toHtml();</span>
+<span class="fc" id="L104">        assertEquals(&quot;Script parsing not working&quot;, this.anotherFailingScriptTag, scriptNodeHtml);</span>
+<span class="fc" id="L105">    }</span>
+
+    /**
+     * Implement test case NodeVisitor.
+     */
+    public final class ScriptVisitor extends NodeVisitor {
+
+       /** Keeps the only script tag. */
+        public ScriptTag scriptTag;
+
+        /**
+         * Creates a new ScriptVisitor object.
+         */
+<span class="fc" id="L118">        public ScriptVisitor() {</span>
+<span class="fc" id="L119">            super(true, true);</span>
+<span class="fc" id="L120">        }</span>
+
+        /**
+         * @see org.htmlparser.visitors.NodeVisitor
+         */
+        public void visitTag(final Tag n) {
+<span class="fc bfc" id="L126" title="All 2 branches covered.">            if ((null != n.getParent())</span>
+<span class="pc bpc" id="L127" title="1 of 2 branches missed.">                || ((n instanceof CompositeTag)</span>
+<span class="pc bpc" id="L128" title="1 of 2 branches missed.">                    &amp;&amp; (null == ((CompositeTag) n).getEndTag()))) {</span>
+
+<span class="pc bpc" id="L130" title="1 of 2 branches missed.">                if (n instanceof ScriptTag) {</span>
+<span class="fc" id="L131">                    this.scriptTag = (ScriptTag) n;</span>
+                }
+<span class="fc" id="L133">            } else {</span>
+<span class="fc bfc" id="L134" title="All 2 branches covered.">                if (n instanceof ScriptTag) {</span>
+<span class="fc" id="L135">                    this.scriptTag = (ScriptTag) n;</span>
+                }
+            }
+<span class="fc" id="L138">        }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

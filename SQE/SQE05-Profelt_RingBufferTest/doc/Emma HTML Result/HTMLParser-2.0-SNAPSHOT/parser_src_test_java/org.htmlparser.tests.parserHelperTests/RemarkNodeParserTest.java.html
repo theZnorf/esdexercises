@@ -1,0 +1,429 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>RemarkNodeParserTest.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tests.parserHelperTests</a> &gt; <span class="el_source">RemarkNodeParserTest.java</span></div><h1>RemarkNodeParserTest.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Somik Raha
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/test/java/org/htmlparser/tests/parserHelperTests/RemarkNodeParserTest.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 13:37:00 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 5 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tests.parserHelperTests;
+
+import org.htmlparser.PrototypicalNodeFactory;
+import org.htmlparser.Remark;
+import org.htmlparser.Tag;
+import org.htmlparser.Text;
+import org.htmlparser.lexer.Lexer;
+import org.htmlparser.tests.ParserTestCase;
+import org.htmlparser.util.ParserException;
+
+public class RemarkNodeParserTest extends ParserTestCase
+{
+    static
+    {
+<span class="fc" id="L40">        System.setProperty (&quot;org.htmlparser.tests.parserHelperTests.RemarkParserTest&quot;, &quot;RemarkParserTest&quot;);</span>
+<span class="fc" id="L41">    }</span>
+
+    public RemarkNodeParserTest (String name) {
+<span class="fc" id="L44">        super(name);</span>
+<span class="fc" id="L45">    }</span>
+
+    /**
+     * Test unparsed remark node.
+     * The bug being reproduced is this : &lt;BR&gt;
+     * &amp;lt;!-- saved from url=(0022)http://internet.e-mail --&amp;gt;
+     * &amp;lt;HTML&amp;gt;
+     * &amp;lt;HEAD&amp;gt;&amp;lt;META name=&quot;title&quot; content=&quot;Training Introduction&quot;&amp;gt;
+     * &amp;lt;META name=&quot;subject&quot; content=&quot;&quot;&amp;gt;
+     * &amp;lt;!--
+         Whats gonna happen now ?
+     * --&amp;gt;
+     * &amp;lt;TEST&amp;gt;
+     * &amp;lt;/TEST&amp;gt;
+     *
+     * The above line is incorrectly parsed - the remark is not correctly identified.
+     * This bug was reported by Serge Kruppa (2002-Feb-08).
+     */
+    public void testRemarkBug() throws ParserException
+    {
+<span class="fc" id="L65">        createParser(</span>
+<span class="fc" id="L66">            &quot;&lt;!-- saved from url=(0022)http://internet.e-mail --&gt;\n&quot;+</span>
+            &quot;&lt;HTML&gt;\n&quot;+
+            &quot;&lt;HEAD&gt;&lt;META name=\&quot;title\&quot; content=\&quot;Training Introduction\&quot;&gt;\n&quot;+
+            &quot;&lt;META name=\&quot;subject\&quot; content=\&quot;\&quot;&gt;\n&quot;+
+            &quot;&lt;!--\n&quot;+
+            &quot;   Whats gonna happen now ?\n&quot;+
+            &quot;--&gt;\n&quot;+
+            &quot;&lt;TEST&gt;\n&quot;+
+            &quot;&lt;/TEST&gt;\n&quot;);
+<span class="fc" id="L75">        parser.setNodeFactory (new PrototypicalNodeFactory (true));</span>
+<span class="fc" id="L76">        parseAndAssertNodeCount(15);</span>
+        // The first node should be a Remark
+<span class="fc" id="L78">        assertTrue(&quot;First node should be a Remark&quot;,node[0] instanceof Remark);</span>
+<span class="fc" id="L79">        Remark Remark = (Remark)node[0];</span>
+<span class="fc" id="L80">        assertEquals(&quot;Text of the Remark #1&quot;,&quot; saved from url=(0022)http://internet.e-mail &quot;,Remark.getText());</span>
+        // The tenth node should be a Remark
+<span class="fc" id="L82">        assertTrue(&quot;Tenth node should be a Remark&quot;,node[9] instanceof Remark);</span>
+<span class="fc" id="L83">        Remark = (Remark)node[9];</span>
+<span class="fc" id="L84">        assertEquals(&quot;Text of the Remark #10&quot;,&quot;\n   Whats gonna happen now ?\n&quot;,Remark.getText());</span>
+<span class="fc" id="L85">    }</span>
+
+    public void testGetText () throws ParserException {
+<span class="fc" id="L88">        createParser(</span>
+<span class="fc" id="L89">            &quot;&lt;!-- saved from url=(0022)http://internet.e-mail --&gt;\n&quot;+</span>
+            &quot;&lt;HTML&gt;\n&quot;+
+            &quot;&lt;HEAD&gt;&lt;META name=\&quot;title\&quot; content=\&quot;Training Introduction\&quot;&gt;\n&quot;+
+            &quot;&lt;META name=\&quot;subject\&quot; content=\&quot;\&quot;&gt;\n&quot;+
+            &quot;&lt;!--\n&quot;+
+            &quot;   Whats gonna happen now ?\n&quot;+
+            &quot;--&gt;\n&quot;+
+            &quot;&lt;TEST&gt;\n&quot;+
+            &quot;&lt;/TEST&gt;\n&quot;);
+<span class="fc" id="L98">        parser.setNodeFactory (new PrototypicalNodeFactory (true));</span>
+<span class="fc" id="L99">        parseAndAssertNodeCount(15);</span>
+        // The first node should be a Remark
+<span class="fc" id="L101">        assertTrue(&quot;First node should be a Remark&quot;,node[0] instanceof Remark);</span>
+<span class="fc" id="L102">        Remark Remark = (Remark)node[0];</span>
+<span class="fc" id="L103">        assertEquals(&quot;Plain Text of the Remark #1&quot;,&quot; saved from url=(0022)http://internet.e-mail &quot;,Remark.getText ());</span>
+        // The tenth node should be a Remark
+<span class="fc" id="L105">        assertTrue(&quot;Tenth node should be a Remark&quot;,node[9] instanceof Remark);</span>
+<span class="fc" id="L106">        Remark = (Remark)node[9];</span>
+<span class="fc" id="L107">        assertEquals(&quot;Plain Text of the Remark #10&quot;,&quot;\n   Whats gonna happen now ?\n&quot;,Remark.getText());</span>
+
+<span class="fc" id="L109">    }</span>
+
+    public void testToRawString()  throws ParserException {
+<span class="fc" id="L112">        createParser(</span>
+<span class="fc" id="L113">            &quot;&lt;!-- saved from url=(0022)http://internet.e-mail --&gt;\n&quot;+</span>
+            &quot;&lt;HTML&gt;\n&quot;+
+            &quot;&lt;HEAD&gt;&lt;META name=\&quot;title\&quot; content=\&quot;Training Introduction\&quot;&gt;\n&quot;+
+            &quot;&lt;META name=\&quot;subject\&quot; content=\&quot;\&quot;&gt;\n&quot;+
+            &quot;&lt;!--\n&quot;+
+            &quot;   Whats gonna happen now ?\n&quot;+
+            &quot;--&gt;\n&quot;+
+            &quot;&lt;TEST&gt;\n&quot;+
+            &quot;&lt;/TEST&gt;\n&quot;);
+<span class="fc" id="L122">        parser.setNodeFactory (new PrototypicalNodeFactory (true));</span>
+<span class="fc" id="L123">        parseAndAssertNodeCount(15);</span>
+        // The first node should be a Remark
+<span class="fc" id="L125">        assertTrue(&quot;First node should be a Remark&quot;,node[0] instanceof Remark);</span>
+<span class="fc" id="L126">        Remark Remark = (Remark)node[0];</span>
+<span class="fc" id="L127">        assertStringEquals(&quot;Raw String of the Remark #1&quot;,&quot;&lt;!-- saved from url=(0022)http://internet.e-mail --&gt;&quot;,Remark.toHtml());</span>
+        // The tenth node should be a Remark
+<span class="fc" id="L129">        assertTrue(&quot;Tenth node should be a Remark&quot;,node[9] instanceof Remark);</span>
+<span class="fc" id="L130">        Remark = (Remark)node[9];</span>
+<span class="fc" id="L131">        assertStringEquals(&quot;Raw String of the Remark #6&quot;,&quot;&lt;!--\n   Whats gonna happen now ?\n--&gt;&quot;,Remark.toHtml());</span>
+<span class="fc" id="L132">    }</span>
+
+    public void testNonRemark() throws ParserException {
+<span class="fc" id="L135">        createParser(&quot;&amp;nbsp;&lt;![endif]&gt;&quot;);</span>
+<span class="fc" id="L136">        parseAndAssertNodeCount(2);</span>
+        // The first node should be a Remark
+<span class="fc" id="L138">        assertTrue(&quot;First node should be a string node&quot;,node[0] instanceof Text);</span>
+<span class="fc" id="L139">        assertTrue(&quot;Second node should be a Tag&quot;,node[1] instanceof Tag);</span>
+<span class="fc" id="L140">        Text stringNode = (Text)node[0];</span>
+<span class="fc" id="L141">        Tag tag = (Tag)node[1];</span>
+<span class="fc" id="L142">        assertEquals(&quot;Text contents&quot;,&quot;&amp;nbsp;&quot;,stringNode.getText());</span>
+<span class="fc" id="L143">        assertEquals(&quot;Tag Contents&quot;,&quot;![endif]&quot;,tag.getText());</span>
+
+<span class="fc" id="L145">    }</span>
+
+    /**
+     * This is the simulation of bug report 586756, submitted
+     * by John Zook.
+     * If all the comment contains is a blank line, it breaks
+     * the state
+     */
+    public void testRemarkWithBlankLine() throws ParserException {
+<span class="fc" id="L154">        createParser(&quot;&lt;!--\n&quot;+</span>
+        &quot;\n&quot;+
+        &quot;--&gt;&quot;);
+<span class="fc" id="L157">        parser.setNodeFactory (new PrototypicalNodeFactory (true));</span>
+<span class="fc" id="L158">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L159">        assertTrue(&quot;Node should be a Remark&quot;,node[0] instanceof Remark);</span>
+<span class="fc" id="L160">        Remark Remark = (Remark)node[0];</span>
+<span class="fc" id="L161">        assertEquals(&quot;Expected contents&quot;,&quot;\n\n&quot;,Remark.getText());</span>
+
+<span class="fc" id="L163">    }</span>
+
+    /**
+     * This is the simulation of a bug report submitted
+     * by Claude Duguay.
+     * If it is a comment with nothing in it, parser crashes
+     */
+    public void testRemarkWithNothing() throws ParserException {
+<span class="fc" id="L171">        createParser(&quot;&lt;!--&gt;&quot;);</span>
+<span class="fc" id="L172">        parser.setNodeFactory (new PrototypicalNodeFactory (true));</span>
+<span class="fc" id="L173">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L174">        assertTrue(&quot;Node should be a Remark&quot;,node[0] instanceof Remark);</span>
+<span class="fc" id="L175">        Remark Remark = (Remark)node[0];</span>
+<span class="fc" id="L176">        assertEquals(&quot;Expected contents&quot;,&quot;&quot;,Remark.getText());</span>
+
+<span class="fc" id="L178">    }</span>
+
+    /**
+     * Test tag within remark.
+     * Reproduction of bug reported by John Zook [594301]
+     * When we have tags like :
+     * &amp;lt;!-- &amp;lt;A&amp;gt; --&amp;gt;
+     * it doesent get parsed correctly
+     */
+    public void testTagWithinRemark() throws ParserException {
+<span class="fc" id="L188">        createParser(&quot;&lt;!-- \n&quot;+</span>
+        &quot;&lt;A&gt;\n&quot;+
+        &quot;bcd --&gt;&quot;);
+<span class="fc" id="L191">        parser.setNodeFactory (new PrototypicalNodeFactory (true));</span>
+<span class="fc" id="L192">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L193">        assertTrue(&quot;Node should be a Remark&quot;,node[0] instanceof Remark);</span>
+<span class="fc" id="L194">        Remark Remark = (Remark)node[0];</span>
+<span class="fc" id="L195">        assertStringEquals(&quot;Expected contents&quot;,&quot; \n&lt;A&gt;\nbcd &quot;,Remark.getText());</span>
+
+<span class="fc" id="L197">    }</span>
+
+    /**
+     * Bug reported by John Zook [594301], invalid remark nodes are accepted as remark nodes.
+     * &amp;lt;&lt;br&gt;
+     * -&lt;br&gt;
+     * -&lt;br&gt;
+     * ssd --&amp;gt;&lt;br&gt;
+     * This is not supposed to be a Remark
+     */
+    public void testInvalidTag() throws ParserException {
+<span class="fc" id="L208">        createParser(&quot;&lt;!\n&quot;+</span>
+        &quot;-\n&quot;+
+        &quot;-\n&quot;+
+        &quot;ssd --&gt;&quot;);
+<span class="fc" id="L212">        parser.setNodeFactory (new PrototypicalNodeFactory (true));</span>
+<span class="fc" id="L213">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L214">        assertTrue(&quot;Node should be a Tag but was &quot;+node[0],node[0] instanceof Tag);</span>
+<span class="fc" id="L215">        Tag tag = (Tag)node[0];</span>
+<span class="fc" id="L216">        assertStringEquals(&quot;Expected contents&quot;,&quot;!\n&quot;+</span>
+        &quot;-\n&quot;+
+        &quot;-\n&quot;+
+<span class="fc" id="L219">        &quot;ssd --&quot;,tag.getText());</span>
+<span class="fc" id="L220">    }</span>
+
+    /**
+     * Bug reported by John Zook [594301]
+     * If dashes exist in a comment, they dont get added to the comment text
+     */
+    public void testDashesInComment() throws ParserException{
+<span class="fc" id="L227">        createParser(&quot;&lt;!-- -- --&gt;&quot;);</span>
+<span class="fc" id="L228">        parser.setNodeFactory (new PrototypicalNodeFactory (true));</span>
+<span class="fc" id="L229">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L230">        assertTrue(&quot;Node should be a Remark but was &quot;+node[0],node[0] instanceof Remark);</span>
+<span class="fc" id="L231">        Remark Remark = (Remark)node[0];</span>
+<span class="fc" id="L232">        assertEquals(&quot;Remark Node contents&quot;,&quot; -- &quot;,Remark.getText());</span>
+<span class="fc" id="L233">    }</span>
+
+
+    // from http://www.w3.org/MarkUp/html-spec/html-spec_3.html
+//Comments
+//
+//To include comments in an HTML document, use a comment declaration.
+//A comment declaration consists of `&lt;!' followed by zero or more comments
+//followed by `&gt;'. Each comment starts with `--' and includes all text up to
+//and including the next occurrence of `--'. In a comment declaration, white
+//space is allowed after each comment, but not before the first comment. The
+//entire comment declaration is ignored. (10)
+//
+//For example:
+//
+//&lt;!DOCTYPE HTML PUBLIC &quot;-//IETF//DTD HTML 2.0//EN&quot;&gt;
+//&lt;HEAD&gt;
+//&lt;TITLE&gt;HTML Comment Example&lt;/TITLE&gt;
+//&lt;!-- Id: html-sgml.sgm,v 1.5 1995/05/26 21:29:50 connolly Exp  --&gt;
+//&lt;!-- another -- -- comment --&gt;
+//&lt;!&gt;
+//&lt;/HEAD&gt;
+//&lt;BODY&gt;
+//&lt;p&gt; &lt;!- not a comment, just regular old data characters -&gt;
+
+    /**
+     * Test a comment declaration with a comment.
+     */
+    public void testSingleComment ()
+        throws
+            ParserException
+    {
+<span class="fc" id="L265">        createParser(</span>
+<span class="fc" id="L266">              &quot;&lt;HTML&gt;\n&quot;</span>
+            + &quot;&lt;HEAD&gt;\n&quot;
+            + &quot;&lt;TITLE&gt;HTML Comment Test&lt;/TITLE&gt;\n&quot;
+            + &quot;&lt;/HEAD&gt;\n&quot;
+            + &quot;&lt;BODY&gt;\n&quot;
+            + &quot;&lt;!-- Id: html-sgml.sgm,v 1.5 1995/05/26 21:29:50 connolly Exp  --&gt;\n&quot;
+            + &quot;&lt;/BODY&gt;\n&quot;
+            + &quot;&lt;/HTML&gt;\n&quot;
+            );
+<span class="fc" id="L275">        parser.setNodeFactory (new PrototypicalNodeFactory (true));</span>
+<span class="fc" id="L276">        parseAndAssertNodeCount(18);</span>
+<span class="fc" id="L277">        assertTrue(&quot;Node should be a Remark but was &quot;+node[12],node[12] instanceof Remark);</span>
+<span class="fc" id="L278">        Remark Remark = (Remark)node[12];</span>
+<span class="fc" id="L279">        assertEquals(&quot;Remark Node contents&quot;,&quot; Id: html-sgml.sgm,v 1.5 1995/05/26 21:29:50 connolly Exp  &quot;,Remark.getText());</span>
+<span class="fc" id="L280">    }</span>
+
+    /**
+     * Test a comment declaration with two comments.
+     */
+    public void testDoubleComment ()
+        throws
+            ParserException
+    {
+<span class="fc" id="L289">        createParser(</span>
+<span class="fc" id="L290">              &quot;&lt;HTML&gt;\n&quot;</span>
+            + &quot;&lt;HEAD&gt;\n&quot;
+            + &quot;&lt;TITLE&gt;HTML Comment Test&lt;/TITLE&gt;\n&quot;
+            + &quot;&lt;/HEAD&gt;\n&quot;
+            + &quot;&lt;BODY&gt;\n&quot;
+            + &quot;&lt;!-- another -- -- comment --&gt;\n&quot;
+            + &quot;&lt;/BODY&gt;\n&quot;
+            + &quot;&lt;/HTML&gt;\n&quot;
+            );
+<span class="fc" id="L299">        parser.setNodeFactory (new PrototypicalNodeFactory (true));</span>
+<span class="fc" id="L300">        parseAndAssertNodeCount(18);</span>
+<span class="fc" id="L301">        assertTrue(&quot;Node should be a Remark but was &quot;+node[12],node[12] instanceof Remark);</span>
+<span class="fc" id="L302">        Remark Remark = (Remark)node[12];</span>
+<span class="fc" id="L303">        assertEquals(&quot;Remark Node contents&quot;,&quot; another -- -- comment &quot;,Remark.getText());</span>
+<span class="fc" id="L304">    }</span>
+
+    /**
+     * Test a comment declaration without any comments.
+     */
+    public void testEmptyComment ()
+        throws
+            ParserException
+    {
+<span class="fc" id="L313">        createParser(</span>
+<span class="fc" id="L314">              &quot;&lt;HTML&gt;\n&quot;</span>
+            + &quot;&lt;HEAD&gt;\n&quot;
+            + &quot;&lt;TITLE&gt;HTML Comment Test 'testEmptyComment'&lt;/TITLE&gt;\n&quot;
+            + &quot;&lt;/HEAD&gt;\n&quot;
+            + &quot;&lt;BODY&gt;\n&quot;
+            + &quot;&lt;!&gt;\n&quot;
+            + &quot;&lt;/BODY&gt;\n&quot;
+            + &quot;&lt;/HTML&gt;\n&quot;
+            );
+<span class="fc" id="L323">        parser.setNodeFactory (new PrototypicalNodeFactory (true));</span>
+<span class="fc" id="L324">        parseAndAssertNodeCount(18);</span>
+<span class="fc" id="L325">        assertTrue(&quot;Node should be a Remark but was &quot;+node[12],node[12] instanceof Remark);</span>
+<span class="fc" id="L326">        Remark Remark = (Remark)node[12];</span>
+<span class="fc" id="L327">        assertEquals(&quot;Remark Node contents&quot;,&quot;&quot;,Remark.getText());</span>
+<span class="fc" id="L328">    }</span>
+
+//    /**
+//     * Test what the specification calls data characters.
+//     * Actually, no browser I've tried handles this correctly (as text).
+//     * Some handle it as a comment and others handle it as a tag.
+//     * So for now we leave this test case out.
+//     */
+//    public void testNotAComment ()
+//        throws
+//            HTMLParserException
+//    {
+//      createParser(
+//              &quot;&lt;HTML&gt;\n&quot;
+//            + &quot;&lt;HEAD&gt;\n&quot;
+//            + &quot;&lt;TITLE&gt;HTML Comment Test 'testNotAComment'&lt;/TITLE&gt;\n&quot;
+//            + &quot;&lt;/HEAD&gt;\n&quot;
+//            + &quot;&lt;BODY&gt;\n&quot;
+//            + &quot;&lt;!- not a comment, just regular old data characters -&gt;\n&quot;
+//            + &quot;&lt;/BODY&gt;\n&quot;
+//            + &quot;&lt;/HTML&gt;\n&quot;
+//            );
+//      parseAndAssertNodeCount(10);
+//      assertTrue(&quot;Node should not be a Remark&quot;,!(node[7] instanceof Remark));
+//      assertTrue(&quot;Node should be a HTMLText but was &quot;+node[7],node[7].getType()==HTMLText.TYPE);
+//      HTMLText stringNode = (HTMLText)node[7];
+//      assertEquals(&quot;String Node contents&quot;,&quot;&lt;!- not a comment, just regular old data characters -&gt;\n&quot;,stringNode.getText());
+//    }
+
+    /**
+     * Test exclamation mark ending.
+     * Test a comment ending with !--.
+     * See bug #788746 parser crashes on comments like &lt;!-- foobar --!&gt;
+     */
+    public void testExclamationComment ()
+        throws
+            ParserException
+    {
+<span class="fc" id="L366">        boolean old_remark_handling = Lexer.STRICT_REMARKS;</span>
+        try
+        {
+            // handling this requires non-strict handling
+<span class="fc" id="L370">            Lexer.STRICT_REMARKS = false;</span>
+<span class="fc" id="L371">            createParser (</span>
+<span class="fc" id="L372">                  &quot;&lt;html&gt;\n&quot;</span>
+                + &quot;&lt;head&gt;\n&quot;
+                + &quot;&lt;title&gt;foobar&lt;/title&gt;\n&quot;
+                + &quot;&lt;/head&gt;\n&quot;
+                + &quot;&lt;body&gt;\n&quot;
+                + &quot;&lt;!-- foobar --!&gt;\n&quot;
+                + &quot;&lt;/body&gt;\n&quot;
+                + &quot;&lt;/html&gt;\n&quot;
+                );
+<span class="fc" id="L381">            parser.setNodeFactory (new PrototypicalNodeFactory (true));</span>
+<span class="fc" id="L382">            parseAndAssertNodeCount (18);</span>
+<span class="fc" id="L383">            assertTrue(&quot;Node should be a Remark but was &quot; + node[12], node[12] instanceof Remark);</span>
+<span class="fc" id="L384">            assertStringEquals (&quot;remark text&quot;, &quot;&lt;!-- foobar --!&gt;&quot;, node[12].toHtml ());</span>
+<span class="fc" id="L385">        }</span>
+        finally
+<span class="nc" id="L387">        {</span>
+<span class="pc" id="L388">            Lexer.STRICT_REMARKS = old_remark_handling;</span>
+<span class="nc" id="L389">        }</span>
+<span class="fc" id="L390">    }</span>
+
+    /**
+     * Test a comment ending with -.
+     * See also the Acid2 test at http://www.webstandards.org/act/acid2/test.html.
+     */
+    public void testDashEnding ()
+        throws
+            ParserException
+    {
+<span class="fc" id="L400">        String preamble = &quot;&lt;div class=\&quot;parser\&quot;&gt;&quot;;</span>
+<span class="fc" id="L401">        String remark = &quot;&lt;!-- -&gt;ERROR&lt;!- --&gt;&quot;;</span>
+<span class="fc" id="L402">        String rest = &quot;&lt;/div&gt;&lt;/div&gt; &lt;!-- two dashes is what delimits a comment, so the text \&quot;-&gt;ERROR&lt;!-\&quot; earlier on this line is actually part of a comment --&gt;&quot;;</span>
+<span class="fc" id="L403">        createParser (preamble + remark + rest);</span>
+<span class="fc" id="L404">        parser.setNodeFactory (new PrototypicalNodeFactory (true));</span>
+<span class="fc" id="L405">        parseAndAssertNodeCount (6);</span>
+<span class="fc" id="L406">        assertTrue(&quot;Node should be a Remark but was &quot; + node[1], node[1] instanceof Remark);</span>
+<span class="fc" id="L407">        assertStringEquals (&quot;remark text&quot;, remark, node[1].toHtml ());</span>
+<span class="fc" id="L408">    }</span>
+
+    /**
+     * Test a comment ending with ---.
+     * See bug #1345049 HTMLParser should not terminate a comment with ---&amp;gt;
+     * See also the Acid2 test at http://www.webstandards.org/act/acid2/test.html.
+     */
+    public void test3DashesEnding ()
+        throws
+            ParserException
+    {
+<span class="fc" id="L419">        String preamble = &quot;&lt;div class=\&quot;parser\&quot;&gt;&quot;;</span>
+<span class="fc" id="L420">        String remark = &quot;&lt;!-- ---&gt;ERROR&lt;!- --&gt;&quot;;</span>
+<span class="fc" id="L421">        String rest = &quot;&lt;/div&gt;&lt;/div&gt; &lt;!-- two dashes is what delimits a comment, so the text \&quot;-&gt;ERROR&lt;!-\&quot; earlier on this line is actually part of a comment --&gt;&quot;;</span>
+<span class="fc" id="L422">        createParser (preamble + remark + rest);</span>
+<span class="fc" id="L423">        parser.setNodeFactory (new PrototypicalNodeFactory (true));</span>
+<span class="fc" id="L424">        parseAndAssertNodeCount (6);</span>
+<span class="fc" id="L425">        assertTrue(&quot;Node should be a Remark but was &quot; + node[1], node[1] instanceof Remark);</span>
+<span class="fc" id="L426">        assertStringEquals (&quot;remark text&quot;, remark, node[1].toHtml ());</span>
+<span class="fc" id="L427">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

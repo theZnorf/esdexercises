@@ -1,0 +1,401 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>Stream.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">lexer/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.lexer</a> &gt; <span class="el_source">Stream.java</span></div><h1>Stream.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/lexer/src/main/java/org/htmlparser/lexer/Stream.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.lexer;
+
+import java.io.IOException;
+import java.io.InputStream;
+
+/**
+ * Provides for asynchronous fetching from a stream.
+ *
+ */
+public class Stream extends InputStream implements Runnable
+{
+    /**
+     * The number of calls to fill.
+     * Note: to be removed.
+     */
+<span class="fc" id="L41">    public int fills = 0;</span>
+
+    /**
+     * The number of reallocations.
+     * Note: to be removed.
+     */
+<span class="fc" id="L47">    public int reallocations = 0;</span>
+
+    /**
+     * The number of synchronous (blocking) fills.
+     * Note: to be removed.
+     */
+<span class="fc" id="L53">    public int synchronous = 0;</span>
+
+    /**
+     * An initial buffer size.
+     */
+    protected static final int BUFFER_SIZE = 4096;
+
+    /**
+     * Return value when no more characters are left.
+     */
+    protected static final int EOF = -1;
+
+    /**
+     * The underlying stream.
+     */
+    protected volatile InputStream mIn;
+
+    /**
+     * The bytes read so far.
+     */
+    public volatile byte[] mBuffer;
+
+    /**
+     * The number of valid bytes in the buffer.
+     */
+    public volatile int mLevel;
+
+    /**
+     * The offset of the next byte returned by read().
+     */
+    protected int mOffset;
+
+    /**
+     * The content length from the HTTP header.
+     */
+    protected int mContentLength;
+
+    /**
+     * The bookmark.
+     */
+    protected int mMark;
+
+    /**
+     * Construct a stream with no assumptions about the number of bytes available.
+     * @param in The input stream to use.
+     */
+    public Stream (InputStream in)
+    {
+<span class="fc" id="L101">        this (in, 0);</span>
+<span class="fc" id="L102">    }</span>
+
+    /**
+     * Construct a stream to read the given number of bytes.
+     * @param in The input stream to use.
+     * @param bytes The maximum number of bytes to read.
+     * This should be set to the ContentLength from the HTTP header.
+     * A negative or zero value indicates an unknown number of bytes.
+     */
+<span class="fc" id="L111">    public Stream (InputStream in, int bytes)</span>
+    {
+<span class="fc" id="L113">        mIn = in;</span>
+<span class="fc" id="L114">        mBuffer = null;</span>
+<span class="fc" id="L115">        mLevel = 0;</span>
+<span class="fc" id="L116">        mOffset = 0;</span>
+<span class="pc bpc" id="L117" title="1 of 2 branches missed.">        mContentLength = bytes &lt; 0 ? 0 : bytes;</span>
+<span class="fc" id="L118">        mMark = -1;</span>
+<span class="fc" id="L119">    }</span>
+
+    /**
+     * Fetch more bytes from the underlying stream.
+     * Has no effect if the underlying stream has been drained.
+     * @param force If &lt;code&gt;true&lt;/code&gt;, an attempt is made to read from the
+     * underlying stream, even if bytes are available, If &lt;code&gt;false&lt;/code&gt;,
+     * a read of the underlying stream will not occur if there are already
+     * bytes available.
+     * @return &lt;code&gt;true&lt;/code&gt; if not at the end of the input stream.
+     * @exception IOException If the underlying stream read() or available() throws one.
+     */
+    protected synchronized boolean fill (boolean force)
+        throws
+            IOException
+    {
+        int size;
+        byte[] buffer;
+        int read;
+        boolean ret;
+
+<span class="fc" id="L140">        ret = false;</span>
+
+<span class="fc bfc" id="L142" title="All 2 branches covered.">        if (null != mIn) // mIn goes null when it's been sucked dry</span>
+        {
+<span class="pc bpc" id="L144" title="1 of 2 branches missed.">            if (!force)</span>
+            {   // check for change of state while waiting on the monitor in a synchronous call
+<span class="pc bpc" id="L146" title="1 of 2 branches missed.">                if (0 != available ())</span>
+<span class="nc" id="L147">                    return (true);</span>
+<span class="fc" id="L148">                synchronous++;</span>
+            }
+
+            // get some buffer space
+<span class="pc bpc" id="L152" title="1 of 2 branches missed.">            if (0 == mContentLength)</span>
+            {   // unknown content length... keep doubling
+<span class="fc bfc" id="L154" title="All 2 branches covered.">                if (null == mBuffer)</span>
+                {
+<span class="fc" id="L156">                    mBuffer = new byte[Math.max (BUFFER_SIZE, mIn.available ())];</span>
+<span class="fc" id="L157">                    buffer = mBuffer;</span>
+<span class="fc" id="L158">                }</span>
+                else
+                {
+<span class="pc bpc" id="L161" title="1 of 2 branches missed.">                    if (mBuffer.length - mLevel &lt; BUFFER_SIZE / 2)</span>
+<span class="nc" id="L162">                        buffer = new byte[Math.max (mBuffer.length * 2, mBuffer.length + mIn.available ())];</span>
+                    else
+<span class="fc" id="L164">                        buffer = mBuffer;</span>
+                }
+<span class="fc" id="L166">                size = buffer.length - mLevel;</span>
+<span class="fc" id="L167">            }</span>
+            else
+            {   // known content length... allocate once
+<span class="nc" id="L170">                size = mContentLength - mLevel;</span>
+<span class="nc bnc" id="L171" title="All 2 branches missed.">                if (null == mBuffer)</span>
+<span class="nc" id="L172">                    mBuffer =  new byte[size];</span>
+<span class="nc" id="L173">                buffer = mBuffer;</span>
+            }
+
+            // read into the end of the 'new' buffer
+<span class="fc" id="L177">            read = mIn.read (buffer, mLevel, size);</span>
+<span class="fc bfc" id="L178" title="All 2 branches covered.">            if (-1 == read)</span>
+            {
+<span class="fc" id="L180">                mIn.close ();</span>
+<span class="fc" id="L181">                mIn = null;</span>
+<span class="fc" id="L182">            }</span>
+            else
+            {
+<span class="pc bpc" id="L185" title="1 of 2 branches missed.">                if (mBuffer != buffer)</span>
+                {   // copy the bytes previously read
+<span class="nc" id="L187">                    System.arraycopy (mBuffer, 0, buffer, 0, mLevel);</span>
+<span class="nc" id="L188">                    mBuffer = buffer;</span>
+<span class="nc" id="L189">                    reallocations++;</span>
+                }
+<span class="fc" id="L191">                mLevel += read;</span>
+<span class="pc bpc" id="L192" title="3 of 4 branches missed.">                if ((0 != mContentLength) &amp;&amp; (mLevel == mContentLength))</span>
+                {
+<span class="nc" id="L194">                    mIn.close ();</span>
+<span class="nc" id="L195">                    mIn = null;</span>
+                }
+<span class="fc" id="L197">                ret = true;</span>
+<span class="fc" id="L198">                fills++;</span>
+            }
+        }
+
+<span class="fc" id="L202">        return (ret);</span>
+    }
+
+    //
+    // Runnable interface
+    //
+
+    /**
+     * Continually read the underlying stream untill exhausted.
+     * @see java.lang.Thread#run()
+     */
+    public void run ()
+    {
+        boolean filled;
+
+        do
+        {   // keep hammering the socket with no delay, it's metered upstream
+            try
+            {
+<span class="nc" id="L221">                filled = fill (true);</span>
+<span class="nc" id="L222">            }</span>
+<span class="nc" id="L223">            catch (IOException ioe)</span>
+            {
+<span class="nc" id="L225">                ioe.printStackTrace ();</span>
+                // exit the thread if there is a problem,
+                // let the synchronous reader find out about it
+<span class="nc" id="L228">                filled = false;</span>
+            }
+        }
+<span class="nc bnc" id="L231" title="All 2 branches missed.">        while (filled);</span>
+<span class="nc" id="L232">    }</span>
+
+    //
+    // InputStream overrides
+    //
+
+    /**
+     * Reads the next byte of data from the input stream. The value byte is
+     * returned as an &lt;code&gt;int&lt;/code&gt; in the range &lt;code&gt;0&lt;/code&gt; to
+     * &lt;code&gt;255&lt;/code&gt;. If no byte is available because the end of the stream
+     * has been reached, the value &lt;code&gt;-1&lt;/code&gt; is returned. This method
+     * blocks until input data is available, the end of the stream is detected,
+     * or an exception is thrown.
+     * @return  The next byte of data, or &lt;code&gt;-1&lt;/code&gt; if the end of the
+     * stream is reached.
+     * @exception IOException If an I/O error occurs.
+     */
+    public int read () throws IOException
+    {
+        int ret;
+
+        // The following is unsynchronized code.
+        // Some would argue that unsynchronized access isn't thread safe
+        // but I think I can rationalize it in this case...
+        // The two volatile members are mLevel and mBuffer (besides mIn).
+        // If (mOffset &gt;= mLevel) turns false after the test, fill is
+        // superflously called, but it's synchronized and figures it out.
+        // (mOffset &lt; mLevel) only goes more true by the operation of the
+        // background thread, it increases the value of mLevel
+        // and volatile int access is atomic.
+        // If mBuffer changes by the operation of the background thread,
+        // the array pointed to can only be bigger than the previous buffer,
+        // and hence no array bounds exception can be raised.
+<span class="fc bfc" id="L265" title="All 2 branches covered.">        if (0 == (mLevel - mOffset)) // (0 == available ())</span>
+<span class="fc" id="L266">            fill (false);</span>
+<span class="fc bfc" id="L267" title="All 2 branches covered.">        if (0 != (mLevel - mOffset)) // (0 != available ())</span>
+<span class="fc" id="L268">            ret = mBuffer[mOffset++] &amp; 0xff;</span>
+        else
+<span class="fc" id="L270">            ret = EOF;</span>
+
+<span class="fc" id="L272">        return (ret);</span>
+    }
+
+    /**
+     * Returns the number of bytes that can be read (or skipped over) from
+     * this input stream without blocking by the next caller of a method for
+     * this input stream.  The next caller might be the same thread or or
+     * another thread.
+     * @return The number of bytes that can be read from this input stream
+     * without blocking.
+     * @exception IOException If an I/O error occurs.
+     */
+    public int available () throws IOException
+    {
+<span class="fc" id="L286">        return (mLevel - mOffset);</span>
+    }
+
+    /**
+     * Closes this input stream and releases any system resources associated
+     * with the stream.
+     * @exception IOException If an I/O error occurs.
+     */
+    public synchronized void close () throws IOException
+    {
+<span class="fc bfc" id="L296" title="All 2 branches covered.">        if (null != mIn)</span>
+        {
+<span class="fc" id="L298">            mIn.close ();</span>
+<span class="fc" id="L299">            mIn = null;</span>
+        }
+<span class="fc" id="L301">        mBuffer = null;</span>
+<span class="fc" id="L302">        mLevel = 0;</span>
+<span class="fc" id="L303">        mOffset = 0;</span>
+<span class="fc" id="L304">        mContentLength =0;</span>
+<span class="fc" id="L305">        mMark = -1;</span>
+<span class="fc" id="L306">    }</span>
+
+    /**
+     * Repositions this stream to the position at the time the
+     * &lt;code&gt;mark&lt;/code&gt; method was last called on this input stream.
+     *
+     * &lt;p&gt; The general contract of &lt;code&gt;reset&lt;/code&gt; is:
+     *
+     * &lt;p&gt;&lt;ul&gt;
+     *
+     * &lt;li&gt; If the method &lt;code&gt;markSupported&lt;/code&gt; returns
+     * &lt;code&gt;true&lt;/code&gt;, then:
+     *
+     *     &lt;ul&gt;&lt;li&gt; If the method &lt;code&gt;mark&lt;/code&gt; has not been called since
+     *     the stream was created, or the number of bytes read from the stream
+     *     since &lt;code&gt;mark&lt;/code&gt; was last called is larger than the argument
+     *     to &lt;code&gt;mark&lt;/code&gt; at that last call, then an
+     *     &lt;code&gt;IOException&lt;/code&gt; might be thrown.
+     *
+     *     &lt;li&gt; If such an &lt;code&gt;IOException&lt;/code&gt; is not thrown, then the
+     *     stream is reset to a state such that all the bytes read since the
+     *     most recent call to &lt;code&gt;mark&lt;/code&gt; (or since the start of the
+     *     file, if &lt;code&gt;mark&lt;/code&gt; has not been called) will be resupplied
+     *     to subsequent callers of the &lt;code&gt;read&lt;/code&gt; method, followed by
+     *     any bytes that otherwise would have been the next input data as of
+     *     the time of the call to &lt;code&gt;reset&lt;/code&gt;. &lt;/ul&gt;
+     *
+     * &lt;li&gt; If the method &lt;code&gt;markSupported&lt;/code&gt; returns
+     * &lt;code&gt;false&lt;/code&gt;, then:
+     *
+     *     &lt;ul&gt;&lt;li&gt; The call to &lt;code&gt;reset&lt;/code&gt; may throw an
+     *     &lt;code&gt;IOException&lt;/code&gt;.
+     *
+     *     &lt;li&gt; If an &lt;code&gt;IOException&lt;/code&gt; is not thrown, then the stream
+     *     is reset to a fixed state that depends on the particular type of the
+     *     input stream and how it was created. The bytes that will be supplied
+     *     to subsequent callers of the &lt;code&gt;read&lt;/code&gt; method depend on the
+     *     particular type of the input stream. &lt;/ul&gt;&lt;/ul&gt;
+     *
+     * @exception IOException &lt;em&gt;Never thrown. Just for subclassers.&lt;/em&gt;
+     * @see java.io.InputStream#mark(int)
+     * @see java.io.IOException
+     *
+     */
+    public void reset () throws IOException
+    {
+<span class="nc bnc" id="L352" title="All 2 branches missed.">        if (-1 != mMark)</span>
+<span class="nc" id="L353">            mOffset = mMark;</span>
+        else
+<span class="nc" id="L355">            mOffset = 0;</span>
+<span class="nc" id="L356">    }</span>
+
+    /**
+     * Tests if this input stream supports the &lt;code&gt;mark&lt;/code&gt; and
+     * &lt;code&gt;reset&lt;/code&gt; methods. Whether or not &lt;code&gt;mark&lt;/code&gt; and
+     * &lt;code&gt;reset&lt;/code&gt; are supported is an invariant property of a
+     * particular input stream instance. The &lt;code&gt;markSupported&lt;/code&gt; method
+     * of &lt;code&gt;InputStream&lt;/code&gt; returns &lt;code&gt;false&lt;/code&gt;.
+     *
+     * @return &lt;code&gt;true&lt;/code&gt;.
+     * @see java.io.InputStream#mark(int)
+     * @see java.io.InputStream#reset()
+     *
+     */
+    public boolean markSupported ()
+    {
+<span class="fc" id="L372">        return (true);</span>
+    }
+
+    /**
+     * Marks the current position in this input stream. A subsequent call to
+     * the &lt;code&gt;reset&lt;/code&gt; method repositions this stream at the last marked
+     * position so that subsequent reads re-read the same bytes.
+     *
+     * &lt;p&gt; The &lt;code&gt;readlimit&lt;/code&gt; arguments tells this input stream to
+     * allow that many bytes to be read before the mark position gets
+     * invalidated.
+     *
+     * &lt;p&gt; The general contract of &lt;code&gt;mark&lt;/code&gt; is that, if the method
+     * &lt;code&gt;markSupported&lt;/code&gt; returns &lt;code&gt;true&lt;/code&gt;, the stream somehow
+     * remembers all the bytes read after the call to &lt;code&gt;mark&lt;/code&gt; and
+     * stands ready to supply those same bytes again if and whenever the method
+     * &lt;code&gt;reset&lt;/code&gt; is called.  However, the stream is not required to
+     * remember any data at all if more than &lt;code&gt;readlimit&lt;/code&gt; bytes are
+     * read from the stream before &lt;code&gt;reset&lt;/code&gt; is called.
+     *
+     * @param readlimit &lt;em&gt;Not used.&lt;/em&gt;
+     * @see java.io.InputStream#reset()
+     *
+     */
+    public void mark (int readlimit)
+    {
+<span class="nc" id="L398">        mMark = mOffset;</span>
+<span class="nc" id="L399">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

@@ -1,0 +1,433 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>ObjectTag.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tags</a> &gt; <span class="el_source">ObjectTag.java</span></div><h1>ObjectTag.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Enrico Triolo
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/main/java/org/htmlparser/tags/ObjectTag.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tags;
+
+import java.util.Enumeration;
+import java.util.Hashtable;
+import java.util.Vector;
+
+import org.htmlparser.Attribute;
+import org.htmlparser.Node;
+import org.htmlparser.Tag;
+import org.htmlparser.nodes.TextNode;
+import org.htmlparser.nodes.TagNode;
+import org.htmlparser.util.NodeList;
+import org.htmlparser.util.SimpleNodeIterator;
+
+/**
+ * ObjectTag represents an &amp;lt;Object&amp;gt; tag.
+ * It extends a basic tag by providing accessors to the
+ * type, codetype, codebase, classid, data, height, width, standby attributes and parameters.
+ */
+public class ObjectTag extends CompositeTag
+{
+    /**
+     * The set of names handled by this tag.
+     */
+<span class="fc" id="L50">    private static final String[] mIds = new String[] {&quot;OBJECT&quot;};</span>
+
+    /**
+     * The set of end tag names that indicate the end of this tag.
+     */
+<span class="fc" id="L55">    private static final String[] mEndTagEnders = new String[] {&quot;BODY&quot;, &quot;HTML&quot;};</span>
+
+    /**
+     * Create a new object tag.
+     */
+<span class="fc" id="L60">    public ObjectTag ()</span>
+    {
+<span class="fc" id="L62">    }</span>
+
+    /**
+     * Return the set of names handled by this tag.
+     * @return The names to be matched that create tags of this type.
+     */
+    public String[] getIds ()
+    {
+<span class="fc" id="L70">        return (mIds);</span>
+    }
+
+    /**
+     * Return the set of end tag names that cause this tag to finish.
+     * @return The names of following end tags that stop further scanning.
+     */
+    public String[] getEndTagEnders ()
+    {
+<span class="nc" id="L79">        return (mEndTagEnders);</span>
+    }
+
+    /**
+     * Extract the object &lt;code&gt;PARAM&lt;/code&gt; tags from the child list.
+     * @return The list of object parameters (keys and values are String objects).
+     */
+    public Hashtable createObjectParamsTable ()
+    {
+        NodeList kids;
+        Node node;
+        Tag tag;
+        String paramName;
+        String paramValue;
+        Hashtable ret;
+
+<span class="nc" id="L95">        ret = new Hashtable ();</span>
+<span class="nc" id="L96">        kids = getChildren ();</span>
+<span class="nc bnc" id="L97" title="All 2 branches missed.">        if (null != kids)</span>
+<span class="nc bnc" id="L98" title="All 2 branches missed.">            for (int i = 0; i &lt; kids.size (); i++)</span>
+            {
+<span class="nc" id="L100">                node = children.elementAt(i);</span>
+<span class="nc bnc" id="L101" title="All 2 branches missed.">                if (node instanceof Tag)</span>
+                {
+<span class="nc" id="L103">                    tag = (Tag)node;</span>
+<span class="nc bnc" id="L104" title="All 2 branches missed.">                    if (tag.getTagName().equals (&quot;PARAM&quot;))</span>
+                    {
+<span class="nc" id="L106">                        paramName = tag.getAttribute (&quot;NAME&quot;);</span>
+<span class="nc bnc" id="L107" title="All 4 branches missed.">                        if (null != paramName &amp;&amp; 0 != paramName.length ())</span>
+                        {
+<span class="nc" id="L109">                            paramValue = tag.getAttribute (&quot;VALUE&quot;);</span>
+<span class="nc" id="L110">                            ret.put (paramName.toUpperCase(),paramValue);</span>
+                        }
+                    }
+                }
+            }
+
+<span class="nc" id="L116">        return (ret);</span>
+    }
+
+    /**
+     * Get the classid of the object.
+     * @return The value of the &lt;code&gt;CLASSID&lt;/code&gt; attribute.
+     */
+    public String getObjectClassId ()
+    {
+<span class="nc" id="L125">        return getAttribute (&quot;CLASSID&quot;);</span>
+    }
+
+    /**
+     * Get the codebase of the object.
+     * @return The value of the &lt;code&gt;CODEBASE&lt;/code&gt; attribute.
+     */
+    public String getObjectCodeBase ()
+    {
+<span class="nc" id="L134">        return getAttribute (&quot;CODEBASE&quot;);</span>
+    }
+    
+    /**
+     * Get the codetype of the object.
+     * @return The value of the &lt;code&gt;CODETYPE&lt;/code&gt; attribute.
+     */
+    public String getObjectCodeType ()
+    {
+<span class="nc" id="L143">        return getAttribute (&quot;CODETYPE&quot;);</span>
+    }
+    
+    /**
+     * Get the data of the object.
+     * @return The value of the &lt;code&gt;DATA&lt;/code&gt; attribute.
+     */
+    public String getObjectData ()
+    {
+<span class="nc" id="L152">        return getAttribute (&quot;DATA&quot;);</span>
+    }
+    
+    /**
+     * Get the height of the object.
+     * @return The value of the &lt;code&gt;HEIGHT&lt;/code&gt; attribute.
+     */
+    public String getObjectHeight ()
+    {
+<span class="nc" id="L161">        return getAttribute (&quot;HEIGHT&quot;);</span>
+    }
+    
+    /**
+     * Get the standby of the object.
+     * @return The value of the &lt;code&gt;STANDBY&lt;/code&gt; attribute.
+     */
+    public String getObjectStandby ()
+    {
+<span class="nc" id="L170">        return getAttribute (&quot;STANDBY&quot;);</span>
+    }
+    
+    /**
+     * Get the type of the object.
+     * @return The value of the &lt;code&gt;TYPE&lt;/code&gt; attribute.
+     */
+    public String getObjectType ()
+    {
+<span class="nc" id="L179">        return getAttribute (&quot;TYPE&quot;);</span>
+    }
+    
+    /**
+     * Get the width of the object.
+     * @return The value of the &lt;code&gt;WIDTH&lt;/code&gt; attribute.
+     */
+    public String getObjectWidth ()
+    {
+<span class="nc" id="L188">        return getAttribute (&quot;WIDTH&quot;);</span>
+    }
+    
+    /**
+     * Get the object parameters.
+     * @return The list of parameter values (keys and values are String objects).
+     */
+    public Hashtable getObjectParams ()
+    {
+<span class="nc" id="L197">        return createObjectParamsTable ();</span>
+    }
+    
+    /**
+     * Get the &lt;code&gt;PARAM&lt;code&gt; tag with the given name.
+     * @param key The object parameter name to get.
+     * @return The value of the parameter or &lt;code&gt;null&lt;/code&gt; if there is no parameter of that name.
+     */
+    public String getParameter (String key)
+    {
+<span class="nc" id="L207">        return ((String)(getObjectParams ().get (key.toUpperCase ())));</span>
+    }
+    
+    /**
+     * Get an enumeration over the (String) parameter names.
+     * @return An enumeration of the &lt;code&gt;PARAM&lt;code&gt; tag &lt;code&gt;NAME&lt;code&gt; attributes.
+     */
+    public Enumeration getParameterNames ()
+    {
+<span class="nc" id="L216">        return getObjectParams ().keys ();</span>
+    }
+    
+    /**
+     * Set the &lt;code&gt;CLASSID&lt;code&gt; attribute.
+     * @param newClassId The new classid.
+     */
+    public void setObjectClassId (String newClassId)
+    {
+<span class="nc" id="L225">        setAttribute (&quot;CLASSID&quot;, newClassId);</span>
+<span class="nc" id="L226">    }</span>
+    
+    /**
+     * Set the &lt;code&gt;CODEBASE&lt;code&gt; attribute.
+     * @param newCodeBase The new codebase.
+     */
+    public void setObjectCodeBase (String newCodeBase)
+    {
+<span class="nc" id="L234">        setAttribute (&quot;CODEBASE&quot;, newCodeBase);</span>
+<span class="nc" id="L235">    }</span>
+    
+    /**
+     * Set the &lt;code&gt;CODETYPE&lt;code&gt; attribute.
+     * @param newCodeType The new codetype.
+     */
+    public void setObjectCodeType (String newCodeType)
+    {
+<span class="nc" id="L243">        setAttribute (&quot;CODETYPE&quot;, newCodeType);</span>
+<span class="nc" id="L244">    }</span>
+    
+    /**
+     * Set the &lt;code&gt;DATA&lt;code&gt; attribute.
+     * @param newData The new data.
+     */
+    public void setObjectData (String newData)
+    {
+<span class="nc" id="L252">        setAttribute (&quot;DATA&quot;, newData);</span>
+<span class="nc" id="L253">    }</span>
+    
+    /**
+     * Set the &lt;code&gt;HEIGHT&lt;code&gt; attribute.
+     * @param newHeight The new height.
+     */
+    public void setObjectHeight (String newHeight)
+    {
+<span class="nc" id="L261">        setAttribute (&quot;HEIGHT&quot;, newHeight);</span>
+<span class="nc" id="L262">    }</span>
+    
+    /**
+     * Set the &lt;code&gt;STANDBY&lt;code&gt; attribute.
+     * @param newStandby The new standby.
+     */
+    public void setObjectStandby (String newStandby)
+    {
+<span class="nc" id="L270">        setAttribute (&quot;STANDBY&quot;, newStandby);</span>
+<span class="nc" id="L271">    }</span>
+    
+    /**
+     * Set the &lt;code&gt;TYPE&lt;code&gt; attribute.
+     * @param newType The new type.
+     */
+    public void setObjectType (String newType)
+    {
+<span class="nc" id="L279">        setAttribute (&quot;TYPE&quot;, newType);</span>
+<span class="nc" id="L280">    }</span>
+    
+    /**
+     * Set the &lt;code&gt;WIDTH&lt;code&gt; attribute.
+     * @param newWidth The new width.
+     */
+    public void setObjectWidth (String newWidth)
+    {
+<span class="nc" id="L288">        setAttribute (&quot;WIDTH&quot;, newWidth);</span>
+<span class="nc" id="L289">    }</span>
+    
+    /**
+     * Set the enclosed &lt;code&gt;PARAM&lt;code&gt; children.
+     * @param newObjectParams The new parameters.
+     */
+    public void setObjectParams (Hashtable newObjectParams)
+    {
+        NodeList kids;
+        Node node;
+        Tag tag;
+        String paramName;
+        String paramValue;
+        Vector attributes;
+        TextNode string;
+        
+<span class="nc" id="L305">        kids = getChildren ();</span>
+<span class="nc bnc" id="L306" title="All 2 branches missed.">        if (null == kids)</span>
+<span class="nc" id="L307">            kids = new NodeList ();</span>
+        else
+            // erase objectParams from kids
+<span class="nc bnc" id="L310" title="All 2 branches missed.">            for (int i = 0; i &lt; kids.size (); )</span>
+            {
+<span class="nc" id="L312">                node = kids.elementAt (i);</span>
+<span class="nc bnc" id="L313" title="All 2 branches missed.">                if (node instanceof Tag)</span>
+<span class="nc bnc" id="L314" title="All 2 branches missed.">                    if (((Tag)node).getTagName ().equals (&quot;PARAM&quot;))</span>
+                    {
+<span class="nc" id="L316">                        kids.remove (i);</span>
+                        // remove whitespace too
+<span class="nc bnc" id="L318" title="All 2 branches missed.">                        if (i &lt; kids.size ())</span>
+                        {
+<span class="nc" id="L320">                            node = kids.elementAt (i);</span>
+<span class="nc bnc" id="L321" title="All 2 branches missed.">                            if (node instanceof TextNode)</span>
+                            {
+<span class="nc" id="L323">                                string = (TextNode)node;</span>
+<span class="nc bnc" id="L324" title="All 2 branches missed.">                                if (0 == string.getText ().trim ().length ())</span>
+<span class="nc" id="L325">                                    kids.remove (i);</span>
+                            }
+                        }
+<span class="nc" id="L328">                    }</span>
+                    else
+<span class="nc" id="L330">                        i++;</span>
+                else
+<span class="nc" id="L332">                    i++;</span>
+            }
+        
+        // add newObjectParams to kids
+<span class="nc bnc" id="L336" title="All 2 branches missed.">        for (Enumeration e = newObjectParams.keys (); e.hasMoreElements (); )</span>
+        {
+<span class="nc" id="L338">            attributes = new Vector (); // should the tag copy the attributes?</span>
+<span class="nc" id="L339">            paramName = (String)e.nextElement ();</span>
+<span class="nc" id="L340">            paramValue = (String)newObjectParams.get (paramName);</span>
+<span class="nc" id="L341">            attributes.addElement (new Attribute (&quot;PARAM&quot;, null));</span>
+<span class="nc" id="L342">            attributes.addElement (new Attribute (&quot; &quot;));</span>
+<span class="nc" id="L343">            attributes.addElement (new Attribute (&quot;VALUE&quot;, paramValue, '&quot;'));</span>
+<span class="nc" id="L344">            attributes.addElement (new Attribute (&quot; &quot;));</span>
+<span class="nc" id="L345">            attributes.addElement (new Attribute (&quot;NAME&quot;, paramName.toUpperCase (), '&quot;'));</span>
+<span class="nc" id="L346">            tag = new TagNode (null, 0, 0, attributes);</span>
+<span class="nc" id="L347">            kids.add (tag);</span>
+        }
+        
+        //set kids as new children
+<span class="nc" id="L351">        setChildren (kids);</span>
+<span class="nc" id="L352">    }</span>
+    
+    /**
+     * Output a string representing this object tag.
+     * @return A string showing the contents of the object tag.
+     */
+    public String toString ()
+    {
+        Hashtable parameters;
+        Enumeration params;
+        String paramName;
+        String paramValue;
+        boolean found;
+        Node node;
+        StringBuffer ret;
+        
+<span class="nc" id="L368">        ret = new StringBuffer (500);</span>
+<span class="nc" id="L369">        ret.append (&quot;Object Tag\n&quot;);</span>
+<span class="nc" id="L370">        ret.append (&quot;**********\n&quot;);</span>
+<span class="nc" id="L371">        ret.append (&quot;ClassId = &quot;);</span>
+<span class="nc" id="L372">        ret.append (getObjectClassId ());</span>
+<span class="nc" id="L373">        ret.append (&quot;\n&quot;);</span>
+<span class="nc" id="L374">        ret.append (&quot;CodeBase = &quot;);</span>
+<span class="nc" id="L375">        ret.append (getObjectCodeBase ());</span>
+<span class="nc" id="L376">        ret.append (&quot;\n&quot;);</span>
+<span class="nc" id="L377">        ret.append (&quot;CodeType = &quot;);</span>
+<span class="nc" id="L378">        ret.append (getObjectCodeType ());</span>
+<span class="nc" id="L379">        ret.append (&quot;\n&quot;);</span>
+<span class="nc" id="L380">        ret.append (&quot;Data = &quot;);</span>
+<span class="nc" id="L381">        ret.append (getObjectData ());</span>
+<span class="nc" id="L382">        ret.append (&quot;\n&quot;);</span>
+<span class="nc" id="L383">        ret.append (&quot;Height = &quot;);</span>
+<span class="nc" id="L384">        ret.append (getObjectHeight ());</span>
+<span class="nc" id="L385">        ret.append (&quot;\n&quot;);</span>
+<span class="nc" id="L386">        ret.append (&quot;Standby = &quot;);</span>
+<span class="nc" id="L387">        ret.append (getObjectStandby ());</span>
+<span class="nc" id="L388">        ret.append (&quot;\n&quot;);</span>
+<span class="nc" id="L389">        ret.append (&quot;Type = &quot;);</span>
+<span class="nc" id="L390">        ret.append (getObjectType ());</span>
+<span class="nc" id="L391">        ret.append (&quot;\n&quot;);</span>
+<span class="nc" id="L392">        ret.append (&quot;Width = &quot;);</span>
+<span class="nc" id="L393">        ret.append (getObjectWidth ());</span>
+<span class="nc" id="L394">        ret.append (&quot;\n&quot;);</span>
+<span class="nc" id="L395">        parameters = getObjectParams ();</span>
+<span class="nc" id="L396">        params = parameters.keys ();</span>
+<span class="nc bnc" id="L397" title="All 2 branches missed.">        if (null == params)</span>
+<span class="nc" id="L398">            ret.append (&quot;No Params found.\n&quot;);</span>
+        else
+<span class="nc bnc" id="L400" title="All 2 branches missed.">            for (int cnt = 0; params.hasMoreElements (); cnt++)</span>
+            {
+<span class="nc" id="L402">                paramName = (String)params.nextElement ();</span>
+<span class="nc" id="L403">                paramValue = (String)parameters.get (paramName);</span>
+<span class="nc" id="L404">                ret.append (cnt);</span>
+<span class="nc" id="L405">                ret.append (&quot;: Parameter name = &quot;);</span>
+<span class="nc" id="L406">                ret.append (paramName);</span>
+<span class="nc" id="L407">                ret.append (&quot;, Parameter value = &quot;);</span>
+<span class="nc" id="L408">                ret.append (paramValue);</span>
+<span class="nc" id="L409">                ret.append (&quot;\n&quot;);</span>
+            }
+<span class="nc" id="L411">        found = false;</span>
+<span class="nc bnc" id="L412" title="All 2 branches missed.">        for (SimpleNodeIterator e = children (); e.hasMoreNodes ();)</span>
+        {
+<span class="nc" id="L414">            node = e.nextNode ();</span>
+<span class="nc bnc" id="L415" title="All 2 branches missed.">            if (node instanceof Tag)</span>
+<span class="nc bnc" id="L416" title="All 2 branches missed.">                if (((Tag)node).getTagName ().equals (&quot;PARAM&quot;))</span>
+<span class="nc" id="L417">                    continue;</span>
+<span class="nc bnc" id="L418" title="All 2 branches missed.">            if (!found)</span>
+<span class="nc" id="L419">                ret.append (&quot;Miscellaneous items :\n&quot;);</span>
+            else
+<span class="nc" id="L421">                ret.append (&quot; &quot;);</span>
+<span class="nc" id="L422">            found = true;</span>
+<span class="nc" id="L423">            ret.append (node.toString ());</span>
+        }
+<span class="nc bnc" id="L425" title="All 2 branches missed.">        if (found)</span>
+<span class="nc" id="L426">            ret.append (&quot;\n&quot;);</span>
+<span class="nc" id="L427">        ret.append (&quot;End of Object Tag\n&quot;);</span>
+<span class="nc" id="L428">        ret.append (&quot;*****************\n&quot;);</span>
+        
+<span class="nc" id="L430">        return (ret.toString ());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

@@ -1,0 +1,976 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>ParserTest.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tests</a> &gt; <span class="el_source">ParserTest.java</span></div><h1>ParserTest.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Somik Raha
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/test/java/org/htmlparser/tests/ParserTest.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 13:37:00 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 5 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tests;
+
+import java.io.BufferedInputStream;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Locale;
+
+import org.htmlparser.Node;
+import org.htmlparser.Parser;
+import org.htmlparser.PrototypicalNodeFactory;
+import org.htmlparser.Remark;
+import org.htmlparser.Tag;
+import org.htmlparser.Text;
+import org.htmlparser.filters.NodeClassFilter;
+import org.htmlparser.filters.TagNameFilter;
+import org.htmlparser.lexer.InputStreamSource;
+import org.htmlparser.tags.BodyTag;
+import org.htmlparser.tags.ImageTag;
+import org.htmlparser.tags.LinkTag;
+import org.htmlparser.tags.MetaTag;
+import org.htmlparser.util.DefaultParserFeedback;
+import org.htmlparser.util.NodeIterator;
+import org.htmlparser.util.NodeList;
+import org.htmlparser.util.ParserException;
+import org.htmlparser.util.SimpleNodeIterator;
+
+public class ParserTest extends ParserTestCase
+{
+    static
+    {
+<span class="fc" id="L61">        System.setProperty (&quot;org.htmlparser.tests.ParserTest&quot;, &quot;ParserTest&quot;);</span>
+<span class="fc" id="L62">    }</span>
+
+    public ParserTest(String name) {
+<span class="fc" id="L65">        super(name);</span>
+<span class="fc" id="L66">    }</span>
+    public void testElements() throws Exception {
+<span class="fc" id="L68">        StringBuffer hugeData = new StringBuffer();</span>
+<span class="fc bfc" id="L69" title="All 2 branches covered.">        for (int i=0;i&lt;5001;i++) hugeData.append('a');</span>
+<span class="fc" id="L70">        createParser(hugeData.toString());</span>
+<span class="fc" id="L71">        int i = 0;</span>
+<span class="fc bfc" id="L72" title="All 2 branches covered.">        for (NodeIterator e = parser.elements();e.hasMoreNodes();)</span>
+        {
+<span class="fc" id="L74">            node[i++] = e.nextNode();</span>
+        }
+<span class="fc" id="L76">        assertEquals(&quot;There should be 1 node identified&quot;,1,i);</span>
+        // Now try getting the elements again
+//      i = 0;
+//      reader.reset();
+//      reader.setLineCount(1);
+//      reader.setPosInLine(-1);
+//      for (HTMLEnumeration e = parser.elements();e.hasMoreNodes();)
+//      {
+//          node[i++] = e.nextHTMLNode();
+//      }
+//      assertEquals(&quot;There should be 1 node identified (second call to parser.elements())&quot;,1,i);
+<span class="fc" id="L87">    }</span>
+
+    /**
+     * This testcase needs you to be online.
+     */
+    public void testElementsFromWeb() throws Exception {
+        Parser parser;
+        try {
+<span class="nc" id="L95">            parser = new Parser(&quot;http://www.google.com&quot;);</span>
+<span class="nc" id="L96">        }</span>
+<span class="fc" id="L97">        catch (Exception e ){</span>
+<span class="fc" id="L98">            throw new ParserException(&quot;You must be offline! This test needs you to be connected to the internet.&quot;,e);</span>
+        }
+
+<span class="nc" id="L101">        Node[] node = new Node[500];</span>
+<span class="nc" id="L102">        int i = 0;</span>
+<span class="nc bnc" id="L103" title="All 2 branches missed.">        for (NodeIterator e = parser.elements();e.hasMoreNodes();)</span>
+        {
+<span class="nc" id="L105">            node[i++] = e.nextNode();</span>
+        }
+<span class="nc" id="L107">        int cnt = i;</span>
+<span class="nc" id="L108">        parser.reset ();</span>
+        // Now try getting the elements again
+<span class="nc" id="L110">        i = 0;</span>
+<span class="nc bnc" id="L111" title="All 2 branches missed.">        for (NodeIterator e = parser.elements();e.hasMoreNodes();)</span>
+        {
+<span class="nc" id="L113">            node[i++] = e.nextNode();</span>
+        }
+<span class="nc" id="L115">        assertEquals(&quot;There should be &quot;+cnt+&quot; nodes identified (second call to parser.elements())&quot;,cnt,i);</span>
+<span class="nc" id="L116">    }</span>
+
+    /**
+     * Test the Parser(URLConnection) constructor.
+     * This testcase needs you to be online.
+     * Based on the form at Canada Post &lt;code&gt;http://www.canadapost.ca/tools/pcl/bin/default-e.asp&lt;/code&gt;:
+     * &lt;pre&gt;
+     * &amp;lt;form NAME=&quot;SearchQuick&quot; method=&quot;POST&quot; action=&quot;cp_search_response-e.asp&quot;
+     *  onSubmit=&quot;return runSubmit();&quot;&amp;gt;
+     *
+     * &amp;lt;!-- begin test hidden field code --&amp;gt;
+     *   &amp;lt;input TYPE=&quot;Hidden&quot; NAME=&quot;app_language&quot; value=&quot;english&quot;&amp;gt;
+     *
+     *   &amp;lt;input TYPE=&quot;Hidden&quot; NAME=&quot;app_response_start_row_number&quot; value=&quot;1&quot;&amp;gt;
+     *   &amp;lt;input TYPE=&quot;Hidden&quot; NAME=&quot;app_response_rows_max&quot; value=&quot;9&quot;&amp;gt;
+     *
+     *   &amp;lt;input TYPE=&quot;Hidden&quot; NAME=&quot;app_source&quot; value=&quot;quick&quot;&amp;gt;
+     *   &amp;lt;input TYPE=&quot;Hidden&quot; NAME=&quot;query_source&quot; value=&quot;q&quot;&amp;gt;
+     *
+     *   &amp;lt;input TYPE=&quot;Hidden&quot; NAME=&quot;name&quot; value&amp;gt;
+     *   &amp;lt;input TYPE=&quot;Hidden&quot; NAME=&quot;postal_code&quot; value&amp;gt;
+     *   &amp;lt;input TYPE=&quot;Hidden&quot; NAME=&quot;directory_area_name&quot; value&amp;gt;
+     *
+     *   &amp;lt;input TYPE=&quot;Hidden&quot; NAME=&quot;delivery_mode&quot; value&amp;gt;
+     *   &amp;lt;input TYPE=&quot;Hidden&quot; NAME=&quot;Suffix&quot; value&amp;gt;
+     *
+     *   &amp;lt;input TYPE=&quot;Hidden&quot; NAME=&quot;street_direction&quot; value&amp;gt;
+     *   &amp;lt;input TYPE=&quot;Hidden&quot; NAME=&quot;installation_type&quot; value&amp;gt;
+     *   &amp;lt;input TYPE=&quot;Hidden&quot; NAME=&quot;delivery_number&quot; value&amp;gt;
+     *   &amp;lt;input TYPE=&quot;Hidden&quot; NAME=&quot;installation_name&quot; value&amp;gt;
+     *   &amp;lt;input TYPE=&quot;Hidden&quot; NAME=&quot;unit_number&quot; value&amp;gt;
+     *
+     *   &amp;lt;input TYPE=&quot;Hidden&quot; NAME=&quot;app_state&quot; value=&quot;production&quot;&amp;gt;
+     * &amp;lt;!-- end test hidden field code --&amp;gt;
+     *
+     * &amp;lt;p&amp;gt;
+     *   &amp;lt;table border=&quot;0&quot; cellpadding=&quot;0&quot; width=&quot;90%&quot; cellspacing=&quot;0&quot;&amp;gt;
+     *
+     *     &amp;lt;tr&amp;gt;
+     *       &amp;lt;td  class=&quot;tbltitle&quot;&amp;gt; Street Number: &amp;lt;/td&amp;gt;
+     *       &amp;lt;td class=&quot;tbltitle&quot;&amp;gt; Street Name: &amp;lt;/td&amp;gt;
+     *       &amp;lt;td class=&quot;tbltitle&quot;&amp;gt; Street Type:&amp;lt;/td&amp;gt;
+     *     &amp;lt;/tr&amp;gt;
+     *     &amp;lt;tr&amp;gt;
+     *
+     *       &amp;lt;td&amp;gt;
+     *         &amp;lt;input type=&quot;text&quot; name=&quot;street_number&quot; size=&quot;10&quot; maxlength=&quot;10&quot;&amp;gt;
+     *       &amp;lt;/td&amp;gt;
+     *       &amp;lt;td&amp;gt;
+     *         &amp;lt;input type=&quot;text&quot; name=&quot;street_name&quot; size=&quot;30&quot; maxlength=&quot;40&quot;&amp;gt;
+     *         &amp;lt;input type=&quot;hidden&quot; name=&quot;street_type&quot; size=&quot;30&quot;&amp;gt;
+     *       &amp;lt;/td&amp;gt;
+     *       &amp;lt;td&amp;gt;&amp;lt;input type=&quot;text&quot; name=&quot;test&quot; size=&quot;10&quot; maxlength=&quot;30&quot;&amp;gt;&amp;lt;/td&amp;gt;
+     *     &amp;lt;/tr&amp;gt;
+     *
+     *   &amp;lt;/table&amp;gt;
+     * &amp;lt;p&amp;gt;
+     *   &amp;lt;table border=&quot;0&quot; cellpadding=&quot;0&quot; width=&quot;90%&quot; cellspacing=&quot;0&quot;&amp;gt;
+     *     &amp;lt;tr&amp;gt;
+     *       &amp;lt;td class=&quot;tbltitle&quot;&amp;gt;
+     *         Municipality (City, Town, etc.):
+     *       &amp;lt;/td&amp;gt;
+     *       &amp;lt;td class=&quot;tbltitle&quot;&amp;gt;
+     *         Province:
+     *       &amp;lt;/td&amp;gt;
+     *
+     *     &amp;lt;/tr&amp;gt;
+     *     &amp;lt;tr&amp;gt;
+     *       &amp;lt;td&amp;gt;
+     *         &amp;lt;input type=&quot;text&quot; name=&quot;city&quot; size=&quot;30&quot; maxlength=&quot;30&quot;&amp;gt;
+     *       &amp;lt;/td&amp;gt;
+     *       &amp;lt;td&amp;gt;
+     *         &amp;lt;select size=&quot;1&quot; name=&quot;prov&quot;&amp;gt;
+     *           &amp;lt;option selected value=&quot;NULL&quot;&amp;gt;Select&amp;lt;/option&amp;gt;&amp;lt;option value=&quot;AB&quot;&amp;gt;AB - Alberta&amp;lt;/option&amp;gt;&amp;lt;option value=&quot;BC&quot;&amp;gt;BC - British Columbia&amp;lt;/option&amp;gt;&amp;lt;option value=&quot;MB&quot;&amp;gt;MB - Manitoba&amp;lt;/option&amp;gt;&amp;lt;option value=&quot;NB&quot;&amp;gt;NB - New Brunswick&amp;lt;/option&amp;gt;&amp;lt;option value=&quot;NL&quot;&amp;gt;NL - Newfoundland and Labrador&amp;lt;/option&amp;gt;&amp;lt;option value=&quot;NS&quot;&amp;gt;NS - Nova Scotia&amp;lt;/option&amp;gt;&amp;lt;option value=&quot;NT&quot;&amp;gt;NT - Northwest Territories&amp;lt;/option&amp;gt;&amp;lt;option value=&quot;NU&quot;&amp;gt;NU - Nunavut&amp;lt;/option&amp;gt;&amp;lt;option value=&quot;ON&quot;&amp;gt;ON - Ontario&amp;lt;/option&amp;gt;&amp;lt;option value=&quot;PE&quot;&amp;gt;PE - Prince Edward Island&amp;lt;/option&amp;gt;&amp;lt;option value=&quot;QC&quot;&amp;gt;QC - Quebec&amp;lt;/option&amp;gt;&amp;lt;option value=&quot;SK&quot;&amp;gt;SK - Saskatchewan&amp;lt;/option&amp;gt;&amp;lt;option value=&quot;YT&quot;&amp;gt;YT - Yukon&amp;lt;/option&amp;gt;
+     *
+     *         &amp;lt;/select&amp;gt;
+     *       &amp;lt;/td&amp;gt;
+     *     &amp;lt;/tr&amp;gt;
+     *     &amp;lt;tr&amp;gt;
+     *       &amp;lt;td height=&quot;10&quot;&amp;gt;&amp;amp;nbsp;&amp;lt;/td&amp;gt;
+     *       &amp;lt;td&amp;gt;&amp;amp;nbsp;&amp;lt;/td&amp;gt;
+     *     &amp;lt;/tr&amp;gt;
+     *     &amp;lt;tr&amp;gt;
+     *       &amp;lt;td colspan=&quot;2&quot; align=&quot;right&quot; nowrap&amp;gt;
+     *     &amp;lt;input type=&quot;image&quot; src=&quot;images/bb_submit-e.gif&quot; name=&quot;Search&quot; border=&quot;0&quot; WIDTH=&quot;88&quot; HEIGHT=&quot;23&quot;&amp;gt;
+     *         &amp;amp;nbsp; &amp;lt;a href=&quot;#&quot; onclick=&quot;javascript:fClearAllFields();&quot;&amp;gt;&amp;lt;img src=&quot;images/bb_clear_form-e.gif&quot; name=&quot;Clear&quot; border=&quot;0&quot; WIDTH=&quot;88&quot; HEIGHT=&quot;23&quot;&amp;gt;&amp;lt;/a&amp;gt;
+     *    &amp;lt;/td&amp;gt;
+     *     &amp;lt;/tr&amp;gt;
+     *   &amp;lt;/table&amp;gt;
+     * &amp;lt;p&amp;gt;
+     * &amp;lt;/form&amp;gt;
+     * &lt;/pre&gt;
+     * Sumbits the POST and verifies the returned HTML contains an expected value.
+     */
+    public void testPOST() throws Exception
+    {   // the form data:
+<span class="fc" id="L212">        final String number = &quot;2708&quot;;</span>
+<span class="fc" id="L213">        final String street = &quot;Kelly&quot;;</span>
+<span class="fc" id="L214">        final String type = &quot;Avenue&quot;;</span>
+<span class="fc" id="L215">        final String city = &quot;Ottawa&quot;;</span>
+<span class="fc" id="L216">        final String province = &quot;ON&quot;;</span>
+        // the correct answer
+<span class="fc" id="L218">        final String postal_code = &quot;K2B 7V4&quot;;</span>
+
+        Parser parser;
+        URL url;
+        HttpURLConnection connection;
+        StringBuffer buffer;
+        PrintWriter out;
+        boolean pass;
+        NodeIterator enumeration;
+        Node node;
+        Text string;
+
+        try
+        {
+<span class="nc" id="L232">            url = new URL (&quot;http://www.canadapost.ca/tools/pcl/bin/cp_search_response-e.asp&quot;);</span>
+<span class="nc" id="L233">             connection = (HttpURLConnection)url.openConnection ();</span>
+<span class="nc" id="L234">            connection.setRequestMethod (&quot;POST&quot;);</span>
+<span class="nc" id="L235">            connection.setRequestProperty (&quot;Referer&quot;, &quot;http://www.canadapost.ca/tools/pcl/bin/default-e.asp&quot;);</span>
+<span class="nc" id="L236">            connection.setDoOutput (true);</span>
+<span class="nc" id="L237">            connection.setDoInput (true);</span>
+<span class="nc" id="L238">            connection.setUseCaches (false);</span>
+<span class="nc" id="L239">            buffer = new StringBuffer (1024);</span>
+<span class="nc" id="L240">            buffer.append (&quot;app_language=&quot;);</span>
+<span class="nc" id="L241">            buffer.append (&quot;english&quot;);</span>
+<span class="nc" id="L242">            buffer.append (&quot;&amp;&quot;);</span>
+<span class="nc" id="L243">            buffer.append (&quot;app_response_start_row_number=&quot;);</span>
+<span class="nc" id="L244">            buffer.append (&quot;1&quot;);</span>
+<span class="nc" id="L245">            buffer.append (&quot;&amp;&quot;);</span>
+<span class="nc" id="L246">            buffer.append (&quot;app_response_rows_max=&quot;);</span>
+<span class="nc" id="L247">            buffer.append (&quot;9&quot;);</span>
+<span class="nc" id="L248">            buffer.append (&quot;&amp;&quot;);</span>
+<span class="nc" id="L249">            buffer.append (&quot;app_source=&quot;);</span>
+<span class="nc" id="L250">            buffer.append (&quot;quick&quot;);</span>
+<span class="nc" id="L251">            buffer.append (&quot;&amp;&quot;);</span>
+<span class="nc" id="L252">            buffer.append (&quot;query_source=&quot;);</span>
+<span class="nc" id="L253">            buffer.append (&quot;q&quot;);</span>
+<span class="nc" id="L254">            buffer.append (&quot;&amp;&quot;);</span>
+<span class="nc" id="L255">            buffer.append (&quot;name=&quot;);</span>
+<span class="nc" id="L256">            buffer.append (&quot;&amp;&quot;);</span>
+<span class="nc" id="L257">            buffer.append (&quot;postal_code=&quot;);</span>
+<span class="nc" id="L258">            buffer.append (&quot;&amp;&quot;);</span>
+<span class="nc" id="L259">            buffer.append (&quot;directory_area_name=&quot;);</span>
+<span class="nc" id="L260">            buffer.append (&quot;&amp;&quot;);</span>
+<span class="nc" id="L261">            buffer.append (&quot;delivery_mode=&quot;);</span>
+<span class="nc" id="L262">            buffer.append (&quot;&amp;&quot;);</span>
+<span class="nc" id="L263">            buffer.append (&quot;Suffix=&quot;);</span>
+<span class="nc" id="L264">            buffer.append (&quot;&amp;&quot;);</span>
+<span class="nc" id="L265">            buffer.append (&quot;street_direction=&quot;);</span>
+<span class="nc" id="L266">            buffer.append (&quot;&amp;&quot;);</span>
+<span class="nc" id="L267">            buffer.append (&quot;installation_type=&quot;);</span>
+<span class="nc" id="L268">            buffer.append (&quot;&amp;&quot;);</span>
+<span class="nc" id="L269">            buffer.append (&quot;delivery_number=&quot;);</span>
+<span class="nc" id="L270">            buffer.append (&quot;&amp;&quot;);</span>
+<span class="nc" id="L271">            buffer.append (&quot;installation_name=&quot;);</span>
+<span class="nc" id="L272">            buffer.append (&quot;&amp;&quot;);</span>
+<span class="nc" id="L273">            buffer.append (&quot;unit_numbere=&quot;);</span>
+<span class="nc" id="L274">            buffer.append (&quot;&amp;&quot;);</span>
+<span class="nc" id="L275">            buffer.append (&quot;app_state=&quot;);</span>
+<span class="nc" id="L276">            buffer.append (&quot;production&quot;);</span>
+<span class="nc" id="L277">            buffer.append (&quot;&amp;&quot;);</span>
+<span class="nc" id="L278">            buffer.append (&quot;street_number=&quot;);</span>
+<span class="nc" id="L279">            buffer.append (number);</span>
+<span class="nc" id="L280">            buffer.append (&quot;&amp;&quot;);</span>
+<span class="nc" id="L281">            buffer.append (&quot;street_name=&quot;);</span>
+<span class="nc" id="L282">            buffer.append (street);</span>
+<span class="nc" id="L283">            buffer.append (&quot;&amp;&quot;);</span>
+<span class="nc" id="L284">            buffer.append (&quot;street_type=&quot;);</span>
+<span class="nc" id="L285">            buffer.append (type);</span>
+<span class="nc" id="L286">            buffer.append (&quot;&amp;&quot;);</span>
+<span class="nc" id="L287">            buffer.append (&quot;test=&quot;);</span>
+<span class="nc" id="L288">            buffer.append (&quot;&amp;&quot;);</span>
+<span class="nc" id="L289">            buffer.append (&quot;city=&quot;);</span>
+<span class="nc" id="L290">            buffer.append (city);</span>
+<span class="nc" id="L291">            buffer.append (&quot;&amp;&quot;);</span>
+<span class="nc" id="L292">            buffer.append (&quot;prov=&quot;);</span>
+<span class="nc" id="L293">            buffer.append (province);</span>
+<span class="nc" id="L294">            buffer.append (&quot;&amp;&quot;);</span>
+<span class="nc" id="L295">            buffer.append (&quot;Search=&quot;);</span>
+<span class="nc" id="L296">            out = new PrintWriter (connection.getOutputStream ());</span>
+<span class="nc" id="L297">            out.print (buffer);</span>
+<span class="nc" id="L298">            out.close ();</span>
+<span class="nc" id="L299">            parser = new Parser (connection);</span>
+<span class="nc" id="L300">            parser.setNodeFactory (new PrototypicalNodeFactory (true));</span>
+<span class="nc" id="L301">        }</span>
+<span class="fc" id="L302">        catch (Exception e)</span>
+        {
+<span class="fc" id="L304">            throw new ParserException (&quot;You must be offline! This test needs you to be connected to the internet.&quot;, e);</span>
+        }
+
+<span class="nc" id="L307">        pass = false;</span>
+<span class="nc bnc" id="L308" title="All 2 branches missed.">        for (enumeration = parser.elements (); enumeration.hasMoreNodes ();)</span>
+        {
+<span class="nc" id="L310">            node = enumeration.nextNode ();</span>
+<span class="nc bnc" id="L311" title="All 2 branches missed.">            if (node instanceof Text)</span>
+            {
+<span class="nc" id="L313">                string = (Text)node;</span>
+<span class="nc bnc" id="L314" title="All 2 branches missed.">                if (-1 != string.getText ().indexOf (postal_code))</span>
+<span class="nc" id="L315">                    pass = true;</span>
+            }
+        }
+<span class="nc" id="L318">        assertTrue(&quot;POST operation failed.&quot;, pass);</span>
+<span class="nc" id="L319">    }</span>
+
+    /**
+     * Tests the 'from file' Parser constructor.
+     */
+    public void testFile ()
+    {
+        String path;
+        File file;
+        PrintWriter out;
+        Parser parser;
+        Node nodes[];
+        int i;
+        NodeIterator enumeration;
+
+<span class="fc" id="L334">        path = System.getProperty (&quot;user.dir&quot;);</span>
+<span class="pc bpc" id="L335" title="1 of 2 branches missed.">        if (!path.endsWith (File.separator))</span>
+<span class="fc" id="L336">            path += File.separator;</span>
+<span class="fc" id="L337">        file = new File (path + &quot;delete_me.html&quot;);</span>
+        try
+        {
+<span class="fc" id="L340">            out = new PrintWriter (new FileWriter (file));</span>
+<span class="fc" id="L341">            out.println (&quot;&lt;!DOCTYPE HTML PUBLIC \&quot;-//W3C//DTD HTML 4.01 Transitional//EN\&quot;&gt;&quot;);</span>
+<span class="fc" id="L342">            out.println (&quot;&lt;html&gt;&quot;);</span>
+<span class="fc" id="L343">            out.println (&quot;&lt;head&gt;&quot;);</span>
+<span class="fc" id="L344">            out.println (&quot;&lt;title&gt;test&lt;/title&gt;&quot;);</span>
+<span class="fc" id="L345">            out.println (&quot;&lt;meta http-equiv=\&quot;Content-Type\&quot; content=\&quot;text/html; charset=iso-8859-1\&quot;&gt;&quot;);</span>
+<span class="fc" id="L346">            out.println (&quot;&lt;/head&gt;&quot;);</span>
+<span class="fc" id="L347">            out.println (&quot;&lt;body&gt;&quot;);</span>
+<span class="fc" id="L348">            out.println (&quot;This is a test page &quot;);</span>
+<span class="fc" id="L349">            out.println (&quot;&lt;/body&gt;&quot;);</span>
+<span class="fc" id="L350">            out.println (&quot;&lt;/html&gt;&quot;);</span>
+<span class="fc" id="L351">            out.close ();</span>
+<span class="fc" id="L352">            parser = new Parser (file.getAbsolutePath (), new DefaultParserFeedback(DefaultParserFeedback.QUIET));</span>
+<span class="fc" id="L353">            parser.setNodeFactory (new PrototypicalNodeFactory (true));</span>
+<span class="fc" id="L354">            nodes = new Node[30];</span>
+<span class="fc" id="L355">            i = 0;</span>
+<span class="fc bfc" id="L356" title="All 2 branches covered.">            for (enumeration = parser.elements (); enumeration.hasMoreNodes ();)</span>
+            {
+<span class="fc" id="L358">                nodes[i] = enumeration.nextNode ();</span>
+<span class="fc" id="L359">                i++;</span>
+            }
+<span class="fc" id="L361">            assertEquals(&quot;Expected nodes&quot;,20,i);</span>
+<span class="fc" id="L362">        }</span>
+<span class="nc" id="L363">        catch (Exception e)</span>
+        {
+<span class="nc" id="L365">            fail (e.toString ());</span>
+        }
+        finally
+<span class="nc" id="L368">        {</span>
+<span class="pc" id="L369">            file.delete ();</span>
+<span class="nc" id="L370">        }</span>
+<span class="fc" id="L371">    }</span>
+
+    /**
+     * Tests deleting a file held open by the parser.
+     * See bug #1005409 Input file not free by parser
+     */
+    public void testFileDelete ()
+    {
+        String path;
+        File file;
+        PrintWriter out;
+        Parser parser;
+        NodeIterator enumeration;
+
+<span class="fc" id="L385">        path = System.getProperty (&quot;user.dir&quot;);</span>
+<span class="pc bpc" id="L386" title="1 of 2 branches missed.">        if (!path.endsWith (File.separator))</span>
+<span class="fc" id="L387">            path += File.separator;</span>
+<span class="fc" id="L388">        file = new File (path + &quot;delete_me.html&quot;);</span>
+        try
+        {
+<span class="fc" id="L391">            out = new PrintWriter (new FileWriter (file));</span>
+<span class="fc" id="L392">            out.println (&quot;&lt;!DOCTYPE HTML PUBLIC \&quot;-//W3C//DTD HTML 4.01 Transitional//EN\&quot;&gt;&quot;);</span>
+<span class="fc" id="L393">            out.println (&quot;&lt;html&gt;&quot;);</span>
+<span class="fc" id="L394">            out.println (&quot;&lt;head&gt;&quot;);</span>
+<span class="fc" id="L395">            out.println (&quot;&lt;title&gt;test&lt;/title&gt;&quot;);</span>
+<span class="fc" id="L396">            out.println (&quot;&lt;meta http-equiv=\&quot;Content-Type\&quot; content=\&quot;text/html; charset=iso-8859-1\&quot;&gt;&quot;);</span>
+<span class="fc" id="L397">            out.println (&quot;&lt;/head&gt;&quot;);</span>
+<span class="fc" id="L398">            out.println (&quot;&lt;body&gt;&quot;);</span>
+<span class="fc" id="L399">            out.println (&quot;This is a test page &quot;);</span>
+<span class="fc" id="L400">            out.println (&quot;&lt;/body&gt;&quot;);</span>
+<span class="fc" id="L401">            out.println (&quot;&lt;/html&gt;&quot;);</span>
+            // fill our 16K buffer on read
+<span class="fc bfc" id="L403" title="All 2 branches covered.">            for (int i = 0; i &lt; InputStreamSource.BUFFER_SIZE; i++)</span>
+<span class="fc" id="L404">                out.println ();</span>
+<span class="fc" id="L405">            out.close ();</span>
+<span class="fc" id="L406">            parser = new Parser (file.getAbsolutePath (), new DefaultParserFeedback(DefaultParserFeedback.QUIET));</span>
+<span class="fc" id="L407">            parser.setNodeFactory (new PrototypicalNodeFactory (true));</span>
+<span class="fc" id="L408">            enumeration = parser.elements ();</span>
+<span class="fc" id="L409">            enumeration.nextNode ();</span>
+<span class="pc bpc" id="L410" title="1 of 2 branches missed.">            if (-1 != System.getProperty (&quot;os.name&quot;).indexOf(&quot;Windows&quot;))</span>
+                // linux/unix lets you delete a file even when it's open
+<span class="nc bnc" id="L412" title="All 2 branches missed.">                assertTrue (&quot;file deleted with more available&quot;, !file.delete ());</span>
+            // parser.getLexer ().getPage ().close ();
+<span class="fc" id="L414">            parser = null;</span>
+<span class="fc" id="L415">            enumeration = null;</span>
+<span class="fc" id="L416">            System.gc ();</span>
+<span class="fc" id="L417">            System.runFinalization ();</span>
+<span class="fc" id="L418">            assertTrue (&quot;file not deleted after destroy&quot;, file.delete ());</span>
+<span class="fc" id="L419">        }</span>
+<span class="nc" id="L420">        catch (Exception e)</span>
+        {
+<span class="nc" id="L422">            fail (e.toString ());</span>
+        }
+        finally
+<span class="nc" id="L425">        {</span>
+<span class="pc" id="L426">            file.delete ();</span>
+<span class="nc" id="L427">        }</span>
+<span class="fc" id="L428">    }</span>
+
+    /**
+     * Test with a HTTP header with a valid charset parameter.
+     * Here, Oracle Japan is an example of a HTTP server that correctly sets the
+     * charset in the header to match the content encoding.
+     */
+    public void testHTTPCharset ()
+    {
+        Parser parser;
+        try
+        {
+<span class="nc" id="L440">            parser = new Parser(&quot;http://www.oracle.co.jp/&quot;, Parser.DEVNULL);</span>
+<span class="nc" id="L441">            assertTrue(&quot;Character set should be Shift_JIS&quot;, parser.getEncoding ().equalsIgnoreCase (&quot;Shift_JIS&quot;));</span>
+<span class="nc" id="L442">        }</span>
+<span class="nc" id="L443">        catch (ParserException e)</span>
+        {
+<span class="nc" id="L445">            fail (&quot;could not open http://www.ibm.com/jp/&quot;);</span>
+        }
+<span class="nc" id="L447">    }</span>
+
+    /**
+     * Test with a HTML header with a charset parameter not matching the HTTP header.
+     * Here, www.sony.co.jp is an example of a HTTP server that does not set the
+     * charset in the header to match the content encoding. We check that after
+     * the enumeration is created, that the charset has changed to the correct value.
+     */
+    public void testHTMLCharset ()
+    {
+        Parser parser;
+        NodeIterator enumeration;
+
+        try
+        {
+<span class="nc" id="L462">            parser = new Parser(&quot;http://www.sony.co.jp&quot;, Parser.DEVNULL);</span>
+<span class="nc" id="L463">            assertEquals(&quot;Character set by default is ISO-8859-1&quot;, &quot;ISO-8859-1&quot;, parser.getEncoding ());</span>
+<span class="nc" id="L464">            enumeration = parser.elements();</span>
+            // search for the &lt;BODY&gt; tag
+<span class="nc bnc" id="L466" title="All 2 branches missed.">            while (enumeration.hasMoreNodes ())</span>
+<span class="nc bnc" id="L467" title="All 2 branches missed.">                if (enumeration.nextNode () instanceof BodyTag)</span>
+<span class="nc" id="L468">                    break;</span>
+<span class="nc" id="L469">            assertTrue(&quot;Character set should be Shift_JIS&quot;, parser.getEncoding ().equalsIgnoreCase (&quot;Shift_JIS&quot;));</span>
+<span class="nc" id="L470">        }</span>
+<span class="nc" id="L471">        catch (ParserException e)</span>
+        {
+<span class="nc" id="L473">            fail (&quot;could not open http://www.sony.co.jp&quot;);</span>
+        }
+<span class="nc" id="L475">    }</span>
+
+    /**
+     * Test the case of a charset directive different than the HTTP header.
+     * See bug #707447 META TAG - CHARSET
+     * and bug #699886 can't parse website other than iso-8859-1
+     */
+    public void testSwitchCharset () throws ParserException
+    {
+        Parser parser;
+<span class="nc" id="L485">        String url = &quot;http://htmlparser.sourceforge.net/test/gb2312Charset.html&quot;;</span>
+        int i;
+        Node[] nodes;
+
+<span class="nc" id="L489">        parser = new Parser(url);</span>
+<span class="nc" id="L490">        parser.setNodeFactory (new PrototypicalNodeFactory (new MetaTag ()));</span>
+<span class="nc" id="L491">        i = 0;</span>
+<span class="nc" id="L492">        nodes = new Node[30];</span>
+<span class="nc bnc" id="L493" title="All 2 branches missed.">        for (NodeIterator e = parser.elements(); e.hasMoreNodes();)</span>
+<span class="nc" id="L494">            nodes[i++] = e.nextNode();</span>
+<span class="nc" id="L495">        assertEquals (&quot;Expected nodes&quot;, 23, i);</span>
+<span class="nc" id="L496">    }</span>
+
+    /**
+     * Test the case of a double quoted charset directive.
+     * See bug #694477.
+     * Technically, this format does not meet the HTTP/1.1
+     * specification in RFC 2068. In this case that I believe
+     * that the quotes are being inproperly generated in the
+     * header by a server-side web application.
+     * Nonetheless, it would be nice to handle this case.
+     */
+    public void testDoubleQuotedCharset () throws ParserException
+    {
+        Parser parser;
+<span class="nc" id="L510">        String url = &quot;http://htmlparser.sourceforge.net/test/DoublequotedCharset.html&quot;;</span>
+
+<span class="nc" id="L512">        parser = new Parser(url);</span>
+<span class="nc bnc" id="L513" title="All 2 branches missed.">        for (NodeIterator e = parser.elements();e.hasMoreNodes();)</span>
+<span class="nc" id="L514">            e.nextNode();</span>
+<span class="nc" id="L515">        assertTrue (&quot;Wrong encoding&quot;, parser.getEncoding ().equals (&quot;UTF-8&quot;));</span>
+<span class="nc" id="L516">    }</span>
+
+    /**
+     * Test the case of a single quoted charset directive.
+     * See bug #694477.
+     * Technically, this format does not meet the HTTP/1.1
+     * specification in RFC 2068. In this case that I believe
+     * that the quotes are being inproperly generated in the
+     * header by a server-side web application.
+     * Nonetheless, it would be nice to handle this case.
+     */
+    public void testSingleQuotedCharset () throws ParserException
+    {
+        Parser parser;
+<span class="nc" id="L530">        String url = &quot;http://htmlparser.sourceforge.net/test/SinglequotedCharset.html&quot;;</span>
+
+<span class="nc" id="L532">        parser = new Parser(url);</span>
+<span class="nc bnc" id="L533" title="All 2 branches missed.">        for (NodeIterator e = parser.elements();e.hasMoreNodes();)</span>
+<span class="nc" id="L534">            e.nextNode();</span>
+<span class="nc" id="L535">        assertTrue (&quot;Wrong encoding&quot;, parser.getEncoding ().equals (&quot;UTF-8&quot;));</span>
+<span class="nc" id="L536">    }</span>
+
+    // This test is commented out because the URL no longer has a comma delimited character set.
+    // Reinstate when a suitable URL is discovered, or the unit tests set up their own HTTP server.
+//    /**
+//     * Test a bogus comma delimited charset specification in the HTTP header.
+//     * See bug #722941.
+//     * A comma delimted charset in the HTTP header does not meet the HTTP/1.1
+//     * specification in RFC 2068. In this case that I believe
+//     * that some idiot has misconfigured the HTTP server, but since it's
+//     * AOL it would be nice to handle this case.
+//     */
+//    public void testCommaListCharset () throws ParserException
+//    {
+//        URL url;
+//        URLConnection connection;
+//        Parser parser;
+//        String bogus = &quot;http://users.aol.com/geinster/rej.htm&quot;;
+//
+//        try
+//        {
+//            url = new URL (bogus);
+//            connection = url.openConnection ();
+//            parser = new Parser (new Lexer (new Page (connection)));
+//            // must be the default
+//            assertTrue (&quot;Wrong encoding&quot;, parser.getEncoding ().equals (&quot;ISO-8859-1&quot;));
+//            for (NodeIterator e = parser.elements();e.hasMoreNodes();)
+//                e.nextNode();
+//            assertTrue (&quot;Wrong encoding&quot;, parser.getEncoding ().equals (&quot;windows-1252&quot;));
+//        }
+//        catch (Exception e)
+//        {
+//            fail (e.getMessage ());
+//        }
+//    }
+
+    public void testNullUrl() {
+        try
+        {
+<span class="nc" id="L575">            new Parser(&quot;http://none.existant.url.org&quot;, Parser.DEVNULL);</span>
+<span class="nc" id="L576">            assertTrue(&quot;Should have thrown an exception!&quot;,false);</span>
+<span class="nc" id="L577">        }</span>
+<span class="fc" id="L578">        catch (ParserException e)</span>
+        {
+            // expected outcome
+        }
+<span class="fc" id="L582">    }</span>
+
+    public void testURLWithSpaces() throws ParserException{
+        Parser parser;
+<span class="nc" id="L586">        String url = &quot;http://htmlparser.sourceforge.net/test/This is a Test Page.html&quot;;</span>
+
+<span class="nc" id="L588">        parser = new Parser(url);</span>
+<span class="nc" id="L589">        parser.setNodeFactory (new PrototypicalNodeFactory (true));</span>
+<span class="nc" id="L590">        Node node [] = new Node[30];</span>
+<span class="nc" id="L591">        int i = 0;</span>
+<span class="nc bnc" id="L592" title="All 2 branches missed.">        for (NodeIterator e = parser.elements();e.hasMoreNodes();) {</span>
+<span class="nc" id="L593">            node[i] = e.nextNode();</span>
+<span class="nc" id="L594">            i++;</span>
+
+        }
+<span class="nc" id="L597">        assertEquals(&quot;Expected nodes&quot;,20,i);</span>
+<span class="nc" id="L598">    }</span>
+
+    public void testLinkCollection() throws ParserException {
+<span class="fc" id="L601">        createParser(</span>
+<span class="fc" id="L602">        &quot;&lt;html&gt;&lt;head&gt;&lt;meta http-equiv=\&quot;content-type\&quot; content=\&quot;text/html; charset=UTF-8\&quot;&gt;&lt;title&gt;Google&lt;/title&gt;&lt;style&gt;&lt;!--\n&quot;+</span>
+        &quot;body,td,a,p,.h{font-family:arial,sans-serif;} .h{font-size: 20px;} .h{color:} .q{text-decoration:none; color:#0000cc;}\n&quot;+
+        &quot;//--&gt;&lt;/style&gt;\n&quot;+
+        &quot;&lt;script&gt;\n&quot;+
+        &quot;&lt;!--\n&quot;+
+        &quot;function sf(){document.f.q.focus();}\n&quot;+
+        &quot;function c(p){var f=document.f;if (f.action) {f.action = 'http://'+p;f.submit();return false;}return true;}\n&quot;+
+        &quot;// --&gt;\n&quot;+
+        &quot;&lt;/script&gt;\n&quot;+
+        &quot;&lt;/head&gt;&lt;body bgcolor=#ffffff text=#000000 link=#0000cc vlink=#551a8b alink=#ff0000 onLoad=sf()&gt;&lt;center&gt;&lt;table border=0 cellspacing=0 cellpadding=0&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=\&quot;images/logo.gif\&quot; width=276 height=110 alt=\&quot;Google\&quot;&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;br&gt;\n&quot;+
+        &quot;&lt;table border=0 cellspacing=0 cellpadding=0&gt;&quot; +
+            &quot;&lt;tr&gt;&quot; +
+            &quot;&lt;td width=15&gt;&amp;nbsp;&lt;/td&gt;&quot; +
+            &quot;&lt;td id=0 bgcolor=#3366cc align=center width=95 nowrap&gt;&quot; +
+                &quot;&lt;font color=#ffffff size=-1&gt;&lt;b&gt;Web&lt;/b&gt;&lt;/font&gt;&quot; +
+            &quot;&lt;/td&gt;&quot; +
+            &quot;&lt;td width=15&gt;&amp;nbsp;&lt;/td&gt;&quot; +
+            &quot;&lt;td id=1 bgcolor=#efefef align=center width=95 nowrap onClick=\&quot;return c('www.google.com/imghp');\&quot; style=cursor:pointer;cursor:hand;&gt;&lt;a id=1a class=q href=\&quot;/imghp?hl=en&amp;ie=UTF-8&amp;oe=UTF-8\&quot; onClick=\&quot;return c('www.google.com/imghp');\&quot;&gt;&lt;font size=-1&gt;Images&lt;/font&gt;&lt;/a&gt;&lt;/td&gt;&lt;td width=15&gt;&amp;nbsp;&lt;/td&gt;&lt;td id=2 bgcolor=#efefef align=center width=95 nowrap onClick=\&quot;return c('www.google.com/grphp');\&quot; style=cursor:pointer;cursor:hand;&gt;&lt;a id=2a class=q href=\&quot;/grphp?hl=en&amp;ie=UTF-8&amp;oe=UTF-8\&quot; onClick=\&quot;return c('www.google.com/grphp');\&quot;&gt;&lt;font size=-1&gt;Groups&lt;/font&gt;&lt;/a&gt;&lt;/td&gt;&lt;td width=15&gt;&amp;nbsp;&lt;/td&gt;&lt;td id=3 bgcolor=#efefef align=center width=95 nowrap onClick=\&quot;return c('www.google.com/dirhp');\&quot; style=cursor:pointer;cursor:hand;&gt;&lt;a id=3a class=q href=\&quot;/dirhp?hl=en&amp;ie=UTF-8&amp;oe=UTF-8\&quot; onClick=\&quot;return c('www.google.com/dirhp');\&quot;&gt;&lt;font size=-1&gt;Directory&lt;/font&gt;&lt;/a&gt;&lt;/td&gt;&lt;td width=15&gt;&amp;nbsp;&lt;/td&gt;&lt;td id=4 bgcolor=#efefef align=center width=95 nowrap onClick=\&quot;return c('www.google.com/nwshp');\&quot; style=cursor:pointer;cursor:hand;&gt;&lt;a id=4a class=q href=\&quot;/nwshp?hl=en&amp;ie=UTF-8&amp;oe=UTF-8\&quot; onClick=\&quot;return c('www.google.com/nwshp');\&quot;&gt;&lt;font size=-1&gt;&lt;nobr&gt;News-&lt;font  color=red&gt;New!&lt;/font&gt;&lt;/nobr&gt;&lt;/font&gt;&lt;/a&gt;&lt;/td&gt;&lt;td width=15&gt;&amp;nbsp;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan=12 bgcolor=#3366cc&gt;&lt;img width=1 height=1 alt=\&quot;\&quot;&gt;&quot; +
+            &quot;&lt;/td&gt;&quot; +
+            &quot;&lt;/tr&gt;&quot; +
+        &quot;&lt;/table&gt;&quot; +
+        &quot;&lt;br&gt;&quot; +
+        &quot;&lt;form action=\&quot;/search\&quot; name=f&gt;&quot; +
+            &quot;&lt;table cellspacing=0 cellpadding=0&gt;&quot; +
+            &quot;&lt;tr&gt;&quot; +
+                &quot;&lt;td width=75&gt;&amp;nbsp;&lt;/td&gt;&quot; +
+                &quot;&lt;td align=center&gt;&quot; +
+                    &quot;&lt;input type=hidden name=hl value=en&gt;&quot; +
+                    &quot;&lt;input type=hidden name=ie value=\&quot;UTF-8\&quot;&gt;&quot; +
+                    &quot;&lt;input type=hidden name=oe value=\&quot;UTF-8\&quot;&gt;&quot; +
+                    &quot;&lt;input maxLength=256 size=55 name=q value=\&quot;\&quot;&gt;&lt;br&gt;&quot; +
+                    &quot;&lt;input type=submit value=\&quot;Google Search\&quot; name=btnG&gt;&quot; +
+                    &quot;&lt;input type=submit value=\&quot;I'm Feeling Lucky\&quot; name=btnI&gt;&quot; +
+                &quot;&lt;/td&gt;&quot; +
+                &quot;&lt;td valign=top nowrap&gt;&quot; +
+                    &quot;&lt;font size=-2&gt;&amp;nbsp;&amp;#8226;&amp;nbsp;&lt;a href=/advanced_search?hl=en&gt;Advanced&amp;nbsp;Search&lt;/a&gt;&quot; +
+                    &quot;&lt;br&gt;&amp;nbsp;&amp;#8226;&amp;nbsp;&lt;a href=/preferences?hl=en&gt;Preferences&lt;/a&gt;&quot; +
+                    &quot;&lt;br&gt;&amp;nbsp;&amp;#8226;&amp;nbsp;&lt;a href=/language_tools?hl=en&gt;Language Tools&lt;/a&gt;&quot; +
+                    &quot;&lt;/font&gt;&quot; +
+                &quot;&lt;/td&gt;&quot; +
+            &quot;&lt;/tr&gt;&quot; +
+            &quot;&lt;/table&gt;&quot; +
+        &quot;&lt;/form&gt;&lt;br&gt;\n&quot;+
+        &quot;&lt;br&gt;&lt;font size=-1&gt;&lt;a href=\&quot;/ads/\&quot;&gt;Advertise&amp;nbsp;with&amp;nbsp;Us&lt;/a&gt; - &lt;a href=\&quot;/services/\&quot;&gt;Search&amp;nbsp;Solutions&lt;/a&gt; - &lt;a href=\&quot;/options/\&quot;&gt;Services&amp;nbsp;&amp;amp;&amp;nbsp;Tools&lt;/a&gt; - &lt;a href=/about.html&gt;Jobs,&amp;nbsp;Press,&amp;nbsp;&amp;amp;&amp;nbsp;Help&lt;/a&gt;&lt;span id=hp style=\&quot;behavior:url(#default#homepage)\&quot;&gt;&lt;/span&gt;\n&quot;+
+        &quot;&lt;script&gt;\n&quot;+
+        &quot;if (!hp.isHomePage('http://www.google.com/')) {document.write(\&quot;&lt;p&gt;&lt;a href=\&quot;/mgyhp.html\&quot; onClick=\&quot;style.behavior='url(#default#homepage)';setHomePage('http://www.google.com/');\&quot;&gt;Make Google Your Homepage!&lt;/a&gt;\&quot;);}\n&quot;+
+        &quot;&lt;/script&gt;&lt;/font&gt;\n&quot;+
+        &quot;&lt;p&gt;&lt;font size=-2&gt;&amp;copy;2002 Google&lt;/font&gt;&lt;font size=-2&gt; - Searching 3,083,324,652 web pages&lt;/font&gt;&lt;/center&gt;&lt;/body&gt;&lt;/html&gt;\n&quot;
+        );
+<span class="fc" id="L651">        NodeList collectionList = new NodeList();</span>
+<span class="fc" id="L652">        NodeClassFilter filter = new NodeClassFilter (LinkTag.class);</span>
+<span class="fc bfc" id="L653" title="All 2 branches covered.">        for (NodeIterator e = parser.elements();e.hasMoreNodes();)</span>
+<span class="fc" id="L654">            e.nextNode().collectInto(collectionList,filter);</span>
+<span class="fc" id="L655">        assertEquals(&quot;Size of collection vector should be 11&quot;,11,collectionList.size());</span>
+        // All items in collection vector should be links
+<span class="fc bfc" id="L657" title="All 2 branches covered.">        for (SimpleNodeIterator e = collectionList.elements();e.hasMoreNodes();) {</span>
+<span class="fc" id="L658">            Node node = e.nextNode();</span>
+<span class="fc" id="L659">            assertTrue(&quot;Only links should have been parsed&quot;,node instanceof LinkTag);</span>
+        }
+<span class="fc" id="L661">    }</span>
+    public void testImageCollection() throws ParserException {
+<span class="fc" id="L663">        createParser(</span>
+<span class="fc" id="L664">        &quot;&lt;html&gt;\n&quot;+</span>
+        &quot;&lt;head&gt;\n&quot;+
+            &quot;&lt;meta name=\&quot;generator\&quot; content=\&quot;Created Using Yahoo! PageBuilder 2.60.24\&quot;&gt;\n&quot;+
+        &quot;&lt;/head&gt;\n&quot;+
+        &quot;&lt;body bgcolor=\&quot;#FFFFFF\&quot; link=\&quot;#0000FF\&quot; vlink=\&quot;#FF0000\&quot; text=\&quot;#000000\&quot;\n&quot;+
+        &quot; onLoad=\&quot;window.onresize=new Function('if (navigator.appVersion==\'Netscape\') history.go(0);');\&quot;&gt;\n&quot;+
+        &quot;&lt;div id=\&quot;layer0\&quot; style=\&quot;position:absolute;left:218;top:40;width:240;height:26;\&quot;&gt;\n&quot;+
+        &quot;&lt;table width=240 height=26 border=0 cellpadding=0 cellspacing=0&gt;&lt;tr valign=\&quot;top\&quot;&gt;\n&quot;+
+        &quot;&lt;td&gt;&lt;b&gt;&lt;font size=\&quot;+2\&quot;&gt;&lt;span style=\&quot;font-size:24\&quot;&gt;NISHI-HONGWAN-JI&lt;/span&gt;&lt;/font&gt;&lt;/b&gt;&lt;/td&gt;\n&quot;+
+        &quot;&lt;/tr&gt;&lt;/table&gt;&lt;/div&gt;\n&quot;+
+        &quot;&lt;div id=\&quot;layer1\&quot; style=\&quot;position:absolute;left:75;top:88;width:542;height:83;\&quot;&gt;\n&quot;+
+        &quot;&lt;table width=542 height=83 border=0 cellpadding=0 cellspacing=0&gt;&lt;tr valign=\&quot;top\&quot;&gt;\n&quot;+
+        &quot;&lt;td&gt;&lt;span style=\&quot;font-size:14\&quot;&gt;The Nihi Hongwanj-ji temple is very traditional, very old, and very beautiful. This is the place that we stayed on our first night in Kyoto. We then attended the morning prayer ceremony, at 6:30 am. Staying here costed us 7,500 yen, which was inclusive of dinner and breakfast, and usage of the o-furo (public bath). Felt more like a luxury hotel than a temple.&lt;/span&gt;&lt;/td&gt;\n&quot;+
+        &quot;&lt;/tr&gt;&lt;/table&gt;&lt;/div&gt;\n&quot;+
+        &quot;&lt;div id=\&quot;layer2\&quot; style=\&quot;position:absolute;left:144;top:287;width:128;height:96;\&quot;&gt;\n&quot;+
+        &quot;&lt;table width=128 height=96 border=0 cellpadding=0 cellspacing=0&gt;&lt;tr valign=\&quot;top\&quot;&gt;\n&quot;+
+        &quot;&lt;td&gt;&lt;a href=\&quot;nishi-hongwanji1.html\&quot;&gt;&lt;img height=96 width=128 src=\&quot;nishi-hongwanji1-thumb.jpg\&quot; border=0 &gt;&lt;/a&gt;&lt;/td&gt;\n&quot;+
+        &quot;&lt;/tr&gt;&lt;/table&gt;&lt;/div&gt;\n&quot;+
+        &quot;&lt;div id=\&quot;layer3\&quot; style=\&quot;position:absolute;left:415;top:285;width:128;height:96;\&quot;&gt;\n&quot;+
+        &quot;&lt;table width=128 height=96 border=0 cellpadding=0 cellspacing=0&gt;&lt;tr valign=\&quot;top\&quot;&gt;\n&quot;+
+        &quot;&lt;td&gt;&lt;a href=\&quot;nishi-hongwanji3.html\&quot;&gt;&lt;img height=96 width=128 src=\&quot;nishi-hongwanji2-thumb.jpg\&quot; border=0 &gt;&lt;/a&gt;&lt;/td&gt;\n&quot;+
+        &quot;&lt;/tr&gt;&lt;/table&gt;&lt;/div&gt;\n&quot;+
+        &quot;&lt;div id=\&quot;layer4\&quot; style=\&quot;position:absolute;left:414;top:182;width:128;height:96;\&quot;&gt;\n&quot;+
+        &quot;&lt;table width=128 height=96 border=0 cellpadding=0 cellspacing=0&gt;&lt;tr valign=\&quot;top\&quot;&gt;\n&quot;+
+        &quot;&lt;td&gt;&lt;a href=\&quot;higashi-hongwanji.html\&quot;&gt;&lt;img height=96 width=128 src=\&quot;higashi-hongwanji-thumb.jpg\&quot; border=0 &gt;&lt;/a&gt;&lt;/td&gt;\n&quot;+
+        &quot;&lt;/tr&gt;&lt;/table&gt;&lt;/div&gt;\n&quot;+
+        &quot;&lt;div id=\&quot;layer5\&quot; style=\&quot;position:absolute;left:78;top:396;width:530;height:49;\&quot;&gt;\n&quot;+
+        &quot;&lt;table width=530 height=49 border=0 cellpadding=0 cellspacing=0&gt;&lt;tr valign=\&quot;top\&quot;&gt;\n&quot;+
+        &quot;&lt;td&gt;&lt;span style=\&quot;font-size:14\&quot;&gt;Click on the pictures to see the full-sized versions. The picture at the top right corner is taken in Higashi-Hongwanji. Nishi means west, and Higashi means east. These two temples are adjacent to each other and represent two different Buddhist sects.&lt;/span&gt;&lt;/td&gt;\n&quot;+
+        &quot;&lt;/tr&gt;&lt;/table&gt;&lt;/div&gt;\n&quot;+
+        &quot;&lt;div id=\&quot;layer6\&quot; style=\&quot;position:absolute;left:143;top:180;width:128;height:102;\&quot;&gt;\n&quot;+
+        &quot;&lt;table width=128 height=102 border=0 cellpadding=0 cellspacing=0&gt;&lt;tr valign=\&quot;top\&quot;&gt;\n&quot;+
+        &quot;&lt;td&gt;&lt;a href=\&quot;nishi-hongwanji4.html\&quot;&gt;&lt;img height=102 width=128 src=\&quot;nishi-hongwanji4-thumb.jpg\&quot; border=0 &gt;&lt;/a&gt;&lt;/td&gt;\n&quot;+
+        &quot;&lt;/tr&gt;&lt;/table&gt;&lt;/div&gt;\n&quot;+
+        &quot;&lt;div id=\&quot;layer7\&quot; style=\&quot;position:absolute;left:280;top:235;width:124;height:99;\&quot;&gt;\n&quot;+
+        &quot;&lt;table width=124 height=99 border=0 cellpadding=0 cellspacing=0&gt;&lt;tr valign=\&quot;top\&quot;&gt;\n&quot;+
+        &quot;&lt;td&gt;&lt;a href=\&quot;nishi-hongwanji-lodging.html\&quot;&gt;&lt;img height=99 width=124 src=\&quot;nishi-hongwanji-lodging-thumb.jpg\&quot; border=0 &gt;&lt;/a&gt;&lt;/td&gt;\n&quot;+
+        &quot;&lt;/tr&gt;&lt;/table&gt;&lt;/div&gt;\n&quot;+
+        &quot;&lt;/body&gt;\n&quot;+
+        &quot;&lt;/html&gt;&quot;);
+<span class="fc" id="L704">        NodeList collectionList = new NodeList();</span>
+<span class="fc" id="L705">        TagNameFilter filter = new TagNameFilter (&quot;IMG&quot;);</span>
+<span class="fc bfc" id="L706" title="All 2 branches covered.">        for (NodeIterator e = parser.elements();e.hasMoreNodes();)</span>
+<span class="fc" id="L707">            e.nextNode().collectInto(collectionList,filter);</span>
+<span class="fc" id="L708">        assertEquals(&quot;Size of collection vector should be 5&quot;,5,collectionList.size());</span>
+        // All items in collection vector should be links
+<span class="fc bfc" id="L710" title="All 2 branches covered.">        for (SimpleNodeIterator e = collectionList.elements();e.hasMoreNodes();) {</span>
+<span class="fc" id="L711">            Node node = e.nextNode();</span>
+<span class="fc" id="L712">            assertTrue(&quot;Only images should have been parsed&quot;,node instanceof ImageTag);</span>
+        }
+<span class="fc" id="L714">    }</span>
+
+    /**
+     * See bug #728241 OutOfMemory error/ Infinite loop
+     */
+    public void testOutOfMemory () throws Exception
+    {
+<span class="fc" id="L721">        createParser (</span>
+<span class="fc" id="L722">            &quot;&lt;html&gt;&lt;head&gt;&lt;/head&gt;\n&quot;</span>
+            + &quot;&lt;body&gt;\n&quot;
+            + &quot;&lt;table&gt;\n&quot;
+            + &quot;&lt;tr&gt;\n&quot;
+            + &quot;      &lt;td&gt;&lt;img src=\&quot;foo.jpg\&quot; alt=\&quot;f's b\&quot;&gt;&lt;font\n&quot;
+            + &quot; size=1&gt;blah&lt;/font&gt;\n&quot;
+            + &quot;&lt;/td&gt;\n&quot;
+            + &quot;&lt;/tr&gt;\n&quot;
+            + &quot;&lt;/table&gt;\n&quot;
+            + &quot;&lt;/body&gt;&lt;/html&gt;\n&quot;);
+<span class="fc bfc" id="L732" title="All 2 branches covered.">        for (NodeIterator e = parser.elements();e.hasMoreNodes();) {</span>
+<span class="fc" id="L733">            e.nextNode();</span>
+        }
+<span class="fc" id="L735">    }</span>
+
+    /**
+     * See bug #729368 Embedded quote and split tag
+     */
+    public void testEmbeddedQuoteSplit () throws Exception
+    {
+<span class="fc" id="L742">        createParser (</span>
+<span class="fc" id="L743">            &quot;&lt;html&gt;&lt;head&gt;&lt;/head&gt;\n&quot;</span>
+            + &quot;&lt;body&gt;\n&quot;
+            + &quot;&lt;table&gt;\n&quot;
+            + &quot;&lt;tr&gt;&lt;td&gt;&lt;img src=\&quot;x\&quot; alt=\&quot;f's b\&quot;&gt;&lt;font\n&quot;
+            + &quot;size=1&gt;blah&lt;/font&gt;&lt;/td&gt;&lt;/tr&gt;\n&quot;
+            + &quot;&lt;/table&gt;\n&quot;
+            + &quot;&lt;/body&gt;&lt;/html&gt;&quot;);
+<span class="fc" id="L750">        parser.setNodeFactory (new PrototypicalNodeFactory (true));</span>
+<span class="fc" id="L751">        int i = 0;</span>
+<span class="fc bfc" id="L752" title="All 2 branches covered.">        for (NodeIterator e = parser.elements();e.hasMoreNodes();)</span>
+        {
+<span class="fc" id="L754">            Node node = e.nextNode();</span>
+<span class="fc bfc" id="L755" title="All 2 branches covered.">            if (10 == i)</span>
+            {
+<span class="fc" id="L757">                assertTrue (&quot;not a tag&quot;, node instanceof Tag);</span>
+<span class="fc" id="L758">                assertTrue (&quot;ALT attribute incorrect&quot;, ((Tag)node).getAttribute (&quot;ALT&quot;).equals (&quot;f's b&quot;));</span>
+            }
+<span class="fc" id="L760">            i++;</span>
+        }
+<span class="fc" id="L762">        assertEquals(&quot;Expected nodes&quot;,21,i);</span>
+<span class="fc" id="L763">    }</span>
+
+    /**
+     * See bug #826764 ParserException occurs only when using setInputHTML() instea
+     */
+    public void testSetInputHTML () throws Exception
+    {
+        String html;
+        String path;
+        File file;
+        PrintWriter out;
+        NodeList nodes;
+
+<span class="fc" id="L776">        html = &quot;&lt;html&gt;&lt;/html&gt;&quot;;</span>
+<span class="fc" id="L777">        createParser (html);</span>
+<span class="fc" id="L778">        path = System.getProperty (&quot;user.dir&quot;);</span>
+<span class="pc bpc" id="L779" title="1 of 2 branches missed.">        if (!path.endsWith (File.separator))</span>
+<span class="fc" id="L780">            path += File.separator;</span>
+<span class="fc" id="L781">        file = new File (path + &quot;delete_me.html&quot;);</span>
+        try
+        {
+<span class="fc" id="L784">            out = new PrintWriter (new FileWriter (file));</span>
+<span class="fc" id="L785">            out.print (&quot;&lt;html&gt;\r\n&quot;);</span>
+<span class="fc" id="L786">            out.print (&quot;&lt;head&gt;\r\n&quot;);</span>
+<span class="fc" id="L787">            out.print (&quot;&lt;!-- BEGIN TYPE --&gt;\r\n&quot;);</span>
+<span class="fc" id="L788">            out.print (&quot;&lt;!-- NAVIGATION --&gt;\r\n&quot;);</span>
+<span class="fc" id="L789">            out.print (&quot;&lt;!-- END TYPE --&gt;\r\n&quot;);</span>
+<span class="fc" id="L790">            out.print (&quot;&lt;!-- BEGIN TITLE --&gt;\r\n&quot;);</span>
+<span class="fc" id="L791">            out.print (&quot;&lt;title&gt;Einstiegsseite&lt;/title&gt;\r\n&quot;);</span>
+<span class="fc" id="L792">            out.print (&quot;&lt;!-- END TITLE --&gt;\r\n&quot;);</span>
+<span class="fc" id="L793">            out.print (&quot;&lt;/head&gt;\r\n&quot;);</span>
+<span class="fc" id="L794">            out.print (&quot;&lt;body&gt;\r\n&quot;);</span>
+<span class="fc" id="L795">            out.print (&quot;&lt;ul&gt;\r\n&quot;);</span>
+<span class="fc" id="L796">            out.print (&quot;&lt;li&gt;\r\n&quot;);</span>
+<span class="fc" id="L797">            out.print (&quot;&lt;!-- BEGIN ITEM --&gt;\r\n&quot;);</span>
+<span class="fc" id="L798">            out.print (&quot;&lt;!-- BEGIN REF --&gt;\r\n&quot;);</span>
+<span class="fc" id="L799">            out.print (&quot;&lt;a href=\&quot;kapitel1/index.html\&quot;&gt;\r\n&quot;);</span>
+<span class="fc" id="L800">            out.print (&quot;&lt;!-- END REF --&gt;\r\n&quot;);</span>
+<span class="fc" id="L801">            out.print (&quot;&lt;!-- BEGIN REFTITLE --&gt;\r\n&quot;);</span>
+<span class="fc" id="L802">            out.print (&quot;Kapitel 1\r\n&quot;);</span>
+<span class="fc" id="L803">            out.print (&quot;&lt;!-- END REFTITLE --&gt;\r\n&quot;);</span>
+<span class="fc" id="L804">            out.print (&quot;&lt;/a&gt;\r\n&quot;);</span>
+<span class="fc" id="L805">            out.print (&quot;&lt;!-- END ITEM --&gt;\r\n&quot;);</span>
+<span class="fc" id="L806">            out.print (&quot;&lt;/li&gt;\r\n&quot;);</span>
+<span class="fc" id="L807">            out.print (&quot;&lt;li&gt;\r\n&quot;);</span>
+<span class="fc" id="L808">            out.print (&quot;&lt;!-- BEGIN ITEM --&gt;\r\n&quot;);</span>
+<span class="fc" id="L809">            out.print (&quot;&lt;!-- BEGIN REF --&gt;\r\n&quot;);</span>
+<span class="fc" id="L810">            out.print (&quot;&lt;a href=\&quot;kapitel2/index.html\&quot;&gt;\r\n&quot;);</span>
+<span class="fc" id="L811">            out.print (&quot;&lt;!-- END REF --&gt;\r\n&quot;);</span>
+<span class="fc" id="L812">            out.print (&quot;&lt;!-- BEGIN REFTITLE --&gt;\r\n&quot;);</span>
+<span class="fc" id="L813">            out.print (&quot;Kapitel 2\r\n&quot;);</span>
+<span class="fc" id="L814">            out.print (&quot;&lt;!-- END REFTITLE --&gt;\r\n&quot;);</span>
+<span class="fc" id="L815">            out.print (&quot;&lt;/a&gt;\r\n&quot;);</span>
+<span class="fc" id="L816">            out.print (&quot;&lt;!-- END ITEM --&gt;\r\n&quot;);</span>
+<span class="fc" id="L817">            out.print (&quot;&lt;/li&gt;\r\n&quot;);</span>
+<span class="fc" id="L818">            out.print (&quot;&lt;li&gt;\r\n&quot;);</span>
+<span class="fc" id="L819">            out.print (&quot;&lt;!-- BEGIN ITEM --&gt;\r\n&quot;);</span>
+<span class="fc" id="L820">            out.print (&quot;&lt;!-- BEGIN REF --&gt;\r\n&quot;);</span>
+<span class="fc" id="L821">            out.print (&quot;&lt;a href=\&quot;kapitel3/index.html\&quot;&gt;\r\n&quot;);</span>
+<span class="fc" id="L822">            out.print (&quot;&lt;!-- END REF --&gt;\r\n&quot;);</span>
+<span class="fc" id="L823">            out.print (&quot;&lt;!-- BEGIN REFTITLE --&gt;\r\n&quot;);</span>
+<span class="fc" id="L824">            out.print (&quot;Kapitel 3\r\n&quot;);</span>
+<span class="fc" id="L825">            out.print (&quot;&lt;!-- END REFTITLE --&gt;\r\n&quot;);</span>
+<span class="fc" id="L826">            out.print (&quot;&lt;/a&gt;\r\n&quot;);</span>
+<span class="fc" id="L827">            out.print (&quot;&lt;!-- END ITEM --&gt;\r\n&quot;);</span>
+<span class="fc" id="L828">            out.print (&quot;&lt;/li&gt;\r\n&quot;);</span>
+<span class="fc" id="L829">            out.print (&quot;&lt;/ul&gt;\r\n&quot;);</span>
+<span class="fc" id="L830">            out.print (&quot;&lt;/body&gt;\r\n&quot;);</span>
+<span class="fc" id="L831">            out.print (&quot;&lt;/html&gt;&quot;);</span>
+<span class="fc" id="L832">            out.close ();</span>
+<span class="fc" id="L833">            DataInputStream stream = new DataInputStream (</span>
+<span class="fc" id="L834">                new BufferedInputStream (new FileInputStream (file)));</span>
+<span class="fc" id="L835">            byte[] buffer = new byte[(int)file.length ()];</span>
+<span class="fc" id="L836">            stream.readFully (buffer);</span>
+<span class="fc" id="L837">            html = new String (buffer);</span>
+            try
+            {
+<span class="fc" id="L840">                parser.setInputHTML (html);</span>
+<span class="fc" id="L841">                nodes = parser.extractAllNodesThatMatch (new NodeClassFilter (LinkTag.class));</span>
+<span class="fc" id="L842">            }</span>
+<span class="nc" id="L843">            catch (ParserException e)</span>
+            {
+<span class="nc" id="L845">                e.printStackTrace ();</span>
+<span class="nc" id="L846">                nodes = new NodeList ();</span>
+            }
+<span class="pc bpc" id="L848" title="1 of 2 branches missed.">            assertTrue (&quot;node count&quot;, 3 == nodes.size ());</span>
+<span class="fc" id="L849">        }</span>
+<span class="nc" id="L850">        catch (Exception e)</span>
+        {
+<span class="nc" id="L852">            fail (e.toString ());</span>
+        }
+        finally
+<span class="nc" id="L855">        {</span>
+<span class="pc" id="L856">            file.delete ();</span>
+<span class="nc" id="L857">        }</span>
+<span class="fc" id="L858">    }</span>
+
+    /**
+     * Test reproducing a java.lang.StackOverflowError.
+     */
+    public void testXMLTypeToString () throws Exception
+    {
+        String guts;
+        String output;
+                                                                                                                                                        
+<span class="fc" id="L868">        guts = &quot;TD width=\&quot;69\&quot;/&quot;;</span>
+<span class="fc" id="L869">        createParser (&quot;&lt;&quot; + guts + &quot;&gt;&quot;);</span>
+<span class="fc" id="L870">        parseAndAssertNodeCount (1);</span>
+<span class="fc" id="L871">        output = node[0].toString (); // this was where StackOverflow was thrown</span>
+<span class="pc bpc" id="L872" title="1 of 2 branches missed.">        assertTrue (&quot;bad toString()&quot;, -1 != output.indexOf (guts));</span>
+<span class="fc" id="L873">    }</span>
+
+    /**
+     * See bug #883664 toUpperCase on tag names and attributes depends on locale
+     */
+    public void testDifferentLocale () throws Exception
+    {
+        String html;
+        Locale original;
+                                                                                                                                                        
+<span class="fc" id="L883">        html = &quot;&lt;title&gt;This is supposedly Turkish.&lt;/title&gt;&quot;;</span>
+<span class="fc" id="L884">        original = Locale.getDefault ();</span>
+        try
+        {
+<span class="fc" id="L887">            Locale.setDefault (new Locale (&quot;tr&quot;)); // turkish</span>
+<span class="fc" id="L888">            createParser (html);</span>
+<span class="fc" id="L889">            parseAndAssertNodeCount (1);</span>
+<span class="fc" id="L890">            assertStringEquals (&quot;html&quot;, html, node[0].toHtml ());</span>
+<span class="fc" id="L891">        }</span>
+        finally
+<span class="nc" id="L893">        {</span>
+<span class="pc" id="L894">            Locale.setDefault (original);</span>
+<span class="nc" id="L895">        }</span>
+<span class="fc" id="L896">    }</span>
+    
+    /**
+     * See bug #900128 RemarkNode.setText() does not set Text
+     */
+    public void testSetStringText () throws Exception
+    {
+        String text;
+        String html;
+        String newtext;
+        String newhtml;
+        Node txt;
+
+<span class="fc" id="L909">        text = &quot;This is just text.&quot;;</span>
+<span class="fc" id="L910">        html = &quot;&lt;body&gt;&quot; + text + &quot;&lt;/body&gt;&quot;;</span>
+<span class="fc" id="L911">        newtext = &quot;This is different text.&quot;;</span>
+<span class="fc" id="L912">        newhtml = &quot;&lt;body&gt;&quot; + newtext + &quot;&lt;/body&gt;&quot;;</span>
+<span class="fc" id="L913">        createParser (html);</span>
+<span class="fc" id="L914">        parseAndAssertNodeCount (1);</span>
+<span class="fc" id="L915">        assertStringEquals (&quot;html wrong&quot;, html, node[0].toHtml ());</span>
+<span class="pc bpc" id="L916" title="1 of 2 branches missed.">        assertTrue (&quot;wrong number of children&quot;, 1 == node[0].getChildren ().size ());</span>
+<span class="fc" id="L917">        assertTrue (&quot;string node expected&quot;, node[0].getChildren ().elementAt (0) instanceof Text);</span>
+<span class="fc" id="L918">        txt = node[0].getChildren ().elementAt (0);</span>
+<span class="fc" id="L919">        assertStringEquals (&quot;string html wrong&quot;, text, txt.toHtml ());</span>
+<span class="fc" id="L920">        assertStringEquals (&quot;string contents wrong&quot;, text, txt.getText ());</span>
+<span class="fc" id="L921">        assertTrue (&quot;toString wrong&quot;, txt.toString ().endsWith (text));</span>
+<span class="fc" id="L922">        txt.setText (newtext);</span>
+<span class="fc" id="L923">        assertStringEquals (&quot;html wrong&quot;, newhtml, node[0].toHtml ());</span>
+<span class="fc" id="L924">        assertStringEquals (&quot;new string html wrong&quot;, newtext, txt.toHtml ());</span>
+<span class="fc" id="L925">        assertStringEquals (&quot;new string contents wrong&quot;, newtext, txt.getText ());</span>
+<span class="fc" id="L926">        assertTrue (&quot;toString wrong&quot;, txt.toString ().endsWith (newtext));</span>
+<span class="fc" id="L927">    }</span>
+
+    /**
+     * See bug #900128 RemarkNode.setText() does not set Text
+     */
+    public void testSetRemarkText () throws Exception
+    {
+        String text;
+        String remark;
+        String html;
+        String newtext;
+        String newremark;
+        String newhtml;
+        Node rem;
+
+<span class="fc" id="L942">        text = &quot; This is a remark. &quot;;</span>
+<span class="fc" id="L943">        remark = &quot;&lt;!--&quot; + text + &quot;--&gt;&quot;;</span>
+<span class="fc" id="L944">        html = &quot;&lt;body&gt;&quot; + remark + &quot;&lt;/body&gt;&quot;;</span>
+<span class="fc" id="L945">        newtext = &quot; This is a different remark. &quot;;</span>
+<span class="fc" id="L946">        newremark = &quot;&lt;!--&quot; + newtext + &quot;--&gt;&quot;;</span>
+<span class="fc" id="L947">        newhtml = &quot;&lt;body&gt;&quot; + newremark + &quot;&lt;/body&gt;&quot;;</span>
+<span class="fc" id="L948">        createParser (html);</span>
+<span class="fc" id="L949">        parseAndAssertNodeCount (1);</span>
+<span class="fc" id="L950">        assertStringEquals (&quot;html wrong&quot;, html, node[0].toHtml ());</span>
+<span class="pc bpc" id="L951" title="1 of 2 branches missed.">        assertTrue (&quot;wrong number of children&quot;, 1 == node[0].getChildren ().size ());</span>
+<span class="fc" id="L952">        assertTrue (&quot;remark node expected&quot;, node[0].getChildren ().elementAt (0) instanceof Remark);</span>
+<span class="fc" id="L953">        rem = node[0].getChildren ().elementAt (0);</span>
+<span class="fc" id="L954">        assertStringEquals (&quot;remark html wrong&quot;, remark, rem.toHtml ());</span>
+<span class="fc" id="L955">        assertStringEquals (&quot;remark contents wrong&quot;, text, rem.getText ());</span>
+<span class="fc" id="L956">        assertTrue (&quot;toString wrong&quot;, rem.toString ().endsWith (text));</span>
+<span class="fc" id="L957">        rem.setText (newtext);</span>
+<span class="fc" id="L958">        assertStringEquals (&quot;html wrong&quot;, newhtml, node[0].toHtml ());</span>
+<span class="fc" id="L959">        assertStringEquals (&quot;new remark html wrong&quot;, newremark, rem.toHtml ());</span>
+<span class="fc" id="L960">        assertStringEquals (&quot;new remark contents wrong&quot;, newtext, rem.getText ());</span>
+<span class="fc" id="L961">        assertTrue (&quot;toString wrong&quot;, rem.toString ().endsWith (newtext));</span>
+<span class="fc" id="L962">        rem.setText (newremark);</span>
+<span class="fc" id="L963">        assertStringEquals (&quot;html wrong&quot;, newhtml, node[0].toHtml ());</span>
+<span class="fc" id="L964">        assertStringEquals (&quot;new remark html wrong&quot;, newremark, rem.toHtml ());</span>
+<span class="fc" id="L965">        assertStringEquals (&quot;new remark contents wrong&quot;, newtext, rem.getText ());</span>
+<span class="fc" id="L966">        assertTrue (&quot;toString wrong&quot;, rem.toString ().endsWith (newtext));</span>
+<span class="fc" id="L967">    }</span>
+
+    public void testFixSpaces () throws ParserException
+    {
+<span class="nc" id="L971">        String url = &quot;http://htmlparser.sourceforge.net/test/This is a Test Page.html&quot;;</span>
+<span class="nc" id="L972">        parser = new Parser (url);</span>
+<span class="nc" id="L973">        assertEquals(&quot;Expected&quot;,&quot;http://htmlparser.sourceforge.net/test/This%20is%20a%20Test%20Page.html&quot;, parser.getURL ());</span>
+<span class="nc" id="L974">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

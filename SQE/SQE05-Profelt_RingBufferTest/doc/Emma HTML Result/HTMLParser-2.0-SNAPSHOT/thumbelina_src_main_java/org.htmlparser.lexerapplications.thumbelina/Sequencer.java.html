@@ -1,0 +1,354 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>Sequencer.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">thumbelina/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.lexerapplications.thumbelina</a> &gt; <span class="el_source">Sequencer.java</span></div><h1>Sequencer.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/thumbelina/src/main/java/org/htmlparser/lexerapplications/thumbelina/Sequencer.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.lexerapplications.thumbelina;
+
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Image;
+import java.awt.Insets;
+import java.awt.Point;
+import java.io.File;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Random;
+import javax.swing.JViewport;
+
+
+/**
+ * Display received images at a constant rate.
+ */
+public class Sequencer
+    extends
+        Thread
+{
+    /**
+     * The default delay time, {@value} milliseconds.
+     */
+    protected static final int DEFAULT_DELAY = 500;
+
+    /**
+     * The thumbelina object to drive.
+     */
+    protected Thumbelina mThumbelina;
+
+    /**
+     * Pictures awaiting display.
+     */
+    protected ArrayList&lt;Picture&gt; mPending;
+
+    /**
+     * Activity state.
+     * &lt;code&gt;true&lt;/code&gt; means fetching and displaying, &lt;code&gt;false&lt;/code&gt; not.
+     */
+    protected boolean mActive;
+
+    /**
+     * Delay between picture displays.
+     */
+    protected int mDelay;
+
+    /**
+     * Random number generator for picture placement.
+     */
+    protected Random mRandom;
+
+    /**
+     * Creates a new instance of a Sequencer.
+     * @param thumbelina The object to push images to.
+     */
+<span class="nc" id="L82">    public Sequencer (final Thumbelina thumbelina)</span>
+    {
+<span class="nc" id="L84">        mThumbelina = thumbelina;</span>
+<span class="nc" id="L85">        mPending = new ArrayList&lt;Picture&gt; ();</span>
+<span class="nc" id="L86">        mActive = true;</span>
+<span class="nc" id="L87">        setDelay (DEFAULT_DELAY);</span>
+<span class="nc" id="L88">        mRandom = new Random ();</span>
+<span class="nc" id="L89">        setName (&quot;Sequencer&quot;); // only good if there's just one of these</span>
+<span class="nc" id="L90">        start ();</span>
+<span class="nc" id="L91">    }</span>
+
+    /**
+     * Clears the pending images list.
+     */
+    public void reset ()
+    {
+<span class="nc" id="L98">        synchronized (mPending)</span>
+        {
+<span class="nc" id="L100">            mPending.clear ();</span>
+<span class="nc" id="L101">            mThumbelina.mReadyProgress.setValue (0);</span>
+<span class="nc" id="L102">            mPending.notify ();</span>
+        }
+<span class="nc" id="L104">    }</span>
+
+    /**
+     * Compute a random point to load the image.
+     * Generate a random point for one of the corners of the image and
+     * then condition the numbers so the image is on screen.
+     * @param url The url this picture was fetched from.
+     * Used in computing the random position, so the picture is always
+     * placed in the same location, even when refetched.
+     * @param width The width of the image.
+     * @param height The height of the image.
+     * @return The random point to use.
+     */
+    protected Point random (final String url, final int width, final int height)
+    {
+        Component parent;
+        Component grandparent;
+        Dimension dim;
+        Insets insets;
+        int minx;
+        int miny;
+        int maxx;
+        int maxy;
+        int rndx;
+        int rndy;
+        int corner;
+        Point ret;
+
+<span class="nc" id="L132">        parent = mThumbelina.getPicturePanel ().getParent ();</span>
+<span class="nc bnc" id="L133" title="All 2 branches missed.">        if (parent instanceof JViewport)</span>
+        {
+<span class="nc" id="L135">            grandparent = parent.getParent (); // JScrollPane</span>
+<span class="nc" id="L136">            dim = grandparent.getSize ();</span>
+<span class="nc" id="L137">        }</span>
+        else
+<span class="nc" id="L139">            dim = mThumbelina.getPicturePanel ().getSize ();</span>
+        // JPanel:
+//        insets = mThumbelina.getPicturePanel ().getInsets ();
+//        dim.width -= (insets.left + insets.right);
+//        dim.height -= (insets.top + insets.bottom);
+//        minx = insets.left;
+//        miny = insets.top;
+<span class="nc" id="L146">        minx = 0;</span>
+<span class="nc" id="L147">        miny = 0;</span>
+<span class="nc" id="L148">        maxx = minx + dim.width;</span>
+<span class="nc" id="L149">        maxy = miny + dim.height;</span>
+<span class="nc" id="L150">        mRandom.setSeed ((((long)(width + height)) &lt;&lt; 32) + url.hashCode ());</span>
+<span class="nc" id="L151">        rndx = (int)(mRandom.nextDouble () * dim.width);</span>
+<span class="nc" id="L152">        rndy = (int)(mRandom.nextDouble () * dim.height);</span>
+<span class="nc" id="L153">        corner = (int)(mRandom.nextDouble () * 4); // the panel has four corners</span>
+<span class="nc" id="L154">        ret = new Point (0, 0);</span>
+<span class="nc bnc" id="L155" title="All 5 branches missed.">        switch (corner)</span>
+        {
+            case 0: // upper left
+<span class="nc bnc" id="L158" title="All 2 branches missed.">                if (rndx + width &gt;= maxx)</span>
+<span class="nc" id="L159">                    ret.x = maxx - width;</span>
+                else
+<span class="nc" id="L161">                    ret.x = rndx;</span>
+<span class="nc bnc" id="L162" title="All 2 branches missed.">                if (rndy + height &gt;= maxy)</span>
+<span class="nc" id="L163">                    ret.y = maxy - height;</span>
+                else
+<span class="nc" id="L165">                    ret.y = rndy;</span>
+<span class="nc" id="L166">                break;</span>
+            case 1: // upper right
+<span class="nc bnc" id="L168" title="All 2 branches missed.">                if (rndx - width &lt; minx)</span>
+<span class="nc" id="L169">                    ret.x = minx;</span>
+                else
+<span class="nc" id="L171">                    ret.x = rndx - width;</span>
+<span class="nc bnc" id="L172" title="All 2 branches missed.">                if (rndy + height &gt;= maxy)</span>
+<span class="nc" id="L173">                    ret.y = maxy - height;</span>
+                else
+<span class="nc" id="L175">                    ret.y = rndy;</span>
+<span class="nc" id="L176">                break;</span>
+            case 2: // lower right
+<span class="nc bnc" id="L178" title="All 2 branches missed.">                if (rndx - width &lt; minx)</span>
+<span class="nc" id="L179">                    ret.x = minx;</span>
+                else
+<span class="nc" id="L181">                    ret.x = rndx - width;</span>
+<span class="nc bnc" id="L182" title="All 2 branches missed.">                if (rndy - height &lt; miny)</span>
+<span class="nc" id="L183">                    ret.y = miny;</span>
+                else
+<span class="nc" id="L185">                    ret.y = rndy - height;</span>
+<span class="nc" id="L186">                break;</span>
+            case 3: // lower left
+<span class="nc bnc" id="L188" title="All 2 branches missed.">                if (rndx + width &gt;= maxx)</span>
+<span class="nc" id="L189">                    ret.x = maxx - width;</span>
+                else
+<span class="nc" id="L191">                    ret.x = rndx;</span>
+<span class="nc bnc" id="L192" title="All 2 branches missed.">                if (rndy - height &lt; miny)</span>
+<span class="nc" id="L193">                    ret.y = miny;</span>
+                else
+<span class="nc" id="L195">                    ret.y = rndy - height;</span>
+<span class="nc" id="L196">                break;</span>
+            default:
+<span class="nc" id="L198">                throw new IllegalStateException (&quot;random corner = &quot; + corner);</span>
+        }
+
+        // if it's really large stuff it in the upper left hand corner
+<span class="nc bnc" id="L202" title="All 2 branches missed.">        if (ret.x &lt; 0)</span>
+<span class="nc" id="L203">            ret.x = 0;</span>
+<span class="nc bnc" id="L204" title="All 2 branches missed.">        if (ret.y &lt; 0)</span>
+<span class="nc" id="L205">            ret.y = 0;</span>
+
+
+<span class="nc" id="L208">        return (ret);</span>
+    }
+
+    /**
+     * Place a picture in the display area.
+     * Places the picture at a random location on screen.
+     * @param picture The picture to place on screen.
+     * @param add If &lt;code&gt;true&lt;/code&gt;, the picture is added to the history.
+     */
+    protected void place (final Picture picture, final boolean add)
+    {
+        Point p;
+
+<span class="nc bnc" id="L221" title="All 2 branches missed.">        if (Picture.ORIGIN == picture.getOrigin ())</span>
+        {
+            // never been placed before
+<span class="nc" id="L224">            p = random (</span>
+<span class="nc" id="L225">                picture.getIdentity ().toString (),</span>
+<span class="nc" id="L226">                picture.width,</span>
+<span class="nc" id="L227">                picture.height);</span>
+<span class="nc" id="L228">            picture.x = p.x;</span>
+<span class="nc" id="L229">            picture.y = p.y;</span>
+<span class="nc" id="L230">            picture.setOrigin (p);</span>
+        }
+<span class="nc" id="L232">        mThumbelina.getPicturePanel ().draw (picture, add);</span>
+<span class="nc" id="L233">    }</span>
+
+    /**
+     * Add an image to the panel.
+     * @param picture The picture to add.
+     * @param background If &lt;code&gt;true&lt;/code&gt;, just add to pending list.
+     */
+    public void add (Picture picture, final boolean background)
+    {
+        int size;
+                                                                                                             
+<span class="nc bnc" id="L244" title="All 2 branches missed.">        if (picture.getValid ())</span>
+<span class="nc bnc" id="L245" title="All 2 branches missed.">            if (background)</span>
+<span class="nc" id="L246">                synchronized (mPending)</span>
+                {
+<span class="nc" id="L248">                    mPending.add (picture);</span>
+//                    size = mPending.size ();
+//                    if (mThumbelina.mReadyProgress.getMaximum () &lt; size)
+//                        mThumbelina.mReadyProgress.setMaximum (size);
+//                    mThumbelina.mReadyProgress.setValue (size);
+<span class="nc" id="L253">                    mPending.notify ();</span>
+                }
+            else
+<span class="nc" id="L256">                place (picture, false);</span>
+        else
+<span class="nc" id="L258">            System.out.println (picture.getIdentity ().toString () + &quot; is invalid&quot;);</span>
+<span class="nc" id="L259">    }</span>
+
+    //
+    // Runnable interface
+    //
+
+    /**
+     * Display pictures from pending list with delay between.
+     * If the list is empty it waits on the pending list for new pictures.
+     */
+    public void run ()
+    {
+        Picture picture;
+        int size;
+
+<span class="nc" id="L274">        while (true)</span>
+        {
+            try
+            {
+<span class="nc" id="L278">                picture = null;</span>
+<span class="nc" id="L279">                synchronized (mPending)</span>
+                {
+<span class="nc bnc" id="L281" title="All 4 branches missed.">                    if (mActive &amp;&amp; !mPending.isEmpty ())</span>
+<span class="nc" id="L282">                        picture = mPending.remove (0);</span>
+                    else
+                        try
+                        {
+<span class="nc" id="L286">                            mPending.wait ();</span>
+<span class="nc" id="L287">                        }</span>
+<span class="nc" id="L288">                        catch (InterruptedException ie)</span>
+                        {
+<span class="nc" id="L290">                            ie.printStackTrace ();</span>
+                        }
+//                    size = mPending.size ();
+//                    if (mThumbelina.mReadyProgress.getMaximum () &lt; size)
+//                        mThumbelina.mReadyProgress.setMaximum (size);
+//                    mThumbelina.mReadyProgress.setValue (size);
+                }
+<span class="nc bnc" id="L297" title="All 2 branches missed.">                if (null != picture)</span>
+                {
+<span class="nc" id="L299">                    place (picture, true);</span>
+<span class="nc bnc" id="L300" title="All 2 branches missed.">                    if (0 != getDelay ())</span>
+                        try
+                        {
+<span class="nc" id="L303">                            sleep (getDelay ());</span>
+<span class="nc" id="L304">                        }</span>
+<span class="nc" id="L305">                        catch (InterruptedException ie)</span>
+                        {
+<span class="nc" id="L307">                            ie.printStackTrace ();</span>
+                        }
+                }
+<span class="nc" id="L310">            }</span>
+<span class="nc" id="L311">            catch (Throwable t)</span>
+            {
+<span class="nc" id="L313">                t.printStackTrace ();</span>
+            }
+        }
+    }
+
+    /**
+     * Getter for property delay.
+     * @return Value of property delay.
+     */
+    public int getDelay ()
+    {
+<span class="nc" id="L324">        return (mDelay);</span>
+    }
+
+    /**
+     * Setter for property delay.
+     * @param delay New value of property delay.
+     */
+    public void setDelay (final int delay)
+    {
+<span class="nc" id="L333">        mDelay = delay;</span>
+<span class="nc" id="L334">    }</span>
+
+}
+
+/*
+ * Revision Control Modification History
+ *
+ * $Log: Sequencer.java,v $
+ * Revision 1.2  2004/07/31 16:42:30  derrickoswald
+ * Remove unused variables and other fixes exposed by turning on compiler warnings.
+ *
+ * Revision 1.1  2003/09/21 18:20:56  derrickoswald
+ * Thumbelina
+ * Created a lexer GUI application to extract images behind thumbnails.
+ * Added a task in the ant build script - thumbelina - to create the jar file.
+ * You need JDK 1.4.x to build it.  It can be run on JDK 1.3.x in crippled mode.
+ * Usage: java -Xmx256M thumbelina.jar [URL]
+ *
+ *
+ */
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

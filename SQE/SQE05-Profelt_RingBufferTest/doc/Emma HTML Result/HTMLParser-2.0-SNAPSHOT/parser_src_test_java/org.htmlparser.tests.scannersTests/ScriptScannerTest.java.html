@@ -1,0 +1,717 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>ScriptScannerTest.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tests.scannersTests</a> &gt; <span class="el_source">ScriptScannerTest.java</span></div><h1>ScriptScannerTest.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Somik Raha
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/test/java/org/htmlparser/tests/scannersTests/ScriptScannerTest.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 13:37:00 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 5 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tests.scannersTests;
+
+import java.util.Hashtable;
+
+import org.htmlparser.Node;
+import org.htmlparser.Parser;
+import org.htmlparser.filters.NodeClassFilter;
+import org.htmlparser.filters.TagNameFilter;
+import org.htmlparser.lexer.Lexer;
+import org.htmlparser.scanners.ScriptDecoder;
+import org.htmlparser.tags.BodyTag;
+import org.htmlparser.tags.ScriptTag;
+import org.htmlparser.tests.ParserTestCase;
+import org.htmlparser.util.NodeIterator;
+import org.htmlparser.util.NodeList;
+import org.htmlparser.util.ParserException;
+
+public class ScriptScannerTest extends ParserTestCase
+{
+    static
+    {
+<span class="fc" id="L47">        System.setProperty (&quot;org.htmlparser.tests.scannersTests.ScriptScannerTest&quot;, &quot;ScriptScannerTest&quot;);</span>
+<span class="fc" id="L48">    }</span>
+
+    public ScriptScannerTest(String name) {
+<span class="fc" id="L51">        super(name);</span>
+<span class="fc" id="L52">    }</span>
+
+    public void testScan() throws ParserException
+    {
+<span class="fc" id="L56">        String testHtml = &quot;&lt;SCRIPT&gt;document.write(d+\&quot;.com\&quot;)&lt;/SCRIPT&gt;&quot;;</span>
+<span class="fc" id="L57">        createParser(testHtml,&quot;http://www.google.com/test/index.html&quot;);</span>
+<span class="fc" id="L58">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L59">        assertTrue(&quot;Node should be a script tag&quot;,node[0] instanceof ScriptTag);</span>
+        // Check the data in the applet tag
+<span class="fc" id="L61">        ScriptTag scriptTag = (ScriptTag)node[0];</span>
+<span class="fc" id="L62">        assertStringEquals(&quot;Expected Script Code&quot;,&quot;document.write(d+\&quot;.com\&quot;)&quot;,scriptTag.getScriptCode());</span>
+<span class="fc" id="L63">        assertStringEquals(&quot;script tag html&quot;,testHtml,scriptTag.toHtml());</span>
+<span class="fc" id="L64">    }</span>
+
+    /**
+     * Test javascript tag attributes.
+     * Bug reported by Gordon Deudney 2002-03-27
+     * Upon parsing :
+     * &amp;lt;SCRIPT LANGUAGE=&quot;JavaScript&quot;
+     * SRC=&quot;../js/DetermineBrowser.js&quot;&amp;gt;&amp;lt;/SCRIPT&amp;gt;
+     * the SRC data cannot be retrieved.
+     */
+    public void testScanBug() throws ParserException
+    {
+<span class="fc" id="L76">        String src = &quot;../js/DetermineBrowser.js&quot;;</span>
+<span class="fc" id="L77">        createParser(&quot;&lt;SCRIPT LANGUAGE=\&quot;JavaScript\&quot; SRC=\&quot;&quot; + src + &quot;\&quot;&gt;&lt;/SCRIPT&gt;&quot;,&quot;http://www.google.com/test/index.html&quot;);</span>
+<span class="fc" id="L78">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L79">        assertTrue(&quot;Node should be a script tag&quot;,node[0] instanceof ScriptTag);</span>
+        // Check the data in the applet tag
+<span class="fc" id="L81">        ScriptTag scriptTag = (ScriptTag)node[0];</span>
+<span class="fc" id="L82">        String srcExpected = scriptTag.getAttribute (&quot;SRC&quot;);</span>
+<span class="fc" id="L83">        assertEquals(&quot;Expected SRC value&quot;,src,srcExpected);</span>
+<span class="fc" id="L84">    }</span>
+
+    /**
+     * Test script code.
+     * Bug check by Wolfgang Germund 2002-06-02
+     * Upon parsing :
+     * &amp;lt;script language=&quot;javascript&quot;&amp;gt;
+     * if(navigator.appName.indexOf(&quot;Netscape&quot;) != -1)
+     * document.write ('xxx');
+     * else
+     * document.write ('yyy');
+     * &amp;lt;/script&amp;gt;
+     * check getScriptCode().
+     */
+    public void testScanBugWG() throws ParserException
+    {
+<span class="fc" id="L100">        StringBuffer sb2 = new StringBuffer();</span>
+<span class="fc" id="L101">        sb2.append(&quot;\r\nif(navigator.appName.indexOf(\&quot;Netscape\&quot;) != -1)\r\n&quot;);</span>
+<span class="fc" id="L102">        sb2.append(&quot; document.write ('xxx');\r\n&quot;);</span>
+<span class="fc" id="L103">        sb2.append(&quot;else\r\n&quot;);</span>
+<span class="fc" id="L104">        sb2.append(&quot; document.write ('yyy');\r\n&quot;);</span>
+<span class="fc" id="L105">        String testHTML2 = sb2.toString();</span>
+
+<span class="fc" id="L107">        StringBuffer sb1 = new StringBuffer();</span>
+<span class="fc" id="L108">        sb1.append(&quot;&lt;body&gt;&lt;script language=\&quot;javascript\&quot;&gt;&quot;);</span>
+<span class="fc" id="L109">        sb1.append(testHTML2);</span>
+<span class="fc" id="L110">        sb1.append(&quot;&lt;/script&gt;&quot;);</span>
+<span class="fc" id="L111">        String testHTML1 = sb1.toString();</span>
+
+<span class="fc" id="L113">        createParser(testHTML1,&quot;http://www.google.com/test/index.html&quot;);</span>
+<span class="fc" id="L114">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L115">        assertTrue(&quot;Node should be a body tag&quot;, node[0] instanceof BodyTag);</span>
+<span class="fc" id="L116">        BodyTag body = (BodyTag)node[0];</span>
+<span class="pc bpc" id="L117" title="1 of 2 branches missed.">        assertTrue(&quot;Node should have one child&quot;, 1 == body.getChildCount ());</span>
+<span class="fc" id="L118">        assertTrue(&quot;Child should be a script tag&quot;, body.getChild (0) instanceof ScriptTag);</span>
+        // Check the data in the script tag
+<span class="fc" id="L120">        ScriptTag scriptTag = (ScriptTag)body.getChild (0);</span>
+<span class="fc" id="L121">        String s = scriptTag.getScriptCode();</span>
+<span class="fc" id="L122">        assertStringEquals(&quot;Expected Script Code&quot;,testHTML2,s);</span>
+<span class="fc" id="L123">    }</span>
+
+    public void testScanScriptWithLinks() throws ParserException
+    {
+<span class="fc" id="L127">        StringBuffer sb1 = new StringBuffer();</span>
+<span class="fc" id="L128">        sb1.append(&quot;&lt;script type=\&quot;text/javascript\&quot;&gt;\r\n&quot;+</span>
+            &quot;&lt;A HREF=\&quot;http://thisisabadlink.com\&quot;&gt;\r\n&quot;+
+            &quot;&lt;/script&gt;\r\n&quot;);
+<span class="fc" id="L131">        String testHTML1 = new String(sb1.toString());</span>
+
+<span class="fc" id="L133">        createParser(testHTML1,&quot;http://www.hardwareextreme.com/&quot;);</span>
+<span class="fc" id="L134">        parseAndAssertNodeCount(2);</span>
+<span class="fc" id="L135">        assertTrue(&quot;Node should be a script tag&quot;,node[0]</span>
+        instanceof ScriptTag);
+<span class="fc" id="L137">    }</span>
+
+    public void testScanScriptWithComments() throws ParserException {
+<span class="fc" id="L140">        String expectedCode = &quot;\n&lt;!--\n&quot;+</span>
+                          &quot;  function validateForm()\n&quot;+
+                          &quot;  {\n&quot;+
+                          &quot;     var i = 10;\n&quot;+
+                          &quot;     if(i &lt; 5)\n&quot;+
+                          &quot;     i = i - 1 ; \n&quot;+
+                          &quot;     return true;\n&quot;+
+                          &quot;  }\n&quot;+
+                          &quot;// --&gt;\n&quot;;
+<span class="fc" id="L149">        createParser(&quot;&lt;SCRIPT Language=\&quot;JavaScript\&quot;&gt;&quot;+expectedCode+</span>
+<span class="fc" id="L150">                          &quot;&lt;/SCRIPT&gt;&quot;,&quot;http://www.hardwareextreme.com/&quot;);</span>
+<span class="fc" id="L151">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L152">        assertTrue(&quot;Node should be a script tag&quot;,node[0]</span>
+        instanceof ScriptTag);
+        // Check the data in the applet tag
+<span class="fc" id="L155">        ScriptTag scriptTag = (ScriptTag)node[0];</span>
+<span class="fc" id="L156">        String scriptCode = scriptTag.getScriptCode();</span>
+<span class="fc" id="L157">        assertStringEquals(&quot;Expected Code&quot;,expectedCode,scriptCode);</span>
+<span class="fc" id="L158">    }</span>
+
+    /**
+     * Submitted by Dhaval Udani - reproducing bug 664404
+     * @throws ParserException
+     */
+    public void testScriptTagComments() throws
+    ParserException
+    {
+<span class="fc" id="L167">        String testHtml =</span>
+<span class="fc" id="L168">        &quot;&lt;SCRIPT LANGUAGE=\&quot;JavaScript\&quot;&gt;\r\n&quot;+</span>
+            &quot;&lt;!--\r\n&quot;+
+            &quot;// --&gt;\r\n&quot;+
+        &quot;&lt;/SCRIPT&gt;&quot;;
+<span class="fc" id="L172">        createParser(testHtml);</span>
+<span class="fc" id="L173">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L174">        ScriptTag scriptTag = (ScriptTag)node[0];</span>
+<span class="fc" id="L175">        assertStringEquals(&quot;scriptag html&quot;,testHtml,scriptTag.toHtml());</span>
+<span class="fc" id="L176">    }</span>
+
+    /**
+     * Duplicates bug reported by James Moliere - whereby,
+     * if script tags are generated by script code, the parser
+     * interprets them as real tags. The problem was that the
+     * string parser was not moving to the ignore state on encountering double
+     * quotes (only single quotes were previously accepted).
+     * @throws Exception
+     */
+    public void testScriptTagsGeneratedByScriptCode() throws Exception 
+    {
+<span class="fc" id="L188">        boolean old_strict = org.htmlparser.scanners.ScriptScanner.STRICT;</span>
+        try
+        {
+<span class="fc" id="L191">            org.htmlparser.scanners.ScriptScanner.STRICT = false;</span>
+<span class="fc" id="L192">            createParser(</span>
+<span class="fc" id="L193">                &quot;&lt;!DOCTYPE HTML PUBLIC \&quot;-//W3C//DTD HTML 4.01 &quot; +</span>
+                &quot;Transitional//EN\&quot;&gt;&quot; +
+                &quot;&lt;html&gt;&quot; +
+                &quot;&lt;head&gt;&quot; +
+                &quot;&lt;title&gt;Untitled Document&lt;/title&gt;&quot; +
+                &quot;&lt;meta http-equiv=\&quot;Content-Type\&quot; content=\&quot;text/html; &quot; +
+                &quot;charset=iso-8859-1\&quot;&gt;&quot; +
+                &quot;&lt;/head&gt;&quot; +
+                &quot;&lt;script language=\&quot;JavaScript\&quot;&gt;&quot; +
+                &quot;document.write(\&quot;&lt;script &quot; +
+                &quot;language=\\\&quot;JavaScript\\\&quot;&gt;\&quot;);&quot; +
+                &quot;document.write(\&quot;function onmousedown&quot; +
+                &quot;(event)\&quot;);&quot; +
+                &quot;document.write(\&quot;{ // do something\&quot;); &quot; +
+                &quot;document.write(\&quot;}\&quot;); &quot; +
+                &quot;// parser thinks this is the end tag.\n&quot; +
+                &quot;document.write(\&quot;&lt;/script&gt;\&quot;);&quot; +
+                &quot;&lt;/script&gt;&quot; +
+                &quot;&lt;body&gt;&quot; +
+                &quot;&lt;/body&gt;&quot; +
+                &quot;&lt;/html&gt;&quot;
+            );
+<span class="fc" id="L215">            Node scriptNodes [] =</span>
+<span class="fc" id="L216">                parser.extractAllNodesThatMatch (new NodeClassFilter (ScriptTag.class)).toNodeArray ();</span>
+<span class="fc" id="L217">            assertType(</span>
+<span class="fc" id="L218">                &quot;scriptnode&quot;,</span>
+<span class="fc" id="L219">                ScriptTag.class,</span>
+<span class="fc" id="L220">                scriptNodes[0]</span>
+            );
+<span class="fc" id="L222">            ScriptTag scriptTag = (ScriptTag)scriptNodes[0];</span>
+<span class="fc" id="L223">            assertStringEquals(</span>
+<span class="fc" id="L224">                &quot;script code&quot;,</span>
+<span class="fc" id="L225">                &quot;document.write(\&quot;&lt;script &quot; +</span>
+                &quot;language=\\\&quot;JavaScript\\\&quot;&gt;\&quot;);&quot; +
+                &quot;document.write(\&quot;function onmousedown&quot; +
+                &quot;(event)\&quot;);&quot; +
+                &quot;document.write(\&quot;{ // do something\&quot;); &quot; +
+                &quot;document.write(\&quot;}\&quot;); &quot; +
+                &quot;// parser thinks this is the end tag.\n&quot; +
+                &quot;document.write(\&quot;&lt;/script&gt;\&quot;);&quot;,
+<span class="fc" id="L233">                scriptTag.getScriptCode()</span>
+            );
+<span class="fc" id="L235">        }</span>
+        finally
+<span class="nc" id="L237">        {</span>
+<span class="pc" id="L238">            org.htmlparser.scanners.ScriptScanner.STRICT = old_strict;</span>
+<span class="nc" id="L239">        }</span>
+<span class="fc" id="L240">    }</span>
+
+    public void testScriptCodeExtraction() throws ParserException 
+    {
+<span class="fc" id="L244">        boolean old_strict = org.htmlparser.scanners.ScriptScanner.STRICT;</span>
+        try
+        {
+<span class="fc" id="L247">            org.htmlparser.scanners.ScriptScanner.STRICT = false;</span>
+<span class="fc" id="L248">            createParser(</span>
+<span class="fc" id="L249">                &quot;&lt;SCRIPT language=JavaScript&gt;&quot; +</span>
+                &quot;document.write(\&quot;&lt;a href=\&quot;1.htm\&quot;&gt;&lt;img src=\&quot;1.jpg\&quot; &quot; +
+                &quot;width=\&quot;80\&quot; height=\&quot;20\&quot; border=\&quot;0\&quot;&gt;&lt;/a&gt;\&quot;);&quot; +
+                &quot;&lt;/SCRIPT&gt;&quot;
+            );
+<span class="fc" id="L254">            parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L255">            assertType(&quot;script&quot;,ScriptTag.class,node[0]);</span>
+<span class="fc" id="L256">            ScriptTag scriptTag = (ScriptTag)node[0];</span>
+<span class="fc" id="L257">            assertStringEquals(</span>
+<span class="fc" id="L258">                &quot;script code&quot;,</span>
+<span class="fc" id="L259">                &quot;document.write(\&quot;&lt;a href=\&quot;1.htm\&quot;&gt;&lt;img src=\&quot;1.jpg\&quot; &quot; +</span>
+                &quot;width=\&quot;80\&quot; height=\&quot;20\&quot; border=\&quot;0\&quot;&gt;&lt;/a&gt;\&quot;);&quot;,
+<span class="fc" id="L261">                scriptTag.getScriptCode()</span>
+            );
+<span class="fc" id="L263">        }</span>
+        finally
+<span class="nc" id="L265">        {</span>
+<span class="pc" id="L266">            org.htmlparser.scanners.ScriptScanner.STRICT = old_strict;</span>
+<span class="nc" id="L267">        }</span>
+<span class="fc" id="L268">    }</span>
+
+    public void testScriptCodeExtractionWithMultipleQuotes() throws ParserException 
+    {
+<span class="fc" id="L272">        boolean old_strict = org.htmlparser.scanners.ScriptScanner.STRICT;</span>
+        try
+        {
+<span class="fc" id="L275">            org.htmlparser.scanners.ScriptScanner.STRICT = false;</span>
+<span class="fc" id="L276">            createParser(</span>
+<span class="fc" id="L277">                &quot;&lt;SCRIPT language=JavaScript&gt;&quot; +</span>
+                &quot;document.write(\&quot;&lt;a href=\\\&quot;1.htm\\\&quot;&gt;&lt;img src=\\\&quot;1.jpg\\\&quot; &quot; +
+                &quot;width=\\\&quot;80\\\&quot; height=\\\&quot;20\\\&quot; border=\\\&quot;0\\\&quot;&gt;&lt;/a&gt;\&quot;);&quot; +
+                &quot;&lt;/SCRIPT&gt;&quot;
+            );
+<span class="fc" id="L282">            parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L283">            assertType(&quot;script&quot;,ScriptTag.class,node[0]);</span>
+<span class="fc" id="L284">            ScriptTag scriptTag = (ScriptTag)node[0];</span>
+<span class="fc" id="L285">            assertStringEquals(</span>
+<span class="fc" id="L286">                &quot;script code&quot;,</span>
+<span class="fc" id="L287">                &quot;document.write(\&quot;&lt;a href=\\\&quot;1.htm\\\&quot;&gt;&lt;img src=\\\&quot;1.jpg\\\&quot; &quot; +</span>
+                &quot;width=\\\&quot;80\\\&quot; height=\\\&quot;20\\\&quot; border=\\\&quot;0\\\&quot;&gt;&lt;/a&gt;\&quot;);&quot;,
+<span class="fc" id="L289">                scriptTag.getScriptCode()</span>
+            );
+<span class="fc" id="L291">        }</span>
+        finally
+<span class="nc" id="L293">        {</span>
+<span class="pc" id="L294">            org.htmlparser.scanners.ScriptScanner.STRICT = old_strict;</span>
+<span class="nc" id="L295">        }</span>
+<span class="fc" id="L296">    }</span>
+
+    public void testScriptWithinComments() throws Exception 
+    {
+<span class="fc" id="L300">        boolean old_strict = org.htmlparser.scanners.ScriptScanner.STRICT;</span>
+        try
+        {
+<span class="fc" id="L303">            org.htmlparser.scanners.ScriptScanner.STRICT = false;</span>
+<span class="fc" id="L304">            createParser(</span>
+<span class="fc" id="L305">                &quot;&lt;script language=\&quot;JavaScript1.2\&quot;&gt;&quot; +</span>
+                &quot;\n&quot; +
+                &quot;var linkset=new Array()&quot; +
+                &quot;\n&quot; +
+                &quot;var ie4=document.all&amp;&amp;navigator.userAgent.indexOf(\&quot;Opera\&quot;)==-1&quot; +
+                &quot;\n&quot; +
+                &quot;var ns6=document.getElementById&amp;&amp;!document.all&quot; +
+                &quot;\n&quot; +
+                &quot;var ns4=document.layers&quot; +
+                &quot;\n&quot; +
+                &quot;\n&quot; +
+                &quot;\n&quot; +
+                &quot;function showmenu(e,which){&quot; +
+                &quot;\n&quot; +
+                &quot;\n&quot; +
+                &quot;\n&quot; +
+                &quot;if (!document.all&amp;&amp;!document.getElementById&amp;&amp;!document.layers)&quot; +
+                &quot;\n&quot; +
+                &quot;return&quot; +
+                &quot;\n&quot; +
+                &quot;\n&quot; +
+                &quot;\n&quot; +
+                &quot;clearhidemenu()&quot; +
+                &quot;\n&quot; +
+                &quot;\n&quot; +
+                &quot;\n&quot; +
+                &quot;menuobj=ie4? document.all.popmenu : ns6? document.getElementById(\&quot;popmenu\&quot;) : ns4? document.popmenu : \&quot;\&quot;\n&quot; +
+                &quot;\n&quot; +
+                &quot;menuobj.thestyle=(ie4||ns6)? menuobj.style : menuobj&quot; +
+                &quot;\n&quot; +
+                &quot;\n&quot; +
+                &quot;\n&quot; +
+                &quot;if (ie4||ns6)&quot; +
+                &quot;\n&quot; +
+                &quot;menuobj.innerHTML=which&quot; +
+                &quot;\n&quot; +
+                &quot;else{&quot; +
+                &quot;\n&quot; +
+                &quot;menuobj.document.write('&lt;layer name=gui bgColor=#E6E6E6 width=165 onmouseover=\&quot;clearhidemenu()\&quot; onmouseout=\&quot;hidemenu()\&quot;&gt;'+which+'&lt;/layer&gt;')&quot; +
+                &quot;\n&quot; +
+                &quot;menuobj.document.close()&quot; +
+                &quot;\n&quot; +
+                &quot;}&quot; +
+                &quot;\n&quot; +
+                &quot;\n&quot; +
+                &quot;\n&quot; +
+                &quot;menuobj.contentwidth=(ie4||ns6)? menuobj.offsetWidth : menuobj.document.gui.document.width&quot; +
+                &quot;\n&quot; +
+                &quot;menuobj.contentheight=(ie4||ns6)? menuobj.offsetHeight : menuobj.document.gui.document.height&quot; +
+                &quot;\n&quot; +
+                &quot;eventX=ie4? event.clientX : ns6? e.clientX : e.x&quot; +
+                &quot;\n&quot; +
+                &quot;eventY=ie4? event.clientY : ns6? e.clientY : e.y&quot; +
+                &quot;\n&quot; +
+                &quot;\n&quot; +
+                &quot;\n&quot; +
+                &quot;//Find out how close the mouse is to the corner of the window&quot; +
+                &quot;\n&quot; +
+                &quot;var rightedge=ie4? document.body.clientWidth-eventX : window.innerWidth-eventX&quot; +
+                &quot;\n&quot; +
+                &quot;var bottomedge=ie4? document.body.clientHeight-eventY : window.innerHeight-eventY&quot; +
+                &quot;\n&quot; +
+                &quot;\n&quot; +
+                &quot;\n&quot; +
+                &quot;//if the horizontal distance isn't enough to accomodate the width of the context menu&quot; +
+                &quot;\n&quot; +
+                &quot;if (rightedge &lt; menuobj.contentwidth)&quot; +
+                &quot;\n&quot; +
+                &quot;//move the horizontal position of the menu to the left by it's width&quot; +
+                &quot;\n&quot; +
+                &quot;menuobj.thestyle.left=ie4? document.body.scrollLeft+eventX-menuobj.contentwidth : ns6? window.pageXOffset+eventX-menuobj.contentwidth : eventX-menuobj.contentwidth&quot; +
+                &quot;\n&quot; +
+                &quot;else&quot; +
+                &quot;\n&quot; +
+                &quot;//position the horizontal position of the menu where the mouse was clicked&quot; +
+                &quot;\n&quot; +
+                &quot;menuobj.thestyle.left=ie4? document.body.scrollLeft+eventX : ns6? window.pageXOffset+eventX : eventX&quot; +
+                &quot;\n&quot; +
+                &quot;\n&quot; +
+                &quot;\n&quot; +
+                &quot;//same concept with the vertical position&quot; +
+                &quot;\n&quot; +
+                &quot;if (bottomedge&lt;menuobj.contentheight)&quot; +
+                &quot;\n&quot; +
+                &quot;menuobj.thestyle.top=ie4? document.body.scrollTop+eventY-menuobj.contentheight : ns6? window.pageYOffset+eventY-menuobj.contentheight : eventY-menuobj.contentheight&quot; +
+                &quot;\n&quot; +
+                &quot;else&quot; +
+                &quot;\n&quot; +
+                &quot;menuobj.thestyle.top=ie4? document.body.scrollTop+event.clientY : ns6? window.pageYOffset+eventY : eventY&quot; +
+                &quot;\n&quot; +
+                &quot;menuobj.thestyle.visibility=\&quot;visible\&quot;\n&quot; +
+                &quot;\n&quot; +
+                &quot;return false&quot; +
+                &quot;\n&quot; +
+                &quot;}&quot; +
+                &quot;\n&quot; +
+                &quot;\n&quot; +
+                &quot;\n&quot; +
+                &quot;function contains_ns6(a, b) {&quot; +
+                &quot;\n&quot; +
+                &quot;//Determines if 1 element in contained in another- by Brainjar.com&quot; +
+                &quot;\n&quot; +
+                &quot;while (b.parentNode)&quot; +
+                &quot;\n&quot; +
+                &quot;if ((b = b.parentNode) == a)&quot; +
+                &quot;\n&quot; +
+                &quot;return true;&quot; +
+                &quot;\n&quot; +
+                &quot;return false;&quot; +
+                &quot;\n&quot; +
+                &quot;}&quot; +
+                &quot;\n&quot; +
+                &quot;\n&quot; +
+                &quot;\n&quot; +
+                &quot;function hidemenu(){&quot; +
+                &quot;\n&quot; +
+                &quot;if (window.menuobj)&quot; +
+                &quot;\n&quot; +
+                &quot;menuobj.thestyle.visibility=(ie4||ns6)? \&quot;hidden\&quot; : \&quot;hide\&quot;\n&quot; +
+                &quot;\n&quot; +
+                &quot;}&quot; +
+                &quot;\n&quot; +
+                &quot;\n&quot; +
+                &quot;\n&quot; +
+                &quot;function dynamichide(e){&quot; +
+                &quot;\n&quot; +
+                &quot;if (ie4&amp;&amp;!menuobj.contains(e.toElement))&quot; +
+                &quot;\n&quot; +
+                &quot;hidemenu()&quot; +
+                &quot;\n&quot; +
+                &quot;else if (ns6&amp;&amp;e.currentTarget!= e.relatedTarget&amp;&amp; !contains_ns6(e.currentTarget, e.relatedTarget))&quot; +
+                &quot;\n&quot; +
+                &quot;hidemenu()&quot; +
+                &quot;\n&quot; +
+                &quot;}&quot; +
+                &quot;\n&quot; +
+                &quot;\n&quot; +
+                &quot;\n&quot; +
+                &quot;function delayhidemenu(){&quot; +
+                &quot;\n&quot; +
+                &quot;if (ie4||ns6||ns4)&quot; +
+                &quot;\n&quot; +
+                &quot;delayhide=setTimeout(\&quot;hidemenu()\&quot;,500)&quot; +
+                &quot;\n&quot; +
+                &quot;}&quot; +
+                &quot;\n&quot; +
+                &quot;\n&quot; +
+                &quot;\n&quot; +
+                &quot;function clearhidemenu(){&quot; +
+                &quot;\n&quot; +
+                &quot;if (window.delayhide)&quot; +
+                &quot;\n&quot; +
+                &quot;clearTimeout(delayhide)&quot; +
+                &quot;\n&quot; +
+                &quot;}&quot; +
+                &quot;\n&quot; +
+                &quot;\n&quot; +
+                &quot;\n&quot; +
+                &quot;function highlightmenu(e,state){&quot; +
+                &quot;\n&quot; +
+                &quot;if (document.all)&quot; +
+                &quot;\n&quot; +
+                &quot;source_el=event.srcElement&quot; +
+                &quot;\n&quot; +
+                &quot;else if (document.getElementById)&quot; +
+                &quot;\n&quot; +
+                &quot;source_el=e.target&quot; +
+                &quot;\n&quot; +
+                &quot;if (source_el.className==\&quot;menuitems\&quot;){&quot; +
+                &quot;\n&quot; +
+                &quot;source_el.id=(state==\&quot;on\&quot;)? \&quot;mouseoverstyle\&quot; : \&quot;\&quot;\n&quot; +
+                &quot;\n&quot; +
+                &quot;}&quot; +
+                &quot;\n&quot; +
+                &quot;else{&quot; +
+                &quot;\n&quot; +
+                &quot;while(source_el.id!=\&quot;popmenu\&quot;){&quot; +
+                &quot;\n&quot; +
+                &quot;source_el=document.getElementById? source_el.parentNode : source_el.parentElement&quot; +
+                &quot;\n&quot; +
+                &quot;if (source_el.className==\&quot;menuitems\&quot;){&quot; +
+                &quot;\n&quot; +
+                &quot;source_el.id=(state==\&quot;on\&quot;)? \&quot;mouseoverstyle\&quot; : \&quot;\&quot;\n&quot; +
+                &quot;\n&quot; +
+                &quot;}&quot; +
+                &quot;\n&quot; +
+                &quot;}&quot; +
+                &quot;\n&quot; +
+                &quot;}&quot; +
+                &quot;\n&quot; +
+                &quot;}&quot; +
+                &quot;\n&quot; +
+                &quot;\n&quot; +
+                &quot;\n&quot; +
+                &quot;if (ie4||ns6)&quot; +
+                &quot;\n&quot; +
+                &quot;document.onclick=hidemenu&quot; +
+                &quot;\n&quot; +
+                &quot;\n&quot; +
+                &quot;\n&quot; +
+                &quot;&lt;/script&gt;&quot;
+            );
+<span class="fc" id="L507">            parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L508">        }</span>
+        finally
+<span class="nc" id="L510">        {</span>
+<span class="pc" id="L511">            org.htmlparser.scanners.ScriptScanner.STRICT = old_strict;</span>
+<span class="nc" id="L512">        }</span>
+<span class="fc" id="L513">    }</span>
+
+    /**
+     * There was a bug in the ScriptScanner when there was multiline script and
+     * the last line did not have a newline before the end script tag. For example:
+     *
+     * &amp;lt;script&amp;gt;alert()
+     * alert()&amp;lt;/script&amp;gt;
+     *
+     * Would generate the following &quot;scriptCode()&quot; result:
+     * alert()alert()
+     *
+     * But should actually return:
+     * alert()
+     * alert()
+     *
+     * This was fixed in ScriptScanner, which this test verifies
+     */
+    public void testScriptCodeExtractionWithNewlines() throws ParserException {
+<span class="fc" id="L532">        String scriptContents = &quot;alert()\r\nalert()&quot;;</span>
+<span class="fc" id="L533">        createParser(&quot;&lt;script&gt;&quot; + scriptContents + &quot;&lt;/script&gt;&quot;);</span>
+<span class="fc" id="L534">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L535">        assertType(&quot;script&quot;,ScriptTag.class,node[0]);</span>
+<span class="fc" id="L536">        ScriptTag scriptTag = (ScriptTag)node[0];</span>
+<span class="fc" id="L537">        assertStringEquals(</span>
+<span class="fc" id="L538">            &quot;script code&quot;,</span>
+<span class="fc" id="L539">            scriptContents,</span>
+<span class="fc" id="L540">            scriptTag.getScriptCode()</span>
+        );
+<span class="fc" id="L542">    }</span>
+
+    /**
+     * Tests a bug in ScriptScanner where a NPE would be thrown if the
+     * script tag was not closed before the document ended.
+     */
+    public void testScanNoEndTag() throws ParserException   {
+<span class="fc" id="L549">        createParser(&quot;&lt;script&gt;&quot;);</span>
+<span class="fc" id="L550">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L551">    }</span>
+
+    /**
+     * See bug #741769 ScriptScanner doesn't handle quoted &lt;/script&gt; tags
+     */
+    public void testScanQuotedEndTag() throws ParserException
+    {
+<span class="fc" id="L558">        boolean old_strict = org.htmlparser.scanners.ScriptScanner.STRICT;</span>
+        try
+        {
+<span class="fc" id="L561">            org.htmlparser.scanners.ScriptScanner.STRICT = false;</span>
+<span class="fc" id="L562">            String html = &quot;&lt;SCRIPT language=\&quot;JavaScript\&quot;&gt;document.write('&lt;/SCRIPT&gt;');&lt;/SCRIPT&gt;&quot;;</span>
+<span class="fc" id="L563">            createParser(html);</span>
+<span class="fc" id="L564">            parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L565">            assertStringEquals (&quot;Parse error&quot;, html, node[0].toHtml ());</span>
+<span class="fc" id="L566">        }</span>
+        finally
+<span class="nc" id="L568">        {</span>
+<span class="pc" id="L569">            org.htmlparser.scanners.ScriptScanner.STRICT = old_strict;</span>
+<span class="nc" id="L570">        }</span>
+<span class="fc" id="L571">    }</span>
+
+    public void testScanScriptWithTagsInComment() throws ParserException {
+<span class="fc" id="L574">        String javascript = &quot;\n// This is javascript with &lt;li&gt; tag in the comment\n&quot;;</span>
+<span class="fc" id="L575">        createParser(&quot;&lt;script&gt;&quot;+ javascript + &quot;&lt;/script&gt;&quot;);</span>
+<span class="fc" id="L576">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L577">        assertTrue(&quot;Node should be a script tag&quot;,node[0] instanceof ScriptTag);</span>
+<span class="fc" id="L578">        ScriptTag scriptTag = (ScriptTag)node[0];</span>
+<span class="fc" id="L579">        String scriptCode = scriptTag.getScriptCode();</span>
+<span class="fc" id="L580">        assertStringEquals(&quot;Expected Code&quot;,javascript,scriptCode);</span>
+<span class="fc" id="L581">    }</span>
+
+    public void testScanScriptWithJavascriptLineEndings() throws ParserException {
+<span class="fc" id="L584">        String javascript =</span>
+<span class="fc" id="L585">            &quot;\n&quot; +</span>
+            &quot;var s = \&quot;This is a string \\\n&quot; +
+            &quot;that spans multiple lines;\&quot;\n&quot;;
+<span class="fc" id="L588">        createParser(&quot;&lt;script&gt;&quot;+ javascript + &quot;&lt;/script&gt;&quot;);</span>
+<span class="fc" id="L589">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L590">        assertTrue(&quot;Node should be a script tag&quot;,node[0] instanceof ScriptTag);</span>
+<span class="fc" id="L591">        ScriptTag scriptTag = (ScriptTag)node[0];</span>
+<span class="fc" id="L592">        String scriptCode = scriptTag.getScriptCode();</span>
+<span class="fc" id="L593">        assertStringEquals(&quot;Expected Code&quot;,javascript,scriptCode);</span>
+<span class="fc" id="L594">    }</span>
+
+
+    public void testScanScriptWithTags() throws ParserException {
+<span class="fc" id="L598">        String javascript = &quot;\nAnything inside the script tag should be unchanged, even &lt;li&gt; and other html tags\n&quot;;</span>
+<span class="fc" id="L599">        createParser(&quot;&lt;script&gt;&quot;+ javascript + &quot;&lt;/script&gt;&quot;);</span>
+<span class="fc" id="L600">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L601">        assertTrue(&quot;Node should be a script tag&quot;,node[0] instanceof ScriptTag);</span>
+<span class="fc" id="L602">        ScriptTag scriptTag = (ScriptTag)node[0];</span>
+<span class="fc" id="L603">        String scriptCode = scriptTag.getScriptCode();</span>
+<span class="fc" id="L604">        assertStringEquals(&quot;Expected Code&quot;,javascript,scriptCode);</span>
+<span class="fc" id="L605">    }</span>
+
+    /**
+     * See bug #839264 toHtml() parse error in Javascripts with &quot;form&quot; keyword
+     * Contributed by Ivan Wang (xj92wang)
+     */
+    public void testScriptsWithForm ()
+        throws
+            ParserException
+    {
+<span class="fc" id="L615">        String teststring = &quot;&lt;SCRIPT LANGUAGE=\&quot;JAVASCRIPT\&quot;&gt;&quot; +</span>
+            &quot;function valForm(frm) { &quot; + 
+            &quot; for (n=0; n&lt;this.form.test; n++) this.form.nb++; &quot;+
+            &quot;}&quot;+
+            &quot;&lt;/SCRIPT&gt;&quot;;
+<span class="fc" id="L620">        StringBuffer htmlBuffer = new StringBuffer ();</span>
+
+<span class="fc" id="L622">        createParser (teststring);</span>
+<span class="fc bfc" id="L623" title="All 2 branches covered.">        for (NodeIterator i = parser.elements (); i.hasMoreNodes ();)</span>
+        {
+<span class="fc" id="L625">            Node tnode = i.nextNode ();</span>
+<span class="fc" id="L626">            htmlBuffer.append (tnode.toHtml ());</span>
+        }
+<span class="fc" id="L628">        assertStringEquals (&quot;bad html&quot;, teststring, htmlBuffer.toString ());</span>
+<span class="fc" id="L629">    }</span>
+
+    /**
+     * See bug #902121 StringBean throws NullPointerException
+     * Contributed by Reza Motori (rezamotori)
+     */
+    public void testDecodeScript ()
+        throws ParserException
+    {
+<span class="fc" id="L638">        String plaintext =</span>
+<span class="fc" id="L639">            &quot;&lt;HTML&gt;\n&quot; +</span>
+            &quot;&lt;HEAD&gt;\n&quot; +
+            &quot;&lt;TITLE&gt;Script Encoder Sample Page&lt;/TITLE&gt;\n&quot; +
+            &quot;&lt;SCRIPT LANGUAGE=\&quot;JScript.Encode\&quot;&gt;\n&quot; +
+            &quot;&lt;!--//\n&quot; +
+            &quot;//Copyright� 1998 Microsoft Corporation. All Rights Reserved.\n&quot; +
+            &quot;//**Start Encode**\r\n&quot; +
+            &quot;function verifyCorrectBrowser(){\r\n&quot; +
+            &quot;  if(navigator.appName == \&quot;Microsoft Internet Explorer\&quot;)\r\n&quot; +
+            &quot;    if (navigator.appVersion.indexOf (\&quot;5.\&quot;) &gt;= 0)\r\n&quot; +
+            &quot;      return(true);\r\n&quot; +
+            &quot;    else\r\n&quot; +
+            &quot;      return(false);\r\n&quot; +
+            &quot;}\r\n&quot; +
+            &quot;function getAppropriatePage(){\r\n&quot; +
+            &quot;  var str1 = \&quot;Had this been an actual Web site, a page compatible with \&quot;;\r\n&quot; +
+            &quot;  var str2 = \&quot;browsers other than \&quot;;\r\n&quot; +
+            &quot;  var str3 = \&quot;Microsoft Internet Explorer 5.0 \&quot;;\r\n&quot; +
+            &quot;  var str4 = \&quot;would have been loaded.\&quot;;\r\n&quot; +
+            &quot;  if (verifyCorrectBrowser())\r\n&quot; +
+            &quot;    document.write(str1 + str3 + str4);\r\n&quot; +
+            &quot;  else\r\n&quot; +
+            &quot;    document.write(str1 + str2 + str3 + str4);\r\n&quot; +
+            &quot;}\r\n&quot; +
+            &quot;//--&gt;\r\n&quot; +
+            &quot;&lt;/SCRIPT&gt;\n&quot; +
+            &quot;&lt;/HEAD&gt;\n&quot; +
+            &quot;&lt;BODY onload=\&quot;getAppropriatePage()\&quot;&gt;\n&quot; +
+            &quot;&lt;/BODY&gt;\n&quot; +
+            &quot;&lt;/HTML&gt;&quot;;
+<span class="fc" id="L669">        String cryptext =</span>
+<span class="fc" id="L670">            &quot;&lt;HTML&gt;\n&quot; +</span>
+            &quot;&lt;HEAD&gt;\n&quot; +
+            &quot;&lt;TITLE&gt;Script Encoder Sample Page&lt;/TITLE&gt;\n&quot; +
+            &quot;&lt;SCRIPT LANGUAGE=\&quot;JScript.Encode\&quot;&gt;\n&quot; +
+            &quot;&lt;!--//\n&quot; +
+            &quot;//Copyright� 1998 Microsoft Corporation. All Rights Reserved.\n&quot; +
+            &quot;//**Start Encode**#@~^ZwIAAA==@#@&amp;0;	mDkW	P7nDb0zZKD.n1YAMGhk+Dvb`@#@&amp;P,kW`UC7kLlDGDcl22gl:n~{'~Jtr1DGkW6YP&amp;xDnD	+OPA62sKD+ME#@#@&amp;P,~~k6PvxC\\rLmYGDcCwa.n.kkWU bx[+X66Pcr*cJ#,@*{~!*@#@&amp;P,P~~,D+D;D	`YM;n#p@#@&amp;P~P~n^/n@#@&amp;~P,P~~M+Y;.	`Wl^d#I@#@&amp;)@#@&amp;6E	^YbWUPT+O)awDK2DblYKCo`*	@#@&amp;~~7l.PkOD8Px~rCl[~Dtr/,8+U,l	Pl1Y!CV,n4,/rO~Pm~wmo+,^G:alDk8Vn~SkOt,Ei@#@&amp;~~7lD~dDD+P{~r4.Khk+DkPKOtD~Y4lU~ri@#@&amp;~P7lD,dOD2P{PEHr^MWdW6OP&amp;xOnMx+O~A62VK.D~lRZPJp@#@&amp;~P7l.PkY.*,'PrAW!VN,4C\\P(+nx~sKl[+9 Jp@#@&amp;~,k0~c7+.k6z;W.M+1YAMWSd+M`b#@#@&amp;~~,PNK^Es+xD ADbY`dY.q,_~/D.&amp;,_~dDDcbI@#@&amp;~Psk+@#@&amp;P,PP9W1;:xORSDrO`/D.F,_PkO. ,_,/ODf~3PdYM*#p@#@&amp;N@#@&amp;z&amp;R @*@#@&amp;qrIAAA==^#~@&lt;/SCRIPT&gt;\n&quot; +
+            &quot;&lt;/HEAD&gt;\n&quot; +
+            &quot;&lt;BODY onload=\&quot;getAppropriatePage()\&quot;&gt;\n&quot; +
+            &quot;&lt;/BODY&gt;\n&quot; +
+            &quot;&lt;/HTML&gt;&quot;;
+        Lexer lexer;
+        
+<span class="fc" id="L683">        lexer = new Lexer (cryptext);</span>
+<span class="fc" id="L684">        ScriptDecoder.LAST_STATE = ScriptDecoder.STATE_INITIAL; // read everything</span>
+        try
+        {
+<span class="fc" id="L687">            String result = ScriptDecoder.Decode (lexer.getPage (), lexer.getCursor ());</span>
+<span class="fc" id="L688">            assertStringEquals (&quot;decoding failed&quot;, plaintext, result);</span>
+<span class="fc" id="L689">        }</span>
+        finally
+<span class="nc" id="L691">        {</span>
+<span class="pc" id="L692">            ScriptDecoder.LAST_STATE = ScriptDecoder.STATE_DONE;</span>
+<span class="nc" id="L693">        }</span>
+<span class="fc" id="L694">    }</span>
+    
+    /**
+     * See bug #902121 StringBean throws NullPointerException
+     * Contributed by Reza Motori (rezamotori)
+     */
+    public void testDecodePage ()
+        throws ParserException
+    {
+<span class="nc" id="L703">        String url = &quot;http://htmlparser.sourceforge.net/test/EncryptedScriptExample.html&quot;;</span>
+<span class="nc" id="L704">        String plaintext =</span>
+<span class="nc" id="L705">            &quot;\r\n&quot; +</span>
+            &quot;var nows = new Date();\r\n&quot; +
+            &quot;var nIndexs = nows.getTime();\r\n&quot; +
+            &quot;document.write(\&quot;&lt;img src=\\\&quot;http://www.parsads.com/adserve/scriptinject.asp?F=4&amp;Z=3,4,5,10,12&amp;N=1&amp;U=644&amp;O=&amp;nocache=\&quot;  + nIndexs + \&quot;\\\&quot; width=\\\&quot;1\\\&quot; hight=\\\&quot;1\\\&quot;&gt;&lt;img src=\\\&quot;http://www.parsads.com/adserve/scriptinject.asp?F=4&amp;Z=3,4,5,10,12&amp;N=1&amp;U=643&amp;O=&amp;nocache=\&quot;  + nIndexs + \&quot;\\\&quot; width=\\\&quot;1\\\&quot; hight=\\\&quot;1\\\&quot;&gt;&lt;img src=\\\&quot;http://www.parsads.com/adserve/scriptinject.asp?F=4&amp;Z=3,4,5,10,12&amp;N=1&amp;U=324&amp;O=&amp;nocache=\&quot;  + nIndexs + \&quot;\\\&quot; width=\\\&quot;1\\\&quot; hight=\\\&quot;1\\\&quot;&gt;\&quot;);\r\n&quot;;
+        
+<span class="nc" id="L710">        parser = new Parser (url);</span>
+<span class="nc" id="L711">        NodeList scripts = parser.extractAllNodesThatMatch (new TagNameFilter (&quot;SCRIPT&quot;));</span>
+<span class="nc" id="L712">        assertEquals (&quot;wrong number of scripts found&quot;, 2, scripts.size ());</span>
+<span class="nc" id="L713">        ScriptTag script = (ScriptTag)scripts.elementAt (1);</span>
+<span class="nc" id="L714">        assertStringEquals (&quot;script not decoded correctly&quot;, plaintext, script.getScriptCode ());</span>
+<span class="nc" id="L715">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>TextExtractingVisitorTest.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tests.visitorsTests</a> &gt; <span class="el_source">TextExtractingVisitorTest.java</span></div><h1>TextExtractingVisitorTest.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Somik Raha
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/test/java/org/htmlparser/tests/visitorsTests/TextExtractingVisitorTest.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tests.visitorsTests;
+
+import org.htmlparser.tests.ParserTestCase;
+import org.htmlparser.visitors.TextExtractingVisitor;
+
+public class TextExtractingVisitorTest extends ParserTestCase {
+
+    static
+    {
+<span class="fc" id="L35">        System.setProperty (&quot;org.htmlparser.tests.visitorsTests.TextExtractingVisitorTest&quot;, &quot;TextExtractingVisitorTest&quot;);</span>
+<span class="fc" id="L36">    }</span>
+
+    public TextExtractingVisitorTest(String name) {
+<span class="fc" id="L39">        super(name);</span>
+<span class="fc" id="L40">    }</span>
+
+    public void testSimpleVisit() throws Exception {
+<span class="fc" id="L43">        createParser(&quot;&lt;HTML&gt;&lt;HEAD&gt;&lt;TITLE&gt;Hello World&lt;/TITLE&gt;&lt;/HEAD&gt;&lt;/HTML&gt;&quot;);</span>
+<span class="fc" id="L44">        TextExtractingVisitor visitor = new TextExtractingVisitor();</span>
+<span class="fc" id="L45">        parser.visitAllNodesWith(visitor);</span>
+<span class="fc" id="L46">        assertStringEquals(</span>
+<span class="fc" id="L47">            &quot;extracted text&quot;,</span>
+<span class="fc" id="L48">            &quot;Hello World&quot;,</span>
+<span class="fc" id="L49">            visitor.getExtractedText()</span>
+        );
+<span class="fc" id="L51">    }</span>
+
+    public void testSimpleVisitWithRegisteredScanners() throws Exception {
+<span class="fc" id="L54">        createParser(&quot;&lt;HTML&gt;&lt;HEAD&gt;&lt;TITLE&gt;Hello World&lt;/TITLE&gt;&lt;/HEAD&gt;&lt;/HTML&gt;&quot;);</span>
+<span class="fc" id="L55">        TextExtractingVisitor visitor = new TextExtractingVisitor();</span>
+<span class="fc" id="L56">        parser.visitAllNodesWith(visitor);</span>
+<span class="fc" id="L57">        assertStringEquals(</span>
+<span class="fc" id="L58">            &quot;extracted text&quot;,</span>
+<span class="fc" id="L59">            &quot;Hello World&quot;,</span>
+<span class="fc" id="L60">            visitor.getExtractedText()</span>
+        );
+<span class="fc" id="L62">    }</span>
+
+    public void testVisitHtmlWithSpecialChars() throws Exception {
+<span class="fc" id="L65">        createParser(&quot;&lt;BODY&gt;Hello World&amp;nbsp;&amp;nbsp;&lt;/BODY&gt;&quot;);</span>
+<span class="fc" id="L66">        TextExtractingVisitor visitor = new TextExtractingVisitor();</span>
+<span class="fc" id="L67">        parser.visitAllNodesWith(visitor);</span>
+<span class="fc" id="L68">        assertStringEquals(</span>
+<span class="fc" id="L69">            &quot;extracted text&quot;,</span>
+<span class="fc" id="L70">            &quot;Hello World  &quot;,</span>
+<span class="fc" id="L71">            visitor.getExtractedText()</span>
+        );
+<span class="fc" id="L73">    }</span>
+
+    public void testVisitHtmlWithPreTags() throws Exception {
+<span class="fc" id="L76">        createParser(</span>
+<span class="fc" id="L77">            &quot;Some text with &amp;nbsp;&lt;pre&gt;this &amp;nbsp; should be preserved&lt;/pre&gt;&quot;</span>
+        );
+<span class="fc" id="L79">        TextExtractingVisitor visitor = new TextExtractingVisitor();</span>
+<span class="fc" id="L80">        parser.visitAllNodesWith(visitor);</span>
+<span class="fc" id="L81">        assertStringEquals(</span>
+<span class="fc" id="L82">            &quot;extracted text&quot;,</span>
+<span class="fc" id="L83">            &quot;Some text with  this &amp;nbsp; should be preserved&quot;,</span>
+<span class="fc" id="L84">            visitor.getExtractedText()</span>
+        );
+<span class="fc" id="L86">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

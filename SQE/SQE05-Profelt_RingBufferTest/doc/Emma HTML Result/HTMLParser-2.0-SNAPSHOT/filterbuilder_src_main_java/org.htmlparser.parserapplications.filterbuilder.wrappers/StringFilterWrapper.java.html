@@ -1,0 +1,371 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>StringFilterWrapper.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">filterbuilder/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.parserapplications.filterbuilder.wrappers</a> &gt; <span class="el_source">StringFilterWrapper.java</span></div><h1>StringFilterWrapper.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/filterbuilder/src/main/java/org/htmlparser/parserapplications/filterbuilder/wrappers/StringFilterWrapper.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.parserapplications.filterbuilder.wrappers;
+
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.Locale;
+
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JTextArea;
+import javax.swing.border.BevelBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
+
+import org.htmlparser.Node;
+import org.htmlparser.NodeFilter;
+import org.htmlparser.Parser;
+import org.htmlparser.filters.StringFilter;
+import org.htmlparser.parserapplications.filterbuilder.Filter;
+
+/**
+ * Wrapper for StringFilters.
+ */
+public class StringFilterWrapper
+    extends
+        Filter
+    implements
+        ActionListener,
+        DocumentListener,
+        Runnable
+{
+    /**
+     * The underlying filter.
+     */
+    protected StringFilter mFilter;
+
+    /**
+     * Text to check for.
+     */
+    protected JTextArea mPattern;
+
+    /**
+     * The check box for case sensitivity.
+     */
+    protected JCheckBox mCaseSensitivity;
+
+    /**
+     * Combo box for locale.
+     */
+    protected JComboBox mLocale;
+
+    /**
+     * Cached locales.
+     */
+<span class="nc" id="L81">    protected static Locale[] mLocales = null;</span>
+
+    /**
+     * Create a wrapper over a new StringFilter.
+     */ 
+<span class="nc" id="L86">    public StringFilterWrapper ()</span>
+    {
+        Thread thread;
+
+<span class="nc" id="L90">        mFilter = new StringFilter ();</span>
+<span class="nc" id="L91">        mFilter.setCaseSensitive (true);</span>
+
+        // add the text pattern
+<span class="nc" id="L94">        mPattern = new JTextArea (2, 20);</span>
+<span class="nc" id="L95">        mPattern.setBorder (new BevelBorder (BevelBorder.LOWERED));</span>
+<span class="nc" id="L96">        add (mPattern);</span>
+<span class="nc" id="L97">        mPattern.getDocument ().addDocumentListener (this);</span>
+<span class="nc" id="L98">        mPattern.setText (mFilter.getPattern ());</span>
+
+        // add the case sensitivity flag
+<span class="nc" id="L101">        mCaseSensitivity = new JCheckBox (&quot;Case Sensitive&quot;);</span>
+<span class="nc" id="L102">        add (mCaseSensitivity);</span>
+<span class="nc" id="L103">        mCaseSensitivity.addActionListener (this);</span>
+<span class="nc" id="L104">        mCaseSensitivity.setSelected (mFilter.getCaseSensitive ());</span>
+
+        // add the locales choice
+<span class="nc" id="L107">        mLocale = new JComboBox ();</span>
+<span class="nc" id="L108">        synchronized (mLocale)</span>
+        {
+<span class="nc" id="L110">            mLocale.addItem (mFilter.getLocale ().getDisplayName ());</span>
+<span class="nc" id="L111">            thread = new Thread (this);</span>
+<span class="nc" id="L112">            thread.setName  (&quot;locale_getter&quot;);</span>
+<span class="nc" id="L113">            thread.setPriority (Thread.MIN_PRIORITY);</span>
+<span class="nc" id="L114">            thread.run ();</span>
+        }
+<span class="nc" id="L116">        add (mLocale);</span>
+<span class="nc" id="L117">        mLocale.addActionListener (this);</span>
+<span class="nc" id="L118">        mLocale.setSelectedIndex (0);</span>
+<span class="nc bnc" id="L119" title="All 2 branches missed.">        mLocale.setVisible (!mFilter.getCaseSensitive ());</span>
+<span class="nc" id="L120">    }</span>
+
+    //
+    // Filter overrides and concrete implementations
+    //
+
+    /**
+     * Get the name of the filter.
+     * @return A descriptive name for the filter.
+     */
+    public String getDescription ()
+    {
+<span class="nc" id="L132">        return (&quot;Nodes containing string&quot;);</span>
+    }
+
+    /**
+     * Get the resource name for the icon.
+     * @return The icon resource specification.
+     */
+    public String getIconSpec ()
+    {
+<span class="nc" id="L141">        return (&quot;images/StringFilter.gif&quot;);</span>
+    }
+
+    /**
+     * Get the underlying node filter object.
+     * @return The node filter object suitable for serialization.
+     */
+    public NodeFilter getNodeFilter ()
+    {
+        StringFilter ret;
+        
+<span class="nc" id="L152">        ret = new StringFilter ();</span>
+<span class="nc" id="L153">        ret.setCaseSensitive (mFilter.getCaseSensitive ());</span>
+<span class="nc" id="L154">        ret.setLocale (mFilter .getLocale ());</span>
+<span class="nc" id="L155">        ret.setPattern (mFilter.getPattern ());</span>
+            
+<span class="nc" id="L157">        return (ret);</span>
+    }
+
+    /**
+     * Assign the underlying node filter for this wrapper.
+     * @param filter The filter to wrap.
+     * @param context The parser to use for conditioning this filter.
+     * Some filters need contextual information to provide to the user,
+     * i.e. for tag names or attribute names or values,
+     * so the Parser context is provided. 
+     */
+    public void setNodeFilter (NodeFilter filter, Parser context)
+    {
+<span class="nc" id="L170">        mFilter = (StringFilter)filter;</span>
+<span class="nc" id="L171">        mPattern.setText (mFilter.getPattern ());</span>
+<span class="nc" id="L172">        mCaseSensitivity.setSelected (mFilter.getCaseSensitive ());</span>
+<span class="nc bnc" id="L173" title="All 2 branches missed.">        mLocale.setVisible (!mFilter.getCaseSensitive ());</span>
+<span class="nc" id="L174">        mLocale.setSelectedItem (mFilter.getLocale ().getDisplayName ());</span>
+<span class="nc" id="L175">    }</span>
+
+    /**
+     * Get the underlying node filter's subordinate filters.
+     * @return The node filter object's contained filters.
+     */
+    public NodeFilter[] getSubNodeFilters ()
+    {
+<span class="nc" id="L183">        return (new NodeFilter[0]);</span>
+    }
+
+    /**
+     * Assign the underlying node filter's subordinate filters.
+     * @param filters The filters to insert into the underlying node filter.
+     */
+    public void setSubNodeFilters (NodeFilter[] filters)
+    {
+        // should we complain?
+<span class="nc" id="L193">    }</span>
+
+    /**
+     * Convert this filter into Java code.
+     * Output whatever text necessary and return the variable name.
+     * @param out The output buffer.
+     * @param context Three integers as follows:
+     * &lt;li&gt;indent level - the number of spaces to insert at the beginning of each line&lt;/li&gt;
+     * &lt;li&gt;filter number - the next available filter number&lt;/li&gt;
+     * &lt;li&gt;filter array number - the next available array of filters number&lt;/li&gt;
+     * @return The variable name to use when referencing this filter (usually &quot;filter&quot; + context[1]++) 
+     */
+    public String toJavaCode (StringBuffer out, int[] context)
+    {
+        String ret;
+
+<span class="nc" id="L209">        ret = &quot;filter&quot; + context[1]++;</span>
+<span class="nc" id="L210">        spaces (out, context[0]);</span>
+<span class="nc" id="L211">        out.append (&quot;StringFilter &quot;);</span>
+<span class="nc" id="L212">        out.append (ret);</span>
+<span class="nc" id="L213">        out.append (&quot; = new StringFilter ();&quot;);</span>
+<span class="nc" id="L214">        newline (out);</span>
+<span class="nc" id="L215">        spaces (out, context[0]);</span>
+<span class="nc" id="L216">        out.append (ret);</span>
+<span class="nc" id="L217">        out.append (&quot;.setCaseSensitive (&quot;);</span>
+<span class="nc bnc" id="L218" title="All 2 branches missed.">        out.append (mFilter.getCaseSensitive () ? &quot;true&quot; : &quot;false&quot;);</span>
+<span class="nc" id="L219">        out.append (&quot;);&quot;);</span>
+<span class="nc" id="L220">        newline (out);</span>
+<span class="nc" id="L221">        spaces (out, context[0]);</span>
+<span class="nc" id="L222">        out.append (ret);</span>
+<span class="nc" id="L223">        out.append (&quot;.setLocale (new java.util.Locale (\&quot;&quot;);</span>
+<span class="nc" id="L224">        out.append (mFilter .getLocale ().getLanguage ());</span>
+<span class="nc" id="L225">        out.append (&quot;\&quot;, \&quot;&quot;);</span>
+<span class="nc" id="L226">        out.append (mFilter .getLocale ().getCountry ());</span>
+<span class="nc" id="L227">        out.append (&quot;\&quot;, \&quot;&quot;);</span>
+<span class="nc" id="L228">        out.append (mFilter .getLocale ().getVariant ());</span>
+<span class="nc" id="L229">        out.append (&quot;\&quot;));&quot;);</span>
+<span class="nc" id="L230">        newline (out);</span>
+<span class="nc" id="L231">        spaces (out, context[0]);</span>
+<span class="nc" id="L232">        out.append (ret);</span>
+<span class="nc" id="L233">        out.append (&quot;.setPattern (\&quot;&quot;);</span>
+<span class="nc" id="L234">        out.append (mFilter.getPattern ());</span>
+<span class="nc" id="L235">        out.append (&quot;\&quot;);&quot;);</span>
+<span class="nc" id="L236">        newline (out);</span>
+        
+<span class="nc" id="L238">        return (ret);</span>
+    }
+
+    //
+    // NodeFilter interface
+    //
+
+    /**
+     * Predicate to determine whether or not to keep the given node.
+     * The behaviour based on this outcome is determined by the context
+     * in which it is called. It may lead to the node being added to a list
+     * or printed out. See the calling routine for details.
+     * @return &lt;code&gt;true&lt;/code&gt; if the node is to be kept, &lt;code&gt;false&lt;/code&gt;
+     * if it is to be discarded.
+     * @param node The node to test.
+     */
+    public boolean accept (Node node)
+    {
+<span class="nc" id="L256">        return (mFilter.accept (node));</span>
+    }
+
+    //
+    // ActionListener interface
+    //
+
+    /**
+     * Invoked when an action occurs on the combo box.
+     * @param event Details about the action event.
+     */
+    public void actionPerformed (ActionEvent event)
+    {
+        Object source;
+        boolean sensitive;
+        Object[] selection;
+        String locale;
+
+<span class="nc" id="L274">        source = event.getSource ();</span>
+<span class="nc bnc" id="L275" title="All 2 branches missed.">        if (source == mCaseSensitivity)</span>
+        {
+<span class="nc" id="L277">            sensitive = mCaseSensitivity.isSelected ();</span>
+<span class="nc" id="L278">            mFilter.setCaseSensitive (sensitive);</span>
+<span class="nc bnc" id="L279" title="All 2 branches missed.">            mLocale.setVisible (!sensitive);</span>
+<span class="nc" id="L280">            mLocale.setSelectedItem (mFilter.getLocale ().getDisplayName ());</span>
+<span class="nc" id="L281">        }</span>
+<span class="nc bnc" id="L282" title="All 2 branches missed.">        else if (source == mLocale)</span>
+        {
+<span class="nc" id="L284">            synchronized (mLocale)</span>
+            {
+<span class="nc" id="L286">                selection = mLocale.getSelectedObjects ();</span>
+<span class="nc bnc" id="L287" title="All 4 branches missed.">                if ((null != selection) &amp;&amp; (0 != selection.length))</span>
+                {
+<span class="nc" id="L289">                    locale = (String)selection[0];</span>
+<span class="nc bnc" id="L290" title="All 2 branches missed.">                    for (int i = 0; i &lt; mLocales.length; i++)</span>
+<span class="nc bnc" id="L291" title="All 2 branches missed.">                        if (locale.equals (mLocales[i].getDisplayName ()))</span>
+<span class="nc" id="L292">                            mFilter.setLocale (mLocales[i]);</span>
+                }
+            }
+        }
+<span class="nc" id="L296">    }</span>
+
+    //
+    // Runnable interface
+    //
+
+    /**
+     * Background thread task to get the available locales.
+     */
+    public void run ()
+    {
+        String locale;
+
+<span class="nc" id="L309">        synchronized (mLocale)</span>
+        {
+<span class="nc" id="L311">            mLocales = Locale.getAvailableLocales ();</span>
+<span class="nc" id="L312">            locale = mFilter.getLocale ().getDisplayName ();</span>
+<span class="nc bnc" id="L313" title="All 2 branches missed.">            for (int i = 0; i &lt; mLocales.length; i++)</span>
+<span class="nc bnc" id="L314" title="All 2 branches missed.">                if (!locale.equals (mLocales[i].getDisplayName ()))</span>
+<span class="nc" id="L315">                    mLocale.addItem (mLocales[i].getDisplayName ());</span>
+<span class="nc" id="L316">            mLocale.invalidate ();</span>
+        }
+<span class="nc" id="L318">    }</span>
+        
+    //
+    // DocumentListener interface
+    //
+
+    /**
+     * Handle an insert update event.
+     * @param e Details about the insert event.
+     */
+    public void insertUpdate (DocumentEvent e)
+    {
+        Document doc;
+        
+<span class="nc" id="L332">        doc = e.getDocument ();</span>
+        try
+        {
+<span class="nc" id="L335">            mFilter.setPattern (doc.getText (0, doc.getLength ()));</span>
+<span class="nc" id="L336">        }</span>
+<span class="nc" id="L337">        catch (BadLocationException ble)</span>
+        {
+<span class="nc" id="L339">            ble.printStackTrace ();</span>
+        }
+<span class="nc" id="L341">    }</span>
+
+    /**
+     * Handle a remove update event.
+     * @param e Details about the remove event.
+     */
+    public void removeUpdate (DocumentEvent e)
+    {
+        Document doc;
+        
+<span class="nc" id="L351">        doc = e.getDocument ();</span>
+        try
+        {
+<span class="nc" id="L354">            mFilter.setPattern (doc.getText (0, doc.getLength ()));</span>
+<span class="nc" id="L355">        }</span>
+<span class="nc" id="L356">        catch (BadLocationException ble)</span>
+        {
+<span class="nc" id="L358">            ble.printStackTrace ();</span>
+        }
+<span class="nc" id="L360">    }</span>
+
+    /**
+     * Handle a change update event.
+     * @param e Details about the change event.
+     */
+    public void changedUpdate (DocumentEvent e)
+    {
+        // plain text components don't fire these events
+<span class="nc" id="L369">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

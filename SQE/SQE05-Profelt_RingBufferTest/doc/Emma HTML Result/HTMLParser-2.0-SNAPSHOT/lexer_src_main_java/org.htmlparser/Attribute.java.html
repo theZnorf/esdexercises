@@ -1,0 +1,753 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>Attribute.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">lexer/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser</a> &gt; <span class="el_source">Attribute.java</span></div><h1>Attribute.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/lexer/src/main/java/org/htmlparser/Attribute.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser;
+
+import java.io.Serializable;
+
+/**
+ * An attribute within a tag.
+ * Holds the name, assignment string, value and quote character.
+ * &lt;p&gt;
+ * This class was made deliberately simple. Except for
+ * {@link #setRawValue RawValue}, the properties are completely orthogonal,
+ * that is: each property is independant of the others. This means you have
+ * enough rope here to hang yourself, and it's very easy to create
+ * malformed HTML. Where it's obvious, warnings and notes have been provided
+ * in the setters javadocs, but it is up to you -- the programmer --
+ * to ensure that the contents of the four fields will yield valid HTML
+ * (if that's what you want).
+ * &lt;p&gt;
+ * Be especially mindful of quotes and assignment strings. These are handled
+ * by the constructors where it's obvious, but in general, you need to set
+ * them explicitly when building an attribute. For example to construct
+ * the attribute &lt;b&gt;&lt;code&gt;label=&quot;A multi word value.&quot;&lt;/code&gt;&lt;/b&gt; you could use:
+ * &lt;pre&gt;
+ *     attribute = new Attribute ();
+ *     attribute.setName (&quot;label&quot;);
+ *     attribute.setAssignment (&quot;=&quot;);
+ *     attribute.setValue (&quot;A multi word value.&quot;);
+ *     attribute.setQuote ('&quot;');
+ * &lt;/pre&gt;
+ * or
+ * &lt;pre&gt;
+ *     attribute = new Attribute ();
+ *     attribute.setName (&quot;label&quot;);
+ *     attribute.setAssignment (&quot;=&quot;);
+ *     attribute.setRawValue (&quot;A multi word value.&quot;);
+ * &lt;/pre&gt;
+ * or
+ * &lt;pre&gt;
+ *     attribute = new Attribute (&quot;label&quot;, &quot;A multi word value.&quot;);
+ * &lt;/pre&gt;
+ * Note that the assignment value and quoting need to be set separately when
+ * building the attribute from scratch using the properties.
+ * &lt;p&gt;
+ * &lt;table width=&quot;100.0%&quot; align=&quot;Center&quot; border=&quot;1&quot;&gt;
+ *   &lt;caption&gt;Valid States for Attributes.&lt;/caption&gt;
+ *   &lt;tr&gt;
+ *     &lt;th align=&quot;Center&quot;&gt;Description&lt;/th&gt;
+ *     &lt;th align=&quot;Center&quot;&gt;toString()&lt;/th&gt;
+ *     &lt;th align=&quot;Center&quot;&gt;Name&lt;/th&gt;
+ *     &lt;th align=&quot;Center&quot;&gt;Assignment&lt;/th&gt;
+ *     &lt;th align=&quot;Center&quot;&gt;Value&lt;/th&gt;
+ *     &lt;th align=&quot;Center&quot;&gt;Quote&lt;/th&gt;
+ *   &lt;/tr&gt;
+ *   &lt;tr&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;whitespace attribute&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;value&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;&lt;code&gt;null&lt;/code&gt;&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;&lt;code&gt;null&lt;/code&gt;&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;&quot;value&quot;&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;&lt;code&gt;0&lt;/code&gt;&lt;/td&gt;
+ *   &lt;/tr&gt;
+ *   &lt;tr&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;standalone attribute&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;name&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;&quot;name&quot;&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;&lt;code&gt;null&lt;/code&gt;&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;&lt;code&gt;null&lt;/code&gt;&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;&lt;code&gt;0&lt;/code&gt;&lt;/td&gt;
+ *   &lt;/tr&gt;
+ *   &lt;tr&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;empty attribute&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;name=&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;&quot;name&quot;&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;&quot;=&quot;&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;&lt;code&gt;null&lt;/code&gt;&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;&lt;code&gt;0&lt;/code&gt;&lt;/td&gt;
+ *   &lt;/tr&gt;
+ *   &lt;tr&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;empty single quoted attribute&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;name=''&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;&quot;name&quot;&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;&quot;=&quot;&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;&lt;code&gt;null&lt;/code&gt;&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;&lt;code&gt;'&lt;/code&gt;&lt;/td&gt;
+ *   &lt;/tr&gt;
+ *   &lt;tr&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;empty double quoted attribute&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;name=&quot;&quot;&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;&quot;name&quot;&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;&quot;=&quot;&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;&lt;code&gt;null&lt;/code&gt;&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;&lt;code&gt;&quot;&lt;/code&gt;&lt;/td&gt;
+ *   &lt;/tr&gt;
+ *   &lt;tr&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;naked attribute&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;name=value&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;&quot;name&quot;&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;&quot;=&quot;&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;&quot;value&quot;&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;&lt;code&gt;0&lt;/code&gt;&lt;/td&gt;
+ *   &lt;/tr&gt;
+ *   &lt;tr&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;single quoted attribute&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;name='value'&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;&quot;name&quot;&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;&quot;=&quot;&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;&quot;value&quot;&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;&lt;code&gt;'&lt;/code&gt;&lt;/td&gt;
+ *   &lt;/tr&gt;
+ *   &lt;tr&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;double quoted attribute&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;name=&quot;value&quot;&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;&quot;name&quot;&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;&quot;=&quot;&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;&quot;value&quot;&lt;/td&gt;
+ *     &lt;td align=&quot;Center&quot;&gt;&lt;code&gt;&quot;&lt;/code&gt;&lt;/td&gt;
+ *   &lt;/tr&gt;
+ * &lt;/table&gt;
+ * &lt;br&gt;In words:
+ * &lt;br&gt;If Name is null, and Assignment is null, and Quote is zero,
+ *   it's whitepace and Value has the whitespace text -- value
+ * &lt;br&gt;If Name is not null, and both Assignment and Value are null
+ *   it's a standalone attribute -- name
+ * &lt;br&gt;If Name is not null, and Assignment is an equals sign, and Quote is zero
+ *   it's an empty attribute -- name=
+ * &lt;br&gt;If Name is not null, and Assignment is an equals sign,
+ *   and Value is &quot;&quot; or null, and Quote is '
+ *   it's an empty single quoted attribute -- name=''
+ * &lt;br&gt;If Name is not null, and Assignment is an equals sign,
+ *   and Value is &quot;&quot; or null, and Quote is &quot;
+ *   it's an empty double quoted attribute -- name=&quot;&quot;
+ * &lt;br&gt;If Name is not null, and Assignment is an equals sign,
+ *   and Value is something, and Quote is zero
+ *   it's a naked attribute -- name=value
+ * &lt;br&gt;If Name is not null, and Assignment is an equals sign,
+ *   and Value is something, and Quote is '
+ *   it's a single quoted attribute -- name='value'
+ * &lt;br&gt;If Name is not null, and Assignment is an equals sign,
+ *   and Value is something, and Quote is &quot;
+ *   it's a double quoted attribute -- name=&quot;value&quot;
+ * &lt;br&gt;All other states are invalid HTML.
+ * &lt;p&gt;
+ * From the &lt;a href=&quot;http://www.w3.org/TR/html4/intro/sgmltut.html#h-3.2.2&quot;&gt;
+ * HTML 4.01 Specification, W3C Recommendation 24 December 1999&lt;/a&gt;
+ * http://www.w3.org/TR/html4/intro/sgmltut.html#h-3.2.2:&lt;p&gt;
+ * &lt;cite&gt;
+ * 3.2.2 Attributes&lt;p&gt;
+ * Elements may have associated properties, called attributes, which may
+ * have values (by default, or set by authors or scripts). Attribute/value
+ * pairs appear before the final &quot;&gt;&quot; of an element's start tag. Any number
+ * of (legal) attribute value pairs, separated by spaces, may appear in an
+ * element's start tag. They may appear in any order.&lt;p&gt;
+ * In this example, the id attribute is set for an H1 element:
+ * &lt;pre&gt;
+ * &lt;code&gt;
+ * {@.html
+ *  &lt;H1 id=&quot;section1&quot;&gt;
+ *  This is an identified heading thanks to the id attribute
+ *  &lt;/H1&gt;}
+ * &lt;/code&gt;
+ * &lt;/pre&gt;
+ * By default, SGML requires that all attribute values be delimited using
+ * either double quotation marks (ASCII decimal 34) or single quotation
+ * marks (ASCII decimal 39). Single quote marks can be included within the
+ * attribute value when the value is delimited by double quote marks, and
+ * vice versa. Authors may also use numeric character references to
+ * represent double quotes (&amp;amp;#34;) and single quotes (&amp;amp;#39;).
+ * For doublequotes authors can also use the character entity reference
+ * &amp;amp;quot;.&lt;p&gt;
+ * In certain cases, authors may specify the value of an attribute without
+ * any quotation marks. The attribute value may only contain letters
+ * (a-z and A-Z), digits (0-9), hyphens (ASCII decimal 45),
+ * periods (ASCII decimal 46), underscores (ASCII decimal 95),
+ * and colons (ASCII decimal 58). We recommend using quotation marks even
+ * when it is possible to eliminate them.&lt;p&gt;
+ * Attribute names are always case-insensitive.&lt;p&gt;
+ * Attribute values are generally case-insensitive. The definition of each
+ * attribute in the reference manual indicates whether its value is
+ * case-insensitive.&lt;p&gt;
+ * All the attributes defined by this specification are listed in the
+ * &lt;a href=&quot;http://www.w3.org/TR/html4/index/attributes.html&quot;&gt;attribute
+ * index&lt;/a&gt;.&lt;p&gt;
+ * &lt;/cite&gt;
+ * &lt;p&gt;
+ */
+public class Attribute
+    implements
+        Serializable
+{
+    /**
+     * The name of this attribute.
+     * The part before the equals sign, or the stand-alone attribute.
+     * This will be &lt;code&gt;null&lt;/code&gt; if the attribute is whitespace.
+     */
+    protected String mName;
+
+    /**
+     * The assignment string of the attribute.
+     * The equals sign.
+     * This will be &lt;code&gt;null&lt;/code&gt; if the attribute is a
+     * stand-alone attribute.
+     */
+    protected String mAssignment;
+
+    /**
+     * The value of the attribute.
+     * The part after the equals sign.
+     * This will be &lt;code&gt;null&lt;/code&gt; if the attribute is an empty or
+     * stand-alone attribute.
+     */
+    protected String mValue;
+
+    /**
+     * The quote, if any, surrounding the value of the attribute, if any.
+     * This will be zero if there are no quotes around the value.
+     */
+    protected char mQuote;
+
+    /**
+     * Create an attribute with the name, assignment, value and quote given.
+     * If the quote value is zero, assigns the value using {@link #setRawValue}
+     * which sets the quote character to a proper value if necessary.
+     * @param name The name of this attribute.
+     * @param assignment The assignment string of this attribute.
+     * @param value The value of this attribute.
+     * @param quote The quote around the value of this attribute.
+     */
+<span class="fc" id="L252">    public Attribute (String name, String assignment, String value, char quote)</span>
+    {
+<span class="fc" id="L254">        setName (name);</span>
+<span class="fc" id="L255">        setAssignment (assignment);</span>
+<span class="fc bfc" id="L256" title="All 2 branches covered.">        if (0 == quote)</span>
+<span class="fc" id="L257">            setRawValue (value);</span>
+        else
+        {
+<span class="fc" id="L260">            setValue (value);</span>
+<span class="fc" id="L261">            setQuote (quote);</span>
+        }
+<span class="fc" id="L263">    }</span>
+
+    /**
+     * Create an attribute with the name, value and quote given.
+     * Uses an equals sign as the assignment string if the value is not
+     * &lt;code&gt;null&lt;/code&gt;, and calls {@link #setRawValue} to get the
+     * correct quoting if &lt;code&gt;quote&lt;/code&gt; is zero.
+     * @param name The name of this attribute.
+     * @param value The value of this attribute.
+     * @param quote The quote around the value of this attribute.
+     */
+    public Attribute (String name, String value, char quote)
+    {
+<span class="fc bfc" id="L276" title="All 2 branches covered.">        this (name, (null == value ? &quot;&quot; : &quot;=&quot;), value, quote);</span>
+<span class="fc" id="L277">    }</span>
+
+    /**
+     * Create a whitespace attribute with the value given.
+     * @param value The value of this attribute.
+     * @exception IllegalArgumentException if the value contains other than
+     * whitespace. To set a real value use {@link #Attribute(String,String)}.
+     */
+<span class="fc" id="L285">    public Attribute (String value)</span>
+        throws
+            IllegalArgumentException
+    {
+<span class="pc bpc" id="L289" title="1 of 2 branches missed.">        if (0 != value.trim ().length ())</span>
+<span class="nc" id="L290">            throw new IllegalArgumentException (&quot;non whitespace value&quot;);</span>
+        else
+        {
+<span class="fc" id="L293">            setName (null);</span>
+<span class="fc" id="L294">            setAssignment (null);</span>
+<span class="fc" id="L295">            setValue (value);</span>
+<span class="fc" id="L296">            setQuote ((char)0);</span>
+        }
+<span class="fc" id="L298">    }</span>
+
+    /**
+     * Create an attribute with the name and value given.
+     * Uses an equals sign as the assignment string if the value is not
+     * &lt;code&gt;null&lt;/code&gt;, and calls {@link #setRawValue} to get the
+     * correct quoting.
+     * @param name The name of this attribute.
+     * @param value The value of this attribute.
+     */
+    public Attribute (String name, String value)
+    {
+<span class="fc bfc" id="L310" title="All 2 branches covered.">        this (name, (null == value ? &quot;&quot; : &quot;=&quot;), value, (char)0);</span>
+<span class="fc" id="L311">    }</span>
+
+    /**
+     * Create an attribute with the name, assignment string and value given.
+     * Calls {@link #setRawValue} to get the correct quoting.
+     * @param name The name of this attribute.
+     * @param assignment The assignment string of this attribute.
+     * @param value The value of this attribute.
+     */
+    public Attribute (String name, String assignment, String value)
+    {
+<span class="fc" id="L322">        this (name, assignment, value, (char)0);</span>
+<span class="fc" id="L323">    }</span>
+
+    /**
+     * Create an empty attribute.
+     * This will provide &quot;&quot; from the {@link #toString} and
+     * {@link #toString(StringBuffer)} methods.
+     */
+    public Attribute ()
+    {
+<span class="fc" id="L332">        this (null, null, null, (char)0);</span>
+<span class="fc" id="L333">    }</span>
+
+    /**
+     * Get the name of this attribute.
+     * The part before the equals sign, or the contents of the
+     * stand-alone attribute.
+     * @return The name, or &lt;code&gt;null&lt;/code&gt; if it's just a whitepace
+     * 'attribute'.
+     * @see #setName
+     */
+    public String getName ()
+    {
+<span class="fc" id="L345">        return (mName);</span>
+    }
+
+    /**
+     * Get the name of this attribute.
+     * @param buffer The buffer to place the name in.
+     * @see #getName()
+     * @see #setName
+     */
+    public void getName (StringBuffer buffer)
+    {
+<span class="fc bfc" id="L356" title="All 2 branches covered.">        if (null != mName)</span>
+<span class="fc" id="L357">            buffer.append (mName);</span>
+<span class="fc" id="L358">    }</span>
+
+    /**
+     * Set the name of this attribute.
+     * Set the part before the equals sign, or the contents of the
+     * stand-alone attribute.
+     * &lt;em&gt;WARNING:&lt;/em&gt; Setting this to &lt;code&gt;null&lt;/code&gt; can result in
+     * malformed HTML if the assignment string is not &lt;code&gt;null&lt;/code&gt;.
+     * @param name The new name.
+     * @see #getName
+     * @see #getName(StringBuffer)
+     */
+    public void setName (String name)
+    {
+<span class="fc" id="L372">        mName = name;</span>
+<span class="fc" id="L373">    }</span>
+
+    /**
+     * Get the assignment string of this attribute.
+     * This is usually just an equals sign, but in poorly formed attributes it
+     * can include whitespace on either or both sides of an equals sign.
+     * @return The assignment string.
+     * @see #setAssignment
+     */
+    public String getAssignment ()
+    {
+<span class="fc" id="L384">        return (mAssignment);</span>
+    }
+
+    /**
+     * Get the assignment string of this attribute.
+     * @param buffer The buffer to place the assignment string in.
+     * @see #getAssignment()
+     * @see #setAssignment
+     */
+    public void getAssignment (StringBuffer buffer)
+    {
+<span class="fc bfc" id="L395" title="All 2 branches covered.">        if (null != mAssignment)</span>
+<span class="fc" id="L396">            buffer.append (mAssignment);</span>
+<span class="fc" id="L397">    }</span>
+
+    /**
+     * Set the assignment string of this attribute.
+     * &lt;em&gt;WARNING:&lt;/em&gt; Setting this property to other than an equals sign
+     * or &lt;code&gt;null&lt;/code&gt; will result in malformed HTML. In the case of a
+     * &lt;code&gt;null&lt;/code&gt;, the {@link  #setValue value} should also be set to
+     * &lt;code&gt;null&lt;/code&gt;.
+     * @param assignment The new assignment string.
+     * @see #getAssignment
+     * @see #getAssignment(StringBuffer)
+     */
+    public void setAssignment (String assignment)
+    {
+<span class="fc" id="L411">        mAssignment = assignment;</span>
+<span class="fc" id="L412">    }</span>
+
+    /**
+     * Get the value of the attribute.
+     * The part after the equals sign, or the text if it's just a whitepace
+     * 'attribute'.
+     * &lt;em&gt;NOTE:&lt;/em&gt; This does not include any quotes that may have enclosed
+     * the value when it was read. To get the un-stripped value use
+     * {@link  #getRawValue}.
+     * @return The value, or &lt;code&gt;null&lt;/code&gt; if it's a stand-alone or
+     * empty attribute, or the text if it's just a whitepace 'attribute'.
+     * @see #setValue
+     */
+    public String getValue ()
+    {
+<span class="fc" id="L427">        return (mValue);</span>
+    }
+
+    /**
+     * Get the value of the attribute.
+     * @param buffer The buffer to place the value in.
+     * @see #getValue()
+     * @see #setValue
+     */
+    public void getValue (StringBuffer buffer)
+    {
+<span class="fc bfc" id="L438" title="All 2 branches covered.">        if (null != mValue)</span>
+<span class="fc" id="L439">            buffer.append (mValue);</span>
+<span class="fc" id="L440">    }</span>
+
+    /**
+     * Set the value of the attribute.
+     * The part after the equals sign, or the text if it's a whitepace
+     * 'attribute'.
+     * &lt;em&gt;WARNING:&lt;/em&gt; Setting this property to a value that needs to be
+     * quoted without also setting the quote character will result in malformed
+     * HTML.
+     * @param value The new value.
+     * @see #getValue
+     * @see #getValue(StringBuffer)
+     */
+    public void setValue (String value)
+    {
+<span class="fc" id="L455">        mValue = value;</span>
+<span class="fc" id="L456">    }</span>
+
+    /**
+     * Get the quote, if any, surrounding the value of the attribute, if any.
+     * @return Either ' or &quot; if the attribute value was quoted, or zero
+     * if there are no quotes around it.
+     * @see #setQuote
+     */
+    public char getQuote ()
+    {
+<span class="fc" id="L466">        return (mQuote);</span>
+    }
+
+    /**
+     * Get the quote, if any, surrounding the value of the attribute, if any.
+     * @param buffer The buffer to place the quote in.
+     * @see #getQuote()
+     * @see #setQuote
+     */
+    public void getQuote (StringBuffer buffer)
+    {
+<span class="fc bfc" id="L477" title="All 2 branches covered.">        if (0 != mQuote)</span>
+<span class="fc" id="L478">            buffer.append (mQuote);</span>
+<span class="fc" id="L479">    }</span>
+
+    /**
+     * Set the quote surrounding the value of the attribute.
+     * &lt;em&gt;WARNING:&lt;/em&gt; Setting this property to zero will result in malformed
+     * HTML if the {@link  #getValue value} needs to be quoted (i.e. contains
+     * whitespace).
+     * @param quote The new quote value.
+     * @see #getQuote
+     * @see #getQuote(StringBuffer)
+     */
+    public void setQuote (char quote)
+    {
+<span class="fc" id="L492">        mQuote = quote;</span>
+<span class="fc" id="L493">    }</span>
+
+    /**
+     * Get the raw value of the attribute.
+     * The part after the equals sign, or the text if it's just a whitepace
+     * 'attribute'. This includes the quotes around the value if any.
+     * @return The value, or &lt;code&gt;null&lt;/code&gt; if it's a stand-alone attribute,
+     * or the text if it's just a whitepace 'attribute'.
+     * @see #setRawValue
+     */
+    public String getRawValue ()
+    {
+        char quote;
+        StringBuffer buffer;
+        String ret;
+
+<span class="nc bnc" id="L509" title="All 2 branches missed.">        if (isValued ())</span>
+        {
+<span class="nc" id="L511">            quote = getQuote ();</span>
+<span class="nc bnc" id="L512" title="All 2 branches missed.">            if (0 != quote)</span>
+            {
+<span class="nc" id="L514">                buffer = new StringBuffer (); // todo: what is the value length?</span>
+<span class="nc" id="L515">                buffer.append (quote);</span>
+<span class="nc" id="L516">                getValue (buffer);</span>
+<span class="nc" id="L517">                buffer.append (quote);</span>
+<span class="nc" id="L518">                ret = buffer.toString ();</span>
+<span class="nc" id="L519">            }</span>
+            else
+<span class="nc" id="L521">                ret = getValue ();</span>
+<span class="nc" id="L522">        }</span>
+        else
+<span class="nc" id="L524">            ret = null;</span>
+
+<span class="nc" id="L526">        return (ret);</span>
+    }
+
+    /**
+     * Get the raw value of the attribute.
+     * The part after the equals sign, or the text if it's just a whitepace
+     * 'attribute'. This includes the quotes around the value if any.
+     * @param buffer The string buffer to append the attribute value to.
+     * @see #getRawValue()
+     * @see #setRawValue
+     */
+    public void getRawValue (StringBuffer buffer)
+    {
+<span class="fc" id="L539">        getQuote (buffer);</span>
+<span class="fc" id="L540">        getValue (buffer);</span>
+<span class="fc" id="L541">        getQuote (buffer);</span>
+<span class="fc" id="L542">    }</span>
+
+    /**
+     * Set the value of the attribute and the quote character.
+     * If the value is pure whitespace, assign it 'as is' and reset the
+     * quote character. If not, check for leading and trailing double or
+     * single quotes, and if found use this as the quote character and
+     * the inner contents of &lt;code&gt;value&lt;/code&gt; as the real value.
+     * Otherwise, examine the string to determine if quotes are needed
+     * and an appropriate quote character if so. This may involve changing
+     * double quotes within the string to character references.
+     * @param value The new value.
+     * @see #getRawValue
+     * @see #getRawValue(StringBuffer)
+     */
+    public void setRawValue (String value)
+    {
+        char ch;
+        boolean needed;
+        boolean singleq;
+        boolean doubleq;
+        String ref;
+        StringBuffer buffer;
+        char quote;
+
+<span class="fc" id="L567">        quote = 0;</span>
+<span class="pc bpc" id="L568" title="1 of 4 branches missed.">        if ((null != value) &amp;&amp; (0 != value.trim ().length ()))</span>
+        {
+<span class="pc bpc" id="L570" title="3 of 4 branches missed.">            if (value.startsWith (&quot;'&quot;) &amp;&amp; value.endsWith (&quot;'&quot;)</span>
+<span class="nc bnc" id="L571" title="All 2 branches missed.">                &amp;&amp; (2 &lt;= value.length ()))</span>
+            {
+<span class="nc" id="L573">                quote = '\'';</span>
+<span class="nc" id="L574">                value = value.substring (1, value.length () - 1);</span>
+<span class="nc" id="L575">            }</span>
+<span class="pc bpc" id="L576" title="3 of 4 branches missed.">            else if (value.startsWith (&quot;\&quot;&quot;) &amp;&amp; value.endsWith (&quot;\&quot;&quot;)</span>
+<span class="nc bnc" id="L577" title="All 2 branches missed.">                &amp;&amp; (2 &lt;= value.length ()))</span>
+            {
+<span class="nc" id="L579">                quote = '&quot;';</span>
+<span class="nc" id="L580">                value = value.substring (1, value.length () - 1);</span>
+<span class="nc" id="L581">            }</span>
+            else
+            {
+                // first determine if there's whitespace in the value
+                // and while we're at it find a suitable quote character
+<span class="fc" id="L586">                needed = false;</span>
+<span class="fc" id="L587">                singleq = true;</span>
+<span class="fc" id="L588">                doubleq = true;</span>
+<span class="fc bfc" id="L589" title="All 2 branches covered.">                for (int i = 0; i &lt; value.length (); i++)</span>
+                {
+<span class="fc" id="L591">                    ch = value.charAt (i);</span>
+<span class="pc bpc" id="L592" title="1 of 2 branches missed.">                    if ('\'' == ch)</span>
+                    {
+<span class="nc" id="L594">                        singleq  = false;</span>
+<span class="nc" id="L595">                        needed = true;</span>
+<span class="nc" id="L596">                    }</span>
+<span class="pc bpc" id="L597" title="1 of 2 branches missed.">                    else if ('&quot;' == ch)</span>
+                    {
+<span class="nc" id="L599">                        doubleq = false;</span>
+<span class="nc" id="L600">                        needed = true;</span>
+<span class="nc" id="L601">                    }</span>
+<span class="pc bpc" id="L602" title="2 of 6 branches missed.">                    else if (!('-' == ch) &amp;&amp; !('.' == ch) &amp;&amp; !('_' == ch)</span>
+<span class="fc bfc" id="L603" title="All 4 branches covered.">                       &amp;&amp; !(':' == ch) &amp;&amp; !Character.isLetterOrDigit (ch))</span>
+                    {
+<span class="fc" id="L605">                        needed = true;</span>
+                    }
+                }
+
+                // now apply quoting
+<span class="fc bfc" id="L610" title="All 2 branches covered.">                if (needed)</span>
+                {
+<span class="pc bpc" id="L612" title="1 of 2 branches missed.">                    if (doubleq)</span>
+<span class="fc" id="L613">                        quote = '&quot;';</span>
+<span class="nc bnc" id="L614" title="All 2 branches missed.">                    else if (singleq)</span>
+<span class="nc" id="L615">                        quote = '\'';</span>
+                    else
+                    {
+                        // uh-oh, we need to convert some quotes into character
+                        // references, so convert all double quotes into &amp;#34;
+<span class="nc" id="L620">                        quote = '&quot;';</span>
+<span class="nc" id="L621">                        ref = &quot;&amp;quot;&quot;; // Translate.encode (quote);</span>
+                        // JDK 1.4: value = value.replaceAll (&quot;\&quot;&quot;, ref);
+<span class="nc" id="L623">                        buffer = new StringBuffer (</span>
+<span class="nc" id="L624">                                value.length() * (ref.length () - 1));</span>
+<span class="nc bnc" id="L625" title="All 2 branches missed.">                        for (int i = 0; i &lt; value.length (); i++)</span>
+                        {
+<span class="nc" id="L627">                            ch = value.charAt (i);</span>
+<span class="nc bnc" id="L628" title="All 2 branches missed.">                            if (quote == ch)</span>
+<span class="nc" id="L629">                                buffer.append (ref);</span>
+                            else
+<span class="nc" id="L631">                                buffer.append (ch);</span>
+                        }
+<span class="nc" id="L633">                        value = buffer.toString ();</span>
+                    }
+                }
+            }
+        }
+<span class="fc" id="L638">        setValue (value);</span>
+<span class="fc" id="L639">        setQuote (quote);</span>
+<span class="fc" id="L640">    }</span>
+
+    /**
+     * Predicate to determine if this attribute is whitespace.
+     * @return &lt;code&gt;true&lt;/code&gt; if this attribute is whitespace,
+     * &lt;code&gt;false&lt;/code&gt; if it is a real attribute.
+     */
+    public boolean isWhitespace ()
+    {
+<span class="fc bfc" id="L649" title="All 2 branches covered.">        return (null == getName ());</span>
+    }
+
+    /**
+     * Predicate to determine if this attribute has no equals sign (or value).
+     * @return &lt;code&gt;true&lt;/code&gt; if this attribute is a standalone attribute.
+     * &lt;code&gt;false&lt;/code&gt; if has an equals sign.
+     */
+    public boolean isStandAlone ()
+    {
+<span class="fc bfc" id="L659" title="All 4 branches covered.">        return ((null != getName ()) &amp;&amp; (null == getAssignment ()));</span>
+    }
+
+    /**
+     * Predicate to determine if this attribute has an equals sign but no value.
+     * @return &lt;code&gt;true&lt;/code&gt; if this attribute is an empty attribute.
+     * &lt;code&gt;false&lt;/code&gt; if has an equals sign and a value.
+     */
+    public boolean isEmpty ()
+    {
+<span class="pc bpc" id="L669" title="1 of 4 branches missed.">        return ((null != getAssignment ()) &amp;&amp; (null == getValue ()));</span>
+    }
+
+    /**
+     * Predicate to determine if this attribute has a value.
+     * @return &lt;code&gt;true&lt;/code&gt; if this attribute has a value.
+     * &lt;code&gt;false&lt;/code&gt; if it is empty or standalone.
+     */
+    public boolean isValued ()
+    {
+<span class="fc bfc" id="L679" title="All 2 branches covered.">        return (null != getValue ());</span>
+    }
+
+    /**
+     * Get the length of the string value of this attribute.
+     * @return The number of characters required to express this attribute.
+     */
+    public int getLength ()
+    {
+        String name;
+        String assignment;
+        String value;
+        char quote;
+        int ret;
+
+<span class="fc" id="L694">        ret = 0;</span>
+<span class="fc" id="L695">        name = getName ();</span>
+<span class="fc bfc" id="L696" title="All 2 branches covered.">        if (null != name)</span>
+<span class="fc" id="L697">            ret += name.length ();</span>
+<span class="fc" id="L698">        assignment = getAssignment ();</span>
+<span class="fc bfc" id="L699" title="All 2 branches covered.">        if (null != assignment)</span>
+<span class="fc" id="L700">            ret += assignment.length ();</span>
+<span class="fc" id="L701">        value = getValue ();</span>
+<span class="fc bfc" id="L702" title="All 2 branches covered.">        if (null != value)</span>
+<span class="fc" id="L703">            ret += value.length ();</span>
+<span class="fc" id="L704">        quote = getQuote ();</span>
+<span class="fc bfc" id="L705" title="All 2 branches covered.">        if (0 != quote)</span>
+<span class="fc" id="L706">            ret += 2;</span>
+
+<span class="fc" id="L708">        return (ret);</span>
+    }
+
+    /**
+     * Get a text representation of this attribute.
+     * Suitable for insertion into a tag, the output is one of
+     * the forms:
+     * &lt;code&gt;
+     * &lt;pre&gt;
+     * value
+     * name
+     * name=
+     * name=value
+     * name='value'
+     * name=&quot;value&quot;
+     * &lt;/pre&gt;
+     * &lt;/code&gt;
+     * @return A string that can be used within a tag.
+     */
+    public String toString ()
+    {
+        int length;
+        StringBuffer ret;
+
+        // get the size to avoid extra StringBuffer allocations
+<span class="fc" id="L733">        length = getLength ();</span>
+<span class="fc" id="L734">        ret = new StringBuffer (length);</span>
+<span class="fc" id="L735">        toString (ret);</span>
+
+<span class="fc" id="L737">        return (ret.toString ());</span>
+    }
+
+    /**
+     * Get a text representation of this attribute.
+     * @param buffer The accumulator for placing the text into.
+     * @see #toString()
+     */
+    public void toString (StringBuffer buffer)
+    {
+<span class="fc" id="L747">        getName (buffer);</span>
+<span class="fc" id="L748">        getAssignment (buffer);</span>
+<span class="fc" id="L749">        getRawValue (buffer);</span>
+<span class="fc" id="L750">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

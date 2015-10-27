@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>SubFilterList.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">filterbuilder/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.parserapplications.filterbuilder</a> &gt; <span class="el_source">SubFilterList.java</span></div><h1>SubFilterList.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/filterbuilder/src/main/java/org/htmlparser/parserapplications/filterbuilder/SubFilterList.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.parserapplications.filterbuilder;
+
+import java.awt.*;
+
+import javax.swing.*;
+import javax.swing.border.*;
+
+import org.htmlparser.NodeFilter;
+import org.htmlparser.parserapplications.filterbuilder.layouts.VerticalLayoutManager;
+
+/**
+ * A helper class for lists of filters within filters.
+ */
+public class SubFilterList
+    extends
+        JPanel
+{
+    /**
+     * Padding for the drop target.
+     */
+<span class="nc" id="L46">    protected int mExtra = 25; // for now</span>
+
+    /**
+     * The drop target spacer at the bottom of the list.
+     */
+    protected Component mSpacer;
+
+    /**
+     * The parent filter wrapper.
+     */
+    protected Filter mHome;
+
+    /**
+     * The textual title for the list.
+     */
+    protected String mTitle;
+
+    /**
+     * The number of filters limit.
+     */
+    protected int mMax;
+
+    /**
+     * Creates a container panel.
+     * Set the panel minimum size to the same width as the container
+     * but with a bit of extra length.
+     * @param home The filter we belong to.
+     * @param title The border title.
+     * @param max The maximum number of filters in the list (0 for no limit).
+     */
+<span class="nc" id="L76">    public SubFilterList (Filter home, String title, int max)</span>
+    {
+<span class="nc" id="L78">        mHome = home;</span>
+<span class="nc" id="L79">        mTitle = title;</span>
+<span class="nc" id="L80">        mMax = max;</span>
+
+        // not quite:
+        // new BoxLayout (this, BoxLayout.Y_AXIS));
+<span class="nc" id="L84">        setLayout (new VerticalLayoutManager ());</span>
+<span class="nc" id="L85">	    addSpacer ();</span>
+<span class="nc" id="L86">	    setSelected (false);</span>
+<span class="nc" id="L87">    }</span>
+
+    /**
+     * Set the 'selected look' for the component.
+     * @param selected If &lt;code&gt;true&lt;/code&gt;, 'select' this component,
+     * otherwise 'deselect' it.
+     */
+    public void setSelected (boolean selected)
+    {
+<span class="nc bnc" id="L96" title="All 2 branches missed.">        if (selected)</span>
+<span class="nc" id="L97">    	    setBorder (</span>
+<span class="nc" id="L98">    		        new CompoundBorder (</span>
+<span class="nc" id="L99">    		            new TitledBorder (</span>
+<span class="nc" id="L100">    		                null,</span>
+<span class="nc" id="L101">    		                mTitle,</span>
+<span class="nc" id="L102">    	                    TitledBorder.LEFT,</span>
+<span class="nc" id="L103">    	                    TitledBorder.TOP),</span>
+<span class="nc" id="L104">    	                    new CompoundBorder (</span>
+<span class="nc" id="L105">	                            new LineBorder (Color.green, 2),</span>
+<span class="nc" id="L106">	                            new EmptyBorder (1, 1, 1, 1))));</span>
+        else
+<span class="nc" id="L108">    	    setBorder (</span>
+<span class="nc" id="L109">    		        new CompoundBorder (</span>
+<span class="nc" id="L110">    		            new TitledBorder (</span>
+<span class="nc" id="L111">    		                null,</span>
+<span class="nc" id="L112">    		                mTitle,</span>
+<span class="nc" id="L113">    	                    TitledBorder.LEFT,</span>
+<span class="nc" id="L114">    	                    TitledBorder.TOP),</span>
+<span class="nc" id="L115">    	                new EmptyBorder (3,3,3,3)));</span>
+<span class="nc" id="L116">    }</span>
+
+    /**
+     * Stuff a spacer component at the end of the list.
+     */
+    protected void addSpacer ()
+    {
+        Dimension dimension;
+        Insets insets;
+        
+        // set the command area size by adding a rigid area
+<span class="nc" id="L127">        dimension = mHome.getSize ();</span>
+<span class="nc" id="L128">        insets = mHome.getInsets ();</span>
+        // todo: this should resize with the container
+<span class="nc" id="L130">        dimension.setSize (dimension.width - insets.left - insets.right, mExtra);</span>
+<span class="nc" id="L131">        mSpacer = Box.createRigidArea (dimension);</span>
+<span class="nc" id="L132">        add (mSpacer);</span>
+<span class="nc" id="L133">    }</span>
+
+    /**
+     * Remove the spacer component at the end of the list.
+     */
+    protected void removeSpacer ()
+    {
+<span class="nc" id="L140">        remove (mSpacer);</span>
+<span class="nc" id="L141">        mSpacer = null;</span>
+<span class="nc" id="L142">    }</span>
+
+    /**
+     * Get the components in which to drop commands.
+     * @return The component to act as a drop target.
+     */
+    public Component[] getDropTargets ()
+    {
+<span class="nc" id="L150">        return (new Component[] { this });</span>
+    }
+
+    /**
+     * Add a filter to the container contents.
+     * @param filter The command to add to the container.
+     */
+    public void addFilter (Filter filter)
+    {
+        int count;
+        
+<span class="nc" id="L161">        count = getComponentCount ();</span>
+<span class="nc bnc" id="L162" title="All 2 branches missed.">        if (null != mSpacer)</span>
+<span class="nc" id="L163">            count--; // insert before the spacer</span>
+<span class="nc" id="L164">        addFilter (filter, count);</span>
+<span class="nc" id="L165">    }</span>
+
+    /**
+     * Add a filter to the container at a specific position.
+     * @param filter The filter to add to the container.
+     * @param index The index at which to add it.
+     */
+    public void addFilter (Filter filter, int index)
+    {
+        NodeFilter[] before;
+        NodeFilter[] after;
+        int offset;
+
+<span class="nc" id="L178">        add (filter, index);</span>
+<span class="nc" id="L179">        before = mHome.getSubNodeFilters ();</span>
+<span class="nc" id="L180">        after = new NodeFilter[before.length + 1];</span>
+<span class="nc" id="L181">        offset = 0;</span>
+<span class="nc bnc" id="L182" title="All 2 branches missed.">        for (int i = 0; i &lt; after.length; i++)</span>
+<span class="nc bnc" id="L183" title="All 2 branches missed.">            after[i] = (i == index) ? filter : before[offset++];</span>
+<span class="nc" id="L184">        mHome.setSubNodeFilters (after);</span>
+<span class="nc bnc" id="L185" title="All 6 branches missed.">        if ((null != mSpacer) &amp;&amp; (0 != mMax) &amp;&amp; (after.length &gt;= mMax))</span>
+<span class="nc" id="L186">            removeSpacer ();</span>
+<span class="nc" id="L187">    }        </span>
+
+    /**
+     * Remove a filter from the container.
+     * @param filter The filter to remove from the container.
+     */
+    public void removeFilter (Filter filter)
+    {
+        Filter[] filters;
+        int index;
+        
+<span class="nc" id="L198">        filters = getFilters ();</span>
+<span class="nc" id="L199">        index = -1;</span>
+<span class="nc bnc" id="L200" title="All 4 branches missed.">        for (int i = 0; ((-1 == index) &amp;&amp; (i &lt; filters.length)); i++)</span>
+<span class="nc bnc" id="L201" title="All 2 branches missed.">            if (filter == filters[i])</span>
+<span class="nc" id="L202">                index = i;</span>
+<span class="nc bnc" id="L203" title="All 2 branches missed.">        if (-1 != index)</span>
+<span class="nc" id="L204">            removeFilter (index);</span>
+<span class="nc" id="L205">    }</span>
+
+    /**
+     * Remove a filter from the container.
+     * @param index The index of the filter to remove from the container.
+     */
+    public void removeFilter (int index)
+    {
+        NodeFilter[] before;
+        NodeFilter[] after;
+        int offset;
+
+<span class="nc" id="L217">        remove (index);</span>
+<span class="nc" id="L218">        before = mHome.getSubNodeFilters ();</span>
+<span class="nc bnc" id="L219" title="All 2 branches missed.">        if (0 != before.length)</span>
+        {
+<span class="nc" id="L221">	        after = new NodeFilter[before.length - 1];</span>
+<span class="nc" id="L222">	        offset = 0;</span>
+<span class="nc bnc" id="L223" title="All 2 branches missed.">	        for (int i = 0; i &lt; before.length; i++)</span>
+<span class="nc bnc" id="L224" title="All 2 branches missed.">	            if (i != index)</span>
+<span class="nc" id="L225">	                after[offset++] = before[i];</span>
+<span class="nc" id="L226">	        mHome.setSubNodeFilters (after);</span>
+<span class="nc bnc" id="L227" title="All 6 branches missed.">	        if ((null == mSpacer) &amp;&amp; (0 != mMax) &amp;&amp; (after.length &lt; mMax))</span>
+<span class="nc" id="L228">	            addSpacer ();</span>
+        }
+<span class="nc" id="L230">    }</span>
+
+    /**
+     * Return the list of filters in this container.
+     * @return The list of contained filters.
+     */
+    public Filter[] getFilters ()
+    {
+        NodeFilter[] list;
+        Filter[] ret;
+
+<span class="nc" id="L241">        list = mHome.getSubNodeFilters ();</span>
+<span class="nc" id="L242">        ret = new Filter[list.length];</span>
+<span class="nc" id="L243">        System.arraycopy (list, 0, ret, 0, list.length);</span>
+
+<span class="nc" id="L245">        return (ret);</span>
+    }
+
+    /**
+     * Check if our maximum number of filters limit has been reached.
+     * @return &lt;code&gt;true&lt;/code&gt; if the sublist can accept one more filter,
+     * &lt;code&gt;false&lt;/code&gt; otherwise.
+     */
+    public boolean canAccept ()
+    {
+        int count;
+        boolean ret;
+
+<span class="nc bnc" id="L258" title="All 2 branches missed.">        if (0 == mMax)</span>
+<span class="nc" id="L259">            ret = true;</span>
+        else
+        {
+<span class="nc" id="L262">	        count = getComponentCount ();</span>
+<span class="nc bnc" id="L263" title="All 2 branches missed.">	        if (null != mSpacer)</span>
+<span class="nc" id="L264">	            count--;</span>
+<span class="nc bnc" id="L265" title="All 2 branches missed.">	        ret = count &lt; mMax;</span>
+        }
+
+<span class="nc" id="L268">        return (ret);</span>
+    }
+
+    /**
+     * Get the bytes for this command as a String.
+     * @param indent The number of spaces to indent a block.
+     * @param level The current indentation level.
+     * The first non-whitespace character should be at
+     * indented &lt;code&gt;indent&lt;/code&gt; * &lt;code&gt;level&lt;/code&gt; spaces.
+     * @return The string representing this command.
+     */
+    public String toString (int indent, int level)
+    {
+        Filter[] filters;
+        StringBuffer ret;
+        
+<span class="nc" id="L284">        ret = new StringBuffer ();</span>
+
+<span class="nc" id="L286">        filters = getFilters ();</span>
+<span class="nc bnc" id="L287" title="All 2 branches missed.">        for (int i = 0; i &lt; filters.length; i++)</span>
+        {
+<span class="nc" id="L289">            ret.append (filters[i].toString ());</span>
+<span class="nc bnc" id="L290" title="All 2 branches missed.">            if (i + 1 != filters.length)</span>
+<span class="nc" id="L291">                ret.append (&quot;\n&quot;);</span>
+        }
+        
+<span class="nc" id="L294">        return (ret.toString ());</span>
+    }
+    
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

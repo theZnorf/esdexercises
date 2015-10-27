@@ -1,0 +1,994 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>LexerTests.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tests.lexerTests</a> &gt; <span class="el_source">LexerTests.java</span></div><h1>LexerTests.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/test/java/org/htmlparser/tests/lexerTests/LexerTests.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-23 00:23:10 -0400 (Sat, 23 Sep 2006) $
+// $Revision: 13 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tests.lexerTests;
+
+import java.io.IOException;
+import java.net.URL;
+import java.util.HashSet;
+
+import org.htmlparser.Node;
+import org.htmlparser.Parser;
+import org.htmlparser.Remark;
+import org.htmlparser.Tag;
+import org.htmlparser.Text;
+import org.htmlparser.lexer.Lexer;
+import org.htmlparser.nodes.TextNode;
+import org.htmlparser.tags.Html;
+import org.htmlparser.tags.ImageTag;
+import org.htmlparser.tags.ScriptTag;
+import org.htmlparser.tags.StyleTag;
+import org.htmlparser.tests.ParserTestCase;
+import org.htmlparser.util.EncodingChangeException;
+import org.htmlparser.util.NodeIterator;
+import org.htmlparser.util.NodeList;
+import org.htmlparser.util.ParserException;
+
+public class LexerTests extends ParserTestCase
+{
+
+    static
+    {
+<span class="fc" id="L54">        System.setProperty (&quot;org.htmlparser.tests.lexerTests.LexerTests&quot;, &quot;LexerTests&quot;);</span>
+    }
+
+    /**
+     * Test the Lexer class.
+     */
+    public LexerTests (String name)
+    {
+<span class="fc" id="L62">        super (name);</span>
+<span class="fc" id="L63">    }</span>
+
+    /**
+     * Test operation without tags.
+     */
+    public void testPureText () throws ParserException
+    {
+        String reference;
+        Lexer lexer;
+        Text node;
+
+<span class="fc" id="L74">        reference = &quot;Hello world&quot;;</span>
+<span class="fc" id="L75">        lexer = new Lexer (reference);</span>
+<span class="fc" id="L76">        node = (Text)lexer.nextNode ();</span>
+<span class="fc" id="L77">        assertEquals (&quot;Text contents wrong&quot;, reference, node.getText ());</span>
+<span class="fc" id="L78">    }</span>
+
+    /**
+     * Test operation with Unix line endings.
+     */
+    public void testUnixEOL () throws ParserException
+    {
+        String reference;
+        Lexer lexer;
+        Text node;
+
+<span class="fc" id="L89">        reference = &quot;Hello\nworld&quot;;</span>
+<span class="fc" id="L90">        lexer = new Lexer (reference);</span>
+<span class="fc" id="L91">        node = (Text)lexer.nextNode ();</span>
+<span class="fc" id="L92">        assertEquals (&quot;Text contents wrong&quot;, reference, node.getText ());</span>
+<span class="fc" id="L93">    }</span>
+
+    /**
+     * Test operation with Dos line endings.
+     */
+    public void testDosEOL () throws ParserException
+    {
+        String reference;
+        Lexer lexer;
+        Text node;
+
+<span class="fc" id="L104">        reference = &quot;Hello\r\nworld&quot;;</span>
+<span class="fc" id="L105">        lexer = new Lexer (reference);</span>
+<span class="fc" id="L106">        node = (Text)lexer.nextNode ();</span>
+<span class="fc" id="L107">        assertEquals (&quot;Text contents wrong&quot;, reference, node.getText ());</span>
+<span class="fc" id="L108">        reference = &quot;Hello\rworld&quot;;</span>
+<span class="fc" id="L109">        lexer = new Lexer (reference);</span>
+<span class="fc" id="L110">        node = (Text)lexer.nextNode ();</span>
+<span class="fc" id="L111">        assertEquals (&quot;Text contents wrong&quot;, reference, node.getText ());</span>
+<span class="fc" id="L112">    }</span>
+
+    /**
+     * Test operation with line endings near the end of input.
+     */
+    public void testEOF_EOL () throws ParserException
+    {
+        String reference;
+        Lexer lexer;
+        Text node;
+
+<span class="fc" id="L123">        reference = &quot;Hello world\n&quot;;</span>
+<span class="fc" id="L124">        lexer = new Lexer (reference);</span>
+<span class="fc" id="L125">        node = (Text)lexer.nextNode ();</span>
+<span class="fc" id="L126">        assertEquals (&quot;Text contents wrong&quot;, reference, node.getText ());</span>
+<span class="fc" id="L127">        reference = &quot;Hello world\r&quot;;</span>
+<span class="fc" id="L128">        lexer = new Lexer (reference);</span>
+<span class="fc" id="L129">        node = (Text)lexer.nextNode ();</span>
+<span class="fc" id="L130">        assertEquals (&quot;Text contents wrong&quot;, reference, node.getText ());</span>
+<span class="fc" id="L131">        reference = &quot;Hello world\r\n&quot;;</span>
+<span class="fc" id="L132">        lexer = new Lexer (reference);</span>
+<span class="fc" id="L133">        node = (Text)lexer.nextNode ();</span>
+<span class="fc" id="L134">        assertEquals (&quot;Text contents wrong&quot;, reference, node.getText ());</span>
+<span class="fc" id="L135">    }</span>
+
+    /**
+     * Test that tags stop string nodes.
+     */
+    public void testTagStops () throws ParserException
+    {
+<span class="fc" id="L142">        String[] references =</span>
+<span class="fc" id="L143">        {</span>
+<span class="fc" id="L144">            &quot;Hello world&quot;,</span>
+<span class="fc" id="L145">            &quot;Hello world\n&quot;,</span>
+<span class="fc" id="L146">            &quot;Hello world\r\n&quot;,</span>
+<span class="fc" id="L147">            &quot;Hello world\r&quot;,</span>
+
+        };
+<span class="fc" id="L150">        String[] suffixes =</span>
+<span class="fc" id="L151">        {</span>
+<span class="fc" id="L152">            &quot;&lt;head&gt;&quot;,</span>
+<span class="fc" id="L153">            &quot;&lt;/head&gt;&quot;,</span>
+<span class="fc" id="L154">            &quot;&lt;%=head%&gt;&quot;,</span>
+<span class="fc" id="L155">            &quot;&lt;?php ?&gt;&quot;,</span>
+<span class="fc" id="L156">            &quot;&lt;!--head--&gt;&quot;,</span>
+        };
+        Lexer lexer;
+        Text node;
+
+<span class="fc bfc" id="L161" title="All 2 branches covered.">        for (int i = 0; i &lt; references.length; i++)</span>
+        {
+<span class="fc bfc" id="L163" title="All 2 branches covered.">            for (int j = 0; j &lt; suffixes.length; j++)</span>
+            {
+<span class="fc" id="L165">                lexer = new Lexer (references[i] + suffixes[j]);</span>
+<span class="fc" id="L166">                node = (Text)lexer.nextNode ();</span>
+<span class="fc" id="L167">                assertEquals (&quot;Text contents wrong&quot;, references[i], node.getText ());</span>
+            }
+        }
+<span class="fc" id="L170">    }</span>
+
+    /**
+     * Test operation with only tags.
+     */
+    public void testPureTag () throws ParserException
+    {
+        String reference;
+        String suffix;
+        Lexer lexer;
+        Node node;
+
+<span class="fc" id="L182">        reference = &quot;&lt;head&gt;&quot;;</span>
+<span class="fc" id="L183">        lexer = new Lexer (reference);</span>
+<span class="fc" id="L184">        node = lexer.nextNode ();</span>
+<span class="fc" id="L185">        assertEquals (&quot;Tag contents wrong&quot;, reference, node.toHtml ());</span>
+
+<span class="fc" id="L187">        reference = &quot;&lt;head&gt;&quot;;</span>
+<span class="fc" id="L188">        suffix = &quot;&lt;body&gt;&quot;;</span>
+<span class="fc" id="L189">        lexer = new Lexer (reference + suffix);</span>
+<span class="fc" id="L190">        node = lexer.nextNode ();</span>
+<span class="fc" id="L191">        assertEquals (&quot;Tag contents wrong&quot;, reference, node.toHtml ());</span>
+<span class="fc" id="L192">        node = lexer.nextNode ();</span>
+<span class="fc" id="L193">        assertEquals (&quot;Tag contents wrong&quot;, suffix, node.toHtml ());</span>
+<span class="fc" id="L194">    }</span>
+
+    /**
+     * Test operation with attributed tags.
+     */
+    public void testAttributedTag () throws ParserException
+    {
+        String reference;
+        Lexer lexer;
+        Node node;
+
+<span class="fc" id="L205">        reference = &quot;&lt;head lang='en_US' dir=ltr\nprofile=\&quot;http://htmlparser.sourceforge.org/dictionary.html\&quot;&gt;&quot;;</span>
+<span class="fc" id="L206">        lexer = new Lexer (reference);</span>
+<span class="fc" id="L207">        node = lexer.nextNode ();</span>
+<span class="fc" id="L208">        assertEquals (&quot;Tag contents wrong&quot;, reference, node.toHtml ());</span>
+<span class="fc" id="L209">    }</span>
+
+    /**
+     * Test operation with comments.
+     */
+    public void testRemark () throws ParserException
+    {
+        String reference;
+        Lexer lexer;
+        Remark node;
+        String suffix;
+
+<span class="fc" id="L221">        reference = &quot;&lt;!-- This is a comment --&gt;&quot;;</span>
+<span class="fc" id="L222">        lexer = new Lexer (reference);</span>
+<span class="fc" id="L223">        node = (Remark)lexer.nextNode ();</span>
+<span class="fc" id="L224">        assertEquals (&quot;Tag contents wrong&quot;, reference, node.toHtml ());</span>
+
+<span class="fc" id="L226">        reference = &quot;&lt;!-- This is a comment --  &gt;&quot;;</span>
+<span class="fc" id="L227">        lexer = new Lexer (reference);</span>
+<span class="fc" id="L228">        node = (Remark)lexer.nextNode ();</span>
+<span class="fc" id="L229">        assertEquals (&quot;Tag contents wrong&quot;, reference, node.toHtml ());</span>
+
+<span class="fc" id="L231">        reference = &quot;&lt;!-- This is a\nmultiline comment --&gt;&quot;;</span>
+<span class="fc" id="L232">        lexer = new Lexer (reference);</span>
+<span class="fc" id="L233">        node = (Remark)lexer.nextNode ();</span>
+<span class="fc" id="L234">        assertEquals (&quot;Tag contents wrong&quot;, reference, node.toHtml ());</span>
+
+<span class="fc" id="L236">        suffix = &quot;&lt;head&gt;&quot;;</span>
+<span class="fc" id="L237">        reference = &quot;&lt;!-- This is a comment --&gt;&quot;;</span>
+<span class="fc" id="L238">        lexer = new Lexer (reference + suffix);</span>
+<span class="fc" id="L239">        node = (Remark)lexer.nextNode ();</span>
+<span class="fc" id="L240">        assertEquals (&quot;Tag contents wrong&quot;, reference, node.toHtml ());</span>
+
+<span class="fc" id="L242">        reference = &quot;&lt;!-- This is a comment --  &gt;&quot;;</span>
+<span class="fc" id="L243">        lexer = new Lexer (reference + suffix);</span>
+<span class="fc" id="L244">        node = (Remark)lexer.nextNode ();</span>
+<span class="fc" id="L245">        assertEquals (&quot;Tag contents wrong&quot;, reference, node.toHtml ());</span>
+
+<span class="fc" id="L247">        reference = &quot;&lt;!-- This is a\nmultiline comment --&gt;&quot;;</span>
+<span class="fc" id="L248">        lexer = new Lexer (reference + suffix);</span>
+<span class="fc" id="L249">        node = (Remark)lexer.nextNode ();</span>
+<span class="fc" id="L250">        assertEquals (&quot;Tag contents wrong&quot;, reference, node.toHtml ());</span>
+<span class="fc" id="L251">    }</span>
+
+//    /**
+//     * Try a real page.
+//     */
+//    public void testReal () throws ParserException, IOException
+//    {
+//        Lexer lexer;
+//        Node node;
+//
+//        URL url = new URL (&quot;http://sourceforge.net/projects/htmlparser&quot;);
+//        lexer = new Lexer (url.openConnection ());
+//        while (null != (node = lexer.nextNode ()))
+//            System.out.println (node.toString ());
+//    }
+
+    /**
+     * Test the fidelity of the toHtml() method.
+     */
+    public void testFidelity () throws ParserException, IOException
+    {
+        Lexer lexer;
+        Node node;
+        int position;
+        StringBuffer buffer;
+        String string;
+        char[] ref;
+        char[] test;
+
+<span class="nc" id="L280">        URL url = new URL (&quot;http://sourceforge.net&quot;);</span>
+<span class="nc" id="L281">        lexer = new Lexer (url.openConnection ());</span>
+<span class="nc" id="L282">        position = 0;</span>
+<span class="nc" id="L283">        buffer = new StringBuffer (80000);</span>
+<span class="nc bnc" id="L284" title="All 2 branches missed.">        while (null != (node = lexer.nextNode ()))</span>
+        {
+<span class="nc" id="L286">            string = node.toHtml ();</span>
+<span class="nc bnc" id="L287" title="All 2 branches missed.">            if (position != node.getStartPosition ())</span>
+<span class="nc" id="L288">                fail (&quot;non-contiguous&quot; + string);</span>
+<span class="nc" id="L289">            buffer.append (string);</span>
+<span class="nc" id="L290">            position = node.getEndPosition ();</span>
+<span class="nc bnc" id="L291" title="All 2 branches missed.">            if (buffer.length () != position)</span>
+<span class="nc" id="L292">                fail (&quot;text length differed after encountering node &quot; + string);</span>
+        }
+<span class="nc" id="L294">        ref = lexer.getPage ().getText ().toCharArray ();</span>
+<span class="nc" id="L295">        test = new char[buffer.length ()];</span>
+<span class="nc" id="L296">        buffer.getChars (0, buffer.length (), test, 0);</span>
+<span class="nc" id="L297">        assertEquals (&quot;different amounts of text&quot;, ref.length, test.length);</span>
+<span class="nc bnc" id="L298" title="All 2 branches missed.">        for (int i = 0; i &lt; ref.length; i++)</span>
+<span class="nc bnc" id="L299" title="All 2 branches missed.">            if (ref[i] != test[i])</span>
+<span class="nc" id="L300">                fail (&quot;character differs at position &quot; + i + &quot;, expected &lt;&quot; + ref[i] + &quot;&gt; but was &lt;&quot; + test[i] + &quot;&gt;&quot;);</span>
+<span class="nc" id="L301">    }</span>
+
+//    /**
+//     * Test the relative speed reading from a string parsing tags too.
+//     */
+//    public void testSpeedStringWithoutTags () throws ParserException, IOException
+//    {
+//        final String link = &quot;http://htmlparser.sourceforge.net/javadoc_1_3/index-all.html&quot;;
+//        URL url;
+//        URLConnection connection;
+//        Source source;
+//        StringBuffer buffer;
+//        int i;
+//        String html;
+//
+//        long old_total;
+//        long new_total;
+//        long begin;
+//        long end;
+//        StringReader reader;
+//        NodeReader nodes;
+//        Parser parser;
+//        int nodecount;
+//        Node node;
+//        int charcount;
+//
+//        url = new URL (link);
+//        connection = url.openConnection ();
+//        connection.connect ();
+//        source = new Source (new Stream (connection.getInputStream ()));
+//        buffer = new StringBuffer (350000);
+//        while (-1 != (i = source.read ()))
+//            buffer.append ((char)i);
+//        source.close ();
+//        html = buffer.toString ();
+//        old_total = 0;
+//        new_total = 0;
+//        for (i = 0; i &lt; 5; i++)
+//        {
+//            System.gc ();
+//            begin = System.currentTimeMillis ();
+//            Lexer lexer = new Lexer (html);
+//            nodecount = 0;
+//            while (null != (node = lexer.nextNode ()))
+//                nodecount++;
+//            end = System.currentTimeMillis ();
+//            System.out.println (&quot;     lexer: &quot; + (end - begin) + &quot; msec, &quot; + nodecount + &quot; nodes&quot;);
+//            if (0 != i) // the first timing is way different
+//                new_total += (end - begin);
+//
+//            System.gc ();
+//            begin = System.currentTimeMillis ();
+//            reader = new StringReader (html);
+//            nodes =  new NodeReader (new BufferedReader (reader), 350000);
+//            parser = new Parser (nodes, null);
+//            nodecount = 0;
+//            while (null != (node = nodes.readElement ()))
+//                nodecount++;
+//            end = System.currentTimeMillis ();
+//            System.out.println (&quot;old reader: &quot; + (end - begin) + &quot; msec, &quot; + nodecount + &quot; nodes&quot;);
+//            if (0 != i) // the first timing is way different
+//                old_total += (end - begin);
+//        }
+//        assertTrue (&quot;old parser is&quot; + ((double)(new_total - old_total)/(double)old_total*100.0) + &quot;% faster&quot;, new_total &lt; old_total);
+//        System.out.println (&quot;lexer is &quot; + ((double)(old_total - new_total)/(double)old_total*100.0) + &quot;% faster&quot;);
+//    }
+//
+//    /**
+//     * Test the relative speed reading from a string parsing tags too.
+//     */
+//    public void testSpeedStringWithTags () throws ParserException, IOException
+//    {
+//        final String link = &quot;http://htmlparser.sourceforge.net/javadoc_1_3/index-all.html&quot;;
+//        URL url;
+//        URLConnection connection;
+//        Source source;
+//        StringBuffer buffer;
+//        int i;
+//        String html;
+//
+//        long old_total;
+//        long new_total;
+//        long begin;
+//        long end;
+//        StringReader reader;
+//        NodeReader nodes;
+//        Parser parser;
+//        int nodecount;
+//        Node node;
+//        int charcount;
+//
+//        url = new URL (link);
+//        connection = url.openConnection ();
+//        connection.connect ();
+//        source = new Source (new Stream (connection.getInputStream ()));
+//        buffer = new StringBuffer (350000);
+//        while (-1 != (i = source.read ()))
+//            buffer.append ((char)i);
+//        source.close ();
+//        html = buffer.toString ();
+//        old_total = 0;
+//        new_total = 0;
+//        for (i = 0; i &lt; 5; i++)
+//        {
+//            System.gc ();
+//            begin = System.currentTimeMillis ();
+//            Lexer lexer = new Lexer (html);
+//            nodecount = 0;
+//            while (null != (node = lexer.nextNode ()))
+//            {
+//                nodecount++;
+//                if (node instanceof TagNode)
+//                    ((TagNode)node).getAttributes ();
+//            }
+//            end = System.currentTimeMillis ();
+//            System.out.println (&quot;     lexer: &quot; + (end - begin) + &quot; msec, &quot; + nodecount + &quot; nodes&quot;);
+//            if (0 != i) // the first timing is way different
+//                new_total += (end - begin);
+//
+//            System.gc ();
+//            begin = System.currentTimeMillis ();
+//            reader = new StringReader (html);
+//            nodes =  new NodeReader (new BufferedReader (reader), 350000);
+//            parser = new Parser (nodes, null);
+//            nodecount = 0;
+//            while (null != (node = nodes.readElement ()))
+//            {
+//                nodecount++;
+//                if (node instanceof Tag)
+//                    ((Tag)node).getAttributes ();
+//            }
+//            end = System.currentTimeMillis ();
+//            System.out.println (&quot;old reader: &quot; + (end - begin) + &quot; msec, &quot; + nodecount + &quot; nodes&quot;);
+//            if (0 != i) // the first timing is way different
+//                old_total += (end - begin);
+//        }
+//        assertTrue (&quot;old parser is&quot; + ((double)(new_total - old_total)/(double)old_total*100.0) + &quot;% faster&quot;, new_total &lt; old_total);
+//        System.out.println (&quot;lexer is &quot; + ((double)(old_total - new_total)/(double)old_total*100.0) + &quot;% faster&quot;);
+//    }
+//
+//    public void testSpeedStreamWithoutTags () throws ParserException, IOException
+//    {
+//        final String link = &quot;http://htmlparser.sourceforge.net/javadoc_1_3/index-all.html&quot;;
+//        URL url;
+//        URLConnection connection;
+//        Source source;
+//        StringBuffer buffer;
+//        int i;
+//        String html;
+//        InputStream stream;
+//
+//        long old_total;
+//        long new_total;
+//        long begin;
+//        long end;
+//        InputStreamReader reader;
+//        NodeReader nodes;
+//        Parser parser;
+//        int nodecount;
+//        Node node;
+//        int charcount;
+//
+//        url = new URL (link);
+//        connection = url.openConnection ();
+//        connection.connect ();
+//        source = new Source (new Stream (connection.getInputStream ()));
+//        buffer = new StringBuffer (350000);
+//        while (-1 != (i = source.read ()))
+//            buffer.append ((char)i);
+//        source.close ();
+//        html = buffer.toString ();
+//        old_total = 0;
+//        new_total = 0;
+//
+//        for (i = 0; i &lt; 5; i++)
+//        {
+//
+//            System.gc ();
+//            begin = System.currentTimeMillis ();
+//            stream = new ByteArrayInputStream (html.getBytes (Page.DEFAULT_CHARSET));
+//            Lexer lexer = new Lexer (new Page (stream, Page.DEFAULT_CHARSET));
+//            nodecount = 0;
+//            while (null != (node = lexer.nextNode ()))
+//                nodecount++;
+//            end = System.currentTimeMillis ();
+//            System.out.println (&quot;     lexer: &quot; + (end - begin) + &quot; msec, &quot; + nodecount + &quot; nodes&quot;);
+//            if (0 != i) // the first timing is way different
+//                new_total += (end - begin);
+//
+//            System.gc ();
+//            begin = System.currentTimeMillis ();
+//            stream = new ByteArrayInputStream (html.getBytes (Page.DEFAULT_CHARSET));
+//            reader = new InputStreamReader (stream);
+//            nodes =  new NodeReader (reader, 350000);
+//            parser = new Parser (nodes, null);
+//            nodecount = 0;
+//            while (null != (node = nodes.readElement ()))
+//                nodecount++;
+//            end = System.currentTimeMillis ();
+//            System.out.println (&quot;old reader: &quot; + (end - begin) + &quot; msec, &quot; + nodecount + &quot; nodes&quot;);
+//            if (0 != i) // the first timing is way different
+//                old_total += (end - begin);
+//
+//        }
+//        assertTrue (&quot;old parser is&quot; + ((double)(new_total - old_total)/(double)old_total*100.0) + &quot;% faster&quot;, new_total &lt; old_total);
+//        System.out.println (&quot;lexer is &quot; + ((double)(old_total - new_total)/(double)old_total*100.0) + &quot;% faster&quot;);
+//    }
+//
+//    public void testSpeedStreamWithTags () throws ParserException, IOException
+//    {
+//        final String link = &quot;http://htmlparser.sourceforge.net/javadoc_1_3/index-all.html&quot;;
+//        URL url;
+//        URLConnection connection;
+//        Source source;
+//        StringBuffer buffer;
+//        int i;
+//        String html;
+//        InputStream stream;
+//
+//        long old_total;
+//        long new_total;
+//        long begin;
+//        long end;
+//        InputStreamReader reader;
+//        NodeReader nodes;
+//        Parser parser;
+//        int nodecount;
+//        Node node;
+//        int charcount;
+//
+//        url = new URL (link);
+//        connection = url.openConnection ();
+//        connection.connect ();
+//        source = new Source (new Stream (connection.getInputStream ()));
+//        buffer = new StringBuffer (350000);
+//        while (-1 != (i = source.read ()))
+//            buffer.append ((char)i);
+//        source.close ();
+//        html = buffer.toString ();
+//        old_total = 0;
+//        new_total = 0;
+//
+//        for (i = 0; i &lt; 5; i++)
+//        {
+//
+//            System.gc ();
+//            begin = System.currentTimeMillis ();
+//            stream = new ByteArrayInputStream (html.getBytes (Page.DEFAULT_CHARSET));
+//            Lexer lexer = new Lexer (new Page (stream, Page.DEFAULT_CHARSET));
+//            nodecount = 0;
+//            while (null != (node = lexer.nextNode ()))
+//            {
+//                nodecount++;
+//                if (node instanceof TagNode)
+//                    ((TagNode)node).getAttributes ();
+//            }
+//            end = System.currentTimeMillis ();
+//            System.out.println (&quot;     lexer: &quot; + (end - begin) + &quot; msec, &quot; + nodecount + &quot; nodes&quot;);
+//            if (0 != i) // the first timing is way different
+//                new_total += (end - begin);
+//
+//            System.gc ();
+//            begin = System.currentTimeMillis ();
+//            stream = new ByteArrayInputStream (html.getBytes (Page.DEFAULT_CHARSET));
+//            reader = new InputStreamReader (stream);
+//            nodes =  new NodeReader (reader, 350000);
+//            parser = new Parser (nodes, null);
+//            nodecount = 0;
+//            while (null != (node = nodes.readElement ()))
+//            {
+//                nodecount++;
+//                if (node instanceof Tag)
+//                    ((Tag)node).getAttributes ();
+//            }
+//            end = System.currentTimeMillis ();
+//            System.out.println (&quot;old reader: &quot; + (end - begin) + &quot; msec, &quot; + nodecount + &quot; nodes&quot;);
+//            if (0 != i) // the first timing is way different
+//                old_total += (end - begin);
+//        }
+//        assertTrue (&quot;old parser is&quot; + ((double)(new_total - old_total)/(double)old_total*100.0) + &quot;% faster&quot;, new_total &lt; old_total);
+//        System.out.println (&quot;lexer is &quot; + ((double)(old_total - new_total)/(double)old_total*100.0) + &quot;% faster&quot;);
+//    }
+
+//    public static void main (String[] args) throws ParserException, IOException
+//    {
+//        LexerTests tests = new LexerTests (&quot;hallow&quot;);
+//        tests.testSpeedStreamWithTags ();
+//    }
+
+    static final HashSet mAcceptable;
+    static
+    {
+<span class="fc" id="L593">        mAcceptable = new HashSet ();</span>
+<span class="fc" id="L594">        mAcceptable.add (&quot;A&quot;);</span>
+<span class="fc" id="L595">        mAcceptable.add (&quot;BODY&quot;);</span>
+<span class="fc" id="L596">        mAcceptable.add (&quot;BR&quot;);</span>
+<span class="fc" id="L597">        mAcceptable.add (&quot;CENTER&quot;);</span>
+<span class="fc" id="L598">        mAcceptable.add (&quot;FONT&quot;);</span>
+<span class="fc" id="L599">        mAcceptable.add (&quot;HEAD&quot;);</span>
+<span class="fc" id="L600">        mAcceptable.add (&quot;HR&quot;);</span>
+<span class="fc" id="L601">        mAcceptable.add (&quot;HTML&quot;);</span>
+<span class="fc" id="L602">        mAcceptable.add (&quot;IMG&quot;);</span>
+<span class="fc" id="L603">        mAcceptable.add (&quot;P&quot;);</span>
+<span class="fc" id="L604">        mAcceptable.add (&quot;TABLE&quot;);</span>
+<span class="fc" id="L605">        mAcceptable.add (&quot;TD&quot;);</span>
+<span class="fc" id="L606">        mAcceptable.add (&quot;TITLE&quot;);</span>
+<span class="fc" id="L607">        mAcceptable.add (&quot;TR&quot;);</span>
+<span class="fc" id="L608">        mAcceptable.add (&quot;META&quot;);</span>
+<span class="fc" id="L609">        mAcceptable.add (&quot;STRONG&quot;);</span>
+<span class="fc" id="L610">        mAcceptable.add (&quot;FORM&quot;);</span>
+<span class="fc" id="L611">        mAcceptable.add (&quot;INPUT&quot;);</span>
+<span class="fc" id="L612">        mAcceptable.add (&quot;!DOCTYPE&quot;);</span>
+<span class="fc" id="L613">        mAcceptable.add (&quot;TBODY&quot;);</span>
+<span class="fc" id="L614">        mAcceptable.add (&quot;B&quot;);</span>
+<span class="fc" id="L615">        mAcceptable.add (&quot;DIV&quot;);</span>
+<span class="fc" id="L616">        mAcceptable.add (&quot;SCRIPT&quot;);</span>
+<span class="fc" id="L617">        mAcceptable.add (&quot;NOSCRIPT&quot;);</span>
+<span class="fc" id="L618">        mAcceptable.add (&quot;STYLE&quot;);</span>
+<span class="fc" id="L619">        mAcceptable.add (&quot;SPAN&quot;);</span>
+<span class="fc" id="L620">        mAcceptable.add (&quot;UL&quot;);</span>
+<span class="fc" id="L621">        mAcceptable.add (&quot;LI&quot;);</span>
+<span class="fc" id="L622">        mAcceptable.add (&quot;IFRAME&quot;);</span>
+<span class="fc" id="L623">        mAcceptable.add (&quot;LINK&quot;);</span>
+<span class="fc" id="L624">        mAcceptable.add (&quot;H1&quot;);</span>
+<span class="fc" id="L625">        mAcceptable.add (&quot;H3&quot;);</span>
+<span class="fc" id="L626">        mAcceptable.add (&quot;OBJECT&quot;);</span>
+<span class="fc" id="L627">        mAcceptable.add (&quot;PARAM&quot;);</span>
+<span class="fc" id="L628">        mAcceptable.add (&quot;EMBED&quot;);</span>
+<span class="fc" id="L629">    }</span>
+
+    /**
+     * Test case for bug #789439 Japanese page causes OutOfMemory Exception
+     * No exception is thrown in the current version of the parser,
+     * however, the problem is that ISO-2022-JP (aka JIS) encoding sometimes
+     * causes spurious tags.
+     * The root cause is characters bracketed by [esc]$B and [esc](J (contrary
+     * to what is indicated in then j_s_nightingale analysis of the problem) that
+     * sometimes have an angle bracket (&amp;lt; or 0x3c) embedded in them. These
+     * are taken to be tags by the parser, instead of being considered strings.
+     * &lt;p&gt;
+     * The URL refrenced has an ISO-8859-1 encoding (the default), but
+     * Japanese characters intermixed on the page with English, using the JIS
+     * encoding. We detect failure by looking for weird tag names which were
+     * not correctly handled as string nodes.
+     * &lt;p&gt;
+     * Here is a partial dump of the page with escape sequences:
+     * &lt;pre&gt;
+     * 0002420 1b 24 42 3f 79 4a 42 25 47 25 38 25 2b 25 61 43
+     * 0002440 35 44 65 43 44 1b 28 4a 20 77 69 74 68 20 43 61
+     * ..
+     * 0002720 6c 22 3e 4a 53 6b 79 1b 24 42 42 50 31 7e 25 5a
+     * 0002740 21 3c 25 38 1b 28 4a 3c 2f 41 3e 3c 50 3e 0a 3c
+     * ..
+     * 0003060 20 69 1b 24 42 25 62 21 3c 25 49 42 50 31 7e 25
+     * 0003100 5a 21 3c 25 38 1b 28 4a 3c 2f 41 3e 3c 50 3e 0a
+     * ..
+     * 0003220 1b 24 42 25 2d 25 3f 25 5e 25 2f 25 69 24 4e 25
+     * 0003240 5b 21 3c 25 60 25 5a 21 3c 25 38 1b 28 4a 3c 2f
+     * ..
+     * 0003320 6e 65 31 2e 70 6c 22 3e 1b 24 42 3d 60 48 77 43
+     * 0003340 66 1b 28 4a 3c 2f 41 3e 3c 50 3e 0a 2d 2d 2d 2d
+     * ..
+     * 0004400 46 6f 72 75 6d 20 30 30 39 20 28 1b 24 42 3e 21
+     * 0004420 3c 6a 24 4b 31 4a 4a 21 44 2e 24 4a 24 49 1b 28
+     * 0004440 4a 29 3c 2f 41 3e 3c 49 4d 47 20 53 52 43 3d 22
+     * &lt;/pre&gt;
+     * &lt;p&gt;
+     * The fix proposed by j_s_nightingale is implemented to swallow JIS
+     * escape sequences in the string parser.
+     * Apparently the fix won't help EUC-JP and Shift-JIS though, so this may
+     * still be a problem.
+     * It's theoretically possible that JIS encoding, or another one,
+     * could be used as attribute names or values within tags as well,
+     * but this is considered improbable and is therefore not handled in
+     * the tag parser state machine.
+     */
+    public void testJIS ()
+        throws ParserException
+    {
+        Parser parser;
+        NodeIterator iterator;
+        
+<span class="nc" id="L683">        parser = new Parser (&quot;http://www.009.com/&quot;);</span>
+        try
+        {
+<span class="nc" id="L686">            iterator = parser.elements ();</span>
+<span class="nc bnc" id="L687" title="All 2 branches missed.">            while (iterator.hasMoreNodes ())</span>
+<span class="nc" id="L688">                checkTagNames (iterator.nextNode ());</span>
+<span class="nc" id="L689">        }</span>
+<span class="nc" id="L690">        catch (EncodingChangeException ece)</span>
+        {
+<span class="nc" id="L692">            parser.reset ();</span>
+<span class="nc" id="L693">            iterator = parser.elements ();</span>
+<span class="nc bnc" id="L694" title="All 2 branches missed.">            while (iterator.hasMoreNodes ())</span>
+<span class="nc" id="L695">                checkTagNames (iterator.nextNode ());</span>
+        }
+<span class="nc" id="L697">    }</span>
+
+    /**
+     * Check the tag name for one of the ones expected on the page.
+     * Recursively check the children.
+     */
+    public void checkTagNames (Node node)
+    {
+        Tag tag;
+        String name;
+        NodeList children;
+        
+<span class="nc bnc" id="L709" title="All 2 branches missed.">        if (node instanceof Tag)</span>
+        {
+<span class="nc" id="L711">            tag = (Tag)node;</span>
+<span class="nc" id="L712">            name = tag.getTagName ();</span>
+<span class="nc bnc" id="L713" title="All 2 branches missed.">            if (!mAcceptable.contains (name))</span>
+<span class="nc" id="L714">                fail (&quot;unrecognized tag name \&quot;&quot; + name + &quot;\&quot;&quot;);</span>
+<span class="nc" id="L715">            children = tag.getChildren ();</span>
+<span class="nc bnc" id="L716" title="All 2 branches missed.">            if (null != children)</span>
+<span class="nc bnc" id="L717" title="All 2 branches missed.">                for (int i = 0; i &lt; children.size (); i++)</span>
+<span class="nc" id="L718">                    checkTagNames (children.elementAt (i));</span>
+        }
+<span class="nc" id="L720">    }</span>
+
+    /**
+     * See bug #825820 Words conjoined
+     */
+    public void testConjoined ()
+        throws
+            ParserException
+    {
+        StringBuffer buffer;
+        NodeIterator iterator;
+        Node node;
+        String expected;
+
+<span class="fc" id="L734">        expected = &quot;The Title\nThis is the body.&quot;;</span>
+<span class="fc" id="L735">        String html1 = &quot;&lt;html&gt;&lt;title&gt;The Title\n&lt;/title&gt;&quot; +</span>
+            &quot;&lt;body&gt;This is &lt;a href=\&quot;foo.html\&quot;&gt;the body&lt;/a&gt;.&lt;/body&gt;&lt;/html&gt;&quot;;
+<span class="fc" id="L737">        createParser (html1);</span>
+<span class="fc" id="L738">        buffer = new StringBuffer ();</span>
+<span class="fc bfc" id="L739" title="All 2 branches covered.">        for (iterator = parser.elements (); iterator.hasMoreNodes (); )</span>
+        {
+<span class="fc" id="L741">            node = iterator.nextNode ();</span>
+<span class="fc" id="L742">            String text = node.toPlainTextString ();</span>
+<span class="fc" id="L743">            buffer.append (text);</span>
+        }
+<span class="fc" id="L745">        assertStringEquals (&quot;conjoined text&quot;, expected, buffer.toString ());</span>
+
+<span class="fc" id="L747">        String html2 = &quot;&lt;html&gt;&lt;title&gt;The Title&lt;/title&gt;\n&quot; +</span>
+            &quot;&lt;body&gt;This is &lt;a href=\&quot;foo.html\&quot;&gt;the body&lt;/a&gt;.&lt;/body&gt;&lt;/html&gt;&quot;;
+<span class="fc" id="L749">        createParser (html2);</span>
+<span class="fc" id="L750">        buffer = new StringBuffer ();</span>
+<span class="fc bfc" id="L751" title="All 2 branches covered.">        for (iterator = parser.elements (); iterator.hasMoreNodes (); )</span>
+        {
+<span class="fc" id="L753">            node = iterator.nextNode ();</span>
+<span class="fc" id="L754">            String text = node.toPlainTextString ();</span>
+<span class="fc" id="L755">            buffer.append (text);</span>
+        }
+<span class="fc" id="L757">        assertStringEquals (&quot;conjoined text&quot;, expected, buffer.toString ());</span>
+        
+<span class="fc" id="L759">        String html3 = &quot;&lt;html&gt;&lt;title&gt;The Title&lt;/title&gt;&quot; +</span>
+            &quot;&lt;body&gt;\nThis is &lt;a href=\&quot;foo.html\&quot;&gt;the body&lt;/a&gt;.&lt;/body&gt;&lt;/html&gt;&quot;;
+<span class="fc" id="L761">        createParser (html3);</span>
+<span class="fc" id="L762">        buffer = new StringBuffer ();</span>
+<span class="fc bfc" id="L763" title="All 2 branches covered.">        for (iterator = parser.elements (); iterator.hasMoreNodes (); )</span>
+        {
+<span class="fc" id="L765">            node = iterator.nextNode ();</span>
+<span class="fc" id="L766">            String text = node.toPlainTextString ();</span>
+<span class="fc" id="L767">            buffer.append (text);</span>
+        }
+<span class="fc" id="L769">        assertStringEquals (&quot;conjoined text&quot;, expected, buffer.toString ());</span>
+<span class="fc" id="L770">    }</span>
+
+    /**
+     * Check for StackOverflow error.
+     */
+    public void testStackOverflow ()
+        throws
+            ParserException
+    {
+        NodeIterator iterator;
+        Node node;
+        String html;
+                                                                                                                                                        
+<span class="fc" id="L783">        html = &quot;&lt;a href = \&quot;http://test.com\&quot; /&gt;&quot;;</span>
+<span class="fc" id="L784">        createParser (html);</span>
+<span class="fc bfc" id="L785" title="All 2 branches covered.">        for (iterator = parser.elements (); iterator.hasMoreNodes (); )</span>
+        {
+<span class="fc" id="L787">            node = iterator.nextNode ();</span>
+<span class="fc" id="L788">            String text = node.toHtml ();</span>
+<span class="fc" id="L789">            assertStringEquals (&quot;no overflow&quot;, html, text);</span>
+        }
+<span class="fc" id="L791">        html = &quot;&lt;a href=\&quot;http://test.com\&quot;/&gt;&quot;;</span>
+<span class="fc" id="L792">        createParser (html);</span>
+<span class="fc bfc" id="L793" title="All 2 branches covered.">        for (iterator = parser.elements (); iterator.hasMoreNodes (); )</span>
+        {
+<span class="fc" id="L795">            node = iterator.nextNode ();</span>
+<span class="fc" id="L796">            String text = node.toHtml ();</span>
+<span class="fc" id="L797">            assertStringEquals (&quot;no overflow&quot;, html, text);</span>
+        }
+<span class="fc" id="L799">        html = &quot;&lt;a href = \&quot;http://test.com\&quot;/&gt;&quot;;</span>
+<span class="fc" id="L800">        createParser (html);</span>
+<span class="fc bfc" id="L801" title="All 2 branches covered.">        for (iterator = parser.elements (); iterator.hasMoreNodes (); )</span>
+        {
+<span class="fc" id="L803">            node = iterator.nextNode ();</span>
+<span class="fc" id="L804">            String text = node.toHtml ();</span>
+<span class="fc" id="L805">            assertStringEquals (&quot;no overflow&quot;, html, text);</span>
+        }
+<span class="fc" id="L807">    }</span>
+
+    /**
+     * See bug #880283 Character &quot;&amp;gt;&quot; erroneously inserted by Lexer
+     */
+    public void testJsp () throws ParserException
+    {
+        String html;
+        Lexer lexer;
+        Node node;
+        
+<span class="fc" id="L818">        html = &quot;&lt;% out.urlEncode('abc') + \&quot;&lt;br&gt;\&quot; + out.urlEncode('xyz') %&gt;&quot;;</span>
+<span class="fc" id="L819">        lexer = new Lexer (html);</span>
+<span class="fc" id="L820">        node = lexer.nextNode ();</span>
+<span class="pc bpc" id="L821" title="1 of 2 branches missed.">        if (node == null)</span>
+<span class="nc" id="L822">            fail (&quot;too few nodes&quot;);</span>
+        else
+<span class="fc" id="L824">            assertStringEquals (&quot;bad html&quot;, html, node.toHtml());</span>
+<span class="fc" id="L825">        assertNull (&quot;too many nodes&quot;, lexer.nextNode ());</span>
+<span class="fc" id="L826">    }</span>
+
+    /**
+     * Unit test for new PI parsing code.
+     */
+    public void testPI() throws ParserException
+    {
+        String html;
+        Lexer lexer;
+        Node node;
+
+<span class="fc" id="L837">        html = &quot;&lt;?php print(\&quot;&lt;p&gt;Hello World!&lt;/p&gt;\&quot;); ?&gt;&quot;;</span>
+<span class="fc" id="L838">        lexer = new Lexer(html);</span>
+<span class="fc" id="L839">        node = lexer.nextNode();</span>
+<span class="pc bpc" id="L840" title="1 of 2 branches missed.">        if (node == null)</span>
+<span class="nc" id="L841">            fail (&quot;too few nodes&quot;);</span>
+        else
+<span class="fc" id="L843">            assertStringEquals(&quot;bad html&quot;, html, node.toHtml());</span>
+<span class="fc" id="L844">        assertNull(&quot;too many nodes&quot;, lexer.nextNode());</span>
+<span class="fc" id="L845">    }</span>
+
+    /**
+     * See bug #899413 bug in javascript end detection.
+     */
+    public void testEscapedQuote () throws ParserException
+    {
+        String string;
+        String html;
+        Lexer lexer;
+        Node node;
+        
+<span class="fc" id="L857">        string = &quot;\na='\\'';\n&quot;;</span>
+<span class="fc" id="L858">        html = string + &quot;&lt;/script&gt;&quot;;</span>
+<span class="fc" id="L859">        lexer = new Lexer (html);</span>
+<span class="fc" id="L860">        node = lexer.nextNode (true);</span>
+<span class="pc bpc" id="L861" title="1 of 2 branches missed.">        if (node == null)</span>
+<span class="nc" id="L862">            fail (&quot;too few nodes&quot;);</span>
+        else
+<span class="fc" id="L864">            assertStringEquals (&quot;bad string&quot;, string, node.toHtml());</span>
+<span class="fc" id="L865">        assertNotNull (&quot;too few nodes&quot;, lexer.nextNode (true));</span>
+<span class="fc" id="L866">        assertNull (&quot;too many nodes&quot;, lexer.nextNode (true));</span>
+<span class="fc" id="L867">    }</span>
+
+    /**
+     * See bug #1227213 Particular SCRIPT tags close too late.
+     */
+    public void testCommentInScript () throws ParserException
+    {
+        String tag;
+        String cdata;
+        String endtag;
+        String html;
+        Parser parser;
+        NodeIterator iterator;
+        Node node;
+
+<span class="fc" id="L882">        tag = &quot;&lt;script&gt;&quot;;</span>
+<span class="fc" id="L883">        cdata = &quot;&lt;!--document.write(\&quot;en\&quot;);// --&gt;&quot;;</span>
+<span class="fc" id="L884">        endtag = &quot;&lt;/script&gt;&quot;;</span>
+<span class="fc" id="L885">        html = tag + cdata + endtag;</span>
+<span class="fc" id="L886">        parser = new Parser ();</span>
+<span class="fc" id="L887">        parser.setInputHTML (html);</span>
+<span class="fc" id="L888">        iterator = parser.elements ();</span>
+<span class="fc" id="L889">        node = iterator.nextNode ();</span>
+<span class="pc bpc" id="L890" title="1 of 2 branches missed.">        if (node == null)</span>
+<span class="nc" id="L891">            fail (&quot;too few nodes&quot;);</span>
+        else
+<span class="fc" id="L893">            assertStringEquals (&quot;bad parse&quot;, html, node.toHtml());</span>
+<span class="fc" id="L894">        assertTrue (node instanceof ScriptTag);</span>
+<span class="fc" id="L895">        assertStringEquals (&quot;bad cdata&quot;, cdata, ((ScriptTag)node).getScriptCode ());</span>
+<span class="fc" id="L896">        assertNull (&quot;too many nodes&quot;, iterator.nextNode ());</span>
+<span class="fc" id="L897">    }</span>
+
+    /**
+     * See bug #1227213 Particular SCRIPT tags close too late.
+     * This was actually working prior to the patch, since the
+     * ScriptScanner didn't use smartquote processing.
+     * I'm not sure why jwilsonsprings1 said the patch worked
+     * for him. I can only assume he was mistaken in thinking
+     * it was the URL that caused the failure.
+     */
+    public void testUrlInStyle () throws ParserException
+    {
+        String tag;
+        String cdata;
+        String endtag;
+        String html;
+        Parser parser;
+        NodeIterator iterator;
+        Node node;
+        
+<span class="fc" id="L917">        tag = &quot;&lt;style&gt;&quot;;</span>
+<span class="fc" id="L918">        cdata = &quot;.eSDot {background-image:&quot; +</span>
+            &quot;url(http://di.image.eshop.msn.com/img/sys/dot.gif)}&quot;;
+<span class="fc" id="L920">        endtag = &quot;&lt;/style&gt;&quot;;</span>
+<span class="fc" id="L921">        html = tag + cdata + endtag;</span>
+<span class="fc" id="L922">        parser = new Parser ();</span>
+<span class="fc" id="L923">        parser.setInputHTML (html);</span>
+<span class="fc" id="L924">        iterator = parser.elements ();</span>
+<span class="fc" id="L925">        node = iterator.nextNode ();</span>
+<span class="pc bpc" id="L926" title="1 of 2 branches missed.">        if (node == null)</span>
+<span class="nc" id="L927">            fail (&quot;too few nodes&quot;);</span>
+        else
+<span class="fc" id="L929">            assertStringEquals (&quot;bad parse&quot;, html, node.toHtml());</span>
+<span class="fc" id="L930">        assertTrue (node instanceof StyleTag);</span>
+<span class="fc" id="L931">        assertStringEquals (&quot;bad cdata&quot;, cdata, ((StyleTag)node).getStyleCode ());</span>
+<span class="fc" id="L932">        assertNull (&quot;too many nodes&quot;, iterator.nextNode ());</span>
+<span class="fc" id="L933">    }</span>
+
+    /**
+     * See bug #1493884 Lexer returns a TagNode with a 'null' name
+     */
+    public void testDosLineEndingInName () throws ParserException
+    {
+        String html;
+        NodeIterator iterator;
+        Node node;
+
+<span class="fc" id="L944">        html = &quot;&lt;!\r\nMSIE-&gt;&quot;;</span>
+<span class="fc" id="L945">        parser = new Parser ();</span>
+<span class="fc" id="L946">        parser.setInputHTML (html);</span>
+<span class="fc" id="L947">        iterator = parser.elements ();</span>
+<span class="fc" id="L948">        node = iterator.nextNode ();</span>
+<span class="pc bpc" id="L949" title="1 of 2 branches missed.">        if (node == null)</span>
+<span class="nc" id="L950">            fail (&quot;too few nodes&quot;);</span>
+        else
+        {
+<span class="fc" id="L953">            assertNotNull (&quot;null node&quot;, node);</span>
+<span class="fc" id="L954">            assertTrue (node instanceof Tag);</span>
+<span class="fc" id="L955">            assertNotNull (&quot;null name&quot;, ((Tag)node).getTagName ());</span>
+<span class="fc" id="L956">            assertStringEquals (&quot;bad parse&quot;, &quot;!&quot;, ((Tag)node).getTagName ());</span>
+        }
+<span class="fc" id="L958">    }</span>
+    
+    
+    /**
+     * See bug #1547354 &lt;&lt;tag&gt; parsed as text
+     */
+    public void testDoubleAngle () throws ParserException
+    {
+        String html;
+        NodeIterator iterator;
+        Node node;
+        Html htmltag;
+        NodeList children;
+
+<span class="fc" id="L972">        html = &quot;&lt;html&gt;&lt;&lt;img src=\&quot;xyz\&quot;&gt;&lt;/html&gt;&quot;;</span>
+<span class="fc" id="L973">        parser = new Parser ();</span>
+<span class="fc" id="L974">        parser.setInputHTML (html);</span>
+<span class="fc" id="L975">        iterator = parser.elements ();</span>
+<span class="fc" id="L976">        node = iterator.nextNode ();</span>
+<span class="pc bpc" id="L977" title="1 of 2 branches missed.">        if (node == null)</span>
+<span class="nc" id="L978">            fail (&quot;too few nodes&quot;);</span>
+        else
+        {
+<span class="fc" id="L981">            assertNotNull (&quot;null node&quot;, node);</span>
+<span class="fc" id="L982">            assertTrue (node instanceof Html);</span>
+<span class="fc" id="L983">            htmltag = (Html)node;</span>
+<span class="fc" id="L984">            children = htmltag.getChildren ();</span>
+<span class="fc" id="L985">            assertNotNull (&quot;null children&quot;, children);</span>
+<span class="pc bpc" id="L986" title="1 of 2 branches missed.">            assertTrue (&quot;wrong node count in html&quot;, 2 == children.size ());</span>
+<span class="fc" id="L987">            assertTrue (&quot;no text node first&quot;, children.elementAt (0) instanceof TextNode);</span>
+<span class="fc" id="L988">            assertStringEquals (&quot;bad parse&quot;, &quot;&lt;&quot;, children.elementAt (0).toHtml ());</span>
+<span class="fc" id="L989">            assertTrue (&quot;no img node second&quot;, children.elementAt (1) instanceof ImageTag);</span>
+        }
+<span class="fc" id="L991">    }</span>
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>HasParentFilterWrapper.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">filterbuilder/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.parserapplications.filterbuilder.wrappers</a> &gt; <span class="el_source">HasParentFilterWrapper.java</span></div><h1>HasParentFilterWrapper.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/filterbuilder/src/main/java/org/htmlparser/parserapplications/filterbuilder/wrappers/HasParentFilterWrapper.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.parserapplications.filterbuilder.wrappers;
+
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import javax.swing.JCheckBox;
+
+import org.htmlparser.Node;
+import org.htmlparser.NodeFilter;
+import org.htmlparser.Parser;
+import org.htmlparser.filters.HasParentFilter;
+import org.htmlparser.parserapplications.filterbuilder.Filter;
+import org.htmlparser.parserapplications.filterbuilder.SubFilterList;
+
+/**
+ * Wrapper for HasParentFilters.
+ */
+public class HasParentFilterWrapper
+    extends
+        Filter
+    implements
+        ActionListener
+{
+    /**
+     * The underlying filter.
+     */
+    protected HasParentFilter mFilter;
+
+    /**
+     * The check box for recursion.
+     */
+    protected JCheckBox mRecursive;
+
+    /**
+     * The drop target container.
+     */
+    protected SubFilterList mContainer;
+    
+    /**
+     * Create a wrapper over a new HasParentFilter.
+     */ 
+<span class="nc" id="L67">    public HasParentFilterWrapper ()</span>
+    {
+<span class="nc" id="L69">        mFilter = new HasParentFilter ();</span>
+
+        // add the recursive flag
+<span class="nc" id="L72">        mRecursive = new JCheckBox (&quot;Recursive&quot;);</span>
+<span class="nc" id="L73">        add (mRecursive);</span>
+<span class="nc" id="L74">        mRecursive.addActionListener (this);</span>
+<span class="nc" id="L75">        mRecursive.setSelected (mFilter.getRecursive ());</span>
+
+        // add the subfilter container
+<span class="nc" id="L78">        mContainer = new SubFilterList (this, &quot;Parent Filter&quot;, 1);</span>
+<span class="nc" id="L79">        add (mContainer);</span>
+<span class="nc" id="L80">    }</span>
+
+    //
+    // Filter overrides and concrete implementations
+    //
+    
+    /**
+     * Get the name of the filter.
+     * @return A descriptive name for the filter.
+     */
+    public String getDescription ()
+    {
+<span class="nc" id="L92">        return (&quot;Has Parent&quot;);</span>
+    }
+
+    /**
+     * Get the resource name for the icon.
+     * @return The icon resource specification.
+     */
+    public String getIconSpec ()
+    {
+<span class="nc" id="L101">        return (&quot;images/HasParentFilter.gif&quot;);</span>
+    }
+
+    /**
+     * Get the underlying node filter object.
+     * @return The node filter object suitable for serialization.
+     */
+    public NodeFilter getNodeFilter ()
+    {
+        NodeFilter filter;
+        HasParentFilter ret;
+        
+<span class="nc" id="L113">        ret = new HasParentFilter ();</span>
+
+<span class="nc" id="L115">        ret.setRecursive (mFilter.getRecursive ());</span>
+<span class="nc" id="L116">        filter = mFilter.getParentFilter ();</span>
+<span class="nc bnc" id="L117" title="All 2 branches missed.">        if (null != filter)</span>
+<span class="nc" id="L118">            ret.setParentFilter (((Filter)filter).getNodeFilter ());</span>
+            
+<span class="nc" id="L120">        return (ret);</span>
+    }
+
+    /**
+     * Assign the underlying node filter for this wrapper.
+     * @param filter The filter to wrap.
+     * @param context The parser to use for conditioning this filter.
+     * Some filters need contextual information to provide to the user,
+     * i.e. for tag names or attribute names or values,
+     * so the Parser context is provided. 
+     */
+    public void setNodeFilter (NodeFilter filter, Parser context)
+    {
+<span class="nc" id="L133">        mFilter = (HasParentFilter)filter;</span>
+<span class="nc" id="L134">        mRecursive.setSelected (mFilter.getRecursive ());</span>
+<span class="nc" id="L135">    }</span>
+
+    /**
+     * Get the underlying node filter's subordinate filters.
+     * @return The node filter object's contained filters.
+     */
+    public NodeFilter[] getSubNodeFilters ()
+    {
+        NodeFilter filter;
+        NodeFilter[] ret;
+
+<span class="nc" id="L146">        filter = mFilter.getParentFilter ();</span>
+<span class="nc bnc" id="L147" title="All 2 branches missed.">        if (null != filter)</span>
+<span class="nc" id="L148">            ret = new NodeFilter[] { filter };</span>
+        else
+<span class="nc" id="L150">            ret = new NodeFilter[0];</span>
+
+<span class="nc" id="L152">        return (ret);</span>
+    }
+
+    /**
+     * Assign the underlying node filter's subordinate filters.
+     * @param filters The filters to insert into the underlying node filter.
+     */
+    public void setSubNodeFilters (NodeFilter[] filters)
+    {
+<span class="nc bnc" id="L161" title="All 2 branches missed.">        if (0 != filters.length)</span>
+<span class="nc" id="L162">            mFilter.setParentFilter (filters[0]);</span>
+        else
+<span class="nc" id="L164">            mFilter.setParentFilter (null);</span>
+<span class="nc" id="L165">    }</span>
+
+    /**
+     * Convert this filter into Java code.
+     * Output whatever text necessary and return the variable name.
+     * @param out The output buffer.
+     * @param context Three integers as follows:
+     * &lt;li&gt;indent level - the number of spaces to insert at the beginning of each line&lt;/li&gt;
+     * &lt;li&gt;filter number - the next available filter number&lt;/li&gt;
+     * &lt;li&gt;filter array number - the next available array of filters number&lt;/li&gt;
+     * @return The variable name to use when referencing this filter (usually &quot;filter&quot; + context[1]++) 
+     */
+    public String toJavaCode (StringBuffer out, int[] context)
+    {
+        String name;
+        String ret;
+
+<span class="nc bnc" id="L182" title="All 2 branches missed.">        if (null != mFilter.getParentFilter ())</span>
+<span class="nc" id="L183">            name = ((Filter)mFilter.getParentFilter ()).toJavaCode (out, context);</span>
+        else
+<span class="nc" id="L185">            name = null;</span>
+<span class="nc" id="L186">        ret = &quot;filter&quot; + context[1]++;</span>
+<span class="nc" id="L187">        spaces (out, context[0]);</span>
+<span class="nc" id="L188">        out.append (&quot;HasParentFilter &quot;);</span>
+<span class="nc" id="L189">        out.append (ret);</span>
+<span class="nc" id="L190">        out.append (&quot; = new HasParentFilter ();&quot;);</span>
+<span class="nc" id="L191">        newline (out);</span>
+<span class="nc" id="L192">        spaces (out, context[0]);</span>
+<span class="nc" id="L193">        out.append (ret);</span>
+<span class="nc" id="L194">        out.append (&quot;.setRecursive (&quot;);</span>
+<span class="nc bnc" id="L195" title="All 2 branches missed.">        out.append (mFilter.getRecursive () ? &quot;true&quot; : &quot;false&quot;);</span>
+<span class="nc" id="L196">        out.append (&quot;);&quot;);</span>
+<span class="nc" id="L197">        newline (out);</span>
+<span class="nc bnc" id="L198" title="All 2 branches missed.">        if (null != name)</span>
+        {
+<span class="nc" id="L200">            spaces (out, context[0]);</span>
+<span class="nc" id="L201">            out.append (ret);</span>
+<span class="nc" id="L202">            out.append (&quot;.setParentFilter (&quot;);</span>
+<span class="nc" id="L203">            out.append (name);</span>
+<span class="nc" id="L204">            out.append (&quot;);&quot;);</span>
+<span class="nc" id="L205">            newline (out);</span>
+        }
+        
+<span class="nc" id="L208">        return (ret);</span>
+    }
+
+    //
+    // NodeFilter interface
+    //
+
+    /**
+     * Predicate to determine whether or not to keep the given node.
+     * The behaviour based on this outcome is determined by the context
+     * in which it is called. It may lead to the node being added to a list
+     * or printed out. See the calling routine for details.
+     * @return &lt;code&gt;true&lt;/code&gt; if the node is to be kept, &lt;code&gt;false&lt;/code&gt;
+     * if it is to be discarded.
+     * @param node The node to test.
+     */
+    public boolean accept (Node node)
+    {
+<span class="nc" id="L226">        return (mFilter.accept (node));</span>
+    }
+
+    //
+    // ActionListener interface
+    //
+
+    /**
+     * Invoked when an action occurs on the check box.
+     * @param event Details about the action event.
+     */
+    public void actionPerformed (ActionEvent event)
+    {
+        Object source;
+        boolean recursive;
+
+<span class="nc" id="L242">        source = event.getSource ();</span>
+<span class="nc bnc" id="L243" title="All 2 branches missed.">        if (source == mRecursive)</span>
+        {
+<span class="nc" id="L245">            recursive = mRecursive.isSelected ();</span>
+<span class="nc" id="L246">            mFilter.setRecursive (recursive);</span>
+        }
+<span class="nc" id="L248">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

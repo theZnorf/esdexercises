@@ -1,0 +1,374 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>SAXTest.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tests</a> &gt; <span class="el_source">SAXTest.java</span></div><h1>SAXTest.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/test/java/org/htmlparser/tests/SAXTest.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tests;
+
+import java.io.IOException;
+
+import java.net.MalformedURLException;
+import java.net.URL;
+
+import org.xml.sax.Attributes;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.ErrorHandler;
+import org.xml.sax.Locator;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXNotRecognizedException;
+import org.xml.sax.SAXNotSupportedException;
+import org.xml.sax.SAXParseException;
+import org.xml.sax.XMLReader;
+
+import org.xml.sax.helpers.XMLReaderFactory;
+
+
+/**
+ * Test class for SAX2.
+ */
+<span class="nc" id="L49">public class SAXTest implements ContentHandler, ErrorHandler</span>
+{
+
+    ////////////////////////////////////////////////////////////////////
+    // Main app.
+    ////////////////////////////////////////////////////////////////////
+
+
+    /**
+     * Main application entry point.
+     */
+    public static void main (String args[])
+    {
+<span class="nc" id="L62">	System.out.println(&quot;************************************&quot; +</span>
+			   &quot;************************************&quot;);
+<span class="nc" id="L64">	System.out.println(&quot;* Testing SAX2&quot;);</span>
+<span class="nc" id="L65">	System.out.println(&quot;************************************&quot; +</span>
+			   &quot;************************************&quot;);
+<span class="nc" id="L67">	System.out.print(&quot;\n&quot;);</span>
+
+	//
+	// Figure out the XML reader
+	//
+
+//	String driverName =
+//	    System.getProperty(&quot;org.xml.sax.driver&quot;,
+//			       &quot;org.apache.xerces.parsers.SAXParser&quot;);
+<span class="nc" id="L76">        String driverName = &quot;org.htmlparser.sax.XMLReader&quot;;</span>
+<span class="nc" id="L77">	System.out.println(&quot;SAX driver class: &quot; +</span>
+<span class="nc" id="L78">			   driverName +</span>
+<span class="nc" id="L79">			   &quot;\n  (you can specify a different one using the &quot; +</span>
+<span class="nc" id="L80">			   &quot;org.xml.sax.driver property)&quot;);</span>
+<span class="nc" id="L81">	System.out.print(&quot;\n&quot;);</span>
+
+
+	//
+	// Create the XML reader
+	//
+
+<span class="nc" id="L88">	System.out.println(&quot;Now, we'll try to create an instance of the &quot; +</span>
+			   &quot;driver, using XMLReaderFactory&quot;);
+<span class="nc" id="L90">	XMLReader reader = null;</span>
+	try {
+<span class="nc" id="L92">	    reader = XMLReaderFactory.createXMLReader(driverName);</span>
+<span class="nc" id="L93">	} catch (SAXException e) {</span>
+<span class="nc" id="L94">	    System.out.println(&quot;Failed to create XMLReader: &quot; +</span>
+<span class="nc" id="L95">			       e.getMessage() +</span>
+<span class="nc" id="L96">			       &quot;\nMake sure that the class actually &quot; +</span>
+<span class="nc" id="L97">			       &quot;exists and is present on your CLASSPATH&quot; +</span>
+<span class="nc" id="L98">			       &quot;\nor specify a different class using the &quot; +</span>
+<span class="nc" id="L99">			       &quot;org.xml.sax.driver property&quot;);</span>
+<span class="nc" id="L100">	    System.exit(1);</span>
+	}
+<span class="nc" id="L102">	System.out.println(&quot;XMLReader created successfully\n&quot;);</span>
+
+
+	//
+	// Check features.
+	//
+<span class="nc" id="L108">	System.out.println(&quot;Checking defaults for some well-known features:&quot;);</span>
+<span class="nc" id="L109">	checkFeature(reader, &quot;http://xml.org/sax/features/namespaces&quot;);</span>
+<span class="nc" id="L110">	checkFeature(reader, &quot;http://xml.org/sax/features/namespace-prefixes&quot;);</span>
+<span class="nc" id="L111">	checkFeature(reader, &quot;http://xml.org/sax/features/string-interning&quot;);</span>
+<span class="nc" id="L112">	checkFeature(reader, &quot;http://xml.org/sax/features/validation&quot;);</span>
+<span class="nc" id="L113">	checkFeature(reader,</span>
+<span class="nc" id="L114">		     &quot;http://xml.org/sax/features/external-general-entities&quot;);</span>
+<span class="nc" id="L115">	checkFeature(reader,</span>
+<span class="nc" id="L116">		     &quot;http://xml.org/sax/features/external-parameter-entities&quot;);</span>
+<span class="nc" id="L117">	System.out.print(&quot;\n&quot;);</span>
+
+	
+	//
+	// Assign handlers.
+	//
+<span class="nc" id="L123">	System.out.println(&quot;Creating and assigning handlers\n&quot;);</span>
+<span class="nc" id="L124">	SAXTest handler = new SAXTest();</span>
+<span class="nc" id="L125">	reader.setContentHandler(handler);</span>
+<span class="nc" id="L126">	reader.setErrorHandler(handler);</span>
+
+	//
+	// Parse documents.
+	//
+<span class="nc bnc" id="L131" title="All 2 branches missed.">	if (args.length &gt; 0) {</span>
+<span class="nc bnc" id="L132" title="All 2 branches missed.">	    for (int i = 0; i &lt; args.length; i++) {</span>
+<span class="nc" id="L133">		String systemId = makeAbsoluteURL(args[i]);</span>
+<span class="nc" id="L134">		System.out.println(&quot;Trying file &quot; + systemId);</span>
+		try {
+<span class="nc" id="L136">		    reader.parse(systemId);</span>
+<span class="nc" id="L137">		} catch (SAXException e1) {</span>
+<span class="nc" id="L138">		    System.out.println(systemId +</span>
+<span class="nc" id="L139">				       &quot; failed with XML error: &quot; +</span>
+<span class="nc" id="L140">				       e1.getMessage());</span>
+<span class="nc" id="L141">		} catch (IOException e2) {</span>
+<span class="nc" id="L142">		    System.out.println(systemId +</span>
+<span class="nc" id="L143">				       &quot; failed with I/O error: &quot; +</span>
+<span class="nc" id="L144">				       e2.getMessage());</span>
+		}
+<span class="nc" id="L146">		System.out.print(&quot;\n&quot;);</span>
+	    }
+<span class="nc" id="L148">	} else {</span>
+<span class="nc" id="L149">	    System.out.println(&quot;No documents supplied on command line; &quot; +</span>
+			       &quot;parsing skipped.&quot;);
+	}
+
+
+	//
+	// Done.
+	//
+<span class="nc" id="L157">	System.out.println(&quot;SAX2 test finished.&quot;);</span>
+<span class="nc" id="L158">    }</span>
+
+
+    /**
+     * Check and display the value of a feature.
+     */
+    private static void checkFeature (XMLReader reader, String name)
+    {
+	try {
+<span class="nc" id="L167">	    System.out.println(&quot;  &quot; +</span>
+<span class="nc" id="L168">			       name +</span>
+<span class="nc" id="L169">			       &quot; = &quot; +</span>
+<span class="nc" id="L170">			       reader.getFeature(name));</span>
+<span class="nc" id="L171">	} catch (SAXNotRecognizedException e) {</span>
+<span class="nc" id="L172">	    System.out.println(&quot;XMLReader does not recognize feature &quot; +</span>
+<span class="nc" id="L173">			       name);</span>
+<span class="nc" id="L174">	} catch (SAXNotSupportedException e) {</span>
+<span class="nc" id="L175">	    System.out.println(&quot;XMLReader recognizes feature &quot; +</span>
+<span class="nc" id="L176">			       name +</span>
+<span class="nc" id="L177">			       &quot; but does not support checking its value&quot;);</span>
+	}
+<span class="nc" id="L179">    }</span>
+
+
+    /**
+     * Construct an absolute URL if necessary.
+     *
+     * This method is useful for relative file paths on a command
+     * line; it converts them to absolute file: URLs, using the
+     * correct path separator.  This method is based on an
+     * original suggestion by James Clark.
+     *
+     * @param url The (possibly relative) URL.
+     * @return An absolute URL of some sort.
+     */
+    private static String makeAbsoluteURL (String url)
+    {
+	URL baseURL;
+	
+<span class="nc" id="L197">	String currentDirectory = System.getProperty(&quot;user.dir&quot;);</span>
+<span class="nc" id="L198">	String fileSep = System.getProperty(&quot;file.separator&quot;);</span>
+<span class="nc" id="L199">	String file = currentDirectory.replace(fileSep.charAt(0), '/') + '/';</span>
+	
+<span class="nc bnc" id="L201" title="All 2 branches missed.">	if (file.charAt(0) != '/') {</span>
+<span class="nc" id="L202">	    file = &quot;/&quot; + file;</span>
+	}
+
+	try {
+<span class="nc" id="L206">	    baseURL = new URL(&quot;file&quot;, null, file);</span>
+<span class="nc" id="L207">	    return new URL(baseURL, url).toString();</span>
+<span class="nc" id="L208">	} catch (MalformedURLException e) {</span>
+<span class="nc" id="L209">	    System.err.println(url + &quot;: &quot; + e.getMessage());</span>
+<span class="nc" id="L210">	    return url;</span>
+	}
+    }
+
+    private static String makeNSName (String uri, String localName,
+				      String qName)
+    {
+<span class="nc bnc" id="L217" title="All 2 branches missed.">	if (uri.equals(&quot;&quot;)) </span>
+<span class="nc" id="L218">	    uri = &quot;[none]&quot;;</span>
+<span class="nc bnc" id="L219" title="All 2 branches missed.">	if (localName.equals(&quot;&quot;))</span>
+<span class="nc" id="L220">	    localName = &quot;[none]&quot;;</span>
+<span class="nc bnc" id="L221" title="All 2 branches missed.">	if (qName.equals(&quot;&quot;))</span>
+<span class="nc" id="L222">	    qName = &quot;[none]&quot;;</span>
+<span class="nc" id="L223">	return uri + '/' + localName + '/' + qName;</span>
+    }
+
+    private static String escapeData (char ch[], int start, int length)
+    {
+<span class="nc" id="L228">	StringBuffer buf = new StringBuffer();</span>
+<span class="nc bnc" id="L229" title="All 2 branches missed.">	for (int i = start; i &lt; start + length; i++) {</span>
+<span class="nc bnc" id="L230" title="All 4 branches missed.">	    switch(ch[i]) {</span>
+	    case '\n':
+<span class="nc" id="L232">		buf.append(&quot;\\n&quot;);</span>
+<span class="nc" id="L233">		break;</span>
+	    case '\t':
+<span class="nc" id="L235">		buf.append(&quot;\\t&quot;);</span>
+<span class="nc" id="L236">		break;</span>
+	    case '\r':
+<span class="nc" id="L238">		buf.append(&quot;\\r&quot;);</span>
+<span class="nc" id="L239">		break;</span>
+	    default:
+<span class="nc" id="L241">		buf.append(ch[i]);</span>
+		break;
+	    }
+	}
+<span class="nc" id="L245">	return buf.toString();</span>
+    }
+
+
+    ////////////////////////////////////////////////////////////////////
+    // Implementation of org.xml.sax.ContentHandler.
+    ////////////////////////////////////////////////////////////////////
+
+    public void setDocumentLocator (Locator locator)
+    {
+<span class="nc" id="L255">	System.out.println(&quot;  EVENT: setDocumentLocator&quot;);</span>
+<span class="nc" id="L256">    }</span>
+
+    public void startDocument ()
+	throws SAXException
+    {
+<span class="nc" id="L261">	System.out.println(&quot;  EVENT: startDocument&quot;);</span>
+<span class="nc" id="L262">    }</span>
+
+    public void endDocument ()
+	throws SAXException
+    {
+<span class="nc" id="L267">	System.out.println(&quot;  EVENT: endDocument&quot;);</span>
+<span class="nc" id="L268">    }</span>
+
+    public void startPrefixMapping (String prefix, String uri)
+	throws SAXException
+    {
+<span class="nc" id="L273">	System.out.println(&quot;  EVENT: startPrefixMapping &quot; +</span>
+<span class="nc" id="L274">			   prefix + &quot; = &quot; + uri);</span>
+<span class="nc" id="L275">    }</span>
+
+    public void endPrefixMapping (String prefix)
+	throws SAXException
+    {
+<span class="nc" id="L280">	System.out.println(&quot;  EVENT: endPrefixMapping &quot; + prefix);</span>
+<span class="nc" id="L281">    }</span>
+
+    public void startElement (String namespaceURI, String localName,
+			      String qName, Attributes atts)
+	throws SAXException
+    {
+<span class="nc" id="L287">	System.out.println(&quot;  EVENT: startElement &quot; +</span>
+<span class="nc" id="L288">			   makeNSName(namespaceURI, localName, qName));</span>
+<span class="nc" id="L289">	int attLen = atts.getLength();</span>
+<span class="nc bnc" id="L290" title="All 2 branches missed.">	for (int i = 0; i &lt; attLen; i++) {</span>
+<span class="nc" id="L291">	    char ch[] = atts.getValue(i).toCharArray();</span>
+<span class="nc" id="L292">	    System.out.println(&quot;    Attribute &quot; +</span>
+<span class="nc" id="L293">			       makeNSName(atts.getURI(i),</span>
+<span class="nc" id="L294">					  atts.getLocalName(i),</span>
+<span class="nc" id="L295">					  atts.getQName(i)) +</span>
+<span class="nc" id="L296">			       '=' +</span>
+<span class="nc" id="L297">			       escapeData(ch, 0, ch.length));</span>
+	}
+<span class="nc" id="L299">    }</span>
+
+    public void endElement (String namespaceURI, String localName,
+			    String qName)
+	throws SAXException
+    {
+<span class="nc" id="L305">	System.out.println(&quot;  EVENT: endElement &quot; +</span>
+<span class="nc" id="L306">			   makeNSName(namespaceURI, localName, qName));</span>
+<span class="nc" id="L307">    }</span>
+
+    public void characters (char ch[], int start, int length)
+	throws SAXException
+    {
+<span class="nc" id="L312">	System.out.println(&quot;  EVENT: characters &quot; +</span>
+<span class="nc" id="L313">			   escapeData(ch, start, length));</span>
+<span class="nc" id="L314">    }</span>
+
+    public void ignorableWhitespace (char ch[], int start, int length)
+	throws SAXException
+    {
+<span class="nc" id="L319">	System.out.println(&quot;  EVENT: ignorableWhitespace &quot; +</span>
+<span class="nc" id="L320">			   escapeData(ch, start, length));</span>
+<span class="nc" id="L321">    }</span>
+
+    public void processingInstruction (String target, String data)
+	throws SAXException
+    {
+<span class="nc" id="L326">	System.out.println(&quot;  EVENT: processingInstruction &quot; +</span>
+<span class="nc" id="L327">			   target + ' ' + data);</span>
+<span class="nc" id="L328">    }</span>
+
+    public void skippedEntity (String name)
+	throws SAXException
+    {
+<span class="nc" id="L333">	System.out.println(&quot;  EVENT: skippedEntity &quot; + name);</span>
+<span class="nc" id="L334">    }</span>
+
+
+    ////////////////////////////////////////////////////////////////////
+    // Implementation of org.xml.sax.ErrorHandler.
+    ////////////////////////////////////////////////////////////////////
+
+    public void warning (SAXParseException e)
+	throws SAXException
+    {
+<span class="nc" id="L344">	System.out.println(&quot;  EVENT: warning &quot; +</span>
+<span class="nc" id="L345">			   e.getMessage() + ' ' +</span>
+<span class="nc" id="L346">			   e.getSystemId() + ' ' +</span>
+<span class="nc" id="L347">			   e.getLineNumber() + ' ' +</span>
+<span class="nc" id="L348">			   e.getColumnNumber());</span>
+<span class="nc" id="L349">    }</span>
+
+    public void error (SAXParseException e)
+	throws SAXException
+    {
+<span class="nc" id="L354">	System.out.println(&quot;  EVENT: error &quot; +</span>
+<span class="nc" id="L355">			   e.getMessage() + ' ' +</span>
+<span class="nc" id="L356">			   e.getSystemId() + ' ' +</span>
+<span class="nc" id="L357">			   e.getLineNumber() + ' ' +</span>
+<span class="nc" id="L358">			   e.getColumnNumber());</span>
+<span class="nc" id="L359">    }</span>
+
+    public void fatalError (SAXParseException e)
+	throws SAXException
+    {
+<span class="nc" id="L364">	System.out.println(&quot;  EVENT: fatal error &quot; +</span>
+<span class="nc" id="L365">			   e.getMessage() + ' ' +</span>
+<span class="nc" id="L366">			   e.getSystemId() + ' ' +</span>
+<span class="nc" id="L367">			   e.getLineNumber() + ' ' +</span>
+<span class="nc" id="L368">			   e.getColumnNumber());</span>
+<span class="nc" id="L369">    }</span>
+
+}
+
+// end of SAXTest.java
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

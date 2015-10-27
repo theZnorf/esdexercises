@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>NodeListTest.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tests.utilTests</a> &gt; <span class="el_source">NodeListTest.java</span></div><h1>NodeListTest.java</h1><pre class="source lang-java linenums"><span class="fc" id="L1">// HTMLParser Library - A java-based parser for HTML</span>
+// http://htmlparser.org
+// Copyright (C) 2006 Somik Raha
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/test/java/org/htmlparser/tests/utilTests/NodeListTest.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 13:37:00 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 5 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tests.utilTests;
+
+import org.htmlparser.Node;
+import org.htmlparser.nodes.AbstractNode;
+import org.htmlparser.tests.ParserTestCase;
+import org.htmlparser.util.NodeList;
+import org.htmlparser.util.SimpleNodeIterator;
+import org.htmlparser.visitors.NodeVisitor;
+
+public class NodeListTest extends ParserTestCase {
+
+    static
+    {
+<span class="fc" id="L39">        System.setProperty (&quot;org.htmlparser.tests.utilTests.NodeListTest&quot;, &quot;NodeListTest&quot;);</span>
+<span class="fc" id="L40">    }</span>
+
+    private NodeList nodeList;
+    private Node[] testNodes;
+
+    public NodeListTest(String name) {
+<span class="fc" id="L46">        super(name);</span>
+<span class="fc" id="L47">    }</span>
+
+    protected void setUp() {
+<span class="fc" id="L50">        nodeList = new NodeList();</span>
+<span class="fc" id="L51">    }</span>
+
+    public void testOneItemConstructor() {
+<span class="fc" id="L54">        Node node = createHTMLNodeObject();</span>
+<span class="fc" id="L55">        nodeList = new NodeList(node);</span>
+<span class="fc" id="L56">        assertEquals(&quot;Vector Size&quot;,1,nodeList.size());</span>
+<span class="pc bpc" id="L57" title="1 of 2 branches missed.">        assertTrue(&quot;First Element&quot;,node==nodeList.elementAt(0));</span>
+<span class="fc" id="L58">    }</span>
+
+    public void testAddOneItem() {
+<span class="fc" id="L61">        Node node = createHTMLNodeObject();</span>
+<span class="fc" id="L62">        nodeList.add(node);</span>
+<span class="fc" id="L63">        assertEquals(&quot;Vector Size&quot;,1,nodeList.size());</span>
+<span class="pc bpc" id="L64" title="1 of 2 branches missed.">        assertTrue(&quot;First Element&quot;,node==nodeList.elementAt(0));</span>
+<span class="fc" id="L65">    }</span>
+
+    public void testAddTwoItems() {
+<span class="fc" id="L68">        Node node1 = createHTMLNodeObject();</span>
+<span class="fc" id="L69">        Node node2 = createHTMLNodeObject();</span>
+<span class="fc" id="L70">        nodeList.add(node1);</span>
+<span class="fc" id="L71">        nodeList.add(node2);</span>
+<span class="fc" id="L72">        assertEquals(&quot;Vector Size&quot;,2,nodeList.size());</span>
+<span class="pc bpc" id="L73" title="1 of 2 branches missed.">        assertTrue(&quot;First Element&quot;,node1==nodeList.elementAt(0));</span>
+<span class="pc bpc" id="L74" title="1 of 2 branches missed.">        assertTrue(&quot;Second Element&quot;,node2==nodeList.elementAt(1));</span>
+<span class="fc" id="L75">    }</span>
+
+    public void testAddTenItems() {
+<span class="fc" id="L78">        createTestDataAndPutInVector(10);</span>
+<span class="fc" id="L79">        assertTestDataCouldBeExtractedFromVector(10);</span>
+<span class="fc" id="L80">    }</span>
+
+    public void testAddElevenItems() {
+<span class="fc" id="L83">        createTestDataAndPutInVector(11);</span>
+<span class="fc" id="L84">        assertTestDataCouldBeExtractedFromVector(11);</span>
+<span class="fc" id="L85">    }</span>
+
+    public void testAddThirtyItems() {
+<span class="fc" id="L88">        createTestDataAndPutInVector(30);</span>
+<span class="fc" id="L89">        assertTestDataCouldBeExtractedFromVector(30);</span>
+<span class="fc" id="L90">    }</span>
+
+    public void testAddThirtyOneItems() {
+<span class="fc" id="L93">        createTestDataAndPutInVector(31);</span>
+<span class="fc" id="L94">        assertTestDataCouldBeExtractedFromVector(31);</span>
+<span class="fc" id="L95">    }</span>
+
+    public void testAddFiftyItems() {
+<span class="fc" id="L98">        createTestDataAndPutInVector(50);</span>
+<span class="fc" id="L99">        assertTestDataCouldBeExtractedFromVector(50);</span>
+<span class="fc" id="L100">    }</span>
+
+    public void testAddFiftyOneItems() {
+<span class="fc" id="L103">        createTestDataAndPutInVector(51);</span>
+<span class="fc" id="L104">        assertTestDataCouldBeExtractedFromVector(51);</span>
+<span class="fc" id="L105">    }</span>
+
+    public void testAddTwoHundredItems() {
+<span class="fc" id="L108">        createTestDataAndPutInVector(200);</span>
+<span class="fc" id="L109">        assertTestDataCouldBeExtractedFromVector(200);</span>
+<span class="fc" id="L110">    }</span>
+
+    public void testElements() throws Exception {
+<span class="fc" id="L113">        createTestDataAndPutInVector(11);</span>
+<span class="fc" id="L114">        Node [] resultNodes = new Node[11];</span>
+<span class="fc" id="L115">        int i = 0;</span>
+<span class="fc bfc" id="L116" title="All 2 branches covered.">        for (SimpleNodeIterator e = nodeList.elements();e.hasMoreNodes();) {</span>
+<span class="fc" id="L117">            resultNodes[i] = e.nextNode();</span>
+<span class="pc bpc" id="L118" title="1 of 2 branches missed.">            assertTrue(&quot;Node &quot;+i+&quot; did not match&quot;,testNodes[i]==resultNodes[i]);</span>
+<span class="fc" id="L119">            i++;</span>
+        }
+
+<span class="fc" id="L122">    }</span>
+
+    private Node createHTMLNodeObject() {
+<span class="fc" id="L125">        Node node = new AbstractNode(null,10,20) {</span>
+            public void accept(NodeVisitor visitor) {
+<span class="nc" id="L127">            }</span>
+
+            public String toHtml(boolean verbose) {
+<span class="nc" id="L130">                return null;</span>
+            }
+
+            public String toPlainTextString() {
+<span class="nc" id="L134">                return null;</span>
+            }
+
+            public String toString() {
+<span class="nc" id="L138">                return &quot;&quot;;</span>
+            }
+        };
+<span class="fc" id="L141">        return node;</span>
+    }
+
+    private void createTestDataAndPutInVector(int nodeCount) {
+<span class="fc" id="L145">        testNodes = new Node[nodeCount];</span>
+<span class="fc bfc" id="L146" title="All 2 branches covered.">        for (int i=0;i&lt;nodeCount;i++) {</span>
+<span class="fc" id="L147">            testNodes[i]= createHTMLNodeObject();</span>
+<span class="fc" id="L148">            nodeList.add(testNodes[i]);</span>
+        }
+<span class="fc" id="L150">    }</span>
+
+    private void assertTestDataCouldBeExtractedFromVector(int nodeCount) {
+<span class="fc bfc" id="L153" title="All 2 branches covered.">        for (int i=0;i&lt;nodeCount;i++) {</span>
+<span class="pc bpc" id="L154" title="1 of 2 branches missed.">            assertTrue(&quot;Element &quot;+i+&quot; did not match&quot;,testNodes[i]==nodeList.elementAt(i));</span>
+        }
+<span class="fc" id="L156">    }</span>
+
+    public void testToNodeArray() {
+<span class="fc" id="L159">        createTestDataAndPutInVector(387);</span>
+<span class="fc" id="L160">        Node nodes [] = nodeList.toNodeArray();</span>
+<span class="fc" id="L161">        assertEquals(&quot;Length of array&quot;,387,nodes.length);</span>
+<span class="fc bfc" id="L162" title="All 2 branches covered.">        for (int i=0;i&lt;nodes.length;i++)</span>
+<span class="fc" id="L163">            assertNotNull(&quot;node &quot;+i+&quot; should not be null&quot;,nodes[i]);</span>
+<span class="fc" id="L164">    }</span>
+
+    public void testRemove() {
+<span class="fc" id="L167">        Node node1 = createHTMLNodeObject();</span>
+<span class="fc" id="L168">        Node node2 = createHTMLNodeObject();</span>
+<span class="fc" id="L169">        nodeList.add(node1);</span>
+<span class="fc" id="L170">        nodeList.add(node2);</span>
+<span class="fc" id="L171">        assertEquals(&quot;Vector Size&quot;,2,nodeList.size());</span>
+<span class="pc bpc" id="L172" title="1 of 2 branches missed.">        assertTrue(&quot;First Element&quot;,node1==nodeList.elementAt(0));</span>
+<span class="pc bpc" id="L173" title="1 of 2 branches missed.">        assertTrue(&quot;Second Element&quot;,node2==nodeList.elementAt(1));</span>
+<span class="fc" id="L174">        nodeList.remove(1);</span>
+<span class="fc" id="L175">        assertEquals(&quot;List Size&quot;,1,nodeList.size());</span>
+<span class="pc bpc" id="L176" title="1 of 2 branches missed.">        assertTrue(&quot;First Element&quot;,node1==nodeList.elementAt(0));</span>
+<span class="fc" id="L177">    }</span>
+
+    public void testRemoveAll() {
+<span class="fc" id="L180">        Node node1 = createHTMLNodeObject();</span>
+<span class="fc" id="L181">        Node node2 = createHTMLNodeObject();</span>
+<span class="fc" id="L182">        nodeList.add(node1);</span>
+<span class="fc" id="L183">        nodeList.add(node2);</span>
+<span class="fc" id="L184">        assertEquals(&quot;Vector Size&quot;,2,nodeList.size());</span>
+<span class="pc bpc" id="L185" title="1 of 2 branches missed.">        assertTrue(&quot;First Element&quot;,node1==nodeList.elementAt(0));</span>
+<span class="pc bpc" id="L186" title="1 of 2 branches missed.">        assertTrue(&quot;Second Element&quot;,node2==nodeList.elementAt(1));</span>
+<span class="fc" id="L187">        nodeList.removeAll();</span>
+<span class="fc" id="L188">        assertEquals(&quot;List Size&quot;,0,nodeList.size());</span>
+<span class="pc bpc" id="L189" title="1 of 2 branches missed.">        assertTrue(&quot;First Element&quot;,null==nodeList.elementAt(0));</span>
+<span class="pc bpc" id="L190" title="1 of 2 branches missed.">        assertTrue(&quot;Second Element&quot;,null==nodeList.elementAt(1));</span>
+<span class="fc" id="L191">    }</span>
+
+
+    public void testIndexOf() {
+<span class="fc" id="L195">        Node node1 = createHTMLNodeObject();</span>
+<span class="fc" id="L196">        Node node2 = createHTMLNodeObject();</span>
+<span class="fc" id="L197">        Node node3 = createHTMLNodeObject();</span>
+<span class="fc" id="L198">        nodeList.add(node1);</span>
+<span class="fc" id="L199">        nodeList.add(node2);</span>
+<span class="fc" id="L200">        nodeList.add(node3);</span>
+<span class="fc" id="L201">        assertEquals(&quot;Vector Size&quot;,3,nodeList.size());</span>
+<span class="pc bpc" id="L202" title="1 of 2 branches missed.">        assertTrue(&quot;First Element&quot;,node1==nodeList.elementAt(0));</span>
+<span class="pc bpc" id="L203" title="1 of 2 branches missed.">        assertTrue(&quot;Second Element&quot;,node2==nodeList.elementAt(1));</span>
+<span class="pc bpc" id="L204" title="1 of 2 branches missed.">        assertTrue(&quot;Third Element&quot;,node3==nodeList.elementAt(2));</span>
+<span class="pc bpc" id="L205" title="1 of 2 branches missed.">        assertTrue(&quot;Index wrong&quot;,1 == nodeList.indexOf(node2));</span>
+<span class="pc bpc" id="L206" title="1 of 2 branches missed.">        assertTrue(&quot;Index wrong&quot;,0 == nodeList.indexOf(node1));</span>
+<span class="pc bpc" id="L207" title="1 of 2 branches missed.">        assertTrue(&quot;Index wrong&quot;,2 == nodeList.indexOf(node3));</span>
+<span class="fc" id="L208">    }</span>
+
+    public void testRemoveItem() {
+<span class="fc" id="L211">        Node node1 = createHTMLNodeObject();</span>
+<span class="fc" id="L212">        Node node2 = createHTMLNodeObject();</span>
+<span class="fc" id="L213">        nodeList.add(node1);</span>
+<span class="fc" id="L214">        nodeList.add(node2);</span>
+<span class="fc" id="L215">        assertEquals(&quot;Vector Size&quot;,2,nodeList.size());</span>
+<span class="pc bpc" id="L216" title="1 of 2 branches missed.">        assertTrue(&quot;First Element&quot;,node1==nodeList.elementAt(0));</span>
+<span class="pc bpc" id="L217" title="1 of 2 branches missed.">        assertTrue(&quot;Second Element&quot;,node2==nodeList.elementAt(1));</span>
+<span class="fc" id="L218">        nodeList.remove(node1);</span>
+<span class="fc" id="L219">        assertEquals(&quot;List Size&quot;,1,nodeList.size());</span>
+<span class="pc bpc" id="L220" title="1 of 2 branches missed.">        assertTrue(&quot;First Element&quot;,node2==nodeList.elementAt(0));</span>
+<span class="fc" id="L221">    }</span>
+
+    public void testRemoveLastItem() {
+<span class="fc" id="L224">        Node node1 = createHTMLNodeObject();</span>
+<span class="fc" id="L225">        Node node2 = createHTMLNodeObject();</span>
+<span class="fc" id="L226">        nodeList.add(node1);</span>
+<span class="fc" id="L227">        nodeList.add(node2);</span>
+<span class="fc" id="L228">        assertEquals(&quot;Vector Size&quot;,2,nodeList.size());</span>
+<span class="pc bpc" id="L229" title="1 of 2 branches missed.">        assertTrue(&quot;First Element&quot;,node1==nodeList.elementAt(0));</span>
+<span class="pc bpc" id="L230" title="1 of 2 branches missed.">        assertTrue(&quot;Second Element&quot;,node2==nodeList.elementAt(1));</span>
+<span class="fc" id="L231">        nodeList.remove(node2);</span>
+<span class="fc" id="L232">        assertEquals(&quot;List Size&quot;,1,nodeList.size());</span>
+<span class="pc bpc" id="L233" title="1 of 2 branches missed.">        assertTrue(&quot;First Element&quot;,node1==nodeList.elementAt(0));</span>
+<span class="fc" id="L234">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

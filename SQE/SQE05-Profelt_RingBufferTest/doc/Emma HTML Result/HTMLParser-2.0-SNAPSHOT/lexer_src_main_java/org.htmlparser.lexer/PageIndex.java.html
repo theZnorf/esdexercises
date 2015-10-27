@@ -1,0 +1,425 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>PageIndex.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">lexer/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.lexer</a> &gt; <span class="el_source">PageIndex.java</span></div><h1>PageIndex.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/lexer/src/main/java/org/htmlparser/lexer/PageIndex.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.lexer;
+
+import java.io.Serializable;
+import org.htmlparser.util.sort.Ordered;
+import org.htmlparser.util.sort.Sort;
+import org.htmlparser.util.sort.Sortable;
+
+/**
+ * A sorted array of integers, the positions of the first characters of each line.
+ * To facilitate processing the first element should be maintained at position 0.
+ * Facilities to add, remove, search and determine row and column are provided.
+ * This class provides similar functionality to a Vector but
+ * does not incur the overhead of an &lt;code&gt;Integer&lt;/code&gt; object per element.
+ */
+public class PageIndex
+    implements
+        Serializable,
+        Sortable
+{
+    /**
+     * Starting increment for allocations.
+     */
+    protected static final int mStartIncrement = 100;
+
+    /**
+     * Increment for allocations.
+     */
+    protected int mIncrement;
+
+    /**
+     * The number of valid elements.
+     */
+    protected int mCount;
+
+    /**
+     * The elements.
+     */
+    protected int[] mIndices;
+
+    /**
+     * The page associated with this index.
+     */
+    protected Page mPage;
+
+    /**
+     * Create an empty index.
+     * @param page The page associated with this index.
+     */
+<span class="fc" id="L74">    public PageIndex (Page page)</span>
+    {
+<span class="fc" id="L76">        mPage = page;</span>
+<span class="fc" id="L77">        mIndices = new int[mIncrement];</span>
+<span class="fc" id="L78">        mCount = 0;</span>
+<span class="fc" id="L79">        mIncrement = mStartIncrement * 2;</span>
+<span class="fc" id="L80">    }</span>
+
+    /**
+     * Create an index with the one element given.
+     * @param page The page associated with this index.
+     * @param cursor The single element for the new index.
+     */
+    public PageIndex (Page page, int cursor)
+    {
+<span class="nc" id="L89">        this (page);</span>
+<span class="nc" id="L90">        mIndices[0] = cursor;</span>
+<span class="nc" id="L91">        mCount = 1;</span>
+<span class="nc" id="L92">    }</span>
+
+    /**
+     * Create an index with the elements given.
+     * @param page The page associated with this index.
+     * @param cursors The initial elements of the index.
+     * NOTE: The list must be sorted in ascending order.
+     */
+<span class="nc" id="L100">    public PageIndex (Page page, int[] cursors)</span>
+    {
+<span class="nc" id="L102">        mPage = page;</span>
+<span class="nc" id="L103">        mIndices = cursors;</span>
+<span class="nc" id="L104">        mCount = cursors.length;</span>
+<span class="nc" id="L105">    }</span>
+
+    /**
+     * Get this index's page.
+     * @return The page associated with this index.
+     */
+    public Page getPage ()
+    {
+<span class="fc" id="L113">        return (mPage);</span>
+    }
+
+    /**
+     * Get the count of elements.
+     * @return The number of valid elements.
+     */
+    public int size ()
+    {
+<span class="fc" id="L122">        return (mCount);</span>
+    }
+
+    /**
+     * Get the capacity for elements without reallocation.
+     * @return The number of spaces for elements.
+     */
+    public int capacity ()
+    {
+<span class="fc" id="L131">        return (mIndices.length);</span>
+    }
+
+    /**
+     * Add an element to the list
+     * @param cursor The element to add.
+     * @return The position at which the element was inserted or
+     * the index of the existing element if it is a duplicate.
+     */
+    public int add (Cursor cursor)
+    {
+        int position;
+        int last;
+        int ret;
+
+<span class="fc" id="L146">        position = cursor.getPosition ();</span>
+<span class="fc bfc" id="L147" title="All 2 branches covered.">        if (0 == mCount)</span>
+        {
+<span class="fc" id="L149">            ret = 0;</span>
+<span class="fc" id="L150">            insertElementAt (position, ret);</span>
+<span class="fc" id="L151">        }</span>
+        else
+        {
+<span class="fc" id="L154">            last = mIndices[mCount - 1];</span>
+<span class="fc bfc" id="L155" title="All 2 branches covered.">            if (position == last)</span>
+<span class="fc" id="L156">                ret = mCount - 1;</span>
+            else
+<span class="pc bpc" id="L158" title="1 of 2 branches missed.">                if (position &gt; last)</span>
+                {
+<span class="fc" id="L160">                    ret = mCount;</span>
+<span class="fc" id="L161">                    insertElementAt (position, ret);</span>
+<span class="fc" id="L162">                }</span>
+                else
+                {
+        	        // find where it goes
+<span class="nc" id="L166">        	        ret = Sort.bsearch (this, cursor);</span>
+
+	                // insert, but not twice
+<span class="nc bnc" id="L169" title="All 4 branches missed.">	                if (!((ret &lt; size ()) &amp;&amp; (position == mIndices[ret])))</span>
+<span class="nc" id="L170">	                    insertElementAt (position, ret);</span>
+                }
+        }
+
+<span class="fc" id="L174">        return (ret);</span>
+    }
+
+    /**
+     * Add an element to the list
+     * @param cursor The element to add.
+     * @return The position at which the element was inserted or
+     * the index of the existing element if it is a duplicate.
+     */
+    public int add (int cursor)
+    {
+<span class="fc" id="L185">        return (add (new Cursor (getPage (), cursor)));</span>
+    }
+
+    /**
+     * Remove an element from the list
+     * @param cursor The element to remove.
+     */
+    public void remove (Cursor cursor)
+    {
+        int i;
+
+        // find it
+<span class="nc" id="L197">        i = Sort.bsearch (this, cursor);</span>
+
+        // remove
+<span class="nc bnc" id="L200" title="All 4 branches missed.">        if ((i &lt; size ()) &amp;&amp; (cursor.getPosition () == mIndices[i]))</span>
+<span class="nc" id="L201">            removeElementAt (i);</span>
+<span class="nc" id="L202">    }</span>
+
+    /**
+     * Remove an element from the list
+     * @param cursor The element to remove.
+     */
+    public void remove (int cursor)
+    {
+<span class="nc" id="L210">        remove (new Cursor (getPage (), cursor));</span>
+<span class="nc" id="L211">    }</span>
+
+    /**
+     * Get an element from the list.
+     * @param index The index of the element to get.
+     * @return The element.
+     */
+    public int elementAt (int index)
+    {
+<span class="pc bpc" id="L220" title="1 of 2 branches missed.">        if (index &gt;= mCount) // negative index is handled by array.. below</span>
+<span class="nc" id="L221">            throw new IndexOutOfBoundsException (&quot;index &quot; + index + &quot; beyond current limit&quot;);</span>
+        else
+<span class="fc" id="L223">            return (mIndices[index]);</span>
+    }
+
+    /**
+     * Get the line number for a cursor.
+     * @param cursor The character offset into the page.
+     * @return The line number the character is in.
+     */
+    public int row (Cursor cursor)
+    {
+        int ret;
+
+<span class="fc" id="L235">        ret = Sort.bsearch (this, cursor);</span>
+        // handle line transition, the search returns the index if it matches
+        // exactly one of the line end positions, so we advance one line if
+        // it's equal to the offset at the row index, since that position is
+        // actually the beginning of the next line
+<span class="fc bfc" id="L240" title="All 4 branches covered.">        if ((ret &lt; mCount) &amp;&amp; (cursor.getPosition () == mIndices[ret]))</span>
+<span class="fc" id="L241">            ret++;</span>
+
+<span class="fc" id="L243">        return (ret);</span>
+    }
+
+    /**
+     * Get the line number for a position.
+     * @param cursor The character offset into the page.
+     * @return The line number the character is in.
+     */
+    public int row (int cursor)
+    {
+<span class="fc" id="L253">        return (row (new Cursor (getPage (), cursor)));</span>
+    }
+
+    /**
+     * Get the column number for a cursor.
+     * @param cursor The character offset into the page.
+     * @return The character offset into the line this cursor is on.
+     */
+    public int column (Cursor cursor)
+    {
+        int row;
+        int previous;
+
+<span class="fc" id="L266">        row = row (cursor);</span>
+<span class="fc bfc" id="L267" title="All 2 branches covered.">        if (0 != row)</span>
+<span class="fc" id="L268">            previous = this.elementAt (row - 1);</span>
+        else
+<span class="fc" id="L270">            previous = 0;</span>
+
+<span class="fc" id="L272">        return (cursor.getPosition () - previous);</span>
+    }
+
+    /**
+     * Get the column number for a position.
+     * @param cursor The character offset into the page.
+     * @return The character offset into the line this cursor is on.
+     */
+    public int column (int cursor)
+    {
+<span class="nc" id="L282">        return (column (new Cursor (getPage (), cursor)));</span>
+    }
+
+    /**
+     * Get the elements as an array of int.
+     * @return A new array containing the elements,
+     * i.e. a snapshot of the index.
+     */
+    public int[] get ()
+    {
+<span class="fc" id="L292">        int[] ret = new int[size ()];</span>
+<span class="fc" id="L293">        System.arraycopy (mIndices, 0, ret, 0, size ());</span>
+
+<span class="fc" id="L295">        return (ret);</span>
+    }
+
+    /**
+     * Binary search for the element.
+     * @param cursor The element to search for.
+     * @return The index at which the element was found or is to be inserted.
+     */
+    protected int bsearch (int cursor)
+    {
+<span class="nc" id="L305">        return (Sort.bsearch (this, new Cursor (getPage (), cursor)));</span>
+    }
+
+    /**
+     * Binary search for the element.
+     * @param cursor The element to search for.
+     * @param first The index to start at.
+     * @param last The index to stop at.
+     * @return The index at which the element was found or is to be inserted.
+     */
+    protected int bsearch (int cursor, int first, int last)
+    {
+<span class="nc" id="L317">        return (Sort.bsearch (this, new Cursor (getPage (), cursor), first, last));</span>
+    }
+
+    /**
+     * Inserts an element into the list.
+     * The index must be a value greater than or equal to 0 and less than
+     * or equal to the current size of the array.
+     * @param cursor The element to insert.
+     * @param index The index in the list to insert it at.
+     */
+    protected void insertElementAt (int cursor, int index)
+    {
+<span class="pc bpc" id="L329" title="1 of 4 branches missed.">        if ((index &gt;= capacity ()) || (size () == capacity ()))</span>
+        {   // allocate more space
+<span class="fc" id="L331">            int[] new_values = new int[Math.max (capacity () + mIncrement, index + 1)];</span>
+<span class="fc" id="L332">            mIncrement *= 2;</span>
+<span class="pc bpc" id="L333" title="1 of 2 branches missed.">            if (index &lt; capacity ())</span>
+            {
+                // copy and shift up in two pieces
+<span class="nc" id="L336">                System.arraycopy (mIndices, 0, new_values, 0, index);</span>
+<span class="nc" id="L337">                System.arraycopy (mIndices, index, new_values, index + 1, capacity () - index);</span>
+<span class="nc" id="L338">            }</span>
+            else
+<span class="fc" id="L340">                System.arraycopy (mIndices, 0, new_values, 0, capacity ());</span>
+<span class="fc" id="L341">            mIndices = new_values;</span>
+<span class="fc" id="L342">        }</span>
+<span class="pc bpc" id="L343" title="1 of 2 branches missed.">        else if (index &lt; size ())</span>
+            // shift up
+<span class="nc" id="L345">            System.arraycopy (mIndices, index, mIndices, index + 1, capacity () - (index + 1));</span>
+<span class="fc" id="L346">        mIndices[index] = cursor;</span>
+<span class="fc" id="L347">        mCount++;</span>
+<span class="fc" id="L348">    }</span>
+
+    /**
+     * Remove an element from the list.
+     * @param index The index of the item to remove.
+     */
+    protected void removeElementAt (int index)
+    {
+        // shift
+<span class="nc" id="L357">        System.arraycopy (mIndices, index + 1, mIndices, index, capacity () - (index + 1));</span>
+<span class="nc" id="L358">        mIndices[capacity() - 1] = 0;</span>
+<span class="nc" id="L359">        mCount--;</span>
+<span class="nc" id="L360">    }</span>
+
+    //
+    // Sortable interface
+    //
+
+    /**
+     * Returns the first index of the Sortable.
+     * @return The index of the first element.
+     */
+    public int first ()
+    {
+<span class="fc" id="L372">        return (0);</span>
+    }
+
+    /**
+     * Returns the last index of the Sortable.
+     * @return The index of the last element.
+     * If this were an array object this would be (object.length - 1).
+     * For an empty index this will return -1.
+     */
+    public int last ()
+    {
+<span class="fc" id="L383">        return (mCount - 1);</span>
+    }
+
+    /**
+     * Fetch the object at the given index.
+     * @param index The item number to get.
+     * @param reuse If this argument is not null, it is an object
+     * acquired from a previous fetch that is no longer needed and
+     * may be returned as the result if it makes mores sense to alter
+     * and return it than to fetch or create a new element. That is, the
+     * reuse object is garbage and may be used to avoid allocating a new
+     * object if that would normally be the strategy.
+     * @return The Ordered object at that index.
+     */
+    public Ordered fetch (int index, Ordered reuse)
+    {
+        Cursor ret;
+
+<span class="fc bfc" id="L401" title="All 2 branches covered.">        if (null != reuse)</span>
+        {
+<span class="fc" id="L403">            ret = (Cursor)reuse;</span>
+<span class="fc" id="L404">            ret.mPosition = mIndices[index];</span>
+<span class="fc" id="L405">            ret.mPage = getPage (); // redundant</span>
+<span class="fc" id="L406">        }</span>
+        else
+<span class="fc" id="L408">            ret = new Cursor (getPage (), mIndices[index]);</span>
+
+<span class="fc" id="L410">        return (ret);</span>
+    }
+
+    /**
+     * Swaps the elements at the given indicies.
+     * @param i One index.
+     * @param j The other index.
+     */
+    public void swap (int i, int j)
+    {
+<span class="nc" id="L420">        int temp = mIndices[i];</span>
+<span class="nc" id="L421">        mIndices[i] = mIndices[j];</span>
+<span class="nc" id="L422">        mIndices[j] = temp;</span>
+<span class="nc" id="L423">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

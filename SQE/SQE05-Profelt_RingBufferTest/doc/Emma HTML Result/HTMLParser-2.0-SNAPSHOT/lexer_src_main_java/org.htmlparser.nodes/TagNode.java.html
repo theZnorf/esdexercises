@@ -1,0 +1,885 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>TagNode.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">lexer/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.nodes</a> &gt; <span class="el_source">TagNode.java</span></div><h1>TagNode.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/lexer/src/main/java/org/htmlparser/nodes/TagNode.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-22 21:18:08 -0400 (Fri, 22 Sep 2006) $
+// $Revision: 12 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.nodes;
+
+import java.util.Enumeration;
+import java.util.Hashtable;
+import java.util.Locale;
+import java.util.Vector;
+
+import org.htmlparser.Attribute;
+import org.htmlparser.Tag;
+import org.htmlparser.lexer.Cursor;
+import org.htmlparser.lexer.Lexer;
+import org.htmlparser.lexer.Page;
+import org.htmlparser.scanners.Scanner;
+import org.htmlparser.scanners.TagScanner;
+import org.htmlparser.util.ParserException;
+import org.htmlparser.visitors.NodeVisitor;
+
+/**
+ * TagNode represents a generic tag.
+ * If no scanner is registered for a given tag name, this is what you get.
+ * This is also the base class for all tags created by the parser.
+ */
+public class TagNode
+    extends
+        AbstractNode
+    implements
+        Tag
+{
+    /**
+     * An empty set of tag names.
+     */
+<span class="fc" id="L57">    private final static String[] NONE = new String[0];</span>
+    
+    /**
+     * The scanner for this tag.
+     */
+    private Scanner mScanner;
+    
+    /**
+     * The default scanner for non-composite tags.
+     */
+<span class="fc" id="L67">    protected final static Scanner mDefaultScanner = new TagScanner ();</span>
+
+    /**
+     * The tag attributes.
+     * Objects of type {@link Attribute}.
+     * The first element is the tag name, subsequent elements being either
+     * whitespace or real attributes.
+     */
+    protected Vector mAttributes;
+
+    /**
+     * Set of tags that breaks the flow.
+     */
+    protected static Hashtable breakTags;
+    static
+    {
+<span class="fc" id="L83">        breakTags = new Hashtable (30);</span>
+<span class="fc" id="L84">        breakTags.put (&quot;BLOCKQUOTE&quot;, Boolean.TRUE);</span>
+<span class="fc" id="L85">        breakTags.put (&quot;BODY&quot;, Boolean.TRUE);</span>
+<span class="fc" id="L86">        breakTags.put (&quot;BR&quot;, Boolean.TRUE);</span>
+<span class="fc" id="L87">        breakTags.put (&quot;CENTER&quot;, Boolean.TRUE);</span>
+<span class="fc" id="L88">        breakTags.put (&quot;DD&quot;, Boolean.TRUE);</span>
+<span class="fc" id="L89">        breakTags.put (&quot;DIR&quot;, Boolean.TRUE);</span>
+<span class="fc" id="L90">        breakTags.put (&quot;DIV&quot;, Boolean.TRUE);</span>
+<span class="fc" id="L91">        breakTags.put (&quot;DL&quot;, Boolean.TRUE);</span>
+<span class="fc" id="L92">        breakTags.put (&quot;DT&quot;, Boolean.TRUE);</span>
+<span class="fc" id="L93">        breakTags.put (&quot;FORM&quot;, Boolean.TRUE);</span>
+<span class="fc" id="L94">        breakTags.put (&quot;H1&quot;, Boolean.TRUE);</span>
+<span class="fc" id="L95">        breakTags.put (&quot;H2&quot;, Boolean.TRUE);</span>
+<span class="fc" id="L96">        breakTags.put (&quot;H3&quot;, Boolean.TRUE);</span>
+<span class="fc" id="L97">        breakTags.put (&quot;H4&quot;, Boolean.TRUE);</span>
+<span class="fc" id="L98">        breakTags.put (&quot;H5&quot;, Boolean.TRUE);</span>
+<span class="fc" id="L99">        breakTags.put (&quot;H6&quot;, Boolean.TRUE);</span>
+<span class="fc" id="L100">        breakTags.put (&quot;HEAD&quot;, Boolean.TRUE);</span>
+<span class="fc" id="L101">        breakTags.put (&quot;HR&quot;, Boolean.TRUE);</span>
+<span class="fc" id="L102">        breakTags.put (&quot;HTML&quot;, Boolean.TRUE);</span>
+<span class="fc" id="L103">        breakTags.put (&quot;ISINDEX&quot;, Boolean.TRUE);</span>
+<span class="fc" id="L104">        breakTags.put (&quot;LI&quot;, Boolean.TRUE);</span>
+<span class="fc" id="L105">        breakTags.put (&quot;MENU&quot;, Boolean.TRUE);</span>
+<span class="fc" id="L106">        breakTags.put (&quot;NOFRAMES&quot;, Boolean.TRUE);</span>
+<span class="fc" id="L107">        breakTags.put (&quot;OL&quot;, Boolean.TRUE);</span>
+<span class="fc" id="L108">        breakTags.put (&quot;P&quot;, Boolean.TRUE);</span>
+<span class="fc" id="L109">        breakTags.put (&quot;PRE&quot;, Boolean.TRUE);</span>
+<span class="fc" id="L110">        breakTags.put (&quot;TD&quot;, Boolean.TRUE);</span>
+<span class="fc" id="L111">        breakTags.put (&quot;TH&quot;, Boolean.TRUE);</span>
+<span class="fc" id="L112">        breakTags.put (&quot;TITLE&quot;, Boolean.TRUE);</span>
+<span class="fc" id="L113">        breakTags.put (&quot;UL&quot;, Boolean.TRUE);</span>
+<span class="fc" id="L114">    }</span>
+
+    /**
+     * Create an empty tag.
+     */
+    public TagNode ()
+    {
+<span class="fc" id="L121">        this (null, -1, -1, new Vector ());</span>
+<span class="fc" id="L122">    }</span>
+
+    /**
+     * Create a tag with the location and attributes provided
+     * @param page The page this tag was read from.
+     * @param start The starting offset of this node within the page.
+     * @param end The ending offset of this node within the page.
+     * @param attributes The list of attributes that were parsed in this tag.
+     * @see Attribute
+     */
+    public TagNode (Page page, int start, int end, Vector attributes)
+    {
+<span class="fc" id="L134">        super (page, start, end);</span>
+
+<span class="fc" id="L136">        mScanner = mDefaultScanner;</span>
+<span class="fc" id="L137">        mAttributes = attributes;</span>
+<span class="fc bfc" id="L138" title="All 4 branches covered.">        if ((null == mAttributes) || (0 == mAttributes.size ()))</span>
+        {
+            String[] names;
+
+<span class="fc" id="L142">            names = getIds ();</span>
+<span class="pc bpc" id="L143" title="1 of 4 branches missed.">            if ((null != names) &amp;&amp; (0 != names.length))</span>
+<span class="fc" id="L144">                setTagName (names[0]);</span>
+            else
+<span class="fc" id="L146">                setTagName (&quot;&quot;); // make sure it's not null</span>
+        }
+<span class="fc" id="L148">    }</span>
+
+    /**
+     * Create a tag like the one provided.
+     * @param tag The tag to emulate.
+     * @param scanner The scanner for this tag.
+     */
+    public TagNode (TagNode tag, TagScanner scanner)
+    {
+<span class="nc" id="L157">        this (tag.getPage (), tag.getTagBegin (), tag.getTagEnd (), tag.getAttributesEx ());</span>
+<span class="nc" id="L158">        setThisScanner (scanner);</span>
+<span class="nc" id="L159">    }</span>
+
+    /**
+     * Returns the value of an attribute.
+     * @param name Name of attribute, case insensitive.
+     * @return The value associated with the attribute or null if it does
+     * not exist, or is a stand-alone or
+     */
+    public String getAttribute (String name)
+    {
+        Attribute attribute;
+        String ret;
+
+<span class="fc" id="L172">        ret = null;</span>
+
+<span class="fc" id="L174">        attribute = getAttributeEx (name);</span>
+<span class="fc bfc" id="L175" title="All 2 branches covered.">        if (null != attribute)</span>
+<span class="fc" id="L176">            ret = attribute.getValue ();</span>
+
+<span class="fc" id="L178">        return (ret);</span>
+    }
+
+    /**
+     * Set attribute with given key, value pair.
+     * Figures out a quote character to use if necessary.
+     * @param key The name of the attribute.
+     * @param value The value of the attribute.
+     */
+    public void setAttribute (String key, String value)
+    {
+        char ch;
+        boolean needed;
+        boolean singleq;
+        boolean doubleq;
+        String ref;
+        StringBuffer buffer;
+        char quote;
+        Attribute attribute;
+
+        // first determine if there's whitespace in the value
+        // and while we'return at it find a suitable quote character
+<span class="fc" id="L200">        needed = false;</span>
+<span class="fc" id="L201">        singleq = true;</span>
+<span class="fc" id="L202">        doubleq = true;</span>
+<span class="pc bpc" id="L203" title="1 of 2 branches missed.">        if (null != value)</span>
+<span class="fc bfc" id="L204" title="All 2 branches covered.">            for (int i = 0; i &lt; value.length (); i++)</span>
+            {
+<span class="fc" id="L206">                ch = value.charAt (i);</span>
+<span class="fc bfc" id="L207" title="All 2 branches covered.">                if (Character.isWhitespace (ch))</span>
+<span class="fc" id="L208">                    needed = true;</span>
+<span class="pc bpc" id="L209" title="1 of 2 branches missed.">                else if ('\'' == ch)</span>
+<span class="nc" id="L210">                    singleq  = false;</span>
+<span class="fc bfc" id="L211" title="All 2 branches covered.">                else if ('&quot;' == ch)</span>
+<span class="fc" id="L212">                    doubleq = false;</span>
+            }
+
+        // now apply quoting
+<span class="fc bfc" id="L216" title="All 2 branches covered.">        if (needed)</span>
+        {
+<span class="pc bpc" id="L218" title="1 of 2 branches missed.">            if (doubleq)</span>
+<span class="fc" id="L219">                quote = '&quot;';</span>
+<span class="nc bnc" id="L220" title="All 2 branches missed.">            else if (singleq)</span>
+<span class="nc" id="L221">                quote = '\'';</span>
+            else
+            {
+                // uh-oh, we need to convert some quotes into character references
+                // convert all double quotes into &amp;#34;
+<span class="nc" id="L226">                quote = '&quot;';</span>
+<span class="nc" id="L227">                ref = &quot;&amp;quot;&quot;; // Translate.encode (quote);</span>
+                // JDK 1.4: value = value.replaceAll (&quot;\&quot;&quot;, ref);
+<span class="nc" id="L229">                buffer = new StringBuffer (value.length() * 5);</span>
+<span class="nc bnc" id="L230" title="All 2 branches missed.">                for (int i = 0; i &lt; value.length (); i++)</span>
+                {
+<span class="nc" id="L232">                    ch = value.charAt (i);</span>
+<span class="nc bnc" id="L233" title="All 2 branches missed.">                    if (quote == ch)</span>
+<span class="nc" id="L234">                        buffer.append (ref);</span>
+                    else
+<span class="nc" id="L236">                        buffer.append (ch);</span>
+                }
+<span class="nc" id="L238">                value = buffer.toString ();</span>
+            }
+<span class="nc" id="L240">        }</span>
+        else
+<span class="fc" id="L242">            quote = 0;</span>
+<span class="fc" id="L243">        attribute = getAttributeEx (key);</span>
+<span class="fc bfc" id="L244" title="All 2 branches covered.">        if (null != attribute)</span>
+        {   // see if we can splice it in rather than replace it
+<span class="fc" id="L246">            attribute.setValue (value);</span>
+<span class="fc bfc" id="L247" title="All 2 branches covered.">            if (0 != quote)</span>
+<span class="fc" id="L248">                attribute.setQuote (quote);</span>
+<span class="fc" id="L249">        }</span>
+        else
+<span class="fc" id="L251">            setAttribute (key, value, quote);</span>
+<span class="fc" id="L252">    }</span>
+
+    /**
+     * Remove the attribute with the given key, if it exists.
+     * @param key The name of the attribute.
+     */
+    public void removeAttribute (String key)
+    {
+        Attribute attribute;
+
+<span class="nc" id="L262">        attribute = getAttributeEx (key);</span>
+<span class="nc bnc" id="L263" title="All 2 branches missed.">        if (null != attribute)</span>
+<span class="nc" id="L264">            getAttributesEx ().remove (attribute);</span>
+<span class="nc" id="L265">    }</span>
+
+    /**
+     * Set attribute with given key, value pair where the value is quoted by quote.
+     * @param key The name of the attribute.
+     * @param value The value of the attribute.
+     * @param quote The quote character to be used around value.
+     * If zero, it is an unquoted value.
+     */
+    public void setAttribute (String key, String value, char quote)
+    {
+<span class="fc" id="L276">        setAttribute (new Attribute (key, value, quote));</span>
+<span class="fc" id="L277">    }</span>
+
+    /**
+     * Returns the attribute with the given name.
+     * @param name Name of attribute, case insensitive.
+     * @return The attribute or null if it does
+     * not exist.
+     */
+    public Attribute getAttributeEx (String name)
+    {
+        Vector attributes;
+        int size;
+        Attribute attribute;
+        String string;
+        Attribute ret;
+
+<span class="fc" id="L293">        ret = null;</span>
+
+<span class="fc" id="L295">        attributes = getAttributesEx ();</span>
+<span class="pc bpc" id="L296" title="1 of 2 branches missed.">        if (null != attributes)</span>
+        {
+<span class="fc" id="L298">            size = attributes.size ();</span>
+<span class="fc bfc" id="L299" title="All 2 branches covered.">            for (int i = 0; i &lt; size; i++)</span>
+            {
+<span class="fc" id="L301">                attribute = (Attribute)attributes.elementAt (i);</span>
+<span class="fc" id="L302">                string = attribute.getName ();</span>
+<span class="fc bfc" id="L303" title="All 4 branches covered.">                if ((null != string) &amp;&amp; name.equalsIgnoreCase (string))</span>
+                {
+<span class="fc" id="L305">                    ret = attribute;</span>
+<span class="fc" id="L306">                    i = size; // exit fast</span>
+                }
+            }
+        }
+
+<span class="fc" id="L311">        return (ret);</span>
+    }
+
+    /**
+     * Set an attribute.
+     * @param attribute The attribute to set.
+     * @see #setAttribute(Attribute)
+     */
+    public void setAttributeEx (Attribute attribute)
+    {
+<span class="nc" id="L321">        setAttribute (attribute);</span>
+<span class="nc" id="L322">    }</span>
+
+    /**
+     * Set an attribute.
+     * This replaces an attribute of the same name.
+     * To set the zeroth attribute (the tag name), use setTagName().
+     * @param attribute The attribute to set.
+     */
+    public void setAttribute (Attribute attribute)
+    {
+        boolean replaced;
+        Vector attributes;
+        int length;
+        String name;
+        Attribute test;
+        String test_name;
+
+<span class="fc" id="L339">        replaced = false;</span>
+<span class="fc" id="L340">        attributes = getAttributesEx ();</span>
+<span class="fc" id="L341">        length =  attributes.size ();</span>
+<span class="pc bpc" id="L342" title="1 of 2 branches missed.">        if (0 &lt; length)</span>
+        {
+<span class="fc" id="L344">            name = attribute.getName ();</span>
+<span class="pc bpc" id="L345" title="1 of 2 branches missed.">            for (int i = 1; i &lt; attributes.size (); i++)</span>
+            {
+<span class="nc" id="L347">                test = (Attribute)attributes.elementAt (i);</span>
+<span class="nc" id="L348">                test_name = test.getName ();</span>
+<span class="nc bnc" id="L349" title="All 2 branches missed.">                if (null != test_name)</span>
+<span class="nc bnc" id="L350" title="All 2 branches missed.">                    if (test_name.equalsIgnoreCase (name))</span>
+                    {
+<span class="nc" id="L352">                        attributes.setElementAt (attribute, i);</span>
+<span class="nc" id="L353">                        replaced = true;</span>
+                    }
+            }
+        }
+<span class="pc bpc" id="L357" title="1 of 2 branches missed.">        if (!replaced)</span>
+        {
+            // add whitespace between attributes
+<span class="pc bpc" id="L360" title="2 of 4 branches missed.">            if ((0 != length) &amp;&amp; !((Attribute)attributes.elementAt (length - 1)).isWhitespace ())</span>
+<span class="fc" id="L361">                attributes.addElement (new Attribute (&quot; &quot;));</span>
+<span class="fc" id="L362">            attributes.addElement (attribute);</span>
+        }
+<span class="fc" id="L364">    }</span>
+
+    /**
+     * Gets the attributes in the tag.
+     * @return Returns the list of {@link Attribute Attributes} in the tag.
+     * The first element is the tag name, subsequent elements being either
+     * whitespace or real attributes.
+     */
+    public Vector getAttributesEx ()
+    {
+<span class="fc" id="L374">        return (mAttributes);</span>
+    }
+
+    /**
+     * Return the name of this tag.
+     * &lt;p&gt;
+     * &lt;em&gt;
+     * Note: This value is converted to uppercase and does not
+     * begin with &quot;/&quot; if it is an end tag. Nor does it end with
+     * a slash in the case of an XML type tag.
+     * To get at the original text of the tag name use
+     * {@link #getRawTagName getRawTagName()}.
+     * The conversion to uppercase is performed with an ENGLISH locale.
+     * &lt;/em&gt;
+     * @return The tag name.
+     */
+    public String getTagName ()
+    {
+        String ret;
+
+<span class="fc" id="L394">        ret = getRawTagName ();</span>
+<span class="pc bpc" id="L395" title="1 of 2 branches missed.">        if (null != ret)</span>
+        {
+<span class="fc" id="L397">            ret = ret.toUpperCase (Locale.ENGLISH);</span>
+<span class="fc bfc" id="L398" title="All 2 branches covered.">            if (ret.startsWith (&quot;/&quot;))</span>
+<span class="fc" id="L399">                ret = ret.substring (1);</span>
+<span class="fc bfc" id="L400" title="All 2 branches covered.">            if (ret.endsWith (&quot;/&quot;))</span>
+<span class="fc" id="L401">                ret = ret.substring (0, ret.length () - 1);</span>
+        }
+
+<span class="fc" id="L404">        return (ret);</span>
+    }
+
+    /**
+     * Return the name of this tag.
+     * @return The tag name or null if this tag contains nothing or only
+     * whitespace.
+     */
+    public String getRawTagName ()
+    {
+        Vector attributes;
+        String ret;
+
+<span class="fc" id="L417">        ret = null;</span>
+        
+<span class="fc" id="L419">        attributes = getAttributesEx ();</span>
+<span class="pc bpc" id="L420" title="1 of 2 branches missed.">        if (0 != attributes.size ())</span>
+<span class="fc" id="L421">            ret = ((Attribute)attributes.elementAt (0)).getName ();</span>
+
+<span class="fc" id="L423">        return (ret);</span>
+    }
+
+    /**
+     * Set the name of this tag.
+     * This creates or replaces the first attribute of the tag (the
+     * zeroth element of the attribute vector).
+     * @param name The tag name.
+     */
+    public void setTagName (String name)
+    {
+        Attribute attribute;
+        Vector attributes;
+        Attribute zeroth;
+
+<span class="fc" id="L438">        attribute = new Attribute (name, null, (char)0);</span>
+<span class="fc" id="L439">        attributes = getAttributesEx ();</span>
+<span class="fc bfc" id="L440" title="All 2 branches covered.">        if (null == attributes)</span>
+        {
+<span class="fc" id="L442">            attributes = new Vector ();</span>
+<span class="fc" id="L443">            setAttributesEx (attributes);</span>
+        }
+<span class="pc bpc" id="L445" title="1 of 2 branches missed.">        if (0 == attributes.size ())</span>
+            // nothing added yet
+<span class="fc" id="L447">            attributes.addElement (attribute);</span>
+        else
+        {
+<span class="nc" id="L450">            zeroth = (Attribute)attributes.elementAt (0);</span>
+            // check for attribute that looks like a name
+<span class="nc bnc" id="L452" title="All 4 branches missed.">            if ((null == zeroth.getValue ()) &amp;&amp; (0 == zeroth.getQuote ()))</span>
+<span class="nc" id="L453">                attributes.setElementAt (attribute, 0);</span>
+            else
+<span class="nc" id="L455">                attributes.insertElementAt (attribute, 0);</span>
+        }
+<span class="fc" id="L457">    }</span>
+
+    /**
+     * Return the text contained in this tag.
+     * @return The complete contents of the tag (within the angle brackets).
+     */
+    public String getText ()
+    {
+        String ret;
+        
+<span class="fc" id="L467">        ret = toHtml ();</span>
+<span class="fc" id="L468">        ret = ret.substring (1, ret.length () - 1);</span>
+        
+<span class="fc" id="L470">        return (ret);</span>
+    }
+
+    /**
+     * Sets the attributes.
+     * NOTE: Values of the extended hashtable are two element arrays of String,
+     * with the first element being the original name (not uppercased),
+     * and the second element being the value.
+     * @param attribs The attribute collection to set.
+     */
+    public void setAttributesEx (Vector attribs)
+    {
+<span class="fc" id="L482">        mAttributes = attribs;</span>
+<span class="fc" id="L483">    }</span>
+
+    /**
+     * Sets the nodeBegin.
+     * @param tagBegin The nodeBegin to set
+     */
+    public void setTagBegin (int tagBegin)
+    {
+<span class="nc" id="L491">        nodeBegin = tagBegin;</span>
+<span class="nc" id="L492">    }</span>
+
+    /**
+     * Gets the nodeBegin.
+     * @return The nodeBegin value.
+     */
+    public int getTagBegin ()
+    {
+<span class="nc" id="L500">        return (nodeBegin);</span>
+    }
+
+    /**
+     * Sets the nodeEnd.
+     * @param tagEnd The nodeEnd to set
+     */
+    public void setTagEnd (int tagEnd)
+    {
+<span class="nc" id="L509">        nodeEnd = tagEnd;</span>
+<span class="nc" id="L510">    }</span>
+
+    /**
+     * Gets the nodeEnd.
+     * @return The nodeEnd value.
+     */
+    public int getTagEnd ()
+    {
+<span class="nc" id="L518">        return (nodeEnd);</span>
+    }
+
+    /**
+     * Parses the given text to create the tag contents.
+     * @param text A string of the form &amp;lt;TAGNAME xx=&quot;yy&quot;&amp;gt;.
+     */
+    public void setText (String text)
+    {
+        Lexer lexer;
+        TagNode output;
+        
+<span class="nc" id="L530">        lexer = new Lexer (text);</span>
+        try
+        {
+<span class="nc" id="L533">            output = (TagNode)lexer.nextNode ();</span>
+<span class="nc" id="L534">            mPage = output.getPage ();</span>
+<span class="nc" id="L535">            nodeBegin = output.getStartPosition ();</span>
+<span class="nc" id="L536">            nodeEnd = output.getEndPosition ();</span>
+<span class="nc" id="L537">            mAttributes = output.getAttributesEx ();</span>
+<span class="nc" id="L538">        }</span>
+<span class="nc" id="L539">        catch (ParserException pe)</span>
+        {
+<span class="nc" id="L541">            throw new IllegalArgumentException (pe.getMessage ());</span>
+        }
+<span class="nc" id="L543">    }</span>
+
+    /**
+     * Get the plain text from this node.
+     * @return An empty string (tag contents do not display in a browser).
+     * If you want this tags HTML equivalent, use {@link #toHtml toHtml()}.
+     */
+    public String toPlainTextString ()
+    {
+<span class="fc" id="L552">        return (&quot;&quot;);</span>
+    }
+
+    /**
+     * Render the tag as HTML.
+     * A call to a tag's &lt;code&gt;toHtml()&lt;/code&gt; method will render it in HTML.
+     * @param verbatim If &lt;code&gt;true&lt;/code&gt; return as close to the original
+     * page text as possible.
+     * @return The tag as an HTML fragment.
+     * @see org.htmlparser.Node#toHtml()
+     */
+    public String toHtml (boolean verbatim)
+    {
+<span class="fc" id="L565">        return (toTagHtml ());</span>
+    }
+
+    /**
+     * Return the tag HTML.
+     * Like &lt;code&gt;toHtml()&lt;/code&gt; but since this is not implemented
+     * by {@link org.htmlparser.tags.CompositeTag}, only renders the start tag.
+     * @return The sequence of characters for the start tag only.
+     * @see #toHtml()
+     */
+    public String toTagHtml ()
+    {
+        int length;
+        int size;
+        Vector attributes;
+        Attribute attribute;
+        StringBuffer ret;
+
+<span class="fc" id="L583">        length = 2;</span>
+<span class="fc" id="L584">        attributes = getAttributesEx ();</span>
+<span class="fc" id="L585">        size = attributes.size ();</span>
+<span class="fc bfc" id="L586" title="All 2 branches covered.">        for (int i = 0; i &lt; size; i++)</span>
+        {
+<span class="fc" id="L588">            attribute = (Attribute)attributes.elementAt (i);</span>
+<span class="fc" id="L589">            length += attribute.getLength ();</span>
+        }
+<span class="fc" id="L591">        ret = new StringBuffer (length);</span>
+<span class="fc" id="L592">        ret.append (&quot;&lt;&quot;);</span>
+<span class="fc bfc" id="L593" title="All 2 branches covered.">        for (int i = 0; i &lt; size; i++)</span>
+        {
+<span class="fc" id="L595">            attribute = (Attribute)attributes.elementAt (i);</span>
+<span class="fc" id="L596">            attribute.toString (ret);</span>
+        }
+<span class="fc" id="L598">        ret.append (&quot;&gt;&quot;);</span>
+
+<span class="fc" id="L600">        return (ret.toString ());</span>
+    }
+
+    /**
+     * Print the contents of the tag.
+     * @return An string describing the tag. For text that looks like HTML use #toHtml().
+     */
+    public String toString ()
+    {
+        String text;
+        String type;
+        Cursor start;
+        Cursor end;
+        StringBuffer ret;
+
+<span class="fc" id="L615">        text = getText ();</span>
+<span class="fc" id="L616">        ret = new StringBuffer (20 + text.length ());</span>
+<span class="pc bpc" id="L617" title="1 of 2 branches missed.">        if (isEndTag ())</span>
+<span class="nc" id="L618">            type = &quot;End&quot;;</span>
+        else
+<span class="fc" id="L620">            type = &quot;Tag&quot;;</span>
+<span class="fc" id="L621">        start = new Cursor (getPage (), getStartPosition ());</span>
+<span class="fc" id="L622">        end = new Cursor (getPage (), getEndPosition ());</span>
+<span class="fc" id="L623">        ret.append (type);</span>
+<span class="fc" id="L624">        ret.append (&quot; (&quot;);</span>
+<span class="fc" id="L625">        ret.append (start);</span>
+<span class="fc" id="L626">        ret.append (&quot;,&quot;);</span>
+<span class="fc" id="L627">        ret.append (end);</span>
+<span class="fc" id="L628">        ret.append (&quot;): &quot;);</span>
+<span class="fc bfc" id="L629" title="All 2 branches covered.">        if (80 &lt; ret.length () + text.length ())</span>
+        {
+<span class="fc" id="L631">            text = text.substring (0, 77 - ret.length ());</span>
+<span class="fc" id="L632">            ret.append (text);</span>
+<span class="fc" id="L633">            ret.append (&quot;...&quot;);</span>
+<span class="fc" id="L634">        }</span>
+        else
+<span class="fc" id="L636">            ret.append (text);</span>
+        
+<span class="fc" id="L638">        return (ret.toString ());</span>
+    }
+
+    /**
+     * Determines if the given tag breaks the flow of text.
+     * @return &lt;code&gt;true&lt;/code&gt; if following text would start on a new line,
+     * &lt;code&gt;false&lt;/code&gt; otherwise.
+     */
+    public boolean breaksFlow ()
+    {
+<span class="fc" id="L648">        return (breakTags.containsKey (getTagName ()));</span>
+    }
+
+    /**
+     * Default tag visiting code.
+     * Based on &lt;code&gt;isEndTag()&lt;/code&gt;, calls either &lt;code&gt;visitTag()&lt;/code&gt; or
+     * &lt;code&gt;visitEndTag()&lt;/code&gt;.
+     * @param visitor The visitor that is visiting this node.
+     */
+    public void accept (NodeVisitor visitor)
+    {
+<span class="fc bfc" id="L659" title="All 2 branches covered.">        if (isEndTag ())</span>
+<span class="fc" id="L660">            visitor.visitEndTag (this);</span>
+        else
+<span class="fc" id="L662">            visitor.visitTag (this);</span>
+<span class="fc" id="L663">    }</span>
+
+    /**
+     * Is this an empty xml tag of the form &amp;lt;tag/&amp;gt;.
+     * @return true if the last character of the last attribute is a '/'.
+     */
+    public boolean isEmptyXmlTag ()
+    {
+        Vector attributes;
+        int size;
+        Attribute attribute;
+        String name;
+        int length;
+        boolean ret;
+
+<span class="fc" id="L678">        ret = false;</span>
+
+<span class="fc" id="L680">        attributes = getAttributesEx ();</span>
+<span class="fc" id="L681">        size = attributes.size ();</span>
+<span class="pc bpc" id="L682" title="1 of 2 branches missed.">        if (0 &lt; size)</span>
+        {
+<span class="fc" id="L684">            attribute = (Attribute)attributes.elementAt (size - 1);</span>
+<span class="fc" id="L685">            name = attribute.getName ();</span>
+<span class="fc bfc" id="L686" title="All 2 branches covered.">            if (null != name)</span>
+            {
+<span class="fc" id="L688">                length = name.length ();</span>
+<span class="fc bfc" id="L689" title="All 2 branches covered.">                ret = name.charAt (length - 1) == '/';</span>
+            }
+        }
+
+<span class="fc" id="L693">        return (ret);</span>
+    }
+
+    /**
+     * Set this tag to be an empty xml node, or not.
+     * Adds or removes an ending slash on the tag.
+     * @param emptyXmlTag If true, ensures there is an ending slash in the node,
+     * i.e. &amp;lt;tag/&amp;gt;, otherwise removes it.
+     */
+    public void setEmptyXmlTag (boolean emptyXmlTag)
+    {
+        Vector attributes;
+        int size;
+        Attribute attribute;
+        String name;
+        String value;
+        int length;
+        
+<span class="fc" id="L711">        attributes = getAttributesEx ();</span>
+<span class="fc" id="L712">        size = attributes.size ();</span>
+<span class="pc bpc" id="L713" title="1 of 2 branches missed.">        if (0 &lt; size)</span>
+        {
+<span class="fc" id="L715">            attribute = (Attribute)attributes.elementAt (size - 1);</span>
+<span class="fc" id="L716">            name = attribute.getName ();</span>
+<span class="pc bpc" id="L717" title="1 of 2 branches missed.">            if (null != name)</span>
+            {
+<span class="fc" id="L719">                length = name.length ();</span>
+<span class="fc" id="L720">                value = attribute.getValue ();</span>
+<span class="pc bpc" id="L721" title="1 of 2 branches missed.">                if (null == value)</span>
+<span class="pc bpc" id="L722" title="1 of 2 branches missed.">                    if (name.charAt (length - 1) == '/')</span>
+                    {
+                        // already exists, remove if requested
+<span class="pc bpc" id="L725" title="1 of 2 branches missed.">                        if (!emptyXmlTag)</span>
+<span class="fc bfc" id="L726" title="All 2 branches covered.">                            if (1 == length)</span>
+<span class="fc" id="L727">                                attributes.removeElementAt (size - 1);</span>
+                            else
+                            {
+                                // this shouldn't happen, but covers the case
+                                // where no whitespace separates the slash
+                                // from the previous attribute
+<span class="fc" id="L733">                                name = name.substring (0, length - 1);</span>
+<span class="fc" id="L734">                                attribute = new Attribute (name, null);</span>
+<span class="fc" id="L735">                                attributes.removeElementAt (size - 1);</span>
+<span class="fc" id="L736">                                attributes.addElement (attribute);</span>
+                            }
+<span class="fc" id="L738">                    }</span>
+                    else
+                    {
+                        // ends with attribute, add whitespace + slash if requested
+<span class="nc bnc" id="L742" title="All 2 branches missed.">                        if (emptyXmlTag)</span>
+                        {
+<span class="nc" id="L744">                            attribute = new Attribute (&quot; &quot;);</span>
+<span class="nc" id="L745">                            attributes.addElement (attribute);</span>
+<span class="nc" id="L746">                            attribute = new Attribute (&quot;/&quot;, null);</span>
+<span class="nc" id="L747">                            attributes.addElement (attribute);</span>
+                        }
+<span class="nc" id="L749">                    }</span>
+                else
+                {
+                    // some valued attribute, add whitespace + slash if requested
+<span class="nc bnc" id="L753" title="All 2 branches missed.">                    if (emptyXmlTag)</span>
+                    {
+<span class="nc" id="L755">                        attribute = new Attribute (&quot; &quot;);</span>
+<span class="nc" id="L756">                        attributes.addElement (attribute);</span>
+<span class="nc" id="L757">                        attribute = new Attribute (&quot;/&quot;, null);</span>
+<span class="nc" id="L758">                        attributes.addElement (attribute);</span>
+                    }
+                }
+<span class="nc" id="L761">            }</span>
+            else
+            {
+                // ends with whitespace, add if requested
+<span class="nc bnc" id="L765" title="All 2 branches missed.">                if (emptyXmlTag)</span>
+                {
+<span class="nc" id="L767">                    attribute = new Attribute (&quot;/&quot;, null);</span>
+<span class="nc" id="L768">                    attributes.addElement (attribute);</span>
+                }
+            }
+<span class="nc" id="L771">        }</span>
+        else
+            // nothing there, add if requested
+<span class="nc bnc" id="L774" title="All 2 branches missed.">            if (emptyXmlTag)</span>
+            {
+<span class="nc" id="L776">                attribute = new Attribute (&quot;/&quot;, null);</span>
+<span class="nc" id="L777">                attributes.addElement (attribute);</span>
+            }
+<span class="fc" id="L779">    }</span>
+
+    /**
+     * Predicate to determine if this tag is an end tag (i.e. &amp;lt;/HTML&amp;gt;).
+     * @return &lt;code&gt;true&lt;/code&gt; if this tag is an end tag.
+     */
+    public boolean isEndTag ()
+    {
+        String raw;
+        
+<span class="fc" id="L789">        raw = getRawTagName ();</span>
+
+<span class="pc bpc" id="L791" title="2 of 6 branches missed.">        return ((null == raw) ? false : ((0 != raw.length ()) &amp;&amp; ('/' == raw.charAt (0))));</span>
+    }
+
+    /**
+     * Get the line number where this tag starts.
+     * @return The (zero based) line number in the page where this tag starts.
+     */
+    public int getStartingLineNumber ()
+    {
+<span class="fc" id="L800">        return (getPage ().row (getStartPosition ()));</span>
+    }
+
+    /**
+     * Get the line number where this tag ends.
+     * @return The (zero based) line number in the page where this tag ends.
+     */
+    public int getEndingLineNumber ()
+    {
+<span class="fc" id="L809">        return (getPage ().row (getEndPosition ()));</span>
+    }
+
+    /**
+     * Return the set of names handled by this tag.
+     * Since this a a generic tag, it has no ids.
+     * @return The names to be matched that create tags of this type.
+     */
+    public String[] getIds ()
+    {
+<span class="fc" id="L819">        return (NONE);</span>
+    }
+
+    /**
+     * Return the set of tag names that cause this tag to finish.
+     * These are the normal (non end tags) that if encountered while
+     * scanning (a composite tag) will cause the generation of a virtual
+     * tag.
+     * Since this a a non-composite tag, the default is no enders.
+     * @return The names of following tags that stop further scanning.
+     */
+    public String[] getEnders ()
+    {
+<span class="fc" id="L832">        return (NONE);</span>
+    }
+
+    /**
+     * Return the set of end tag names that cause this tag to finish.
+     * These are the end tags that if encountered while
+     * scanning (a composite tag) will cause the generation of a virtual
+     * tag.
+     * Since this a a non-composite tag, it has no end tag enders.
+     * @return The names of following end tags that stop further scanning.
+     */
+    public String[] getEndTagEnders ()
+    {
+<span class="fc" id="L845">        return (NONE);</span>
+    }
+
+    /**
+     * Return the scanner associated with this tag.
+     * @return The scanner associated with this tag.
+     */
+    public Scanner getThisScanner ()
+    {
+<span class="fc" id="L854">        return (mScanner);</span>
+    }
+
+    /**
+     * Set the scanner associated with this tag.
+     * @param scanner The scanner for this tag.
+     */
+    public void setThisScanner (Scanner scanner)
+    {
+<span class="fc" id="L863">        mScanner = scanner;</span>
+<span class="fc" id="L864">    }</span>
+
+    /**
+     * Get the end tag for this (composite) tag.
+     * For a non-composite tag this always returns &lt;code&gt;null&lt;/code&gt;.
+     * @return The tag that terminates this composite tag, i.e. &amp;lt;/HTML&amp;gt;.
+     */
+    public Tag getEndTag ()
+    {
+<span class="nc" id="L873">        return (null);</span>
+    }
+
+    /**
+     * Set the end tag for this (composite) tag.
+     * For a non-composite tag this is a no-op.
+     * @param end The tag that terminates this composite tag, i.e. &amp;lt;/HTML&amp;gt;.
+     */
+    public void setEndTag (Tag end)
+    {
+<span class="nc" id="L883">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>TagNameFilter.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.filters</a> &gt; <span class="el_source">TagNameFilter.java</span></div><h1>TagNameFilter.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/main/java/org/htmlparser/filters/TagNameFilter.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.filters;
+
+import java.util.Locale;
+
+import org.htmlparser.Node;
+import org.htmlparser.NodeFilter;
+import org.htmlparser.Tag;
+
+/**
+ * This class accepts all tags matching the tag name.
+ */
+public class TagNameFilter
+    implements
+        NodeFilter
+{
+    /**
+     * The tag name to match.
+     */
+    protected String mName;
+
+    /**
+     * Creates a new instance of TagNameFilter.
+     * With no name, this would always return &lt;code&gt;false&lt;/code&gt;
+     * from {@link #accept}.
+     */
+    public TagNameFilter ()
+    {
+<span class="nc" id="L53">        this (&quot;&quot;);</span>
+<span class="nc" id="L54">    }</span>
+
+    /**
+     * Creates a TagNameFilter that accepts tags with the given name.
+     * @param name The tag name to match.
+     */
+<span class="fc" id="L60">    public TagNameFilter (String name)</span>
+    {
+<span class="fc" id="L62">        mName = name.toUpperCase (Locale.ENGLISH);</span>
+<span class="fc" id="L63">    }</span>
+
+    /**
+     * Get the tag name.
+     * @return Returns the name of acceptable tags.
+     */
+    public String getName ()
+    {
+<span class="nc" id="L71">        return (mName);</span>
+    }
+
+    /**
+     * Set the tag name.
+     * @param name The name of the tag to accept.
+     */
+    public void setName (String name)
+    {
+<span class="nc" id="L80">        mName = name;</span>
+<span class="nc" id="L81">    }</span>
+
+    /**
+     * Accept nodes that are tags and have a matching tag name.
+     * This discards non-tag nodes and end tags.
+     * The end tags are available on the enclosing non-end tag.
+     * @param node The node to check.
+     * @return &lt;code&gt;true&lt;/code&gt; if the tag name matches,
+     * &lt;code&gt;false&lt;/code&gt; otherwise.
+     */
+    public boolean accept (Node node)
+    {
+<span class="fc bfc" id="L93" title="All 2 branches covered.">        return ((node instanceof Tag)</span>
+<span class="fc bfc" id="L94" title="All 2 branches covered.">                &amp;&amp; !((Tag)node).isEndTag ()</span>
+<span class="fc bfc" id="L95" title="All 2 branches covered.">                &amp;&amp; ((Tag)node).getTagName ().equals (mName));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

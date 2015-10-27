@@ -1,0 +1,504 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>ScriptDecoder.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.scanners</a> &gt; <span class="el_source">ScriptDecoder.java</span></div><h1>ScriptDecoder.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/main/java/org/htmlparser/scanners/ScriptDecoder.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.scanners;
+
+import org.htmlparser.lexer.Cursor;
+import org.htmlparser.lexer.Page;
+import org.htmlparser.util.ParserException;
+
+/**
+ * Decode script.
+ * Script obfuscated by the &lt;A href=&quot;http://www.microsoft.com/downloads/details.aspx?FamilyId=E7877F67-C447-4873-B1B0-21F0626A6329&amp;displaylang=en&quot; target=&quot;_parent&quot;&gt;Windows Script Encoder&lt;/A&gt;
+ * provided by Microsoft, is converted to plaintext. This code is based loosely
+ * on example code provided by MrBrownstone with changes by Joe Steele, see
+ * &lt;A href=&quot;http://www.virtualconspiracy.com/download/scrdec14.c&quot; target=&quot;_parent&quot;&gt;scrdec14.c&lt;/A&gt;.
+ */
+<span class="nc" id="L39">public class ScriptDecoder</span>
+{
+    /**
+     * Termination state.
+     */
+    public static final int STATE_DONE = 0;
+
+    /**
+     * State on entry.
+     */
+    public static final int STATE_INITIAL = 1;
+
+    /**
+     * State while reading the encoded length.
+     */
+    protected static final int STATE_LENGTH = 2;
+
+    /**
+     * State when reading up to decoded text.
+     */
+    protected static final int STATE_PREFIX = 3;
+
+    /**
+     * State while decoding.
+     */
+    protected static final int STATE_DECODE = 4;
+
+    /**
+     * State when reading an escape sequence.
+     */
+    protected static final int STATE_ESCAPE = 5;
+
+    /**
+     * State when reading the checksum.
+     */
+    protected static final int STATE_CHECKSUM = 6;
+
+    /**
+     * State while exiting.
+     */
+    protected static final int STATE_FINAL = 7;
+
+    /**
+     * The state to enter when decrypting is complete.
+     * If this is STATE_DONE, the decryption will return with any characters
+     * following the encoded text still unconsumed.
+     * Otherwise, if this is STATE_INITIAL, the input will be exhausted and
+     * all following characters will be contained in the return value
+     * of the &lt;code&gt;Decode()&lt;/code&gt; method.
+     */
+<span class="fc" id="L89">    public static int LAST_STATE = STATE_DONE;</span>
+
+    /**
+     * Table of lookup choice.
+     * The decoding cycles between three flavours determined
+     * by this sequence of 64 choices, corresponding to the
+     * first dimension of the lookup table.
+     */
+<span class="fc" id="L97">    protected static byte mEncodingIndex[] =</span>
+<span class="fc" id="L98">    {</span>
+<span class="fc" id="L99">        1, 2, 0, 1, 2, 0, 2, 0, 0, 2, 0, 2, 1, 0, 2, 0, </span>
+<span class="fc" id="L100">        1, 0, 2, 0, 1, 1, 2, 0, 0, 2, 1, 0, 2, 0, 0, 2, </span>
+<span class="fc" id="L101">        1, 1, 0, 2, 0, 2, 0, 1, 0, 1, 1, 2, 0, 1, 0, 2, </span>
+<span class="fc" id="L102">        1, 0, 2, 0, 1, 1, 2, 0, 0, 1, 1, 2, 0, 1, 0, 2,</span>
+    };
+
+    /**
+     * Two dimensional lookup table.
+     * The decoding uses this table to determine the plaintext for
+     * characters that aren't mEscaped.
+     */
+<span class="fc" id="L110">    protected static char mLookupTable[][] =</span>
+<span class="fc" id="L111">    {</span>
+<span class="fc" id="L112">        {</span>
+<span class="fc" id="L113">            '{', </span>
+<span class="fc" id="L114">            '2',  '0',  '!',  ')',  '[',  '8',  '3',  '=', </span>
+<span class="fc" id="L115">            'X',  ':',  '5',  'e',  '9', '\\',  'V',  's', </span>
+<span class="fc" id="L116">            'f',  'N',  'E',  'k',  'b',  'Y',  'x',  '^', </span>
+<span class="fc" id="L117">            '}',  'J',  'm',  'q',    0,  '`',    0,  'S', </span>
+<span class="fc" id="L118">              0,  'B', '\'',  'H',  'r',  'u',  '1',  '7', </span>
+<span class="fc" id="L119">            'M',  'R',  '&quot;',  'T',  'j',  'G',  'd',  '-', </span>
+<span class="fc" id="L120">            ' ',  '',  '.',  'L',  ']',  '~',  'l',  'o', </span>
+<span class="fc" id="L121">            'y',  't',  'C',  '&amp;',  'v',  '%',  '$',  '+', </span>
+<span class="fc" id="L122">            '(',  '#',  'A',  '4', '\t',  '*',  'D',  '?', </span>
+<span class="fc" id="L123">            'w',  ';',  'U',  'i',  'a',  'c',  'P',  'g', </span>
+<span class="fc" id="L124">            'Q',  'I',  'O',  'F',  'h',  '|',  '6',  'p', </span>
+<span class="fc" id="L125">            'n',  'z',  '/',  '_',  'K',  'Z',  ',',  'W', </span>
+        },
+<span class="fc" id="L127">        {</span>
+<span class="fc" id="L128">            'W', </span>
+<span class="fc" id="L129">            '.',  'G',  'z',  'V',  'B',  'j',  '/',  '&amp;', </span>
+<span class="fc" id="L130">            'I',  'A',  '4',  '2',  '[',  'v',  'r',  'C', </span>
+<span class="fc" id="L131">            '8',  '9',  'p',  'E',  'h',  'q',  'O', '\t', </span>
+<span class="fc" id="L132">            'b',  'D',  '#',  'u',    0,  '~',    0,  '^', </span>
+<span class="fc" id="L133">              0,  'w',  'J',  'a',  ']',  '&quot;',  'K',  'o', </span>
+<span class="fc" id="L134">            'N',  ';',  'L',  'P',  'g',  '*',  '}',  't', </span>
+<span class="fc" id="L135">            'T',  '+',  '-',  ',',  '0',  'n',  'k',  'f', </span>
+<span class="fc" id="L136">            '5',  '%',  '!',  'd',  'M',  'R',  'c',  '?', </span>
+<span class="fc" id="L137">            '{',  'x',  ')',  '(',  's',  'Y',  '3',  '', </span>
+<span class="fc" id="L138">            'm',  'U',  'S',  '|',  ':',  '_',  'e',  'F', </span>
+<span class="fc" id="L139">            'X',  '1',  'i',  'l',  'Z',  'H', '\'', '\\', </span>
+<span class="fc" id="L140">            '=',  '$',  'y',  '7',  '`',  'Q',  ' ',  '6', </span>
+        },
+<span class="fc" id="L142">        {</span>
+<span class="fc" id="L143">            'n', </span>
+<span class="fc" id="L144">            '-',  'u',  'R',  '`',  'q',  '^',  'I', '\\', </span>
+<span class="fc" id="L145">            'b',  '}',  ')',  '6',  ' ',  '|',  'z',  '', </span>
+<span class="fc" id="L146">            'k',  'c',  '3',  '+',  'h',  'Q',  'f',  'v', </span>
+<span class="fc" id="L147">            '1',  'd',  'T',  'C',    0,  ':',    0,  '~', </span>
+<span class="fc" id="L148">              0,  'E',  ',',  '*',  't', '\'',  '7',  'D', </span>
+<span class="fc" id="L149">            'y',  'Y',  '/',  'o',  '&amp;',  'r',  'j',  '9', </span>
+<span class="fc" id="L150">            '{',  '?',  '8',  'w',  'g',  'S',  'G',  '4', </span>
+<span class="fc" id="L151">            'x',  ']',  '0',  '#',  'Z',  '[',  'l',  'H', </span>
+<span class="fc" id="L152">            'U',  'p',  'i',  '.',  'L',  '!',  '$',  'N', </span>
+<span class="fc" id="L153">            'P', '\t',  'V',  's',  '5',  'a',  'K',  'X', </span>
+<span class="fc" id="L154">            ';',  'W',  '&quot;',  'm',  'M',  '%',  '(',  'F', </span>
+<span class="fc" id="L155">            'J',  '2',  'A',  '=',  '_',  'O',  'B',  'e', </span>
+        },
+    };
+
+    /**
+     * The base 64 decoding table.
+     * This array determines the value of decoded base 64 elements.
+     */
+    protected static int mDigits[];
+    static
+    {
+<span class="fc" id="L166">        mDigits = new int[0x7b];</span>
+<span class="fc bfc" id="L167" title="All 2 branches covered.">        for (int i = 0; i &lt; 26; i++)</span>
+        {
+<span class="fc" id="L169">            mDigits['A' + i] = i;</span>
+<span class="fc" id="L170">            mDigits['a' + i] = i + 26;</span>
+        }
+<span class="fc bfc" id="L172" title="All 2 branches covered.">        for (int i = 0; i &lt; 10; i++)</span>
+<span class="fc" id="L173">            mDigits['0' + i] = i + 52;</span>
+<span class="fc" id="L174">        mDigits[0x2b] = '&gt;';</span>
+<span class="fc" id="L175">        mDigits[0x2f] = '?';</span>
+    }
+
+    /**
+     * The leader.
+     * The prefix to the encoded script is #@~^nnnnnn== where the n are the
+     * length digits in base64.
+     */
+<span class="fc" id="L183">    protected static char mLeader[] =</span>
+<span class="fc" id="L184">    { </span>
+<span class="fc" id="L185">        '#',</span>
+<span class="fc" id="L186">        '@',</span>
+<span class="fc" id="L187">        '~',</span>
+<span class="fc" id="L188">        '^',</span>
+    };
+
+    /**
+     * The prefix.
+     * The prfix separates the encoded text from the length.
+     */
+<span class="fc" id="L195">    protected static char mPrefix[] =</span>
+<span class="fc" id="L196">    { </span>
+<span class="fc" id="L197">        '=',</span>
+<span class="fc" id="L198">        '=',</span>
+    };
+
+    /**
+     * The trailer.
+     * The suffix to the encoded script is nnnnnn==^#~@ where the n are the
+     * checksum digits in base64. These characters are the part after the checksum.
+     */
+<span class="fc" id="L206">    protected static char mTrailer[] =</span>
+<span class="fc" id="L207">    { </span>
+<span class="fc" id="L208">        '=',</span>
+<span class="fc" id="L209">        '=',</span>
+<span class="fc" id="L210">        '^',</span>
+<span class="fc" id="L211">        '#',</span>
+<span class="fc" id="L212">        '~',</span>
+<span class="fc" id="L213">        '@',</span>
+    };
+
+    /**
+     * Escape sequence characters.
+     */
+<span class="fc" id="L219">    protected static char mEscapes[] =</span>
+<span class="fc" id="L220">    {</span>
+<span class="fc" id="L221">        '#',</span>
+<span class="fc" id="L222">        '&amp;',</span>
+<span class="fc" id="L223">        '!',</span>
+<span class="fc" id="L224">        '*',</span>
+<span class="fc" id="L225">        '$',</span>
+    };
+
+    /**
+     * The escaped characters corresponding to the each escape sequence.
+     */
+<span class="fc" id="L231">    protected static char mEscaped[] = //&quot;\r\n&lt;&gt;@&quot;;</span>
+<span class="fc" id="L232">    {</span>
+<span class="fc" id="L233">        '\r',</span>
+<span class="fc" id="L234">        '\n',</span>
+<span class="fc" id="L235">        '&lt;',</span>
+<span class="fc" id="L236">        '&gt;',</span>
+<span class="fc" id="L237">        '@',</span>
+<span class="fc" id="L238">    };</span>
+
+    /**
+     * Extract the base 64 encoded number.
+     * This is a very limited subset of base 64 encoded characters.
+     * Six characters are expected. These are translated into a single long
+     * value. For a more complete base 64 codec see for example the base64
+     * package of &lt;A href=&quot;http://sourceforge.net/projects/iharder/&quot; target=&quot;_parent&quot;&gt;iHarder.net&lt;/A&gt;
+     * @param p Six base 64 encoded digits.
+     * @return The value of the decoded number.
+     */
+    protected static long decodeBase64 (char[] p)
+    {
+        long ret;
+        
+<span class="fc" id="L253">        ret = 0;</span>
+
+<span class="fc" id="L255">        ret +=  (mDigits[p[0]] &lt;&lt; 2);</span>
+<span class="fc" id="L256">        ret +=  (mDigits[p[1]] &gt;&gt; 4);</span>
+<span class="fc" id="L257">        ret +=  (mDigits[p[1]] &amp; 0xf) &lt;&lt; 12;</span>
+<span class="fc" id="L258">        ret += ((mDigits[p[2]] &gt;&gt; 2) &lt;&lt; 8); </span>
+<span class="fc" id="L259">        ret += ((mDigits[p[2]] &amp; 0x3) &lt;&lt; 22);</span>
+<span class="fc" id="L260">        ret +=  (mDigits[p[3]] &lt;&lt; 16);</span>
+<span class="fc" id="L261">        ret += ((mDigits[p[4]] &lt;&lt; 2) &lt;&lt; 24);</span>
+<span class="fc" id="L262">        ret += ((mDigits[p[5]] &gt;&gt; 4) &lt;&lt; 24);</span>
+
+<span class="fc" id="L264">        return (ret);</span>
+    }
+
+    /**
+     * Decode script encoded by the Microsoft obfuscator.
+     * @param page The source for encoded text.
+     * @param cursor The position at which to start decoding.
+     * This is advanced to the end of the encoded text.
+     * @return The plaintext.
+     * @exception ParserException If an error is discovered while decoding.
+     */
+    public static String Decode (Page page, Cursor cursor)
+        throws
+            ParserException
+    {
+        int state;
+        int substate_initial;
+        int substate_length;
+        int substate_prefix;
+        int substate_checksum;
+        int substate_final;
+        long checksum;
+        long length;
+        char buffer[];
+<span class="fc" id="L288">        buffer = new char[6];</span>
+        int index;
+        char character;
+        int input_character;
+        boolean found;
+        StringBuffer ret;
+        
+<span class="fc" id="L295">        ret = new StringBuffer (1024);</span>
+
+<span class="fc" id="L297">        state = STATE_INITIAL;</span>
+<span class="fc" id="L298">        substate_initial = 0;</span>
+<span class="fc" id="L299">        substate_length = 0;</span>
+<span class="fc" id="L300">        substate_prefix = 0;</span>
+<span class="fc" id="L301">        substate_checksum = 0;</span>
+<span class="fc" id="L302">        substate_final = 0;</span>
+<span class="fc" id="L303">        length = 0L;</span>
+<span class="fc" id="L304">        checksum = 0L;</span>
+<span class="fc" id="L305">        index = 0;</span>
+<span class="fc bfc" id="L306" title="All 2 branches covered.">        while (STATE_DONE != state)</span>
+        {
+<span class="fc" id="L308">            input_character = page.getCharacter (cursor);</span>
+<span class="fc" id="L309">            character = (char)input_character;</span>
+<span class="fc bfc" id="L310" title="All 2 branches covered.">            if (Page.EOF == input_character)</span>
+            {
+<span class="pc bpc" id="L312" title="1 of 2 branches missed.">                if (   (STATE_INITIAL != state)</span>
+<span class="pc bpc" id="L313" title="1 of 2 branches missed.">                    || (0 != substate_initial)</span>
+<span class="pc bpc" id="L314" title="1 of 2 branches missed.">                    || (0 != substate_length)</span>
+<span class="pc bpc" id="L315" title="1 of 2 branches missed.">                    || (0 != substate_prefix)</span>
+<span class="pc bpc" id="L316" title="1 of 2 branches missed.">                    || (0 != substate_checksum)</span>
+<span class="pc bpc" id="L317" title="1 of 2 branches missed.">                    || (0 != substate_final))</span>
+<span class="nc" id="L318">                    throw new ParserException (&quot;illegal state for exit&quot;);</span>
+<span class="fc" id="L319">                state = STATE_DONE;</span>
+<span class="fc" id="L320">            }</span>
+            else
+<span class="pc bpc" id="L322" title="1 of 8 branches missed.">                switch (state)</span>
+                {
+                    case STATE_INITIAL:
+<span class="fc bfc" id="L325" title="All 2 branches covered.">                        if (character == mLeader[substate_initial])</span>
+                        {
+<span class="fc" id="L327">                            substate_initial++;</span>
+<span class="fc bfc" id="L328" title="All 2 branches covered.">                            if (substate_initial == mLeader.length)</span>
+                            {
+<span class="fc" id="L330">                                substate_initial = 0;</span>
+<span class="fc" id="L331">                                state = STATE_LENGTH;</span>
+                            }
+<span class="fc" id="L333">                        }</span>
+                        else
+                        {
+                            // oops, flush
+<span class="pc bpc" id="L337" title="1 of 2 branches missed.">                            for (int k = 0; 0 &lt; substate_initial; k++)</span>
+                            {
+<span class="nc" id="L339">                                ret.append (mLeader[k++]);</span>
+<span class="nc" id="L340">                                substate_initial--;</span>
+                            }
+<span class="fc" id="L342">                            ret.append (character);</span>
+                        }
+<span class="fc" id="L344">                        break;</span>
+
+                    case STATE_LENGTH:
+<span class="fc" id="L347">                        buffer[substate_length] = character;</span>
+<span class="fc" id="L348">                        substate_length++;</span>
+<span class="fc bfc" id="L349" title="All 2 branches covered.">                        if (substate_length &gt;= buffer.length)</span>
+                        {
+<span class="fc" id="L351">                            length = decodeBase64 (buffer);</span>
+<span class="pc bpc" id="L352" title="1 of 2 branches missed.">                            if (0 &gt; length)</span>
+<span class="nc" id="L353">                                throw new ParserException (&quot;illegal length: &quot; + length);</span>
+<span class="fc" id="L354">                            substate_length = 0;</span>
+<span class="fc" id="L355">                            state = STATE_PREFIX;</span>
+                        }
+<span class="fc" id="L357">                        break;</span>
+
+                    case STATE_PREFIX:
+<span class="pc bpc" id="L360" title="1 of 2 branches missed.">                        if (character == mPrefix[substate_prefix])</span>
+<span class="fc" id="L361">                            substate_prefix++;</span>
+                        else
+<span class="nc" id="L363">                            throw new ParserException (&quot;illegal character encountered: &quot; + (int)character + &quot; ('&quot; + character + &quot;')&quot;);</span>
+<span class="fc bfc" id="L364" title="All 2 branches covered.">                        if (substate_prefix &gt;= mPrefix.length)</span>
+                        {
+<span class="fc" id="L366">                            substate_prefix = 0;</span>
+<span class="fc" id="L367">                            state = STATE_DECODE;</span>
+                        }
+<span class="fc" id="L369">                        break;</span>
+
+                    case STATE_DECODE:
+<span class="fc bfc" id="L372" title="All 2 branches covered.">                        if ('@' == character)</span>
+<span class="fc" id="L373">                            state = STATE_ESCAPE;</span>
+                        else
+                        {
+<span class="pc bpc" id="L376" title="1 of 2 branches missed.">                            if (input_character &lt; 0x80)</span>
+                            {
+<span class="fc bfc" id="L378" title="All 2 branches covered.">                                if (input_character == '\t')</span>
+<span class="fc" id="L379">                                    input_character = 0;</span>
+<span class="pc bpc" id="L380" title="1 of 2 branches missed.">                                else if (input_character &gt;= ' ')</span>
+<span class="fc" id="L381">                                    input_character -= ' ' - 1;</span>
+                                else
+<span class="nc" id="L383">                                    throw new ParserException (&quot;illegal encoded character: &quot; + input_character + &quot; ('&quot; + character + &quot;')&quot;);</span>
+<span class="fc" id="L384">                                char ch = mLookupTable[mEncodingIndex[index % 64]][input_character];</span>
+<span class="fc" id="L385">                                ret.append (ch);</span>
+<span class="fc" id="L386">                                checksum += ch;</span>
+<span class="fc" id="L387">                                index++;</span>
+<span class="fc" id="L388">                            }</span>
+                            else
+<span class="nc" id="L390">                                ret.append (character);</span>
+                        }
+<span class="fc" id="L392">                        length--;</span>
+<span class="pc bpc" id="L393" title="1 of 2 branches missed.">                        if (0 == length)</span>
+                        {
+<span class="nc" id="L395">                            index = 0;</span>
+<span class="nc" id="L396">                            state = STATE_CHECKSUM;</span>
+                        }
+<span class="nc" id="L398">                        break;</span>
+
+                    case STATE_ESCAPE:
+<span class="fc" id="L401">                        found = false;</span>
+<span class="fc bfc" id="L402" title="All 2 branches covered.">                        for (int i = 0; i &lt; mEscapes.length; i++)</span>
+<span class="fc bfc" id="L403" title="All 2 branches covered.">                            if (character == mEscapes[i])</span>
+                            {
+<span class="fc" id="L405">                                found = true;</span>
+<span class="fc" id="L406">                                character = mEscaped[i];</span>
+                            }
+<span class="pc bpc" id="L408" title="1 of 2 branches missed.">                        if (!found)</span>
+<span class="nc" id="L409">                            throw new ParserException (&quot;unexpected escape character: &quot; + (int)character + &quot; ('&quot; + character + &quot;')&quot;);</span>
+<span class="fc" id="L410">                        ret.append (character);</span>
+<span class="fc" id="L411">                        checksum += character;</span>
+<span class="fc" id="L412">                        index++;</span>
+<span class="fc" id="L413">                        state = STATE_DECODE;</span>
+<span class="fc" id="L414">                        length--;</span>
+<span class="fc bfc" id="L415" title="All 2 branches covered.">                        if (0 == length)</span>
+                        {
+<span class="fc" id="L417">                            index = 0;</span>
+<span class="fc" id="L418">                            state = STATE_CHECKSUM;</span>
+                        }
+<span class="fc" id="L420">                        break;</span>
+
+                    case STATE_CHECKSUM:
+<span class="fc" id="L423">                        buffer[substate_checksum] = character;</span>
+<span class="fc" id="L424">                        substate_checksum++;</span>
+<span class="fc bfc" id="L425" title="All 2 branches covered.">                        if (substate_checksum &gt;= buffer.length)</span>
+                        {
+<span class="fc" id="L427">                            long check = decodeBase64 (buffer);</span>
+<span class="pc bpc" id="L428" title="1 of 2 branches missed.">                            if (check != checksum)</span>
+<span class="nc" id="L429">                                throw new ParserException (&quot;incorrect checksum, expected &quot; + check + &quot;, calculated &quot; + checksum);</span>
+<span class="fc" id="L430">                            checksum = 0;</span>
+<span class="fc" id="L431">                            substate_checksum = 0;</span>
+<span class="fc" id="L432">                            state = STATE_FINAL;</span>
+                        }
+<span class="fc" id="L434">                        break;</span>
+
+                    case STATE_FINAL:
+<span class="pc bpc" id="L437" title="1 of 2 branches missed.">                        if (character == mTrailer[substate_final])</span>
+<span class="fc" id="L438">                            substate_final++;</span>
+                        else
+<span class="nc" id="L440">                            throw new ParserException (&quot;illegal character encountered: &quot; + (int)character + &quot; ('&quot; + character + &quot;')&quot;);</span>
+<span class="fc bfc" id="L441" title="All 2 branches covered.">                        if (substate_final &gt;= mTrailer.length)</span>
+                        {
+<span class="fc" id="L443">                            substate_final = 0;</span>
+<span class="fc" id="L444">                            state = LAST_STATE;</span>
+                        }
+<span class="fc" id="L446">                        break;</span>
+                    default:
+<span class="nc" id="L448">                        throw new ParserException (&quot;invalid state: &quot; + state);</span>
+                }
+        }
+
+<span class="fc" id="L452">        return (ret.toString ());</span>
+    }
+
+//    /**
+//     * Example mainline for decrypting script.
+//     * Change a file with encrypted script into one without.
+//     * &lt;em&gt;WARNING: This does not preserve DOS type line endings.&lt;/em&gt;
+//     * @param args Command line arguments. Two file names, input and output.
+//     * Optionally, the character set to use as a third argument.
+//     * @exception IOException If the input file doesn't exist, or the output
+//     * file cannot be created.
+//     * @exception ParserException If there is a decryption problem.
+//     */
+//    public static void main (String[] args)
+//         throws
+//            IOException,
+//            ParserException
+//    {
+//        String charset;
+//        FileInputStream in;
+//        Page page;
+//        Cursor cursor;
+//        String string;
+//        int ret;
+//        
+//        if (args.length &lt; 2)
+//        {
+//            System.out.println (&quot;Usage: java org.htmlparser.scanners.ScriptDecoder &lt;infile&gt; &lt;outfile&gt; [charset]&quot;);
+//            ret = 1;
+//        }
+//        else
+//        {
+//            if (2 &lt; args.length)
+//                charset = args[2];
+//            else
+//                charset = &quot;ISO-8859-1&quot;;
+//            in = new FileInputStream (args[0]);
+//            page = new Page (in, charset);
+//            cursor = new Cursor (page, 0);
+//            ScriptDecoder.LAST_STATE = STATE_INITIAL;
+//            string = ScriptDecoder.Decode (page, cursor);
+//            in.close ();
+//            
+//            FileOutputStream outfile = new FileOutputStream (args[1]);
+//            outfile.write (string.getBytes (charset));
+//            outfile.close ();
+//            ret = (0 != string.length ()) ? 0 : 1;
+//        }
+//        
+//        System.exit (ret);
+//    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

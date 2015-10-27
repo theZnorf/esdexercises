@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>ScriptTag.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tags</a> &gt; <span class="el_source">ScriptTag.java</span></div><h1>ScriptTag.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Somik Raha
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/main/java/org/htmlparser/tags/ScriptTag.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tags;
+
+import org.htmlparser.Node;
+import org.htmlparser.scanners.ScriptScanner;
+import org.htmlparser.util.SimpleNodeIterator;
+
+/**
+ * A script tag.
+ */
+public class ScriptTag extends CompositeTag
+{
+    /**
+     * The set of names handled by this tag.
+     */
+<span class="fc" id="L40">    private static final String[] mIds = new String[] {&quot;SCRIPT&quot;};</span>
+
+    /**
+     * The set of end tag names that indicate the end of this tag.
+     */
+<span class="fc" id="L45">    private static final String[] mEndTagEnders = new String[] {&quot;BODY&quot;, &quot;HTML&quot;};</span>
+
+    /**
+     * Script code if different from the page contents.
+     */
+    protected String mCode;
+
+    /**
+     * Create a new script tag.
+     */
+<span class="fc" id="L55">    public ScriptTag ()</span>
+    {
+<span class="fc" id="L57">        setThisScanner (new ScriptScanner ());</span>
+<span class="fc" id="L58">    }</span>
+
+    /**
+     * Return the set of names handled by this tag.
+     * @return The names to be matched that create tags of this type.
+     */
+    public String[] getIds ()
+    {
+<span class="fc" id="L66">        return (mIds);</span>
+    }
+
+    /**
+     * Return the set of end tag names that cause this tag to finish.
+     * @return The names of following end tags that stop further scanning.
+     */
+    public String[] getEndTagEnders ()
+    {
+<span class="nc" id="L75">        return (mEndTagEnders);</span>
+    }
+
+    /**
+     * Get the &lt;code&gt;LANGUAGE&lt;/code&gt; attribute, if any.
+     * @return The scripting language.
+     */
+    public String getLanguage()
+    {
+<span class="fc" id="L84">        return (getAttribute (&quot;LANGUAGE&quot;));</span>
+    }
+
+    /**
+     * Get the script code.
+     * Normally this is the contents of the children, but in the rare case that
+     * the script is encoded, this is the plaintext decrypted code.
+     * @return The plaintext or overridden code contents of the tag.
+     */
+    public String getScriptCode ()
+    {
+        String ret;
+        
+<span class="pc bpc" id="L97" title="1 of 2 branches missed.">        if (null != mCode)</span>
+<span class="nc" id="L98">            ret = mCode;</span>
+        else
+<span class="fc" id="L100">            ret = getChildrenHTML ();</span>
+
+<span class="fc" id="L102">        return (ret);</span>
+    }
+
+    /**
+     * Set the code contents.
+     * @param code The new code contents of this tag.
+     */
+    public void setScriptCode (String code)
+    {
+<span class="nc" id="L111">        mCode = code;</span>
+<span class="nc" id="L112">    }</span>
+
+    /**
+     * Get the &lt;code&gt;TYPE&lt;/code&gt; attribute, if any.
+     * @return The script mime type.
+     */
+    public String getType()
+    {
+<span class="nc" id="L120">        return (getAttribute (&quot;TYPE&quot;));</span>
+    }
+
+    /**
+     * Set the language of the script tag.
+     * @param language The new language value.
+     */
+    public void setLanguage (String language)
+    {
+<span class="nc" id="L129">        setAttribute (&quot;LANGUAGE&quot;, language);</span>
+<span class="nc" id="L130">    }</span>
+
+    /**
+     * Set the mime type of the script tag.
+     * @param type The new mime type.
+     */
+    public void setType (String type)
+    {
+<span class="nc" id="L138">        setAttribute (&quot;TYPE&quot;, type);</span>
+<span class="nc" id="L139">    }</span>
+
+    /**
+     * Places the script contents into the provided buffer.
+     * @param verbatim If &lt;code&gt;true&lt;/code&gt; return as close to the original
+     * page text as possible.
+     * @param sb The buffer to add the script to.
+     */
+    protected void putChildrenInto (StringBuffer sb, boolean verbatim)
+    {
+        Node node;
+
+<span class="pc bpc" id="L151" title="1 of 2 branches missed.">        if (null != getScriptCode ())</span>
+<span class="fc" id="L152">            sb.append (getScriptCode ());</span>
+        else
+<span class="nc bnc" id="L154" title="All 2 branches missed.">            for (SimpleNodeIterator e = children (); e.hasMoreNodes ();)</span>
+            {
+<span class="nc" id="L156">                node = e.nextNode ();</span>
+                // eliminate virtual tags
+<span class="nc bnc" id="L158" title="All 4 branches missed.">                if (!verbatim || !(node.getStartPosition () == node.getEndPosition ()))</span>
+<span class="nc" id="L159">                    sb.append (node.toHtml (verbatim));</span>
+            }
+<span class="fc" id="L161">    }</span>
+
+    /**
+     * Print the contents of the script tag suitable for debugging display.
+     * @return The script language or type and code as a string.
+     */
+    public String toString()
+    {
+<span class="nc" id="L169">        StringBuffer sb = new StringBuffer();</span>
+<span class="nc" id="L170">        sb.append(&quot;Script Node : \n&quot;);</span>
+<span class="nc bnc" id="L171" title="All 4 branches missed.">        if (getLanguage () != null || getType () != null)</span>
+        {
+<span class="nc" id="L173">            sb.append(&quot;Properties --&gt;\n&quot;);</span>
+<span class="nc bnc" id="L174" title="All 4 branches missed.">            if (getLanguage () != null &amp;&amp; getLanguage ().length () !=0)</span>
+<span class="nc" id="L175">                sb.append(&quot;[Language : &quot;+ getLanguage ()+&quot;]\n&quot;);</span>
+<span class="nc bnc" id="L176" title="All 4 branches missed.">            if (getType () != null &amp;&amp; getType ().length () != 0)</span>
+<span class="nc" id="L177">                sb.append(&quot;[Type : &quot;+ getType ()+&quot;]\n&quot;);</span>
+        }
+<span class="nc" id="L179">        sb.append(&quot;\n&quot;);</span>
+<span class="nc" id="L180">        sb.append(&quot;Code\n&quot;);</span>
+<span class="nc" id="L181">        sb.append(&quot;****\n&quot;);</span>
+<span class="nc" id="L182">        sb.append(getScriptCode()+&quot;\n&quot;);</span>
+<span class="nc" id="L183">        return sb.toString();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

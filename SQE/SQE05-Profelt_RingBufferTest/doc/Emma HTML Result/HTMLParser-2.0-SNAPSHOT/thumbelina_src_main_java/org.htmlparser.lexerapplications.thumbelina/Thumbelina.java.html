@@ -1,0 +1,1414 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>Thumbelina.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">thumbelina/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.lexerapplications.thumbelina</a> &gt; <span class="el_source">Thumbelina.java</span></div><h1>Thumbelina.java</h1><pre class="source lang-java linenums"><span class="nc" id="L1">// HTMLParser Library - A java-based parser for HTML</span>
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/thumbelina/src/main/java/org/htmlparser/lexerapplications/thumbelina/Thumbelina.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.lexerapplications.thumbelina;
+
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Image;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.image.ImageObserver;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
+
+import javax.swing.BoxLayout;
+import javax.swing.DefaultListModel;
+import javax.swing.JCheckBox;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+import javax.swing.JScrollPane;
+import javax.swing.JSlider;
+import javax.swing.JSplitPane;
+import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.border.BevelBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+
+import org.htmlparser.Node;
+import org.htmlparser.Tag;
+import org.htmlparser.lexer.Lexer;
+import org.htmlparser.util.ParserException;
+
+/**
+ * View images behind thumbnails.
+ */
+public class Thumbelina
+    extends
+        JPanel // was: java.awt.Canvas
+    implements
+        Runnable,
+        ItemListener,
+        ChangeListener,
+        ListSelectionListener,
+        PictureListener
+{
+    /**
+     * Property name for current URL binding.
+     */
+    public static final String PROP_CURRENT_URL_PROPERTY = &quot;currentURL&quot;;
+    /**
+     * Property name for queue size binding.
+     */
+    public static final String PROP_URL_QUEUE_PROPERTY = &quot;queueSize&quot;;
+    /**
+     * Property name for visited URL size binding.
+     */
+    public static final String PROP_URL_VISITED_PROPERTY = &quot;visitedSize&quot;;
+
+    /**
+     * URL's to visit.
+     */
+    private ArrayList&lt;URL&gt; mUrls;
+
+    /**
+     * URL's visited.
+     */
+    protected HashMap&lt;String,URL&gt; mVisited;
+
+    /**
+     * Images requested.
+     */
+    protected HashMap&lt;String,URL&gt; mRequested;
+
+    /**
+     * Images being tracked currently.
+     */
+    protected HashMap&lt;String, URL&gt; mTracked;
+
+    /**
+     * Background thread.
+     */
+    protected Thread mThread;
+
+    /**
+     * Activity state.
+     * &lt;code&gt;true&lt;/code&gt; means processing URLS, &lt;code&gt;false&lt;/code&gt; not.
+     */
+    protected boolean mActive;
+
+    /**
+     * The picture sequencer.
+     */
+    protected Sequencer mSequencer;
+
+    /**
+     * The central area for pictures.
+     */
+    protected PicturePanel mPicturePanel;
+
+    /**
+     * Value returned when no links are discovered.
+     */
+<span class="nc" id="L144">    protected static final URL[][] NONE = { { }, { } };</span>
+
+    /**
+     * Bound property support.
+     */
+    protected PropertyChangeSupport mPropertySupport;
+
+    /**
+     * The URL being currently being examined.
+     */
+    protected String mCurrentURL;
+
+    /**
+     * If &lt;code&gt;true&lt;/code&gt;, does not follow links containing cgi calls.
+     */
+    protected boolean mDiscardCGI;
+
+    /**
+     * If &lt;code&gt;true&lt;/code&gt;, does not follow links containing queries (?).
+     */
+    protected boolean mDiscardQueries;
+
+    /**
+     * Background thread checkbox in status bar.
+     */
+    protected JCheckBox mBackgroundToggle;
+
+    /**
+     * History list.
+     */
+    protected JList mHistory;
+
+    /**
+     * Scroller for the picture panel.
+     */
+    protected JScrollPane mPicturePanelScroller;
+
+    /**
+     * Scroller for the history list.
+     */
+    protected JScrollPane mHistoryScroller;
+
+    /**
+     * Main panel in central area.
+     */
+    protected JSplitPane mMainArea;
+
+    /**
+     * Status bar.
+     */
+    protected JPanel mPowerBar;
+
+    /**
+     * Image request queue monitor in status bar.
+     */
+    protected JProgressBar mQueueProgress;
+
+    /**
+     * Image ready queue monitor in status bar.
+     */
+    protected JProgressBar mReadyProgress;
+
+    /**
+     * Sequencer thread toggle in status bar.
+     */
+    protected JCheckBox mRunToggle;
+
+    /**
+     * Sequencer speed slider in status bar.
+     */
+    protected JSlider mSpeedSlider;
+
+    /**
+     * URL report in status bar.
+     */
+    protected JTextField mUrlText;
+
+    /**
+     * URL queue size display in status bar.
+     */
+    protected JLabel mQueueSize;
+
+    /**
+     * URL visited count display in status bar.
+     */
+    protected JLabel mVisitedSize;
+
+    /**
+     * Creates a new instance of Thumbelina.
+     */
+    public Thumbelina ()
+    {
+<span class="nc" id="L236">        this ((URL)null);</span>
+<span class="nc" id="L237">    }</span>
+
+    /**
+     * Creates a new instance of Thumbelina.
+     * @param url Single URL to enter into the 'to follow' list.
+     * @exception MalformedURLException If the url is malformed.
+     */
+    public Thumbelina (final String url)
+        throws
+            MalformedURLException
+    {
+<span class="nc bnc" id="L248" title="All 2 branches missed.">        this (null == url ? null : new URL (url));</span>
+<span class="nc" id="L249">    }</span>
+
+    /**
+     * Creates a new instance of Thumbelina.
+     * @param url URL to enter into the 'to follow' list.
+     */
+<span class="nc" id="L255">    public Thumbelina (final URL url)</span>
+    {
+<span class="nc" id="L257">        mUrls = new ArrayList&lt;URL&gt; ();</span>
+<span class="nc" id="L258">        mVisited = new HashMap&lt;String,URL&gt; ();</span>
+<span class="nc" id="L259">        mRequested = new HashMap&lt;String,URL&gt; ();</span>
+<span class="nc" id="L260">        mTracked = new HashMap&lt;String, URL&gt; ();</span>
+<span class="nc" id="L261">        mThread = null;</span>
+<span class="nc" id="L262">        mActive = true;</span>
+<span class="nc" id="L263">        mPicturePanel = new PicturePanel (this);</span>
+<span class="nc" id="L264">        mSequencer = new Sequencer (this);</span>
+<span class="nc" id="L265">        mPropertySupport = new PropertyChangeSupport (this);</span>
+<span class="nc" id="L266">        mCurrentURL = null;</span>
+<span class="nc" id="L267">        mDiscardCGI = true;</span>
+<span class="nc" id="L268">        mDiscardQueries = true;</span>
+
+        // JComponent specific
+<span class="nc" id="L271">        setDoubleBuffered (false);</span>
+<span class="nc" id="L272">        setLayout (new java.awt.BorderLayout ());</span>
+
+<span class="nc" id="L274">        mThread = new Thread (this);</span>
+<span class="nc" id="L275">        mThread.setName (&quot;BackgroundThread&quot;);</span>
+<span class="nc" id="L276">        mThread.start ();</span>
+<span class="nc" id="L277">        initComponents ();</span>
+
+<span class="nc" id="L279">        mRunToggle.addItemListener (this);</span>
+<span class="nc" id="L280">        mBackgroundToggle.addItemListener (this);</span>
+<span class="nc" id="L281">        mSpeedSlider.addChangeListener (this);</span>
+<span class="nc" id="L282">        mHistory.addListSelectionListener (this);</span>
+
+<span class="nc" id="L284">        memCheck ();</span>
+
+<span class="nc bnc" id="L286" title="All 2 branches missed.">        if (null != url)</span>
+<span class="nc" id="L287">            append (url);</span>
+<span class="nc" id="L288">    }</span>
+
+    /**
+     * Check for low memory situation.
+     * Report to the user a bad situation.
+     */
+    protected void memCheck ()
+    {
+        Runtime runtime;
+        long maximum;
+
+<span class="nc bnc" id="L299" title="All 2 branches missed.">        if (System.getProperty (&quot;java.version&quot;).startsWith (&quot;1.4&quot;))</span>
+        {
+<span class="nc" id="L301">            runtime = Runtime.getRuntime ();</span>
+<span class="nc" id="L302">            runtime.gc ();</span>
+<span class="nc" id="L303">            maximum = runtime.maxMemory ();</span>
+<span class="nc bnc" id="L304" title="All 2 branches missed.">            if (maximum &lt; 67108864L) // 64MB</span>
+<span class="nc" id="L305">                JOptionPane.showMessageDialog (</span>
+<span class="nc" id="L306">                    null,</span>
+<span class="nc" id="L307">                    &quot;Maximum available memory is low (&quot; + maximum + &quot; bytes).\n&quot;</span>
+<span class="nc" id="L308">                    + &quot;\n&quot;</span>
+<span class="nc" id="L309">                    + &quot;It is strongly suggested to increase the maximum memory\n&quot;</span>
+<span class="nc" id="L310">                    + &quot;available by using the JVM command line switch -Xmx with\n&quot;</span>
+<span class="nc" id="L311">                    + &quot;a suitable value, such as -Xmx256M for example.&quot;,</span>
+<span class="nc" id="L312">                    &quot;Thumbelina - Low memory&quot;,</span>
+<span class="nc" id="L313">                    JOptionPane.WARNING_MESSAGE,</span>
+<span class="nc" id="L314">                    null /*Icon*/);</span>
+        }
+<span class="nc" id="L316">    }</span>
+
+    /**
+     * Reset this Thumbelina.
+     * Clears the sequencer of pending images, resets the picture panel,
+     * emptiies the 'to be examined' list of URLs.
+     */
+    public void reset ()
+    {
+        int oldsize;
+
+<span class="nc" id="L327">        mSequencer.reset ();</span>
+<span class="nc" id="L328">        mPicturePanel.reset ();</span>
+<span class="nc" id="L329">        synchronized (mUrls)</span>
+        {
+<span class="nc" id="L331">            oldsize = mUrls.size ();</span>
+<span class="nc" id="L332">            mUrls.clear ();</span>
+        }
+<span class="nc" id="L334">        updateQueueSize (oldsize, mUrls.size ());</span>
+<span class="nc" id="L335">    }</span>
+
+    /**
+     * Append the given URL to the queue.
+     * Adds the url only if it isn't already in the queue,
+     * and notifys listeners about the addition.
+     * @param url The url to add.
+     */
+    public void append (final URL url)
+    {
+        String href;
+        boolean found;
+        URL u;
+        int oldsize;
+
+<span class="nc" id="L350">        href = url.toString ();</span>
+<span class="nc" id="L351">        found = false;</span>
+<span class="nc" id="L352">        oldsize = -1;</span>
+<span class="nc" id="L353">        synchronized (mUrls)</span>
+        {
+<span class="nc bnc" id="L355" title="All 4 branches missed.">            for (int i = 0; !found &amp;&amp; (i &lt; mUrls.size ()); i++)</span>
+            {
+<span class="nc" id="L357">                u = mUrls.get (i);</span>
+<span class="nc bnc" id="L358" title="All 2 branches missed.">                if (href.equals (u.toString ()))</span>
+<span class="nc" id="L359">                    found = true;</span>
+            }
+<span class="nc bnc" id="L361" title="All 2 branches missed.">            if (!found)</span>
+            {
+<span class="nc" id="L363">                oldsize = mUrls.size ();</span>
+<span class="nc" id="L364">                mUrls.add (url);</span>
+<span class="nc" id="L365">                mUrls.notify ();</span>
+            }
+        }
+<span class="nc bnc" id="L368" title="All 2 branches missed.">        if (-1 != oldsize)</span>
+<span class="nc" id="L369">            updateQueueSize (oldsize, mUrls.size ());</span>
+<span class="nc" id="L370">    }</span>
+
+    /**
+     * Append the given URLs to the queue.
+     * @param list The list of URL objects to add.
+     */
+    public void append (final ArrayList list)
+    {
+<span class="nc bnc" id="L378" title="All 2 branches missed.">        for (int i = 0; i &lt; list.size (); i++)</span>
+<span class="nc" id="L379">            append ((URL)list.get (i));</span>
+<span class="nc" id="L380">    }</span>
+
+    /**
+     * Filter URLs and add to queue.
+     * Removes already visited links and appends the rest (if any) to the
+     * visit pending list.
+     * @param urls The list of URL's to add to the 'to visit' list.
+     * @return Returns the filered list.
+     */
+    protected ArrayList&lt;URL&gt; filter (final URL[] urls)
+    {
+        URL url;
+        String ref;
+        ArrayList&lt;URL&gt; ret;
+
+<span class="nc" id="L395">        ret = new ArrayList&lt;URL&gt; ();</span>
+<span class="nc bnc" id="L396" title="All 2 branches missed.">        for (int i = 0; i &lt; urls.length; i++)</span>
+        {
+<span class="nc" id="L398">            url = urls[i];</span>
+<span class="nc" id="L399">            ref = url.toString ();</span>
+            // ignore cgi
+<span class="nc bnc" id="L401" title="All 4 branches missed.">            if (!mDiscardCGI || (-1 == ref.indexOf (&quot;/cgi-bin/&quot;)))</span>
+                // ignore queries
+<span class="nc bnc" id="L403" title="All 4 branches missed.">                if (!mDiscardQueries || (-1 == ref.indexOf (&quot;?&quot;)))</span>
+                    // ignore duplicates
+<span class="nc bnc" id="L405" title="All 2 branches missed.">                    if (!mVisited.containsKey (ref))</span>
+                    {
+                        try
+                        {
+<span class="nc" id="L409">                            url.openConnection ();</span>
+<span class="nc" id="L410">                            ret.add (url);</span>
+<span class="nc" id="L411">                        }</span>
+<span class="nc" id="L412">                        catch (IOException ioe)</span>
+                        {
+                            // unknown host or some other problem... discard
+                        }
+                    }
+        }
+
+<span class="nc" id="L419">        return (ret);</span>
+    }
+
+    /**
+     * Initialize the GUI.
+     */
+    private void initComponents ()
+    {
+<span class="nc" id="L427">        mPowerBar = new JPanel ();</span>
+<span class="nc" id="L428">        mUrlText = new JTextField ();</span>
+<span class="nc" id="L429">        mRunToggle = new JCheckBox ();</span>
+<span class="nc" id="L430">        mSpeedSlider = new JSlider ();</span>
+<span class="nc" id="L431">        mReadyProgress = new JProgressBar ();</span>
+<span class="nc" id="L432">        mQueueProgress = new JProgressBar ();</span>
+<span class="nc" id="L433">        mBackgroundToggle = new JCheckBox ();</span>
+<span class="nc" id="L434">        mMainArea = new JSplitPane ();</span>
+<span class="nc" id="L435">        mPicturePanelScroller = new JScrollPane ();</span>
+<span class="nc" id="L436">        mHistoryScroller = new JScrollPane ();</span>
+<span class="nc" id="L437">        mHistory = new JList ();</span>
+<span class="nc" id="L438">        mQueueSize = new JLabel ();</span>
+<span class="nc" id="L439">        mVisitedSize = new JLabel ();</span>
+
+<span class="nc" id="L441">        mPowerBar.setLayout (new BoxLayout (mPowerBar, BoxLayout.X_AXIS));</span>
+
+<span class="nc" id="L443">        mPowerBar.setBorder (new BevelBorder (BevelBorder.LOWERED));</span>
+<span class="nc" id="L444">        mPowerBar.add (mUrlText);</span>
+
+<span class="nc" id="L446">        mRunToggle.setSelected (true);</span>
+<span class="nc" id="L447">        mRunToggle.setText (&quot;On/Off&quot;);</span>
+<span class="nc" id="L448">        mRunToggle.setToolTipText (&quot;Starts/stops the image presentation.&quot;);</span>
+<span class="nc" id="L449">        mPowerBar.add (mRunToggle);</span>
+
+<span class="nc" id="L451">        mSpeedSlider.setMajorTickSpacing (1000);</span>
+<span class="nc" id="L452">        mSpeedSlider.setMaximum (5000);</span>
+<span class="nc" id="L453">        mSpeedSlider.setPaintTicks (true);</span>
+<span class="nc" id="L454">        mSpeedSlider.setToolTipText (&quot;Set inter-image delay.&quot;);</span>
+<span class="nc" id="L455">        mSpeedSlider.setValue (500);</span>
+<span class="nc" id="L456">        mSpeedSlider.setInverted (true);</span>
+<span class="nc" id="L457">        mPowerBar.add (mSpeedSlider);</span>
+
+<span class="nc" id="L459">        mReadyProgress.setToolTipText (&quot;Pending images..&quot;);</span>
+<span class="nc" id="L460">        mReadyProgress.setStringPainted (true);</span>
+<span class="nc" id="L461">        mPowerBar.add (mReadyProgress);</span>
+
+<span class="nc" id="L463">        mQueueProgress.setToolTipText (&quot;Outstanding image fetches..&quot;);</span>
+<span class="nc" id="L464">        mQueueProgress.setStringPainted (true);</span>
+<span class="nc" id="L465">        mPowerBar.add (mQueueProgress);</span>
+
+<span class="nc" id="L467">        mBackgroundToggle.setSelected (true);</span>
+<span class="nc" id="L468">        mBackgroundToggle.setText (&quot;On/Off&quot;);</span>
+<span class="nc" id="L469">        mBackgroundToggle.setToolTipText (&quot;Starts/stops background fetching.&quot;);</span>
+<span class="nc" id="L470">        mPowerBar.add (mBackgroundToggle);</span>
+
+<span class="nc" id="L472">        mVisitedSize.setBorder (new BevelBorder (BevelBorder.LOWERED));</span>
+<span class="nc" id="L473">        mVisitedSize.setText (&quot;00000&quot;);</span>
+<span class="nc" id="L474">        mVisitedSize.setToolTipText (&quot;Number of URLs examined.&quot;);</span>
+<span class="nc" id="L475">        mPowerBar.add (mVisitedSize);</span>
+<span class="nc" id="L476">        mQueueSize.setBorder (new BevelBorder (BevelBorder.LOWERED));</span>
+<span class="nc" id="L477">        mQueueSize.setText (&quot;00000&quot;);</span>
+<span class="nc" id="L478">        mQueueSize.setToolTipText (&quot;Number of URLs in queue.&quot;);</span>
+<span class="nc" id="L479">        mPowerBar.add (mQueueSize);</span>
+
+<span class="nc" id="L481">        mHistory.setModel (new DefaultListModel ());</span>
+<span class="nc" id="L482">        mHistory.setToolTipText (&quot;History&quot;);</span>
+<span class="nc" id="L483">        mHistory.setDoubleBuffered (false);</span>
+<span class="nc" id="L484">        mHistory.setSelectionMode (</span>
+<span class="nc" id="L485">            ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);</span>
+<span class="nc" id="L486">        mHistoryScroller.setViewportView (mHistory);</span>
+<span class="nc" id="L487">        mHistoryScroller.setDoubleBuffered (false);</span>
+<span class="nc" id="L488">        mPicturePanelScroller.setViewportView (mPicturePanel);</span>
+<span class="nc" id="L489">        mPicturePanelScroller.setDoubleBuffered (false);</span>
+<span class="nc" id="L490">        mPicturePanelScroller.setHorizontalScrollBarPolicy (</span>
+<span class="nc" id="L491">            ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);</span>
+<span class="nc" id="L492">        mPicturePanelScroller.setVerticalScrollBarPolicy (</span>
+<span class="nc" id="L493">            ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);</span>
+
+<span class="nc" id="L495">        add (mMainArea, java.awt.BorderLayout.CENTER);</span>
+<span class="nc" id="L496">        mMainArea.setLeftComponent (mHistoryScroller);</span>
+<span class="nc" id="L497">        mMainArea.setRightComponent (mPicturePanelScroller);</span>
+<span class="nc" id="L498">        add (mPowerBar, java.awt.BorderLayout.SOUTH);</span>
+<span class="nc" id="L499">    }</span>
+
+    /**
+     * Gets the state of status bar visibility.
+     * @return &lt;code&gt;true&lt;/code&gt; if the status bar is visible.
+     */
+    public boolean getStatusBarVisible ()
+    {
+        boolean ret;
+
+<span class="nc" id="L509">        ret = false;</span>
+
+<span class="nc bnc" id="L511" title="All 4 branches missed.">        for (int i = 0; !ret &amp;&amp; (i &lt; getComponentCount ()); i++)</span>
+<span class="nc bnc" id="L512" title="All 2 branches missed.">            if (mPowerBar == getComponent (i))</span>
+<span class="nc" id="L513">                ret = true;</span>
+
+<span class="nc" id="L515">        return (ret);</span>
+    }
+
+    /**
+     * Sets the status bar visibility.
+     * @param visible The new visibility state.
+     * If &lt;code&gt;true&lt;/code&gt;, the status bar will be unhidden.
+     */
+    public void setStatusBarVisible (final boolean visible)
+    {
+        int index;
+
+<span class="nc" id="L527">        index = -1;</span>
+<span class="nc bnc" id="L528" title="All 4 branches missed.">        for (int i = 0; (-1 == index) &amp;&amp; (i &lt; getComponentCount ()); i++)</span>
+<span class="nc bnc" id="L529" title="All 2 branches missed.">            if (mPowerBar == getComponent (i))</span>
+<span class="nc" id="L530">                index = i;</span>
+<span class="nc bnc" id="L531" title="All 2 branches missed.">        if (visible)</span>
+        {
+<span class="nc bnc" id="L533" title="All 2 branches missed.">            if (-1 == index)</span>
+            {
+<span class="nc" id="L535">                add (mPowerBar, java.awt.BorderLayout.SOUTH);</span>
+<span class="nc" id="L536">                invalidate ();</span>
+<span class="nc" id="L537">                validate ();</span>
+            }
+<span class="nc" id="L539">        }</span>
+        else
+<span class="nc bnc" id="L541" title="All 2 branches missed.">            if (-1 != index)</span>
+            {
+<span class="nc" id="L543">                remove (index);</span>
+<span class="nc" id="L544">                invalidate ();</span>
+<span class="nc" id="L545">                validate ();</span>
+            }
+<span class="nc" id="L547">    }</span>
+
+    /**
+     * Gets the state of history list visibility.
+     * @return &lt;code&gt;true&lt;/code&gt; if the history list is visible.
+     */
+    public boolean getHistoryListVisible ()
+    {
+        boolean ret;
+
+<span class="nc" id="L557">        ret = false;</span>
+
+<span class="nc bnc" id="L559" title="All 4 branches missed.">        for (int i = 0; !ret &amp;&amp; (i &lt; getComponentCount ()); i++)</span>
+            // check indirectly because the history list is in a splitter
+<span class="nc bnc" id="L561" title="All 2 branches missed.">            if (mMainArea == getComponent (i))</span>
+<span class="nc" id="L562">                ret = true;</span>
+
+<span class="nc" id="L564">        return (ret);</span>
+    }
+
+    /**
+     * Sets the history list visibility.
+     * @param visible The new visibility state.
+     * If &lt;code&gt;true&lt;/code&gt;, the history list will be unhidden.
+     */
+    public void setHistoryListVisible (final boolean visible)
+    {
+        int pictpanel;
+        int splitter;
+        Component component;
+
+<span class="nc" id="L578">        pictpanel = -1;</span>
+<span class="nc" id="L579">        splitter = -1;</span>
+<span class="nc bnc" id="L580" title="All 2 branches missed.">        for (int i = 0; i &lt; getComponentCount (); i++)</span>
+        {
+<span class="nc" id="L582">            component = getComponent (i);</span>
+<span class="nc bnc" id="L583" title="All 2 branches missed.">            if (mPicturePanelScroller == component)</span>
+<span class="nc" id="L584">                pictpanel = i;</span>
+<span class="nc bnc" id="L585" title="All 2 branches missed.">            else if (mMainArea == component)</span>
+<span class="nc" id="L586">                splitter = i;</span>
+        }
+<span class="nc bnc" id="L588" title="All 2 branches missed.">        if (visible)</span>
+        {
+<span class="nc bnc" id="L590" title="All 2 branches missed.">            if (-1 != pictpanel)</span>
+            {
+<span class="nc" id="L592">                remove (pictpanel);</span>
+<span class="nc" id="L593">                add (mMainArea, java.awt.BorderLayout.CENTER);</span>
+<span class="nc" id="L594">                mMainArea.setLeftComponent (mHistoryScroller);</span>
+                //mPicturePanelScroller.setViewportView (mPicturePanel);
+<span class="nc" id="L596">                mMainArea.setRightComponent (mPicturePanelScroller);</span>
+<span class="nc" id="L597">                invalidate ();</span>
+<span class="nc" id="L598">                validate ();</span>
+            }
+<span class="nc" id="L600">        }</span>
+        else
+<span class="nc bnc" id="L602" title="All 2 branches missed.">            if (-1 != splitter)</span>
+            {
+<span class="nc" id="L604">                remove (splitter);</span>
+<span class="nc" id="L605">                add (mPicturePanelScroller, java.awt.BorderLayout.CENTER);</span>
+<span class="nc" id="L606">                invalidate ();</span>
+<span class="nc" id="L607">                validate ();</span>
+            }
+<span class="nc" id="L609">    }</span>
+
+    /**
+     * Gets the state of the sequencer thread.
+     * @return &lt;code&gt;true&lt;/code&gt; if the thread is pumping images.
+     */
+    public boolean getSequencerActive ()
+    {
+<span class="nc" id="L617">        return (mSequencer.mActive);</span>
+    }
+
+    /**
+     * Sets the sequencer activity state.
+     * The sequencer is the thread that moves images from the pending list
+     * to the picture panel on a timed basis.
+     * @param active The new activity state.
+     * If &lt;code&gt;true&lt;/code&gt;, the sequencer will be turned on.
+     * This may alter the speed setting if it is set to zero.
+     */
+    public void setSequencerActive (final boolean active)
+    {
+        // check the delay is not zero
+<span class="nc bnc" id="L631" title="All 2 branches missed.">        if (0 == getSpeed ())</span>
+<span class="nc" id="L632">            setSpeed (Sequencer.DEFAULT_DELAY);</span>
+<span class="nc" id="L633">        mSequencer.mActive = active;</span>
+<span class="nc bnc" id="L634" title="All 2 branches missed.">        if (active)</span>
+<span class="nc" id="L635">            synchronized (mSequencer.mPending)</span>
+            {
+<span class="nc" id="L637">                mSequencer.mPending.notify ();</span>
+            }
+<span class="nc bnc" id="L639" title="All 2 branches missed.">        if (active != mRunToggle.isSelected ())</span>
+<span class="nc" id="L640">            mRunToggle.setSelected (active);</span>
+<span class="nc" id="L641">    }</span>
+
+    /**
+     * Gets the state of the background thread.
+     * @return &lt;code&gt;true&lt;/code&gt; if the thread is examining web pages.
+     */
+    public boolean getBackgroundThreadActive ()
+    {
+<span class="nc" id="L649">        return (mActive);</span>
+    }
+
+    /**
+     * Sets the state of the background thread activity.
+     * The background thread is responsible for examining URLs that are on
+     * the queue for thumbnails, and starting the image fetch operation.
+     * @param active If &lt;code&gt;true&lt;/code&gt;,
+     * the background thread will be turned on.
+     */
+    public void setBackgroundThreadActive (final boolean active)
+    {
+<span class="nc" id="L661">        mActive = active;</span>
+<span class="nc bnc" id="L662" title="All 4 branches missed.">        if (active &amp;&amp; !mUrls.isEmpty ())</span>
+<span class="nc" id="L663">            synchronized (mUrls)</span>
+            {
+<span class="nc" id="L665">                mUrls.notify ();</span>
+            }
+<span class="nc bnc" id="L667" title="All 2 branches missed.">        if (active != mBackgroundToggle.isSelected ())</span>
+<span class="nc" id="L668">            mBackgroundToggle.setSelected (active);</span>
+<span class="nc" id="L669">    }</span>
+
+    /**
+     * Get the sequencer delay time.
+     * @return The number of milliseconds between image additions to the panel.
+     */
+    public int getSpeed ()
+    {
+<span class="nc" id="L677">        return (mSequencer.getDelay ());</span>
+    }
+
+    /**
+     * Set the sequencer delay time.
+     * The sequencer is the thread that moves images from the pending list
+     * to the picture panel on a timed basis. This value sets the number of
+     * milliseconds it waits between pictures.
+     * Setting it to zero toggles the running state off.
+     * @param speed The sequencer delay in milliseconds.
+     */
+    public void setSpeed (final int speed)
+    {
+<span class="nc bnc" id="L690" title="All 2 branches missed.">        if (0 == speed)</span>
+<span class="nc" id="L691">            mRunToggle.setSelected (false);</span>
+        else
+        {
+<span class="nc" id="L694">            mRunToggle.setSelected (true);</span>
+<span class="nc" id="L695">            mSequencer.setDelay (speed);</span>
+        }
+<span class="nc bnc" id="L697" title="All 2 branches missed.">        if (speed != mSpeedSlider.getValue ())</span>
+<span class="nc" id="L698">            mSpeedSlider.setValue (speed);</span>
+<span class="nc" id="L699">    }</span>
+
+    /**
+     * Getter for property discardCGI.
+     * @return Value of property discardCGI.
+     *
+     */
+    public boolean isDiscardCGI ()
+    {
+<span class="nc" id="L708">        return (mDiscardCGI);</span>
+    }
+
+    /**
+     * Setter for property discardCGI.
+     * @param discard New value of property discardCGI.
+     *
+     */
+    public void setDiscardCGI (final boolean discard)
+    {
+<span class="nc" id="L718">        mDiscardCGI = discard;</span>
+<span class="nc" id="L719">    }</span>
+
+    /**
+     * Getter for property discardQueries.
+     * @return Value of property discardQueries.
+     *
+     */
+    public boolean isDiscardQueries ()
+    {
+<span class="nc" id="L728">        return (mDiscardQueries);</span>
+    }
+
+    /**
+     * Setter for property discardQueries.
+     * @param discard New value of property discardQueries.
+     *
+     */
+    public void setDiscardQueries (final boolean discard)
+    {
+<span class="nc" id="L738">        mDiscardQueries = discard;</span>
+<span class="nc" id="L739">    }</span>
+
+    /**
+     * Check if the url looks like an image.
+     * @param url The usrl to check for image characteristics.
+     * @return &lt;code&gt;true&lt;/code&gt; if the url ends in a recognized image
+     * extension.
+     */
+    protected boolean isImage (final String url)
+    {
+<span class="nc" id="L749">        String lower = url.toLowerCase ();</span>
+<span class="nc bnc" id="L750" title="All 4 branches missed.">        return (lower.endsWith (&quot;.jpg&quot;) || lower.endsWith (&quot;.gif&quot;)</span>
+<span class="nc bnc" id="L751" title="All 2 branches missed.">            || lower.endsWith (&quot;.png&quot;));</span>
+    }
+
+    /**
+     * Get the links of an element of a document.
+     * Only gets the links on IMG elements that reference another image.
+     * The latter is based on suffix (.jpg, .gif and .png).
+     * @param lexer The fully conditioned lexer, ready to rock.
+     * @param docbase The url to read.
+     * @return The URLs, targets of the IMG links;
+     * @exception IOException If the underlying infrastructure throws it.
+     * @exception ParserException If there is a problem parsing the url.
+     */
+    protected URL[][] extractImageLinks (final Lexer lexer, final URL docbase)
+        throws
+            IOException,
+            ParserException
+    {
+        HashMap&lt;String,URL&gt; images;
+        HashMap&lt;String,URL&gt; links;
+        boolean ina; // true when within a &lt;A&gt;&lt;/A&gt; pair
+        Node node;
+        Tag tag;
+        String name;
+        Tag startatag;
+        Tag imgtag;
+        String href;
+        String src;
+        URL url;
+        URL[][] ret;
+
+<span class="nc" id="L782">        images = new HashMap&lt;String,URL&gt; ();</span>
+<span class="nc" id="L783">        links = new HashMap&lt;String,URL&gt; ();</span>
+<span class="nc" id="L784">        ina = false;</span>
+<span class="nc" id="L785">        startatag = null;</span>
+<span class="nc" id="L786">        imgtag = null;</span>
+<span class="nc bnc" id="L787" title="All 2 branches missed.">        while (null != (node = lexer.nextNode ()))</span>
+        {
+<span class="nc bnc" id="L789" title="All 2 branches missed.">            if (node instanceof Tag)</span>
+            {
+<span class="nc" id="L791">                tag = (Tag)node;</span>
+<span class="nc" id="L792">                name = tag.getTagName ();</span>
+<span class="nc bnc" id="L793" title="All 2 branches missed.">                if (&quot;A&quot;.equals (name))</span>
+                {
+<span class="nc bnc" id="L795" title="All 2 branches missed.">                    if (tag.isEndTag ())</span>
+                    {
+<span class="nc" id="L797">                        ina = false;</span>
+<span class="nc bnc" id="L798" title="All 2 branches missed.">                        if (null != imgtag)</span>
+                        {
+                            // evidence of a thumb
+<span class="nc" id="L801">                            href = startatag.getAttribute (&quot;HREF&quot;);</span>
+<span class="nc bnc" id="L802" title="All 2 branches missed.">                            if (null != href)</span>
+                            {
+<span class="nc bnc" id="L804" title="All 2 branches missed.">                                if (isImage (href))</span>
+                                {
+<span class="nc" id="L806">                                    src = imgtag.getAttribute (&quot;SRC&quot;);</span>
+<span class="nc bnc" id="L807" title="All 2 branches missed.">                                    if (null != src)</span>
+                                        try
+                                        {
+<span class="nc" id="L810">                                            url = new URL (docbase, href);</span>
+                                            // eliminate duplicates
+<span class="nc" id="L812">                                            href = url.toString ();</span>
+<span class="nc bnc" id="L813" title="All 2 branches missed.">                                            if (!images.containsKey (href))</span>
+<span class="nc" id="L814">                                                images.put (href, url);</span>
+<span class="nc" id="L815">                                        }</span>
+<span class="nc" id="L816">                                        catch (MalformedURLException murle)</span>
+                                        {
+                                            // oops, forget it
+                                        }
+                                }
+                            }
+                        }
+<span class="nc" id="L823">                    }</span>
+                    else
+                    {
+<span class="nc" id="L826">                        startatag = tag;</span>
+<span class="nc" id="L827">                        imgtag = null;</span>
+<span class="nc" id="L828">                        ina = true;</span>
+<span class="nc" id="L829">                        href = startatag.getAttribute (&quot;HREF&quot;);</span>
+<span class="nc bnc" id="L830" title="All 2 branches missed.">                        if (null != href)</span>
+                        {
+<span class="nc bnc" id="L832" title="All 2 branches missed.">                            if (!isImage (href))</span>
+                                try
+                                {
+<span class="nc" id="L835">                                    url = new URL (docbase, href);</span>
+                                    // eliminate duplicates
+<span class="nc" id="L837">                                    href = url.toString ();</span>
+<span class="nc bnc" id="L838" title="All 2 branches missed.">                                    if (!links.containsKey (href))</span>
+<span class="nc" id="L839">                                        links.put (href, url);</span>
+<span class="nc" id="L840">                                }</span>
+<span class="nc" id="L841">                                catch (MalformedURLException murle)</span>
+                                {
+                                    // well, obviously we don't want this one
+                                }
+                        }
+                    }
+<span class="nc" id="L847">                }</span>
+<span class="nc bnc" id="L848" title="All 4 branches missed.">                else if (ina &amp;&amp; &quot;IMG&quot;.equals (name))</span>
+<span class="nc" id="L849">                    imgtag = tag;</span>
+            }
+        }
+
+<span class="nc" id="L853">        ret = new URL[2][];</span>
+<span class="nc" id="L854">        ret[0] = new URL[images.size ()];</span>
+<span class="nc" id="L855">        images.values ().toArray (ret[0]);</span>
+<span class="nc" id="L856">        ret[1] = new URL[links.size ()];</span>
+<span class="nc" id="L857">        links.values ().toArray (ret[1]);</span>
+
+<span class="nc" id="L859">        return (ret);</span>
+    }
+
+    /**
+     * Get the image links from the current URL.
+     * @param url The URL to get the links from
+     * @return An array of two URL arrays, index 0 is a list of images,
+     * index 1 is a list of links to possibly follow.
+     */
+    protected URL[][] getImageLinks (final URL url)
+    {
+        Lexer lexer;
+        URL[][] ret;
+
+<span class="nc bnc" id="L873" title="All 2 branches missed.">        if (null != url)</span>
+        {
+            try
+            {
+<span class="nc" id="L877">                lexer = new Lexer (url.openConnection ());</span>
+<span class="nc" id="L878">                ret = extractImageLinks (lexer, url);</span>
+<span class="nc" id="L879">            }</span>
+<span class="nc" id="L880">            catch (Throwable t)</span>
+            {
+<span class="nc" id="L882">                System.out.println (t.getMessage ());</span>
+<span class="nc" id="L883">                ret = NONE;</span>
+            }
+<span class="nc" id="L885">        }</span>
+        else
+<span class="nc" id="L887">            ret =  NONE;</span>
+
+<span class="nc" id="L889">        return (ret);</span>
+    }
+
+    /**
+     * Get the picture panel object encapsulated by this Thumbelina.
+     * @return The picture panel.
+     */
+    public PicturePanel getPicturePanel ()
+    {
+<span class="nc" id="L898">        return (mPicturePanel);</span>
+    }
+
+    /**
+     * Add a PropertyChangeListener to the listener list.
+     * The listener is registered for all properties.
+     * @param listener The PropertyChangeListener to be added.
+     */
+    public void addPropertyChangeListener (
+        final PropertyChangeListener listener)
+    {
+<span class="nc" id="L909">        mPropertySupport.addPropertyChangeListener (listener);</span>
+<span class="nc" id="L910">    }</span>
+
+    /**
+     * Remove a PropertyChangeListener from the listener list.
+     * This removes a PropertyChangeListener that was registered for all
+     * properties.
+     * @param listener The PropertyChangeListener to be removed.
+     */
+    public void removePropertyChangeListener (
+        final PropertyChangeListener listener)
+    {
+<span class="nc" id="L921">        mPropertySupport.removePropertyChangeListener (listener);</span>
+<span class="nc" id="L922">    }</span>
+
+    /**
+     * Return the URL currently being examined.
+     * This is a bound property. Notifications are available via the
+     * PROP_CURRENT_URL_PROPERTY property.
+     * @return The size of the 'to be examined' list.
+     */
+    public String getCurrentURL ()
+    {
+<span class="nc" id="L932">        return (mCurrentURL);</span>
+    }
+
+    /**
+     * Set the current URL being examined.
+     * @param url The url that is being examined.
+     */
+    protected void setCurrentURL (final String url)
+    {
+        String oldValue;
+
+<span class="nc bnc" id="L943" title="All 4 branches missed.">        if (((null != url) &amp;&amp; !url.equals (mCurrentURL))</span>
+<span class="nc bnc" id="L944" title="All 4 branches missed.">            || ((null == url) &amp;&amp; (null != mCurrentURL)))</span>
+        {
+<span class="nc" id="L946">            oldValue = mCurrentURL;</span>
+<span class="nc" id="L947">            mCurrentURL = url;</span>
+<span class="nc" id="L948">            mPropertySupport.firePropertyChange (</span>
+<span class="nc" id="L949">                PROP_CURRENT_URL_PROPERTY, oldValue, url);</span>
+        }
+<span class="nc" id="L951">    }</span>
+
+    /**
+     * Apply a change in 'to be examined' URL list size.
+     * Sends notification via the &lt;code&gt;PROP_URL_QUEUE_PROPERTY&lt;/code&gt; property
+     * and updates the status bar.
+     * @param original The original size of the list.
+     * @param current The new size of the list.
+     */
+    protected void updateQueueSize (final int original, final int current)
+    {
+        StringBuffer buffer;
+
+<span class="nc" id="L964">        buffer = new StringBuffer ();</span>
+<span class="nc" id="L965">        buffer.append (current);</span>
+<span class="nc bnc" id="L966" title="All 2 branches missed.">        while (buffer.length () &lt; 5)</span>
+<span class="nc" id="L967">            buffer.insert (0, '0');</span>
+<span class="nc" id="L968">        mQueueSize.setText (buffer.toString ());</span>
+<span class="nc" id="L969">        mPropertySupport.firePropertyChange (</span>
+<span class="nc" id="L970">            PROP_URL_QUEUE_PROPERTY, original, current);</span>
+<span class="nc" id="L971">    }</span>
+
+    /**
+     * Apply a change in 'visited' URL list size.
+     * Sends notification via the &lt;code&gt;PROP_URL_VISITED_PROPERTY&lt;/code&gt;
+     * property and updates the status bar.
+     * @param original The original size of the list.
+     * @param current The new size of the list.
+     */
+    protected void updateVisitedSize (final int original, final int current)
+    {
+        StringBuffer buffer;
+
+<span class="nc" id="L984">        buffer = new StringBuffer ();</span>
+<span class="nc" id="L985">        buffer.append (current);</span>
+<span class="nc bnc" id="L986" title="All 2 branches missed.">        while (buffer.length () &lt; 5)</span>
+<span class="nc" id="L987">            buffer.insert (0, '0');</span>
+<span class="nc" id="L988">        mVisitedSize.setText (buffer.toString ());</span>
+<span class="nc" id="L989">        mPropertySupport.firePropertyChange (</span>
+<span class="nc" id="L990">            PROP_URL_VISITED_PROPERTY, original, current);</span>
+<span class="nc" id="L991">    }</span>
+
+    /**
+     * Fetch images.
+     * Ask the toolkit to make the image from a URL, and add a tracker
+     * to handle it when it's received.
+     * Add details to the rquested and tracked lists and update
+     * the status bar.
+     * @param images The list of images to fetch.
+     */
+    protected void fetch (final URL[] images)
+    {
+        Image image;
+        int size;
+
+<span class="nc bnc" id="L1006" title="All 2 branches missed.">        for (int j = 0; j &lt; images.length; j++)</span>
+        {
+<span class="nc bnc" id="L1008" title="All 2 branches missed.">            if (!mRequested.containsKey (images[j].toString ()))</span>
+            {
+<span class="nc" id="L1010">                synchronized (mTracked)</span>
+                {
+<span class="nc" id="L1012">                    size = mTracked.size () + 1;</span>
+<span class="nc bnc" id="L1013" title="All 2 branches missed.">                    if (mQueueProgress.getMaximum () &lt; size)</span>
+                    {
+                        try
+                        {
+<span class="nc" id="L1017">                            mTracked.wait ();</span>
+<span class="nc" id="L1018">                        }</span>
+<span class="nc" id="L1019">                        catch (InterruptedException ie)</span>
+                        {
+                            // this won't happen, just continue on
+                        }
+                    }
+<span class="nc" id="L1024">                    mRequested.put (images[j].toString (), images[j]);</span>
+<span class="nc" id="L1025">                    mTracked.put (images[j].toString (), images[j]);</span>
+<span class="nc" id="L1026">                    mQueueProgress.setValue (size);</span>
+<span class="nc" id="L1027">                    Picture picture = new Picture (images[j], this, null);</span>
+<span class="nc" id="L1028">                    Thread thread = new Thread (picture);</span>
+<span class="nc" id="L1029">                    thread.start ();</span>
+                }
+            }
+        }
+<span class="nc" id="L1033">    }</span>
+
+    // post the received image
+    public void pictureReceived (Picture picture)
+    {
+        URL url;
+        
+<span class="nc" id="L1040">        synchronized (mTracked)</span>
+        {
+<span class="nc" id="L1042">            url = (URL)mTracked.remove (picture.getIdentity ().toString ());</span>
+<span class="nc" id="L1043">            mTracked.notify ();</span>
+<span class="nc" id="L1044">            mQueueProgress.setValue (mTracked.size ());</span>
+//            if (success)
+//                mSequencer.add (picture, (null != url));
+        }
+<span class="nc" id="L1048">    }</span>
+
+    // post the received image
+    public void pictureReady (Picture picture)
+    {
+        URL url;
+        
+<span class="nc" id="L1055">        mSequencer.add (picture, true); // (null != url)</span>
+<span class="nc" id="L1056">    }</span>
+    //
+    // Runnable interface
+    //
+
+    /**
+     * The main processing loop.
+     * Pull suspect URLs off the queue one at a time, fetch and parse it,
+     * request images and enqueue further links.
+     */
+    public void run ()
+    {
+        URL link;
+        int original;
+        int index;
+        String href;
+        URL[][] urls;
+
+<span class="nc" id="L1074">        while (true)</span>
+        {
+            try
+            {
+<span class="nc" id="L1078">                link = null;</span>
+<span class="nc" id="L1079">                original = -1;</span>
+<span class="nc" id="L1080">                synchronized (mUrls)</span>
+                {
+<span class="nc bnc" id="L1082" title="All 2 branches missed.">                    if (0 != mUrls.size ())</span>
+                    {
+<span class="nc" id="L1084">                        original = mUrls.size ();</span>
+<span class="nc" id="L1085">                        index = (int)(Math.random () * original);</span>
+<span class="nc" id="L1086">                        link = mUrls.remove (index);</span>
+                    }
+                }
+<span class="nc bnc" id="L1089" title="All 2 branches missed.">                if (null != link)</span>
+                {
+<span class="nc" id="L1091">                    updateQueueSize (original, mUrls.size ());</span>
+<span class="nc" id="L1092">                    href = link.toString ();</span>
+<span class="nc" id="L1093">                    setCurrentURL (href);</span>
+<span class="nc" id="L1094">                    mVisited.put (href, link);</span>
+<span class="nc" id="L1095">                    updateVisitedSize (</span>
+<span class="nc" id="L1096">                        mVisited.size () - 1, mVisited.size ());</span>
+<span class="nc" id="L1097">                    urls = getImageLinks (link);</span>
+<span class="nc" id="L1098">                    fetch (urls[0]);</span>
+<span class="nc" id="L1099">                    append (filter (urls[1]));</span>
+//                    synchronized (mEnqueuers)
+//                    {
+//                        Enqueuer enqueuer = new Enqueuer (urls[1]);
+//                        enqueuer.setPriority (Thread.MIN_PRIORITY);
+//                        mEnqueuers.add (enqueuer);
+//                        enqueuer.start ();
+//                    }
+// crap                    setCurrentURL (null);
+<span class="nc" id="L1108">                }</span>
+                else
+                    // don't spin crazily on an empty list
+<span class="nc" id="L1111">                    Thread.sleep (100);</span>
+<span class="nc bnc" id="L1112" title="All 2 branches missed.">                if (!mActive)</span>
+<span class="nc" id="L1113">                    synchronized (mUrls)</span>
+                    {
+<span class="nc" id="L1115">                        mUrls.wait ();</span>
+                    }
+            }
+<span class="nc" id="L1118">            catch (Throwable t)</span>
+            {
+<span class="nc" id="L1120">                t.printStackTrace ();</span>
+            }
+        }
+    }
+
+//    static ArrayList mEnqueuers = new ArrayList ();
+//    
+//    class Enqueuer extends Thread
+//    {
+//        URL[] mList;
+//
+//        public Enqueuer (URL[] list)
+//        {
+//            mList = list;
+//        }
+//
+//        public void run ()
+//        {
+//            append (filter (mList));
+//            synchronized (mEnqueuers)
+//            {
+//                mEnqueuers.remove (this);
+//            }
+//        }
+//    }
+
+    //
+    // ItemListener interface
+    //
+
+    /**
+     * Handle checkbox events from the status bar.
+     * Based on the thread toggles, activates or deactivates the
+     * background thread processes.
+     * @param event The event describing the checkbox event.
+     */
+    public void itemStateChanged (final ItemEvent event)
+    {
+        Object source;
+        boolean checked;
+
+<span class="nc" id="L1161">        source = event.getItemSelectable ();</span>
+<span class="nc bnc" id="L1162" title="All 2 branches missed.">        checked = ItemEvent.SELECTED == event.getStateChange ();</span>
+<span class="nc bnc" id="L1163" title="All 2 branches missed.">        if (source == mRunToggle)</span>
+<span class="nc" id="L1164">            setSequencerActive (checked);</span>
+<span class="nc bnc" id="L1165" title="All 2 branches missed.">        else if (source == mBackgroundToggle)</span>
+<span class="nc" id="L1166">            setBackgroundThreadActive (checked);</span>
+<span class="nc" id="L1167">    }</span>
+
+    //
+    // ChangeListener interface
+    //
+
+    /**
+     * Handles the speed slider events.
+     * @param event The event describing the slider activity.
+     */
+    public void stateChanged (final ChangeEvent event)
+    {
+        JSlider source;
+
+<span class="nc" id="L1181">        source = (JSlider)event.getSource ();</span>
+<span class="nc bnc" id="L1182" title="All 2 branches missed.">        if (!source.getValueIsAdjusting ())</span>
+<span class="nc" id="L1183">            setSpeed (source.getValue ());</span>
+<span class="nc" id="L1184">    }</span>
+
+    //
+    // ListSelectionListener interface
+    //
+
+    /**
+     * Handles the history list events.
+     * @param event The event describing the list activity.
+     */
+    public void valueChanged (final ListSelectionEvent event)
+    {
+        JList source;
+        Object[] hrefs;
+        Picture picture;
+        URL url;
+        Image image;
+
+<span class="nc" id="L1202">        source = (JList)event.getSource ();</span>
+<span class="nc bnc" id="L1203" title="All 4 branches missed.">        if (source == mHistory &amp;&amp; !event.getValueIsAdjusting ())</span>
+        {
+<span class="nc" id="L1205">            hrefs = source.getSelectedValues ();</span>
+<span class="nc bnc" id="L1206" title="All 2 branches missed.">            for (int i = 0; i &lt; hrefs.length; i++)</span>
+            {
+<span class="nc" id="L1208">                picture = mPicturePanel.find (&quot;http://&quot; + (String)hrefs[i]);</span>
+<span class="nc bnc" id="L1209" title="All 2 branches missed.">                if (null != picture)</span>
+<span class="nc" id="L1210">                    mPicturePanel.bringToTop (picture);</span>
+                else
+                    try
+                    {
+<span class="nc" id="L1214">                        url = new URL (&quot;http://&quot; + (String)hrefs[i]);</span>
+<span class="nc" id="L1215">                        image = getToolkit ().createImage (url);</span>
+<span class="nc" id="L1216">                        picture = new Picture (url, this, null);</span>
+<span class="nc" id="L1217">                        System.out.println (&quot;refetching &quot; + hrefs[i]);</span>
+<span class="nc" id="L1218">                        Thread thread = new Thread (picture);</span>
+<span class="nc" id="L1219">                        thread.start ();</span>
+<span class="nc" id="L1220">                    }</span>
+<span class="nc" id="L1221">                    catch (MalformedURLException murle)</span>
+                    {
+<span class="nc" id="L1223">                        murle.printStackTrace ();</span>
+                    }
+            }
+        }
+<span class="nc" id="L1227">    }</span>
+
+    /**
+     * Adds the given url to the history list.
+     * Also puts the URL in the url text of the status bar.
+     * @param url The URL to add to the history list.
+     */
+    public void addHistory (String url)
+    {
+        int index;
+        DefaultListModel model;
+
+<span class="nc" id="L1239">        mUrlText.setText (url);</span>
+        // chop off the protocol
+<span class="nc" id="L1241">        index = url.indexOf (&quot;http://&quot;);</span>
+<span class="nc bnc" id="L1242" title="All 2 branches missed.">        if (-1 != index)</span>
+<span class="nc" id="L1243">            url = url.substring (index + 7);</span>
+        else
+<span class="nc" id="L1245">            System.out.println (&quot;********* &quot; + url + &quot; ************&quot;);</span>
+<span class="nc" id="L1246">        model = (DefaultListModel)mHistory.getModel ();</span>
+<span class="nc" id="L1247">        model.addElement (url);</span>
+        // this doesn't friggin work:
+        // mHistory.ensureIndexIsVisible (model.getSize ());
+<span class="nc" id="L1250">    }</span>
+
+    /**
+     * Open a URL.
+     * Resets the urls list and appends the given url as the only item.
+     * @param ref The URL to add.
+     */
+    public void open (String ref)
+    {
+        URL url;
+
+        try
+        {
+<span class="nc bnc" id="L1263" title="All 2 branches missed.">            if (!ref.startsWith (&quot;http://&quot;))</span>
+<span class="nc" id="L1264">                ref = &quot;http://&quot; + ref;</span>
+<span class="nc" id="L1265">            url = new URL (ref);</span>
+<span class="nc" id="L1266">            reset ();</span>
+<span class="nc" id="L1267">            append (url);</span>
+<span class="nc" id="L1268">        }</span>
+<span class="nc" id="L1269">        catch (Exception e)</span>
+        {
+<span class="nc" id="L1271">            System.out.println (e.getMessage ());</span>
+        }
+<span class="nc" id="L1273">    }</span>
+
+    /**
+     * Provide command line help.
+     */
+    protected static void help ()
+    {
+<span class="nc" id="L1280">        System.out.println (&quot;Thumbelina - Scan and display the images behind thumbnails.&quot;);</span>
+<span class="nc" id="L1281">        System.out.println (&quot;java -Xmx256M -jar thumbelina.jar [url]&quot;);</span>
+<span class="nc" id="L1282">        System.out.println (&quot;It is highly recommended that the maximum heap &quot;</span>
+            + &quot;size be increased with -Xmx switch.&quot;);
+<span class="nc" id="L1284">        System.exit (0);</span>
+<span class="nc" id="L1285">    }</span>
+
+    /**
+     * Mainline.
+     * @param args the command line arguments.
+     * Can be one or more forms of -help to get command line help,
+     * or a URL to prime the program with.
+     * Checks for JDK 1.4 and if not found runs in crippled mode
+     * (no ThumbelinaFrame).
+     */
+    public static void main (final String[] args)
+    {
+        URL url;
+        String version;
+        JFrame frame;
+        Thumbelina thumbelina;
+
+<span class="nc" id="L1302">        System.setProperty (&quot;sun.net.client.defaultReadTimeout&quot;, &quot;7000&quot;);</span>
+<span class="nc" id="L1303">        System.setProperty (&quot;sun.net.client.defaultConnectTimeout&quot;, &quot;7000&quot;);</span>
+
+<span class="nc" id="L1305">        url = null;</span>
+<span class="nc bnc" id="L1306" title="All 2 branches missed.">        if (0 != args.length)</span>
+            try
+            {
+<span class="nc bnc" id="L1309" title="All 2 branches missed.">                if (args[0].equalsIgnoreCase (&quot;help&quot;)</span>
+<span class="nc bnc" id="L1310" title="All 2 branches missed.">                    || args[0].equalsIgnoreCase (&quot;-help&quot;)</span>
+<span class="nc bnc" id="L1311" title="All 2 branches missed.">                    || args[0].equalsIgnoreCase (&quot;-h&quot;)</span>
+<span class="nc bnc" id="L1312" title="All 2 branches missed.">                    || args[0].equalsIgnoreCase (&quot;?&quot;)</span>
+<span class="nc bnc" id="L1313" title="All 2 branches missed.">                    || args[0].equalsIgnoreCase (&quot;-?&quot;))</span>
+<span class="nc" id="L1314">                    help ();</span>
+                else
+<span class="nc" id="L1316">                    url = new URL (args[0]);</span>
+<span class="nc" id="L1317">            }</span>
+<span class="nc" id="L1318">            catch (MalformedURLException murle)</span>
+            {
+<span class="nc" id="L1320">                System.err.println (murle.getMessage ());</span>
+<span class="nc" id="L1321">                help ();</span>
+            }
+
+<span class="nc" id="L1324">        version = System.getProperty (&quot;java.version&quot;);</span>
+<span class="nc bnc" id="L1325" title="All 4 branches missed.">        if (version.startsWith (&quot;1.4&quot;) || version.startsWith (&quot;1.5&quot;))</span>
+<span class="nc" id="L1326">            frame = new ThumbelinaFrame (url);</span>
+        else
+        {
+<span class="nc bnc" id="L1329" title="All 2 branches missed.">            if (null == url)</span>
+<span class="nc" id="L1330">                help ();</span>
+<span class="nc" id="L1331">            System.out.println (</span>
+<span class="nc" id="L1332">                &quot;Java version is only &quot;</span>
+<span class="nc" id="L1333">                + version</span>
+<span class="nc" id="L1334">                + &quot;, entering crippled mode&quot;);</span>
+<span class="nc" id="L1335">            frame = new JFrame (&quot;Thumbelina&quot;);</span>
+<span class="nc" id="L1336">            thumbelina = new Thumbelina (url);</span>
+<span class="nc" id="L1337">            frame.getContentPane ().add (thumbelina, BorderLayout.CENTER);</span>
+<span class="nc" id="L1338">            frame.setBounds (10, 10, 640, 480);</span>
+<span class="nc" id="L1339">            frame.addWindowListener (new WindowAdapter ()</span>
+            {
+                public void windowClosing (final WindowEvent event)
+                {
+<span class="nc" id="L1343">                    System.exit (0);</span>
+<span class="nc" id="L1344">                }</span>
+            });
+        }
+<span class="nc" id="L1347">        frame.setVisible (true);</span>
+<span class="nc" id="L1348">    }</span>
+
+    /**
+     * Getter for property queue.
+     * @return List of URLs that are to be visited.
+     */
+    public ArrayList&lt;URL&gt; getQueue ()
+    {
+<span class="nc" id="L1356">        return (mUrls);</span>
+    }
+
+    /**
+     * Getter for property queue.
+     * This is a bound property. Notifications are available via the
+     * &lt;code&gt;PROP_URL_QUEUE_PROPERTY&lt;/code&gt; property.
+     * @return The size of the list of URLs that are to be visited.
+     */
+    public int getQueueSize ()
+    {
+<span class="nc" id="L1367">        return (mUrls.size ());</span>
+    }
+}
+
+/*
+ * Revision Control Modification History
+ *
+ * $Log: Thumbelina.java,v $
+ * Revision 1.7  2005/02/13 20:36:00  derrickoswald
+ * FilterBuilder
+ *
+ * Revision 1.6  2004/07/31 16:42:30  derrickoswald
+ * Remove unused variables and other fixes exposed by turning on compiler warnings.
+ *
+ * Revision 1.5  2004/05/24 16:18:17  derrickoswald
+ * Part three of a multiphase refactoring.
+ * The three node types are now fronted by interfaces (program to the interface paradigm)
+ * with concrete implementations in the new htmlparser.nodes package. Classes from the
+ * lexer.nodes package are moved to this package, and obvious references to the concrete
+ * classes that got broken by this have been changed to use the interfaces where possible.
+ *
+ * Revision 1.4  2004/05/16 17:59:56  derrickoswald
+ * Alter bound property name constants to agree with section
+ * 8.8 Capitalization of inferred names.
+ * in the JavaBeans API specification.
+ *
+ * Revision 1.3  2003/11/04 01:25:02  derrickoswald
+ * Made visiting order the same order as on the page.
+ * The 'shouldRecurseSelf' boolean of NodeVisitor could probably
+ * be removed since it doesn't make much sense any more.
+ * Fixed StringBean, which was still looking for end tags with names starting with
+ * a slash, i.e. &quot;/SCRIPT&quot;, silly beany.
+ * Added some debugging support to the lexer, you can easily base a breakpoint on
+ * line number.
+ *
+ * Revision 1.2  2003/10/26 16:44:01  derrickoswald
+ * Get thumbelina working again. The tag.getName() method doesn't include the / of end tags.
+ *
+ * Revision 1.1  2003/09/21 18:20:56  derrickoswald
+ * Thumbelina
+ * Created a lexer GUI application to extract images behind thumbnails.
+ * Added a task in the ant build script - thumbelina - to create the jar file.
+ * You need JDK 1.4.x to build it.  It can be run on JDK 1.3.x in crippled mode.
+ * Usage: java -Xmx256M thumbelina.jar [URL]
+ *
+ *
+ */
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

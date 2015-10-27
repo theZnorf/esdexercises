@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>WikiCapturer.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">sitecapturer/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.parserapplications</a> &gt; <span class="el_source">WikiCapturer.java</span></div><h1>WikiCapturer.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/sitecapturer/src/main/java/org/htmlparser/parserapplications/WikiCapturer.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-17 21:02:25 -0400 (Sun, 17 Sep 2006) $
+// $Revision: 8 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.parserapplications;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
+import org.htmlparser.filters.AndFilter;
+import org.htmlparser.filters.HasAttributeFilter;
+import org.htmlparser.filters.NotFilter;
+import org.htmlparser.filters.OrFilter;
+import org.htmlparser.filters.TagNameFilter;
+
+/**
+ * Save a wikiwikiweb locally.
+ * Illustrative program to save a wiki locally.
+ */
+public class WikiCapturer
+    extends
+        SiteCapturer
+{
+    /**
+     * Create a wikicapturer.
+     */
+<span class="nc" id="L51">    public WikiCapturer ()</span>
+    {
+<span class="nc" id="L53">    }</span>
+
+    /**
+     * Returns &lt;code&gt;true&lt;/code&gt; if the link is one we are interested in.
+     * @param link The link to be checked.
+     * @return &lt;code&gt;true&lt;/code&gt; if the link has the source URL as a prefix
+     * and doesn't contain '?' or '#'; the former because we won't be able to
+     * handle server side queries in the static target directory structure and
+     * the latter because presumably the full page with that reference has
+     * already been captured previously. This performs a case insensitive
+     * comparison, which is cheating really, but it's cheap.
+     */
+    protected boolean isToBeCaptured (String link)
+    {
+        boolean ret;
+        
+<span class="nc" id="L69">        ret = super.isToBeCaptured (link);</span>
+
+        // eliminate PhpWiki specific pages
+<span class="nc bnc" id="L72" title="All 2 branches missed.">        if (ret)</span>
+<span class="nc bnc" id="L73" title="All 2 branches missed.">            if (link.endsWith (&quot;PhpWikiAdministration&quot;))</span>
+<span class="nc" id="L74">                ret = false;</span>
+<span class="nc bnc" id="L75" title="All 2 branches missed.">            else if (link.endsWith (&quot;PhpWikiDocumentation&quot;))</span>
+<span class="nc" id="L76">                ret = false;</span>
+<span class="nc bnc" id="L77" title="All 2 branches missed.">            else if (link.endsWith (&quot;TextFormattingRules&quot;))</span>
+<span class="nc" id="L78">                ret = false;</span>
+<span class="nc bnc" id="L79" title="All 2 branches missed.">            else if (link.endsWith (&quot;NewMarkupTestPage&quot;))</span>
+<span class="nc" id="L80">                ret = false;</span>
+<span class="nc bnc" id="L81" title="All 2 branches missed.">            else if (link.endsWith (&quot;OldMarkupTestPage&quot;))</span>
+<span class="nc" id="L82">                ret = false;</span>
+<span class="nc bnc" id="L83" title="All 2 branches missed.">            else if (link.endsWith (&quot;OldTextFormattingRules&quot;))</span>
+<span class="nc" id="L84">                ret = false;</span>
+<span class="nc bnc" id="L85" title="All 2 branches missed.">            else if (link.endsWith (&quot;PgsrcTranslation&quot;))</span>
+<span class="nc" id="L86">                ret = false;</span>
+<span class="nc bnc" id="L87" title="All 2 branches missed.">            else if (link.endsWith (&quot;HowToUseWiki&quot;))</span>
+<span class="nc" id="L88">                ret = false;</span>
+<span class="nc bnc" id="L89" title="All 2 branches missed.">            else if (link.endsWith (&quot;MoreAboutMechanics&quot;))</span>
+<span class="nc" id="L90">                ret = false;</span>
+<span class="nc bnc" id="L91" title="All 2 branches missed.">            else if (link.endsWith (&quot;AddingPages&quot;))</span>
+<span class="nc" id="L92">                ret = false;</span>
+<span class="nc bnc" id="L93" title="All 2 branches missed.">            else if (link.endsWith (&quot;WikiWikiWeb&quot;))</span>
+<span class="nc" id="L94">                ret = false;</span>
+<span class="nc bnc" id="L95" title="All 2 branches missed.">            else if (link.endsWith (&quot;UserPreferences&quot;))</span>
+<span class="nc" id="L96">                ret = false;</span>
+<span class="nc bnc" id="L97" title="All 2 branches missed.">            else if (link.endsWith (&quot;PhpWiki&quot;))</span>
+<span class="nc" id="L98">                ret = false;</span>
+<span class="nc bnc" id="L99" title="All 2 branches missed.">            else if (link.endsWith (&quot;WabiSabi&quot;))</span>
+<span class="nc" id="L100">                ret = false;</span>
+<span class="nc bnc" id="L101" title="All 2 branches missed.">            else if (link.endsWith (&quot;EditText&quot;))</span>
+<span class="nc" id="L102">                ret = false;</span>
+<span class="nc bnc" id="L103" title="All 2 branches missed.">            else if (link.endsWith (&quot;FindPage&quot;))</span>
+<span class="nc" id="L104">                ret = false;</span>
+<span class="nc bnc" id="L105" title="All 2 branches missed.">            else if (link.endsWith (&quot;RecentChanges&quot;))</span>
+<span class="nc" id="L106">                ret = false;</span>
+<span class="nc bnc" id="L107" title="All 2 branches missed.">            else if (link.endsWith (&quot;RecentEdits&quot;))</span>
+<span class="nc" id="L108">                ret = false;</span>
+<span class="nc bnc" id="L109" title="All 2 branches missed.">            else if (link.endsWith (&quot;RecentVisitors&quot;))</span>
+<span class="nc" id="L110">                ret = false;</span>
+<span class="nc bnc" id="L111" title="All 2 branches missed.">            else if (link.endsWith (&quot;SteveWainstead&quot;))</span>
+<span class="nc" id="L112">                ret = false;</span>
+
+<span class="nc" id="L114">        return (ret);</span>
+    }
+
+    /**
+     * Mainline to capture a web site locally.
+     * @param args The command line arguments.
+     * There are three arguments the web site to capture, the local directory
+     * to save it to, and a flag (true or false) to indicate whether resources
+     * such as images and video are to be captured as well.
+     * These are requested via dialog boxes if not supplied.
+     * @exception MalformedURLException If the supplied URL is invalid.
+     * @exception IOException If an error occurs reading the pages or resources.
+     */
+    public static void main (String[] args)
+        throws
+            MalformedURLException,
+            IOException
+    {
+        WikiCapturer worker;
+        String url;
+        JFileChooser chooser;
+        URL source;
+        String path;
+        File target;
+        Boolean capture;
+        int ret;
+        
+<span class="nc" id="L141">        worker = new WikiCapturer ();</span>
+<span class="nc bnc" id="L142" title="All 2 branches missed.">        if (0 &gt;= args.length)</span>
+        {
+<span class="nc" id="L144">            url = (String)JOptionPane.showInputDialog (</span>
+<span class="nc" id="L145">                null,</span>
+<span class="nc" id="L146">                &quot;Enter the URL to capture:&quot;,</span>
+<span class="nc" id="L147">                &quot;Web Site&quot;,</span>
+<span class="nc" id="L148">                JOptionPane.PLAIN_MESSAGE,</span>
+<span class="nc" id="L149">                null,</span>
+<span class="nc" id="L150">                null,</span>
+<span class="nc" id="L151">                &quot;http://htmlparser.sourceforge.net&quot;);</span>
+<span class="nc bnc" id="L152" title="All 2 branches missed.">            if (null != url)</span>
+<span class="nc" id="L153">                worker.setSource (url);</span>
+            else
+<span class="nc" id="L155">                System.exit (1);</span>
+<span class="nc" id="L156">        }</span>
+        else
+<span class="nc" id="L158">            worker.setSource (args[0]);</span>
+<span class="nc bnc" id="L159" title="All 2 branches missed.">        if (1 &gt;= args.length)</span>
+        {
+<span class="nc" id="L161">            url = worker.getSource ();</span>
+<span class="nc" id="L162">            source = new URL (url);</span>
+<span class="nc" id="L163">            path = new File (new File (&quot;.&quot; + File.separator), source.getHost () + File.separator).getCanonicalPath ();</span>
+<span class="nc" id="L164">            target = new File (path);</span>
+<span class="nc" id="L165">            chooser = new JFileChooser (target);</span>
+<span class="nc" id="L166">            chooser.setDialogType (JFileChooser.SAVE_DIALOG);</span>
+<span class="nc" id="L167">            chooser.setFileSelectionMode (JFileChooser.DIRECTORIES_ONLY);</span>
+<span class="nc" id="L168">            chooser.setSelectedFile (target); // this doesn't frickin' work</span>
+<span class="nc" id="L169">            chooser.setMultiSelectionEnabled (false);</span>
+<span class="nc" id="L170">            chooser.setDialogTitle (&quot;Target Directory&quot;);</span>
+<span class="nc" id="L171">            ret = chooser.showSaveDialog (null);</span>
+<span class="nc bnc" id="L172" title="All 2 branches missed.">            if (ret == JFileChooser.APPROVE_OPTION)</span>
+<span class="nc" id="L173">                worker.setTarget (chooser.getSelectedFile ().getAbsolutePath ());</span>
+            else
+<span class="nc" id="L175">                System.exit (1);</span>
+<span class="nc" id="L176">        }</span>
+        else
+<span class="nc" id="L178">            worker.setTarget (args[1]);</span>
+<span class="nc bnc" id="L179" title="All 2 branches missed.">        if (2 &gt;= args.length)</span>
+        {
+<span class="nc" id="L181">            capture = (Boolean)JOptionPane.showInputDialog (</span>
+<span class="nc" id="L182">                null,</span>
+<span class="nc" id="L183">                &quot;Should resources be captured:&quot;,</span>
+<span class="nc" id="L184">                &quot;Capture Resources&quot;,</span>
+<span class="nc" id="L185">                JOptionPane.PLAIN_MESSAGE,</span>
+<span class="nc" id="L186">                null,</span>
+<span class="nc" id="L187">                new Object[] { Boolean.TRUE, Boolean.FALSE},</span>
+<span class="nc" id="L188">                Boolean.TRUE);</span>
+<span class="nc bnc" id="L189" title="All 2 branches missed.">            if (null != capture)</span>
+<span class="nc" id="L190">                worker.setCaptureResources (capture.booleanValue ());</span>
+            else
+<span class="nc" id="L192">                System.exit (1);</span>
+<span class="nc" id="L193">        }</span>
+        else
+<span class="nc" id="L195">            worker.setCaptureResources ((Boolean.valueOf (args[2]).booleanValue ()));</span>
+<span class="nc" id="L196">        worker.setFilter (</span>
+<span class="nc" id="L197">            new NotFilter (</span>
+<span class="nc" id="L198">                new OrFilter (</span>
+<span class="nc" id="L199">                    new AndFilter (</span>
+<span class="nc" id="L200">                        new TagNameFilter (&quot;DIV&quot;),</span>
+<span class="nc" id="L201">                        new HasAttributeFilter (&quot;id&quot;, &quot;navbar&quot;)), </span>
+<span class="nc" id="L202">                    new OrFilter (</span>
+<span class="nc" id="L203">                        new AndFilter (</span>
+<span class="nc" id="L204">                            new TagNameFilter (&quot;DIV&quot;),</span>
+<span class="nc" id="L205">                            new HasAttributeFilter (&quot;id&quot;, &quot;actionbar&quot;)),</span>
+<span class="nc" id="L206">                        new AndFilter (</span>
+<span class="nc" id="L207">                            new TagNameFilter (&quot;DIV&quot;),</span>
+<span class="nc" id="L208">                            new HasAttributeFilter (&quot;id&quot;, &quot;xhtml-validator&quot;))))));</span>
+<span class="nc" id="L209">        worker.capture ();</span>
+        
+<span class="nc" id="L211">        System.exit (0);</span>
+<span class="nc" id="L212">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

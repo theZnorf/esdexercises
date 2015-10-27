@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>FormTag.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tags</a> &gt; <span class="el_source">FormTag.java</span></div><h1>FormTag.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Somik Raha
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/main/java/org/htmlparser/tags/FormTag.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tags;
+
+import org.htmlparser.util.NodeList;
+import org.htmlparser.util.SimpleNodeIterator;
+
+/**
+ * Represents a FORM tag.
+ * @author ili
+ */
+public class FormTag extends CompositeTag
+{
+    /**
+     * The {@value} method.
+     * @see #getFormMethod
+     */
+    public static final String POST = &quot;POST&quot;;
+
+    /**
+     * The {@value} method.
+     * @see #getFormMethod
+     */
+    public static final String GET = &quot;GET&quot;;
+    
+    /**
+     * This is the derived form location, based on action.
+     */
+    protected String mFormLocation;
+
+    /**
+     * The set of names handled by this tag.
+     */
+<span class="fc" id="L57">    private static final String[] mIds = new String[] {&quot;FORM&quot;};</span>
+
+    /**
+     * The set of end tag names that indicate the end of this tag.
+     */
+<span class="fc" id="L62">    private static final String[] mEndTagEnders = new String[] {&quot;HTML&quot;, &quot;BODY&quot;, &quot;TABLE&quot;};</span>
+
+    /**
+     * Create a new form tag.
+     */
+<span class="fc" id="L67">    public FormTag ()</span>
+    {
+<span class="fc" id="L69">        mFormLocation = null;</span>
+<span class="fc" id="L70">    }</span>
+
+    /**
+     * Return the set of names handled by this tag.
+     * @return The names to be matched that create tags of this type.
+     */
+    public String[] getIds ()
+    {
+<span class="fc" id="L78">        return (mIds);</span>
+    }
+
+    /**
+     * Return the set of tag names that cause this tag to finish.
+     * @return The names of following tags that stop further scanning.
+     */
+    public String[] getEnders ()
+    {
+<span class="fc" id="L87">        return (mIds);</span>
+    }
+
+    /**
+     * Return the set of end tag names that cause this tag to finish.
+     * @return The names of following end tags that stop further scanning.
+     */
+    public String[] getEndTagEnders ()
+    {
+<span class="fc" id="L96">        return (mEndTagEnders);</span>
+    }
+
+    /**
+     * Get the list of input fields.
+     * @return Input elements in the form.
+     */
+    public NodeList getFormInputs()
+    {
+<span class="fc" id="L105">        return (searchFor (InputTag.class, true));</span>
+    }
+
+    /**
+     * Get the list of text areas.
+     * @return Textarea elements in the form.
+     */
+    public NodeList getFormTextareas()
+    {
+<span class="fc" id="L114">        return (searchFor (TextareaTag.class, true));</span>
+    }
+
+    /**
+     * Get the value of the action attribute.
+     * @return The submit url of the form.
+     */
+    public String getFormLocation()
+    {
+<span class="pc bpc" id="L123" title="1 of 2 branches missed.">        if (null == mFormLocation)</span>
+            // ... is it true that without an ACTION the default is to send it back to the same page?
+<span class="fc" id="L125">            mFormLocation = extractFormLocn ();</span>
+
+<span class="fc" id="L127">        return (mFormLocation);</span>
+    }
+
+    /**
+     * Set the form location. Modification of this element will cause the HTML rendering
+     * to change as well (in a call to toHTML()).
+     * @param url The new FORM location
+     */
+    public void setFormLocation(String url)
+    {
+<span class="fc" id="L137">        mFormLocation = url;</span>
+<span class="fc" id="L138">        setAttribute (&quot;ACTION&quot;, url);</span>
+<span class="fc" id="L139">    }</span>
+
+    /**
+     * Returns the method of the form, GET or POST.
+     * @return String The method of the form (GET if nothing is specified).
+     */
+    public String getFormMethod()
+    {
+        String ret;
+        
+<span class="fc" id="L149">        ret = getAttribute(&quot;METHOD&quot;);</span>
+<span class="pc bpc" id="L150" title="1 of 2 branches missed.">        if (null == ret)</span>
+<span class="nc" id="L151">            ret = GET;</span>
+
+<span class="fc" id="L153">        return (ret);</span>
+    }
+
+    /**
+     * Get the input tag in the form corresponding to the given name
+     * @param name The name of the input tag to be retrieved
+     * @return Tag The input tag corresponding to the name provided
+     */
+    public InputTag getInputTag (String name)
+    {
+        InputTag inputTag;
+        boolean found;
+        String inputTagName;
+        
+<span class="fc" id="L167">        inputTag = null;</span>
+<span class="fc" id="L168">        found = false;</span>
+<span class="fc bfc" id="L169" title="All 4 branches covered.">        for (SimpleNodeIterator e = getFormInputs().elements();e.hasMoreNodes() &amp;&amp; !found;)</span>
+        {
+<span class="fc" id="L171">            inputTag = (InputTag)e.nextNode();</span>
+<span class="fc" id="L172">            inputTagName = inputTag.getAttribute(&quot;NAME&quot;);</span>
+<span class="fc bfc" id="L173" title="All 4 branches covered.">            if (inputTagName!=null &amp;&amp; inputTagName.equalsIgnoreCase(name))</span>
+<span class="fc" id="L174">                found=true;</span>
+        }
+<span class="fc bfc" id="L176" title="All 2 branches covered.">        if (found)</span>
+<span class="fc" id="L177">            return (inputTag);</span>
+        else
+<span class="fc" id="L179">            return (null);</span>
+    }
+
+    /**
+     * Get the value of the name attribute.
+     * @return String The name of the form
+     */
+    public String getFormName()
+    {
+<span class="fc" id="L188">        return (getAttribute(&quot;NAME&quot;));</span>
+    }
+
+    /**
+     * Find the textarea tag matching the given name
+     * @param name Name of the textarea tag to be found within the form.
+     * @return The &lt;code&gt;TEXTAREA&lt;/code&gt; tag with the matching name.
+     */
+    public TextareaTag getTextAreaTag(String name)
+    {
+<span class="fc" id="L198">        TextareaTag textareaTag=null;</span>
+<span class="fc" id="L199">        boolean found = false;</span>
+<span class="pc bpc" id="L200" title="1 of 4 branches missed.">        for (SimpleNodeIterator e=getFormTextareas ().elements();e.hasMoreNodes() &amp;&amp; !found;)</span>
+        {
+<span class="fc" id="L202">            textareaTag = (TextareaTag)e.nextNode();</span>
+<span class="fc" id="L203">            String textAreaName = textareaTag.getAttribute(&quot;NAME&quot;);</span>
+<span class="pc bpc" id="L204" title="1 of 4 branches missed.">            if (textAreaName!=null &amp;&amp; textAreaName.equals(name))</span>
+<span class="fc" id="L205">                found = true;</span>
+        }
+<span class="fc bfc" id="L207" title="All 2 branches covered.">        if (found)</span>
+<span class="fc" id="L208">            return (textareaTag);</span>
+        else
+<span class="fc" id="L210">            return (null);</span>
+    }
+
+    /**
+     * Return a string representation of the contents of this &lt;code&gt;FORM&lt;/code&gt; tag suitable for debugging.
+     * @return A textual representation of the form tag.
+     */
+    public String toString()
+    {
+<span class="nc" id="L219">        return &quot;FORM TAG : Form at &quot;+getFormLocation()+&quot;; begins at : &quot;+getStartPosition ()+&quot;; ends at : &quot;+getEndPosition ();</span>
+    }
+    
+    /**
+     * Extract the &lt;code&gt;ACTION&lt;/code&gt; attribute as an absolute URL.
+     * @return The URL the form is to be submitted to.
+     */
+    public String extractFormLocn ()
+    {
+        String ret;
+        
+<span class="fc" id="L230">        ret = getAttribute(&quot;ACTION&quot;);</span>
+<span class="pc bpc" id="L231" title="1 of 2 branches missed.">        if (null == ret)</span>
+<span class="nc" id="L232">            ret = &quot;&quot;;</span>
+<span class="pc bpc" id="L233" title="1 of 2 branches missed.">        else if (null != getPage ())</span>
+<span class="fc" id="L234">            ret = getPage ().getAbsoluteURL (ret);</span>
+        
+<span class="fc" id="L236">        return (ret);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

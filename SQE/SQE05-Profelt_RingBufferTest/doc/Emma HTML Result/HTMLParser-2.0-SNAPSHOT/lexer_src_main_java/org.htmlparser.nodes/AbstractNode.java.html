@@ -1,0 +1,414 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>AbstractNode.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">lexer/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.nodes</a> &gt; <span class="el_source">AbstractNode.java</span></div><h1>AbstractNode.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Somik Raha
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/lexer/src/main/java/org/htmlparser/nodes/AbstractNode.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.nodes;
+
+import java.io.Serializable;
+
+import org.htmlparser.Node;
+import org.htmlparser.NodeFilter;
+import org.htmlparser.lexer.Page;
+import org.htmlparser.util.NodeList;
+import org.htmlparser.util.ParserException;
+import org.htmlparser.visitors.NodeVisitor;
+
+/**
+ * The concrete base class for all types of nodes (tags, text remarks).
+ * This class provides basic functionality to hold the {@link Page}, the
+ * starting and ending position in the page, the parent and the list of
+ * {@link NodeList children}.
+ */
+public abstract class AbstractNode implements Node, Serializable
+{
+    /**
+     * The page this node came from.
+     */
+    protected Page mPage;
+
+    /**
+     * The beginning position of the tag in the line
+     */
+    protected int nodeBegin;
+
+    /**
+     * The ending position of the tag in the line
+     */
+    protected int nodeEnd;
+
+    /**
+     * The parent of this node.
+     */
+    protected Node parent;
+
+    /**
+     * The children of this node.
+     */
+    protected NodeList children;
+
+    /**
+     * Create an abstract node with the page positions given.
+     * Remember the page and start &amp; end cursor positions.
+     * @param page The page this tag was read from.
+     * @param start The starting offset of this node within the page.
+     * @param end The ending offset of this node within the page.
+     */
+<span class="fc" id="L77">    public AbstractNode (Page page, int start, int end)</span>
+    {
+<span class="fc" id="L79">        mPage = page;</span>
+<span class="fc" id="L80">        nodeBegin = start;</span>
+<span class="fc" id="L81">        nodeEnd = end;</span>
+<span class="fc" id="L82">        parent = null;</span>
+<span class="fc" id="L83">        children = null;</span>
+<span class="fc" id="L84">    }</span>
+
+    /**
+     * Clone this object.
+     * Exposes java.lang.Object clone as a public method.
+     * @return A clone of this object.
+     * @exception CloneNotSupportedException This shouldn't be thrown since
+     * the {@link Node} interface extends Cloneable.
+     */
+    public Object clone() throws CloneNotSupportedException
+    {
+<span class="fc" id="L95">        return (super.clone ());</span>
+    }
+
+    /**
+     * Returns a string representation of the node.
+     * It allows a simple string transformation
+     * of a web page, regardless of node type.&lt;br&gt;
+     * Typical application code (for extracting only the text from a web page)
+     * would then be simplified to:&lt;br&gt;
+     * &lt;pre&gt;
+     * Node node;
+     * for (Enumeration e = parser.elements (); e.hasMoreElements (); )
+     * {
+     *     node = (Node)e.nextElement();
+     *     System.out.println (node.toPlainTextString ());
+     *     // or do whatever processing you wish with the plain text string
+     * }
+     * &lt;/pre&gt;
+     * @return The 'browser' content of this node.
+     */
+    public abstract String toPlainTextString ();
+
+    /**
+     * Return the HTML for this node.
+     * This should be the sequence of characters that were encountered by
+     * the parser that caused this node to be created. Where this breaks down is
+     * where broken nodes (tags and remarks) have been encountered and fixed.
+     * Applications reproducing html can use this method on nodes which are to
+     * be used or transferred as they were received or created.
+     * @return The sequence of characters that would cause this node
+     * to be returned by the parser or lexer.
+     */
+    public String toHtml ()
+    {
+<span class="fc" id="L129">        return (toHtml (false));</span>
+    }
+
+    /**
+     * Return the HTML for this node.
+     * This should be the exact sequence of characters that were encountered by
+     * the parser that caused this node to be created. Where this breaks down is
+     * where broken nodes (tags and remarks) have been encountered and fixed.
+     * Applications reproducing html can use this method on nodes which are to
+     * be used or transferred as they were received or created.
+     * @param verbatim If &lt;code&gt;true&lt;/code&gt; return as close to the original
+     * page text as possible.
+     * @return The (exact) sequence of characters that would cause this node
+     * to be returned by the parser or lexer.
+     */
+    public abstract String toHtml (boolean verbatim);
+
+    /**
+     * Return a string representation of the node.
+     * Subclasses must define this method, and this is typically to be used in the manner&lt;br&gt;
+     * &lt;pre&gt;System.out.println(node)&lt;/pre&gt;
+     * @return A textual representation of the node suitable for debugging
+     */
+    public abstract String toString ();
+
+    /**
+     * Collect this node and its child nodes (if-applicable) into the collectionList parameter, provided the node
+     * satisfies the filtering criteria.&lt;P&gt;
+     * 
+     * This mechanism allows powerful filtering code to be written very easily,
+     * without bothering about collection of embedded tags separately.
+     * e.g. when we try to get all the links on a page, it is not possible to
+     * get it at the top-level, as many tags (like form tags), can contain
+     * links embedded in them. We could get the links out by checking if the
+     * current node is a {@link org.htmlparser.tags.CompositeTag}, and going through its children.
+     * So this method provides a convenient way to do this.&lt;P&gt;
+     * 
+     * Using collectInto(), programs get a lot shorter. Now, the code to
+     * extract all links from a page would look like:
+     * &lt;pre&gt;
+     * NodeList collectionList = new NodeList();
+     * NodeFilter filter = new TagNameFilter (&quot;A&quot;);
+     * for (NodeIterator e = parser.elements(); e.hasMoreNodes();)
+     *      e.nextNode().collectInto(collectionList, filter);
+     * &lt;/pre&gt;
+     * Thus, collectionList will hold all the link nodes, irrespective of how
+     * deep the links are embedded.&lt;P&gt;
+     * 
+     * Another way to accomplish the same objective is:
+     * &lt;pre&gt;
+     * NodeList collectionList = new NodeList();
+     * NodeFilter filter = new TagClassFilter (LinkTag.class);
+     * for (NodeIterator e = parser.elements(); e.hasMoreNodes();)
+     *      e.nextNode().collectInto(collectionList, filter);
+     * &lt;/pre&gt;
+     * This is slightly less specific because the LinkTag class may be
+     * registered for more than one node name, e.g. &amp;lt;LINK&amp;gt; tags too.
+     * @param list The node list to collect acceptable nodes into.
+     * @param filter The filter to determine which nodes are retained.
+     */
+    public void collectInto (NodeList list, NodeFilter filter)
+    {
+<span class="fc bfc" id="L191" title="All 2 branches covered.">        if (filter.accept (this))</span>
+<span class="fc" id="L192">            list.add (this);</span>
+<span class="fc" id="L193">    }</span>
+
+    /**
+     * Get the page this node came from.
+     * @return The page that supplied this node.
+     */
+    public Page getPage ()
+    {
+<span class="fc" id="L201">        return (mPage);</span>
+    }
+
+    /**
+     * Set the page this node came from.
+     * @param page The page that supplied this node.
+     */
+    public void setPage (Page page)
+    {
+<span class="fc" id="L210">        mPage = page;</span>
+<span class="fc" id="L211">    }</span>
+
+    /**
+     * Gets the starting position of the node.
+     * @return The start position.
+     */
+    public int getStartPosition ()
+    {
+<span class="fc" id="L219">        return (nodeBegin);</span>
+    }
+
+    /**
+     * Sets the starting position of the node.
+     * @param position The new start position.
+     */
+    public void setStartPosition (int position)
+    {
+<span class="fc" id="L228">        nodeBegin = position;</span>
+<span class="fc" id="L229">    }</span>
+
+    /**
+     * Gets the ending position of the node.
+     * @return The end position.
+     */
+    public int getEndPosition ()
+    {
+<span class="fc" id="L237">        return (nodeEnd);</span>
+    }
+
+    /**
+     * Sets the ending position of the node.
+     * @param position The new end position.
+     */
+    public void setEndPosition (int position)
+    {
+<span class="fc" id="L246">        nodeEnd = position;</span>
+<span class="fc" id="L247">    }</span>
+
+    /**
+     * Visit this node.
+     * @param visitor The visitor that is visiting this node.
+     */
+    public abstract void accept (NodeVisitor visitor);
+
+    /**
+     * Get the parent of this node.
+     * This will always return null when parsing without scanners,
+     * i.e. if semantic parsing was not performed.
+     * The object returned from this method can be safely cast to a &lt;code&gt;CompositeTag&lt;/code&gt;.
+     * @return The parent of this node, if it's been set, &lt;code&gt;null&lt;/code&gt; otherwise.
+     */
+    public Node getParent ()
+    {
+<span class="fc" id="L264">        return (parent);</span>
+    }
+
+    /**
+     * Sets the parent of this node.
+     * @param node The node that contains this node. Must be a &lt;code&gt;CompositeTag&lt;/code&gt;.
+     */
+    public void setParent (Node node)
+    {
+<span class="fc" id="L273">        parent = node;</span>
+<span class="fc" id="L274">    }</span>
+
+    /**
+     * Get the children of this node.
+     * @return The list of children contained by this node, if it's been set, &lt;code&gt;null&lt;/code&gt; otherwise.
+     */
+    public NodeList getChildren ()
+    {
+<span class="fc" id="L282">        return (children);</span>
+    }
+
+    /**
+     * Set the children of this node.
+     * @param children The new list of children this node contains.
+     */
+    public void setChildren (NodeList children)
+    {
+<span class="fc" id="L291">        this.children = children;</span>
+<span class="fc" id="L292">    }</span>
+    
+    /**
+     * Get the first child of this node.
+     * @return The first child in the list of children contained by this node,
+     * &lt;code&gt;null&lt;/code&gt; otherwise.
+     */
+    public Node getFirstChild ()
+    {
+<span class="nc bnc" id="L301" title="All 2 branches missed.">        if (children == null)</span>
+<span class="nc" id="L302">            return null;</span>
+<span class="nc bnc" id="L303" title="All 2 branches missed.">        if (children.size() == 0)</span>
+<span class="nc" id="L304">            return null;</span>
+<span class="nc" id="L305">        return children.elementAt(0);</span>
+    }
+    
+    /**
+     * Get the last child of this node.
+     * @return The last child in the list of children contained by this node,
+     * &lt;code&gt;null&lt;/code&gt; otherwise.
+     */
+    public Node getLastChild ()
+    {
+<span class="nc bnc" id="L315" title="All 2 branches missed.">        if (children == null)</span>
+<span class="nc" id="L316">            return null;</span>
+<span class="nc" id="L317">        int numChildren = children.size();</span>
+<span class="nc bnc" id="L318" title="All 2 branches missed.">        if (numChildren == 0)</span>
+<span class="nc" id="L319">            return null;</span>
+<span class="nc" id="L320">        return children.elementAt(numChildren - 1);</span>
+    }
+    
+    /**
+     * Get the previous sibling to this node.
+     * @return The previous sibling to this node if one exists,
+     * &lt;code&gt;null&lt;/code&gt; otherwise.
+     */
+    public Node getPreviousSibling ()
+    {
+<span class="nc" id="L330">        Node parentNode = this.getParent();</span>
+<span class="nc bnc" id="L331" title="All 2 branches missed.">        if (parentNode == null)//root node</span>
+<span class="nc" id="L332">            return null;</span>
+<span class="nc" id="L333">        NodeList siblings = parentNode.getChildren();</span>
+<span class="nc bnc" id="L334" title="All 2 branches missed.">        if (siblings == null)//this should actually be an error</span>
+<span class="nc" id="L335">            return null;</span>
+<span class="nc" id="L336">        int numSiblings = siblings.size();</span>
+<span class="nc bnc" id="L337" title="All 2 branches missed.">        if (numSiblings &lt; 2)//need at least one other node to have a chance of having any siblings</span>
+<span class="nc" id="L338">            return null;</span>
+<span class="nc" id="L339">        int positionInParent = -1;</span>
+<span class="nc bnc" id="L340" title="All 2 branches missed.">        for (int i = 0; i &lt; numSiblings; i++)</span>
+        {
+<span class="nc bnc" id="L342" title="All 2 branches missed.">            if (siblings.elementAt(i) == this)</span>
+            {
+<span class="nc" id="L344">                positionInParent = i;</span>
+<span class="nc" id="L345">                break;</span>
+            }
+        }
+<span class="nc bnc" id="L348" title="All 2 branches missed.">        if (positionInParent &lt; 1)//no previous siblings</span>
+<span class="nc" id="L349">            return null;</span>
+<span class="nc" id="L350">        return siblings.elementAt(positionInParent - 1);</span>
+    }
+    
+    /**
+     * Get the next sibling to this node.
+     * @return The next sibling to this node if one exists,
+     * &lt;code&gt;null&lt;/code&gt; otherwise.
+     */
+    public Node getNextSibling ()
+    {
+<span class="nc" id="L360">        Node parentNode = this.getParent();</span>
+<span class="nc bnc" id="L361" title="All 2 branches missed.">        if (parentNode == null)//root node</span>
+<span class="nc" id="L362">            return null;</span>
+<span class="nc" id="L363">        NodeList siblings = parentNode.getChildren();</span>
+<span class="nc bnc" id="L364" title="All 2 branches missed.">        if (siblings == null)//this should actually be an error</span>
+<span class="nc" id="L365">            return null;</span>
+<span class="nc" id="L366">        int numSiblings = siblings.size();</span>
+<span class="nc bnc" id="L367" title="All 2 branches missed.">        if (numSiblings &lt; 2)//need at least one other node to have a chance of having any siblings</span>
+<span class="nc" id="L368">            return null;</span>
+<span class="nc" id="L369">        int positionInParent = -1;</span>
+<span class="nc bnc" id="L370" title="All 2 branches missed.">        for (int i = 0; i &lt; numSiblings; i++)</span>
+        {
+<span class="nc bnc" id="L372" title="All 2 branches missed.">            if (siblings.elementAt(i) == this)</span>
+            {
+<span class="nc" id="L374">                positionInParent = i;</span>
+<span class="nc" id="L375">                break;</span>
+            }
+        }
+<span class="nc bnc" id="L378" title="All 2 branches missed.">        if (positionInParent == -1)//this should actually be an error</span>
+<span class="nc" id="L379">            return null;</span>
+<span class="nc bnc" id="L380" title="All 2 branches missed.">        if (positionInParent == (numSiblings - 1))//no next sibling</span>
+<span class="nc" id="L381">            return null;</span>
+<span class="nc" id="L382">        return siblings.elementAt(positionInParent + 1);</span>
+    }
+
+    /**
+     * Returns the text of the node.
+     * @return The text of this node. The default is &lt;code&gt;null&lt;/code&gt;.
+     */
+    public String getText ()
+    {
+<span class="nc" id="L391">        return null;</span>
+    }
+
+    /**
+     * Sets the string contents of the node.
+     * @param text The new text for the node.
+     */
+    public void setText(String text)
+    {
+<span class="nc" id="L400">    }</span>
+
+    /**
+     * Perform the meaning of this tag.
+     * The default action is to do nothing.
+     * @exception ParserException &lt;em&gt;Not used.&lt;/em&gt; Provides for subclasses
+     * that may want to indicate an exceptional condition.
+     */
+    public void doSemanticAction ()
+        throws
+            ParserException
+    {
+<span class="fc" id="L412">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

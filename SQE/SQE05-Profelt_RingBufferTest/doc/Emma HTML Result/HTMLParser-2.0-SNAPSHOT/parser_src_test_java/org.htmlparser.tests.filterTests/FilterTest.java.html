@@ -1,0 +1,333 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>FilterTest.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tests.filterTests</a> &gt; <span class="el_source">FilterTest.java</span></div><h1>FilterTest.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/test/java/org/htmlparser/tests/filterTests/FilterTest.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tests.filterTests;
+
+import org.htmlparser.Parser;
+import org.htmlparser.Tag;
+import org.htmlparser.filters.AndFilter;
+import org.htmlparser.filters.CssSelectorNodeFilter;
+import org.htmlparser.filters.HasAttributeFilter;
+import org.htmlparser.filters.HasChildFilter;
+import org.htmlparser.filters.NodeClassFilter;
+import org.htmlparser.filters.NotFilter;
+import org.htmlparser.filters.OrFilter;
+import org.htmlparser.filters.RegexFilter;
+import org.htmlparser.filters.StringFilter;
+import org.htmlparser.filters.TagNameFilter;
+import org.htmlparser.lexer.Lexer;
+import org.htmlparser.Text;
+import org.htmlparser.tags.BodyTag;
+import org.htmlparser.tags.LinkTag;
+import org.htmlparser.tests.ParserTestCase;
+import org.htmlparser.util.NodeIterator;
+import org.htmlparser.util.NodeList;
+import org.htmlparser.util.ParserException;
+
+/**
+ * Test the operation of filters.
+ */
+public class FilterTest extends ParserTestCase
+{
+    static
+    {
+<span class="fc" id="L56">        System.setProperty (&quot;org.htmlparser.tests.filterTests.FilterTest&quot;, &quot;FilterTest&quot;);</span>
+<span class="fc" id="L57">    }</span>
+
+    public FilterTest (String name)
+    {
+<span class="fc" id="L61">        super (name);</span>
+<span class="fc" id="L62">    }</span>
+
+    /**
+     * Test node class filtering.
+     */
+    public void testNodeClass () throws ParserException
+    {
+        String guts;
+        String html;
+        NodeList list;
+
+<span class="fc" id="L73">        guts = &quot;&lt;body&gt;Now is the time for all good men..&lt;/body&gt;&quot;;</span>
+<span class="fc" id="L74">        html = &quot;&lt;html&gt;&quot; + guts + &quot;&lt;/html&gt;&quot;;</span>
+<span class="fc" id="L75">        createParser (html);</span>
+<span class="fc" id="L76">        list = parser.extractAllNodesThatMatch (new NodeClassFilter (BodyTag.class));</span>
+<span class="fc" id="L77">        assertEquals (&quot;only one element&quot;, 1, list.size ());</span>
+<span class="fc" id="L78">        assertType (&quot;should be BodyTag&quot;, BodyTag.class, list.elementAt (0));</span>
+<span class="fc" id="L79">        BodyTag body = (BodyTag)list.elementAt (0);</span>
+<span class="fc" id="L80">        assertEquals (&quot;only one child&quot;, 1, body.getChildCount ());</span>
+<span class="fc" id="L81">        assertSuperType (&quot;should be Text&quot;, Text.class, body.getChildren ().elementAt (0));</span>
+<span class="fc" id="L82">        assertStringEquals(&quot;html&quot;, guts, body.toHtml ());</span>
+<span class="fc" id="L83">    }</span>
+
+
+    /**
+     * Test tag name filtering.
+     */
+    public void testTagName () throws ParserException
+    {
+        String guts;
+        String html;
+        NodeList list;
+
+<span class="fc" id="L95">        guts = &quot;&lt;booty&gt;Now is the time for all good men..&lt;/booty&gt;&quot;;</span>
+<span class="fc" id="L96">        html = &quot;&lt;html&gt;&quot; + guts + &quot;&lt;/html&gt;&quot;;</span>
+<span class="fc" id="L97">        createParser (html);</span>
+<span class="fc" id="L98">        list = parser.extractAllNodesThatMatch (new TagNameFilter (&quot;booty&quot;));</span>
+<span class="fc" id="L99">        assertEquals (&quot;only one element&quot;, 1, list.size ());</span>
+<span class="fc" id="L100">        assertSuperType (&quot;should be Tag&quot;, Tag.class, list.elementAt (0));</span>
+<span class="fc" id="L101">        assertStringEquals(&quot;name&quot;, &quot;BOOTY&quot;, ((Tag)(list.elementAt (0))).getTagName ());</span>
+<span class="fc" id="L102">    }</span>
+
+    /**
+     * Test string filtering.
+     */
+    public void testString () throws ParserException
+    {
+        String guts;
+        String html;
+        NodeList list;
+
+<span class="fc" id="L113">        guts = &quot;&lt;body&gt;Now is the &lt;a id=target&gt;&lt;b&gt;time&lt;/b&gt;&lt;/a&gt; for all good &lt;time&gt;men&lt;/time&gt;..&lt;/body&gt;&quot;;</span>
+<span class="fc" id="L114">        html = &quot;&lt;html&gt;&quot; + guts + &quot;&lt;/html&gt;&quot;;</span>
+<span class="fc" id="L115">        createParser (html);</span>
+<span class="fc" id="L116">        list = parser.extractAllNodesThatMatch (new StringFilter (&quot;Time&quot;));</span>
+<span class="fc" id="L117">        assertEquals (&quot;only one element&quot;, 1, list.size ());</span>
+<span class="fc" id="L118">        assertSuperType (&quot;should be String&quot;, Text.class, list.elementAt (0));</span>
+<span class="fc" id="L119">        assertStringEquals(&quot;name&quot;, &quot;time&quot;, ((Text)list.elementAt (0)).getText ());</span>
+        // test case sensitivity
+<span class="fc" id="L121">        list = parser.extractAllNodesThatMatch (new StringFilter (&quot;Time&quot;, true));</span>
+<span class="fc" id="L122">        assertEquals (&quot;should be no elements&quot;, 0, list.size ());</span>
+<span class="fc" id="L123">    }</span>
+
+    /**
+     * Test child filtering.
+     */
+    public void testChild () throws ParserException
+    {
+        String guts;
+        String html;
+        NodeList list;
+
+<span class="fc" id="L134">        guts = &quot;&lt;body&gt;Now is the &lt;a id=target&gt;&lt;b&gt;time&lt;/b&gt;&lt;/a&gt; for all good &lt;a href=http://bongo.com&gt;men&lt;/a&gt;..&lt;/body&gt;&quot;;</span>
+<span class="fc" id="L135">        html = &quot;&lt;html&gt;&quot; + guts + &quot;&lt;/html&gt;&quot;;</span>
+<span class="fc" id="L136">        createParser (html);</span>
+<span class="fc" id="L137">        list = parser.extractAllNodesThatMatch (new HasChildFilter (new TagNameFilter (&quot;b&quot;)));</span>
+<span class="fc" id="L138">        assertEquals (&quot;only one element&quot;, 1, list.size ());</span>
+<span class="fc" id="L139">        assertType (&quot;should be LinkTag&quot;, LinkTag.class, list.elementAt (0));</span>
+<span class="fc" id="L140">        LinkTag link = (LinkTag)list.elementAt (0);</span>
+<span class="fc" id="L141">        assertEquals (&quot;three children&quot;, 3, link.getChildCount ());</span>
+<span class="fc" id="L142">        assertSuperType (&quot;should be TagNode&quot;, Tag.class, link.getChildren ().elementAt (0));</span>
+<span class="fc" id="L143">        Tag tag = (Tag)link.getChildren ().elementAt (0);</span>
+<span class="fc" id="L144">        assertStringEquals(&quot;name&quot;, &quot;B&quot;, tag.getTagName ());</span>
+<span class="fc" id="L145">    }</span>
+
+    /**
+     * Test attribute filtering.
+     */
+    public void testAttribute () throws ParserException
+    {
+        String guts;
+        String html;
+        NodeList list;
+
+<span class="fc" id="L156">        guts = &quot;&lt;body&gt;Now is the &lt;a id=target&gt;&lt;b&gt;time&lt;/b&gt;&lt;/a&gt; for all good &lt;a href=http://bongo.com&gt;men&lt;/a&gt;..&lt;/body&gt;&quot;;</span>
+<span class="fc" id="L157">        html = &quot;&lt;html&gt;&quot; + guts + &quot;&lt;/html&gt;&quot;;</span>
+<span class="fc" id="L158">        createParser (html);</span>
+<span class="fc" id="L159">        list = parser.extractAllNodesThatMatch (new HasAttributeFilter (&quot;id&quot;));</span>
+<span class="fc" id="L160">        assertEquals (&quot;only one element&quot;, 1, list.size ());</span>
+<span class="fc" id="L161">        assertType (&quot;should be LinkTag&quot;, LinkTag.class, list.elementAt (0));</span>
+<span class="fc" id="L162">        LinkTag link = (LinkTag)list.elementAt (0);</span>
+<span class="fc" id="L163">        assertEquals (&quot;attribute value&quot;, &quot;target&quot;, link.getAttribute (&quot;id&quot;));</span>
+<span class="fc" id="L164">    }</span>
+
+    /**
+     * Test and filtering.
+     */
+    public void testAnd () throws ParserException
+    {
+        String guts;
+        String html;
+        NodeList list;
+
+<span class="fc" id="L175">        guts = &quot;&lt;body&gt;Now is the &lt;a id=one&gt;&lt;b&gt;time&lt;/b&gt;&lt;/a&gt; for all good &lt;a id=two&gt;&lt;b&gt;men&lt;/b&gt;&lt;/a&gt;..&lt;/body&gt;&quot;;</span>
+<span class="fc" id="L176">        html = &quot;&lt;html&gt;&quot; + guts + &quot;&lt;/html&gt;&quot;;</span>
+<span class="fc" id="L177">        createParser (html);</span>
+<span class="fc" id="L178">        list = parser.extractAllNodesThatMatch (</span>
+<span class="fc" id="L179">            new AndFilter (</span>
+<span class="fc" id="L180">                new HasChildFilter (</span>
+<span class="fc" id="L181">                    new TagNameFilter (&quot;b&quot;)),</span>
+<span class="fc" id="L182">                new HasChildFilter (</span>
+<span class="fc" id="L183">                    new StringFilter (&quot;men&quot;)))</span>
+                );
+<span class="fc" id="L185">        assertEquals (&quot;only one element&quot;, 1, list.size ());</span>
+<span class="fc" id="L186">        assertType (&quot;should be LinkTag&quot;, LinkTag.class, list.elementAt (0));</span>
+<span class="fc" id="L187">        LinkTag link = (LinkTag)list.elementAt (0);</span>
+<span class="fc" id="L188">        assertEquals (&quot;attribute value&quot;, &quot;two&quot;, link.getAttribute (&quot;id&quot;));</span>
+<span class="fc" id="L189">    }</span>
+
+    /**
+     * Test or filtering.
+     */
+    public void testOr () throws ParserException
+    {
+        String guts;
+        String html;
+        NodeList list;
+
+<span class="fc" id="L200">        guts = &quot;&lt;body&gt;Now is the &lt;a id=one&gt;&lt;b&gt;time&lt;/b&gt;&lt;/a&gt; for &lt;a id=two&gt;&lt;b&gt;all&lt;/b&gt;&lt;/a&gt; good &lt;a id=three&gt;&lt;b&gt;men&lt;/b&gt;&lt;/a&gt;..&lt;/body&gt;&quot;;</span>
+<span class="fc" id="L201">        html = &quot;&lt;html&gt;&quot; + guts + &quot;&lt;/html&gt;&quot;;</span>
+<span class="fc" id="L202">        createParser (html);</span>
+<span class="fc" id="L203">        list = parser.extractAllNodesThatMatch (</span>
+<span class="fc" id="L204">            new OrFilter (</span>
+<span class="fc" id="L205">                new HasChildFilter (</span>
+<span class="fc" id="L206">                    new StringFilter (&quot;time&quot;)),</span>
+<span class="fc" id="L207">                new HasChildFilter (</span>
+<span class="fc" id="L208">                    new StringFilter (&quot;men&quot;)))</span>
+                );
+<span class="fc" id="L210">        assertEquals (&quot;two elements&quot;, 2, list.size ());</span>
+<span class="fc" id="L211">        assertType (&quot;should be LinkTag&quot;, LinkTag.class, list.elementAt (0));</span>
+<span class="fc" id="L212">        LinkTag link = (LinkTag)list.elementAt (0);</span>
+<span class="fc" id="L213">        assertEquals (&quot;attribute value&quot;, &quot;one&quot;, link.getAttribute (&quot;id&quot;));</span>
+<span class="fc" id="L214">        assertType (&quot;should be LinkTag&quot;, LinkTag.class, list.elementAt (1));</span>
+<span class="fc" id="L215">        link = (LinkTag)list.elementAt (1);</span>
+<span class="fc" id="L216">        assertEquals (&quot;attribute value&quot;, &quot;three&quot;, link.getAttribute (&quot;id&quot;));</span>
+<span class="fc" id="L217">    }</span>
+
+    /**
+     * Test not filtering.
+     */
+    public void testNot () throws ParserException
+    {
+        String guts;
+        String html;
+        NodeList list;
+
+<span class="fc" id="L228">        guts = &quot;&lt;body&gt;Now is the &lt;a id=one&gt;&lt;b&gt;time&lt;/b&gt;&lt;/a&gt; for &lt;a id=two&gt;&lt;b&gt;all&lt;/b&gt;&lt;/a&gt; good &lt;a id=three&gt;&lt;b&gt;men&lt;/b&gt;&lt;/a&gt;..&lt;/body&gt;&quot;;</span>
+<span class="fc" id="L229">        html = &quot;&lt;html&gt;&quot; + guts + &quot;&lt;/html&gt;&quot;;</span>
+<span class="fc" id="L230">        createParser (html);</span>
+<span class="fc" id="L231">        list = parser.extractAllNodesThatMatch (</span>
+<span class="fc" id="L232">            new AndFilter (</span>
+<span class="fc" id="L233">                new HasChildFilter (</span>
+<span class="fc" id="L234">                    new TagNameFilter (&quot;b&quot;)),</span>
+<span class="fc" id="L235">                new NotFilter (</span>
+<span class="fc" id="L236">                    new HasChildFilter (</span>
+<span class="fc" id="L237">                        new StringFilter (&quot;all&quot;))))</span>
+                );
+<span class="fc" id="L239">        assertEquals (&quot;two elements&quot;, 2, list.size ());</span>
+<span class="fc" id="L240">        assertType (&quot;should be LinkTag&quot;, LinkTag.class, list.elementAt (0));</span>
+<span class="fc" id="L241">        LinkTag link = (LinkTag)list.elementAt (0);</span>
+<span class="fc" id="L242">        assertEquals (&quot;attribute value&quot;, &quot;one&quot;, link.getAttribute (&quot;id&quot;));</span>
+<span class="fc" id="L243">        assertType (&quot;should be LinkTag&quot;, LinkTag.class, list.elementAt (1));</span>
+<span class="fc" id="L244">        link = (LinkTag)list.elementAt (1);</span>
+<span class="fc" id="L245">        assertEquals (&quot;attribute value&quot;, &quot;three&quot;, link.getAttribute (&quot;id&quot;));</span>
+<span class="fc" id="L246">    }</span>
+
+    public void testEscape() throws Exception
+    {
+<span class="fc" id="L250">        assertEquals (&quot;douchebag&quot;, CssSelectorNodeFilter.unescape (&quot;doucheba\\g&quot;).toString ());</span>
+<span class="fc" id="L251">    }</span>
+
+    public void testSelectors() throws Exception
+    {
+<span class="fc" id="L255">        String html = &quot;&lt;html&gt;&lt;head&gt;&lt;title&gt;sample title&lt;/title&gt;&lt;/head&gt;&lt;body inserterr=\&quot;true\&quot; yomama=\&quot;false\&quot;&gt;&lt;h3 id=\&quot;heading\&quot;&gt;big &lt;/invalid&gt;heading&lt;/h3&gt;&lt;ul id=\&quot;things\&quot;&gt;&lt;li&gt;&lt;br word=\&quot;broken\&quot;/&gt;&amp;gt;moocow&lt;li&gt;&lt;applet/&gt;doohickey&lt;li class=\&quot;last\&quot;&gt;&lt;b class=\&quot;item\&quot;&gt;final&lt;br&gt;item&lt;/b&gt;&lt;/ul&gt;&lt;/body&gt;&lt;/html&gt;&quot;;</span>
+        Lexer l;
+        Parser p;
+        CssSelectorNodeFilter it;
+        NodeIterator i;
+        int count;
+
+<span class="fc" id="L262">        l = new Lexer (html);</span>
+<span class="fc" id="L263">        p = new Parser (l);</span>
+<span class="fc" id="L264">        it = new CssSelectorNodeFilter (&quot;li + li&quot;);</span>
+<span class="fc" id="L265">        count = 0;</span>
+<span class="fc bfc" id="L266" title="All 2 branches covered.">        for (i = p.extractAllNodesThatMatch (it).elements (); i.hasMoreNodes ();)</span>
+        {
+<span class="fc" id="L268">            assertEquals (&quot;tag name wrong&quot;, &quot;LI&quot;, ((Tag)i.nextNode()).getTagName());</span>
+<span class="fc" id="L269">            count++;</span>
+        }
+<span class="fc" id="L271">        assertEquals (&quot;wrong count&quot;, 2, count);</span>
+<span class="fc" id="L272">    }</span>
+
+    /**
+     * Test regular expression matching:
+     */
+    public void testRegularExpression () throws Exception
+    {
+<span class="fc" id="L279">        String target =</span>
+<span class="fc" id="L280">              &quot;\n&quot;</span>
+            + &quot;\n&quot;
+            + &quot;Most recently, in the Western Conference final, the Flames knocked off \n&quot;
+            + &quot;the San Jose Sharks, the Pacific Division champions, to become the first \n&quot;
+            + &quot;Canadian team to reach the Stanley Cup Championship series since 1994.&quot;;
+            
+<span class="fc" id="L286">        String html =</span>
+<span class="fc" id="L287">              &quot;&lt;html&gt;&lt;head&gt;&lt;title&gt;CBC Sports Online: NHL Playoffs&lt;/title&gt;&lt;/head&gt;&quot;</span>
+            + &quot;&lt;body&gt;&lt;h1&gt;CBC SPORTS ONLINE&lt;/h1&gt;\n&quot;
+            + &quot;The Calgary Flames have already defeated three NHL division winners \n&quot;
+            + &quot;during their improbable playoff run. If they are to hoist the Stanley \n&quot;
+            + &quot;Cup they'll have to go through one more. &lt;p&gt;&lt;table ALIGN=\&quot;Right\&quot; width=196 CELLPADDING=0 cellspacing=0 hspace=4&gt; &lt;tr&gt;&lt;td&gt;&lt;img src=\&quot;/gfx/topstory/sports/iginla_j0524.jpg\&quot; width=194 height=194 hspace=3 border=1&gt;&lt;br&gt;\n&quot;
+            + &quot;\n&quot;
+            + &quot;&lt;font SIZE=\&quot;1\&quot; FACE=\&quot;verdana,arial\&quot;&gt;\n&quot;
+            + &quot;Jarome Iginla skates during the Flames' practice on Monday. Calgary takes on the Tampa Bay Lightning in the Stanley Cup finals beginning Tuesday night in Tampa\n&quot;
+            + &quot;&lt;/font&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;\n&quot;
+            + &quot;\n&quot;
+            + &quot;\n&quot;
+            + &quot;In the post-season's first round, the Flames defeated the Vancouver \n&quot;
+            + &quot;Canucks, the Northwest Division winners, in seven tough games. &lt;p&gt;\n&quot;
+            + &quot;\n&quot;
+            + &quot;In Round 2 it was the Detroit Red Wings, who not only won the Central \n&quot;
+            + &quot;Division, but also boasted the NHL's best overall record during the \n&quot;
+            + &quot;regular season, who fell to the Flames. &lt;p&gt;&quot;
+<span class="fc" id="L304">            + target</span>
+<span class="fc" id="L305">            + &quot;&lt;p&gt;\n&quot;</span>
+<span class="fc" id="L306">            + &quot;\n&quot;</span>
+<span class="fc" id="L307">            + &quot;Up next for the Flames is the Tampa Bay Lighting -- the runaway winners \n&quot;</span>
+<span class="fc" id="L308">            + &quot;of the NHL's Southeast Division and the Eastern Conference's best team \n&quot;</span>
+<span class="fc" id="L309">            + &quot;during the regular season. &lt;p&gt;\n&quot;</span>
+<span class="fc" id="L310">            + &quot;\n&quot;</span>
+<span class="fc" id="L311">            + &quot;The Lighting advanced by beating the Philadelphia Flyers in the Eastern \n&quot;</span>
+<span class="fc" id="L312">            + &quot;Conference final. &lt;p&gt;\n&quot;</span>
+<span class="fc" id="L313">            + &quot;&lt;/body&gt;&lt;/html&gt;\n&quot;;</span>
+        Lexer lexer;
+        Parser parser;
+        RegexFilter filter;
+        NodeIterator iterator;
+        int count;
+
+<span class="fc" id="L320">        lexer = new Lexer (html);</span>
+<span class="fc" id="L321">        parser = new Parser (lexer);</span>
+<span class="fc" id="L322">        filter = new RegexFilter (&quot;(19|20)\\d\\d([- \\\\/.](0[1-9]|1[012])[- \\\\/.](0[1-9]|[12][0-9]|3[01]))?&quot;);</span>
+<span class="fc" id="L323">        count = 0;</span>
+<span class="fc bfc" id="L324" title="All 2 branches covered.">        for (iterator = parser.extractAllNodesThatMatch (filter).elements (); iterator.hasMoreNodes ();)</span>
+        {
+<span class="fc" id="L326">            assertEquals (&quot;text wrong&quot;, target, iterator.nextNode ().toHtml ());</span>
+<span class="fc" id="L327">            count++;</span>
+        }
+<span class="fc" id="L329">        assertEquals (&quot;wrong count&quot;, 1, count);</span>
+<span class="fc" id="L330">    }</span>
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

@@ -1,0 +1,403 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>ImageTagTest.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tests.tagTests</a> &gt; <span class="el_source">ImageTagTest.java</span></div><h1>ImageTagTest.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Somik Raha
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/test/java/org/htmlparser/tests/tagTests/ImageTagTest.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tests.tagTests;
+
+import org.htmlparser.Node;
+import org.htmlparser.PrototypicalNodeFactory;
+import org.htmlparser.tags.ImageTag;
+import org.htmlparser.tags.LinkTag;
+import org.htmlparser.tags.TableColumn;
+import org.htmlparser.tags.TableRow;
+import org.htmlparser.tests.ParserTestCase;
+import org.htmlparser.util.NodeIterator;
+import org.htmlparser.util.ParserException;
+import org.htmlparser.util.ParserUtils;
+
+public class ImageTagTest extends ParserTestCase
+{
+    static
+    {
+<span class="fc" id="L43">        System.setProperty (&quot;org.htmlparser.tests.tagTests.ImageTagTest&quot;, &quot;ImageTagTest&quot;);</span>
+<span class="fc" id="L44">    }</span>
+
+    public ImageTagTest(String name) {
+<span class="fc" id="L47">        super(name);</span>
+<span class="fc" id="L48">    }</span>
+
+    /**
+     * The bug being reproduced is this : &lt;BR&gt;
+     * &amp;lt;BODY aLink=#ff0000 bgColor=#ffffff link=#0000cc onload=setfocus() text=#000000 &lt;BR&gt;
+     * vLink=#551a8b&amp;gt;
+     * The above line is incorrectly parsed in that, the BODY tag is not identified.
+     * Creation date: (6/17/2001 4:01:06 PM)
+     */
+    public void testImageTag() throws ParserException
+    {
+<span class="fc" id="L59">        createParser(&quot;&lt;IMG alt=Google height=115 src=\&quot;goo/title_homepage4.gif\&quot; width=305&gt;&quot;,&quot;http://www.google.com/test/index.html&quot;);</span>
+<span class="fc" id="L60">        parseAndAssertNodeCount(1);</span>
+        // The node should be an HTMLImageTag
+<span class="fc" id="L62">        assertTrue(&quot;Node should be a HTMLImageTag&quot;,node[0] instanceof ImageTag);</span>
+<span class="fc" id="L63">        ImageTag imageTag = (ImageTag)node[0];</span>
+<span class="fc" id="L64">        assertEquals(&quot;The image locn&quot;,&quot;http://www.google.com/test/goo/title_homepage4.gif&quot;,imageTag.getImageURL());</span>
+<span class="fc" id="L65">    }</span>
+
+    /**
+     * The bug being reproduced is this : &lt;BR&gt;
+     * &amp;lt;BODY aLink=#ff0000 bgColor=#ffffff link=#0000cc onload=setfocus() text=#000000 &lt;BR&gt;
+     * vLink=#551a8b&amp;gt;
+     * The above line is incorrectly parsed in that, the BODY tag is not identified.
+     * Creation date: (6/17/2001 4:01:06 PM)
+     */
+    public void testImageTagBug() throws ParserException
+    {
+<span class="fc" id="L76">        createParser(&quot;&lt;IMG alt=Google height=115 src=\&quot;../goo/title_homepage4.gif\&quot; width=305&gt;&quot;,&quot;http://www.google.com/test/&quot;);</span>
+<span class="fc" id="L77">        parseAndAssertNodeCount(1);</span>
+        // The node should be an HTMLImageTag
+<span class="fc" id="L79">        assertTrue(&quot;Node should be a HTMLImageTag&quot;,node[0] instanceof ImageTag);</span>
+<span class="fc" id="L80">        ImageTag imageTag = (ImageTag)node[0];</span>
+<span class="fc" id="L81">        assertEquals(&quot;The image locn&quot;,&quot;http://www.google.com/goo/title_homepage4.gif&quot;,imageTag.getImageURL());</span>
+<span class="fc" id="L82">    }</span>
+
+    /**
+     * The bug being reproduced is this : &lt;BR&gt;
+     * &amp;lt;BODY aLink=#ff0000 bgColor=#ffffff link=#0000cc onload=setfocus() text=#000000 &lt;BR&gt;
+     * vLink=#551a8b&amp;gt;
+     * The above line is incorrectly parsed in that, the BODY tag is not identified.
+     * Creation date: (6/17/2001 4:01:06 PM)
+     */
+    public void testImageTageBug2() throws ParserException
+    {
+<span class="fc" id="L93">        createParser(&quot;&lt;IMG alt=Google height=115 src=\&quot;../../goo/title_homepage4.gif\&quot; width=305&gt;&quot;,&quot;http://www.google.com/test/test/index.html&quot;);</span>
+<span class="fc" id="L94">        parseAndAssertNodeCount(1);</span>
+        // The node should be an HTMLImageTag
+<span class="fc" id="L96">        assertTrue(&quot;Node should be a HTMLImageTag&quot;,node[0] instanceof ImageTag);</span>
+<span class="fc" id="L97">        ImageTag imageTag = (ImageTag)node[0];</span>
+<span class="fc" id="L98">        assertEquals(&quot;The image locn&quot;,&quot;http://www.google.com/goo/title_homepage4.gif&quot;,imageTag.getImageURL());</span>
+<span class="fc" id="L99">    }</span>
+
+    /**
+     * This bug occurs when there is a null pointer exception thrown while scanning a tag using LinkScanner.
+     * Creation date: (7/1/2001 2:42:13 PM)
+     */
+    public void testImageTagSingleQuoteBug() throws ParserException
+    {
+<span class="fc" id="L107">        createParser(&quot;&lt;IMG SRC='abcd.jpg'&gt;&quot;,&quot;http://www.cj.com/&quot;);</span>
+<span class="fc" id="L108">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L109">        assertTrue(&quot;Node should be a HTMLImageTag&quot;,node[0] instanceof ImageTag);</span>
+<span class="fc" id="L110">        ImageTag imageTag = (ImageTag)node[0];</span>
+<span class="fc" id="L111">        assertEquals(&quot;Image incorrect&quot;,&quot;http://www.cj.com/abcd.jpg&quot;,imageTag.getImageURL());</span>
+<span class="fc" id="L112">    }</span>
+
+    /**
+     * The bug being reproduced is this : &lt;BR&gt;
+     * &amp;lt;A HREF=&amp;gt;Something&amp;lt;A&amp;gt;&lt;BR&gt;
+     * vLink=#551a8b&amp;gt;
+     * The above line is incorrectly parsed in that, the BODY tag is not identified.
+     * Creation date: (6/17/2001 4:01:06 PM)
+     */
+    public void testNullImageBug() throws ParserException
+    {
+<span class="fc" id="L123">        createParser(&quot;&lt;IMG SRC=&gt;&quot;,&quot;http://www.google.com/test/index.html&quot;);</span>
+<span class="fc" id="L124">        parseAndAssertNodeCount(1);</span>
+        // The node should be an HTMLLinkTag
+<span class="fc" id="L126">        assertTrue(&quot;Node should be a HTMLImageTag&quot;,node[0] instanceof ImageTag);</span>
+<span class="fc" id="L127">        ImageTag imageTag = (ImageTag)node[0];</span>
+<span class="fc" id="L128">        assertStringEquals(&quot;The image location&quot;,&quot;&quot;,imageTag.getImageURL());</span>
+<span class="fc" id="L129">    }</span>
+
+    public void testToHTML() throws ParserException {
+<span class="fc" id="L132">        String img = &quot;&lt;IMG alt=Google height=115 src=\&quot;../../goo/title_homepage4.gif\&quot; width=305&gt;&quot;;</span>
+<span class="fc" id="L133">        createParser(img,&quot;http://www.google.com/test/test/index.html&quot;);</span>
+<span class="fc" id="L134">        parseAndAssertNodeCount(1);</span>
+        // The node should be an ImageTag
+<span class="fc" id="L136">        assertTrue(&quot;Node should be a ImageTag&quot;,node[0] instanceof ImageTag);</span>
+<span class="fc" id="L137">        ImageTag imageTag = (ImageTag)node[0];</span>
+<span class="fc" id="L138">        assertStringEquals(&quot;toHtml&quot;,img,imageTag.toHtml());</span>
+<span class="fc" id="L139">        assertEquals(&quot;Alt&quot;,&quot;Google&quot;,imageTag.getAttribute(&quot;alt&quot;));</span>
+<span class="fc" id="L140">        assertEquals(&quot;Height&quot;,&quot;115&quot;,imageTag.getAttribute(&quot;height&quot;));</span>
+<span class="fc" id="L141">        assertEquals(&quot;Width&quot;,&quot;305&quot;,imageTag.getAttribute(&quot;width&quot;));</span>
+<span class="fc" id="L142">    }</span>
+
+    /**
+     * See bug #753003 &lt;IMG&gt; within &lt;A&gt; missed when followed by &lt;MAP&gt;
+     * Not reproducible.
+     */
+    public ImageTag extractLinkImage (LinkTag link)
+    {
+<span class="fc" id="L150">        Node[] list = ParserUtils.findTypeInNode (link, ImageTag.class);</span>
+<span class="pc bpc" id="L151" title="1 of 2 branches missed.">        return (0 == list.length ? null : (ImageTag)list[0]);</span>
+    }
+
+    /**
+     * See bug #753003 &lt;IMG&gt; within &lt;A&gt; missed when followed by &lt;MAP&gt;
+     * Not reproducible.
+     */
+    public void testMapFollowImg () throws ParserException
+    {
+<span class="fc" id="L160">        String html = &quot;&lt;a href=\&quot;Biography/Biography.html\&quot; &quot;</span>
+            + &quot;onMouseOut=\&quot;MM_swapImgRestore()\&quot; &quot;
+            + &quot;onMouseOver=\&quot;MM_swapImage('Image13','','Graphics/SchneiderPic1.gif',1)\&quot;&gt;&quot;
+            + &quot;&lt;img name=\&quot;Image13\&quot; border=\&quot;0\&quot; src=\&quot;Graphics/SchneiderPic.gif\&quot; &quot;
+            + &quot;width=\&quot;127\&quot; height=\&quot;175\&quot; usemap=\&quot;#Image13Map\&quot; &quot;
+            + &quot;alt=\&quot;Graphics/SchneiderPic.gif\&quot;&gt; &lt;map name=\&quot;Image13Map\&quot;&gt;&quot;
+            + &quot;&lt;area shape=\&quot;circle\&quot; coords=\&quot;67,88,66\&quot; href=\&quot;Biography/Biography.html\&quot; &quot;
+            + &quot;onClick=\&quot;newWindow('Biography/Biography.html','HTML','menubar=yes,scrollbars=yes,resizable=yes,left=0,top=0'); return false\&quot; target=\&quot;HTML\&quot;&gt;&quot;
+            + &quot;&lt;/map&gt;&quot;
+            + &quot;&lt;/a&gt;&quot;;
+<span class="fc" id="L170">        createParser (html);</span>
+<span class="fc" id="L171">        parseAndAssertNodeCount (1);</span>
+<span class="fc" id="L172">        assertTrue (&quot;Node should be a LinkTag&quot;, node[0] instanceof LinkTag);</span>
+<span class="fc" id="L173">        LinkTag link = (LinkTag)node[0];</span>
+<span class="fc" id="L174">        ImageTag img = extractLinkImage (link);</span>
+<span class="fc" id="L175">        assertNotNull (&quot;no image tag&quot;, img);</span>
+<span class="fc" id="L176">    }</span>
+
+    /**
+     * Test empty attribute.
+     * See bug #755929 Empty string attr. value causes attr parsing to be stopped
+     * and bug #753012 IMG SRC not parsed v1.3 &amp; v1.4
+     */
+    public void testEmptyStringElement () throws ParserException
+    {
+<span class="fc" id="L185">        String html = &quot;&lt;img height=\&quot;1\&quot; width=\&quot;1\&quot; alt=\&quot;\&quot; &quot;</span>
+            + &quot;src=\&quot;http://i.cnn.net/cnn/images/1.gif\&quot;/&gt;&quot;;
+
+<span class="fc" id="L188">        createParser (html);</span>
+<span class="fc" id="L189">        parseAndAssertNodeCount (1);</span>
+<span class="fc" id="L190">        assertTrue (&quot;Node should be an ImageTag&quot;, node[0] instanceof ImageTag);</span>
+<span class="fc" id="L191">        ImageTag img = (ImageTag)node[0];</span>
+<span class="fc" id="L192">        assertTrue (&quot;bad source&quot;, &quot;http://i.cnn.net/cnn/images/1.gif&quot;.equals (img.getImageURL ()));</span>
+<span class="fc" id="L193">    }</span>
+
+    public void testDynamicRelativeImageScan() throws ParserException {
+<span class="fc" id="L196">        createParser(&quot;&lt;IMG SRC=\&quot;../abc/def/mypic.jpg\&quot;&gt;&quot;,&quot;http://www.yahoo.com/ghi?abcdefg&quot;);</span>
+<span class="fc" id="L197">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L198">        assertTrue(&quot;Node identified should be HTMLImageTag&quot;,node[0] instanceof ImageTag);</span>
+<span class="fc" id="L199">        ImageTag imageTag = (ImageTag)node[0];</span>
+<span class="fc" id="L200">        assertEquals(&quot;Expected Link&quot;,&quot;http://www.yahoo.com/abc/def/mypic.jpg&quot;,imageTag.getImageURL());</span>
+<span class="fc" id="L201">    }</span>
+
+    /**
+     * This is the reproduction of a bug which causes a null pointer exception
+     */
+    public void testExtractImageLocnInvertedCommasBug() throws ParserException
+    {
+<span class="fc" id="L208">        String locn = &quot;http://us.a1.yimg.com/us.yimg.com/i/ww/m5v5.gif&quot;;</span>
+<span class="fc" id="L209">        createParser (&quot;&lt;img width=638 height=53 border=0 usemap=\&quot;#m\&quot; src=&quot; + locn + &quot; alt=Yahoo&gt;&quot;);</span>
+<span class="fc" id="L210">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L211">        assertTrue(&quot;Node identified should be HTMLImageTag&quot;,node[0] instanceof ImageTag);</span>
+<span class="fc" id="L212">        ImageTag imageTag = (ImageTag)node[0];</span>
+<span class="fc" id="L213">        assertEquals(&quot;Expected Image Locn&quot;,locn,imageTag.getImageURL());</span>
+<span class="fc" id="L214">    }</span>
+
+    /**
+     * This test has been improved to check for params
+     * in the image tag, based on requirement by Annette Doyle.
+     * Thereby an important bug was detected.
+     */
+    public void testPlaceHolderImageScan() throws ParserException {
+<span class="fc" id="L222">        createParser(&quot;&lt;IMG width=1 height=1 alt=\&quot;a\&quot;&gt;&quot;,&quot;http://www.yahoo.com/ghi?abcdefg&quot;);</span>
+<span class="fc" id="L223">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L224">        assertTrue(&quot;Node identified should be HTMLImageTag&quot;,node[0] instanceof ImageTag);</span>
+<span class="fc" id="L225">        ImageTag imageTag = (ImageTag)node[0];</span>
+<span class="fc" id="L226">        assertEquals(&quot;Expected Image Locn&quot;,&quot;&quot;,imageTag.getImageURL());</span>
+<span class="fc" id="L227">        assertEquals(&quot;Image width&quot;,&quot;1&quot;,imageTag.getAttribute(&quot;WIDTH&quot;));</span>
+<span class="fc" id="L228">        assertEquals(&quot;Image height&quot;,&quot;1&quot;,imageTag.getAttribute(&quot;HEIGHT&quot;));</span>
+<span class="fc" id="L229">        assertEquals(&quot;alt&quot;,&quot;a&quot;,imageTag.getAttribute(&quot;ALT&quot;));</span>
+<span class="fc" id="L230">    }</span>
+
+    public void testRelativeImageScan() throws ParserException {
+<span class="fc" id="L233">        createParser(&quot;&lt;IMG SRC=\&quot;mypic.jpg\&quot;&gt;&quot;,&quot;http://www.yahoo.com&quot;);</span>
+<span class="fc" id="L234">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L235">        assertTrue(&quot;Node identified should be ImageTag&quot;,node[0] instanceof ImageTag);</span>
+<span class="fc" id="L236">        ImageTag imageTag = (ImageTag)node[0];</span>
+<span class="fc" id="L237">        assertEquals(&quot;Expected Link&quot;,&quot;http://www.yahoo.com/mypic.jpg&quot;,imageTag.getImageURL());</span>
+<span class="fc" id="L238">    }</span>
+
+    public void testRelativeImageScan2() throws ParserException {
+<span class="fc" id="L241">        createParser(&quot;&lt;IMG SRC=\&quot;abc/def/mypic.jpg\&quot;&gt;&quot;,&quot;http://www.yahoo.com&quot;);     // Register the image scanner</span>
+<span class="fc" id="L242">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L243">        assertTrue(&quot;Node identified should be HTMLImageTag&quot;,node[0] instanceof ImageTag);</span>
+<span class="fc" id="L244">        ImageTag imageTag = (ImageTag)node[0];</span>
+<span class="fc" id="L245">        assertEquals(&quot;Expected Link&quot;,&quot;http://www.yahoo.com/abc/def/mypic.jpg&quot;,imageTag.getImageURL());</span>
+<span class="fc" id="L246">    }</span>
+
+    public void testRelativeImageScan3() throws ParserException {
+<span class="fc" id="L249">        createParser(&quot;&lt;IMG SRC=\&quot;../abc/def/mypic.jpg\&quot;&gt;&quot;,&quot;http://www.yahoo.com/ghi&quot;);</span>
+<span class="fc" id="L250">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L251">        assertTrue(&quot;Node identified should be HTMLImageTag&quot;,node[0] instanceof ImageTag);</span>
+<span class="fc" id="L252">        ImageTag imageTag = (ImageTag)node[0];</span>
+<span class="fc" id="L253">        assertEquals(&quot;Expected Link&quot;,&quot;http://www.yahoo.com/abc/def/mypic.jpg&quot;,imageTag.getImageURL());</span>
+<span class="fc" id="L254">    }</span>
+
+    /**
+     * Test image url which contains spaces in it.
+     * This was actually a bug reported by Sam Joseph (sam@neurogrid.net)
+     */
+    public void testImageWithSpaces() throws ParserException
+    {
+<span class="fc" id="L262">        createParser(&quot;&lt;IMG SRC=\&quot;../abc/def/Hello World.jpg\&quot;&gt;&quot;,&quot;http://www.yahoo.com/ghi&quot;);</span>
+<span class="fc" id="L263">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L264">        assertTrue(&quot;Node identified should be HTMLImageTag&quot;,node[0] instanceof ImageTag);</span>
+<span class="fc" id="L265">        ImageTag imageTag = (ImageTag)node[0];</span>
+<span class="fc" id="L266">        assertEquals(&quot;Expected Link&quot;,&quot;http://www.yahoo.com/abc/def/Hello World.jpg&quot;,imageTag.getImageURL());</span>
+<span class="fc" id="L267">    }</span>
+
+    public void testImageWithNewLineChars() throws ParserException
+    {
+<span class="fc" id="L271">        createParser(&quot;&lt;IMG SRC=\&quot;../abc/def/Hello \r\nWorld.jpg\&quot;&gt;&quot;,&quot;http://www.yahoo.com/ghi&quot;);</span>
+<span class="fc" id="L272">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L273">        assertTrue(&quot;Node identified should be HTMLImageTag&quot;,node[0] instanceof ImageTag);</span>
+<span class="fc" id="L274">        ImageTag imageTag = (ImageTag)node[0];</span>
+<span class="fc" id="L275">        String exp = new String(&quot;http://www.yahoo.com/abc/def/Hello World.jpg&quot;);</span>
+        //assertEquals(&quot;Length of image&quot;,exp.length(),imageTag.getImageLocation().length());
+<span class="fc" id="L277">        assertStringEquals(&quot;Expected Image&quot;,exp,imageTag.getImageURL());</span>
+<span class="fc" id="L278">    }</span>
+
+    /**
+     * Test case to reproduce bug reported by Annette
+     */
+    public void testImageTagsFromYahoo() throws ParserException
+    {
+<span class="fc" id="L285">        createParser(&quot;&lt;small&gt;&lt;a href=s/5926&gt;Air&lt;/a&gt;, &lt;a href=s/5927&gt;Hotel&lt;/a&gt;, &lt;a href=s/5928&gt;Vacations&lt;/a&gt;, &lt;a href=s/5929&gt;Cruises&lt;/a&gt;&lt;/small&gt;&lt;/td&gt;&lt;td align=center&gt;&lt;a href=\&quot;http://rd.yahoo.com/M=218794.2020165.3500581.220161/D=yahoo_top/S=2716149:NP/A=1041273/?http://adfarm.mediaplex.com/ad/ck/990-1736-1039-211\&quot; target=\&quot;_top\&quot;&gt;&lt;img width=230 height=33 src=\&quot;http://us.a1.yimg.com/us.yimg.com/a/co/columbiahouse/4for49Freesh_230x33_redx2.gif\&quot; alt=\&quot;\&quot; border=0&gt;&lt;/a&gt;&lt;/td&gt;&lt;td nowrap align=center width=215&gt;Find your match on&lt;br&gt;&lt;a href=s/2734&gt;&lt;b&gt;Yahoo! Personals&lt;/b&gt;&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td colspan=3 align=center&gt;&lt;input size=30 name=p&gt;\n&quot;+</span>
+<span class="fc" id="L286">        &quot;&lt;input type=submit value=Search&gt; &lt;a href=r/so&gt;advanced search&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;table border=0 cellspacing=0 cellpadding=3 width=640&gt;&lt;tr&gt;&lt;td nowrap align=center&gt;&lt;table border=0 cellspacing=0 cellpadding=0&gt;&lt;tr&gt;&lt;td&gt;&lt;a href=s/5948&gt;&lt;img src=\&quot;http://us.i1.yimg.com/us.yimg.com/i/ligans/klgs/eet.gif\&quot; width=20 height=20 border=0&gt;&lt;/a&gt;&lt;/td&gt;&lt;td&gt; &amp;nbsp; &amp;nbsp; &lt;a href=s/1048&gt;&lt;b&gt;Yahooligans!&lt;/b&gt;&lt;/a&gt; - &lt;a href=s/5282&gt;Eet &amp; Ern&lt;/a&gt;, &lt;a href=s/5283&gt;Games&lt;/a&gt;, &lt;a href=s/5284&gt;Science&lt;/a&gt;, &lt;a href=s/5285&gt;Sports&lt;/a&gt;, &lt;a href=s/5286&gt;Movies&lt;/a&gt;, &lt;a href=s/1048&gt;more&lt;/a&gt; &amp;nbsp; &amp;nbsp; &lt;/td&gt;&lt;td&gt;&lt;a href=s/5948&gt;&lt;img src=\&quot;http://us.i1.yimg.com/us.yimg.com/i/ligans/klgs/ern.gif\&quot; width=20 height=20 border=0&gt;&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td nowrap align=center&gt;&lt;small&gt;&lt;b&gt;Shop&lt;/b&gt;&amp;nbsp;\n&quot;,&quot;http://www.yahoo.com&quot;);</span>
+<span class="fc" id="L287">        Node [] node = new Node[10];</span>
+<span class="fc" id="L288">        parser.setNodeFactory (new PrototypicalNodeFactory (new ImageTag ()));</span>
+<span class="fc" id="L289">        int i = 0;</span>
+        Node thisNode;
+<span class="fc bfc" id="L291" title="All 2 branches covered.">        for (NodeIterator e = parser.elements();e.hasMoreNodes();) {</span>
+<span class="fc" id="L292">            thisNode = e.nextNode();</span>
+<span class="fc bfc" id="L293" title="All 2 branches covered.">            if (thisNode instanceof ImageTag)</span>
+<span class="fc" id="L294">                node[i++] = thisNode;</span>
+        }
+<span class="fc" id="L296">        assertEquals(&quot;Number of nodes identified should be 3&quot;,3,i);</span>
+<span class="fc" id="L297">        assertTrue(&quot;Node identified should be HTMLImageTag&quot;,node[0] instanceof ImageTag);</span>
+<span class="fc" id="L298">        ImageTag imageTag = (ImageTag)node[0];</span>
+<span class="fc" id="L299">        assertEquals(&quot;Expected Image&quot;,&quot;http://us.a1.yimg.com/us.yimg.com/a/co/columbiahouse/4for49Freesh_230x33_redx2.gif&quot;,imageTag.getImageURL());</span>
+<span class="fc" id="L300">        ImageTag imageTag2 = (ImageTag)node[1];</span>
+<span class="fc" id="L301">        assertEquals(&quot;Expected Image 2&quot;,&quot;http://us.i1.yimg.com/us.yimg.com/i/ligans/klgs/eet.gif&quot;,imageTag2.getImageURL());</span>
+<span class="fc" id="L302">        ImageTag imageTag3 = (ImageTag)node[2];</span>
+<span class="fc" id="L303">        assertEquals(&quot;Expected Image 3&quot;,&quot;http://us.i1.yimg.com/us.yimg.com/i/ligans/klgs/ern.gif&quot;,imageTag3.getImageURL());</span>
+<span class="fc" id="L304">    }</span>
+
+    /**
+     * Test case to reproduce bug reported by Annette
+     */
+    public void testImageTagsFromYahooWithAllScannersRegistered() throws ParserException
+    {
+<span class="fc" id="L311">        createParser(</span>
+<span class="fc" id="L312">            &quot;&lt;tr&gt;&quot; +</span>
+                &quot;&lt;td&gt;&quot; +
+                &quot;   &lt;small&gt;&lt;a href=s/5926&gt;Air&lt;/a&gt;, &lt;a href=s/5927&gt;Hotel&lt;/a&gt;, &quot; +
+                    &quot;&lt;a href=s/5928&gt;Vacations&lt;/a&gt;, &lt;a href=s/5929&gt;Cruises&lt;/a&gt;&lt;/small&gt;&quot; +
+                &quot;&lt;/td&gt;&quot; +
+                &quot;&lt;td align=center&gt;&quot; +
+                    &quot;&lt;a href=\&quot;http://rd.yahoo.com/M=218794.2020165.3500581.220161/D=yahoo_top/S=&quot; +
+                    &quot;2716149:NP/A=1041273/?http://adfarm.mediaplex.com/ad/ck/990-1736-1039-211\&quot; &quot; +
+                    &quot;target=\&quot;_top\&quot;&gt;&lt;img width=230 height=33 src=\&quot;http://us.a1.yimg.com/us.yimg.com/a/co/&quot; +
+                    &quot;columbiahouse/4for49Freesh_230x33_redx2.gif\&quot; alt=\&quot;\&quot; border=0&gt;&lt;/a&gt;&quot; +
+                &quot;&lt;/td&gt;&quot; +
+                &quot;&lt;td nowrap align=center width=215&gt;&quot; +
+                    &quot;Find your match on&lt;br&gt;&lt;a href=s/2734&gt;&quot; +
+                    &quot;&lt;b&gt;Yahoo! Personals&lt;/b&gt;&lt;/a&gt;&quot; +
+                &quot;&lt;/td&gt;&quot; +
+            &quot;&lt;/tr&gt;&quot; +
+            &quot;&lt;tr&gt;&quot; +
+                &quot;&lt;td colspan=3 align=center&gt;&quot; +
+                    &quot;&lt;input size=30 &quot; +
+                    &quot;name=p&gt;\n&quot; +
+                &quot;&lt;/td&gt;&quot; +
+<span class="fc" id="L333">            &quot;&lt;/tr&gt;&quot;,&quot;http://www.yahoo.com&quot;,30</span>
+        );
+<span class="fc" id="L335">        parseAndAssertNodeCount(2);</span>
+<span class="fc" id="L336">        assertType(&quot;first node type&quot;,TableRow.class,node[0]);</span>
+<span class="fc" id="L337">        TableRow row = (TableRow)node[0];</span>
+<span class="fc" id="L338">        TableColumn col = row.getColumns()[1];</span>
+<span class="fc" id="L339">        Node node = col.children().nextNode();</span>
+<span class="fc" id="L340">        assertType(&quot;Node identified should be HTMLLinkTag&quot;,LinkTag.class,node);</span>
+<span class="fc" id="L341">        LinkTag linkTag = (LinkTag)node;</span>
+<span class="fc" id="L342">        Node nodeInsideLink = linkTag.children().nextNode();</span>
+<span class="fc" id="L343">        assertType(&quot;Tag within link should be an image tag&quot;,ImageTag.class,nodeInsideLink);</span>
+<span class="fc" id="L344">        ImageTag imageTag = (ImageTag)nodeInsideLink;</span>
+<span class="fc" id="L345">        assertStringEquals(</span>
+<span class="fc" id="L346">            &quot;Expected Image&quot;,</span>
+<span class="fc" id="L347">            &quot;http://us.a1.yimg.com/us.yimg.com/a/co/columbiahouse/4for49Freesh_230x33_redx2.gif&quot;,</span>
+<span class="fc" id="L348">            imageTag.getImageURL()</span>
+        );
+<span class="fc" id="L350">    }</span>
+
+    /**
+     * This is the reproduction of a bug reported
+     * by Annette Doyle
+     */
+    public void testImageTagOnMultipleLines() throws ParserException {
+<span class="fc" id="L357">        createParser(</span>
+<span class="fc" id="L358">            &quot;&lt;td rowspan=3&gt;&quot; +</span>
+                &quot;&lt;img height=49 \n\n&quot;+
+                &quot;alt=\&quot;Central Intelligence Agency, Director of Central Intelligence\&quot; \n\n&quot;+
+                &quot;src=\&quot;graphics/images_home2/cia_banners_template3_01.gif\&quot; \n\n&quot;+
+                &quot;width=241&gt;&quot; +
+            &quot;&lt;/td&gt;&quot;,
+<span class="fc" id="L364">            &quot;http://www.cia.gov&quot;</span>
+        );
+<span class="fc" id="L366">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L367">        assertType(&quot;node should be&quot;, TableColumn.class, node[0]);</span>
+<span class="fc" id="L368">        TableColumn col = (TableColumn)node[0];</span>
+<span class="fc" id="L369">        Node node = col.children().nextNode();</span>
+<span class="fc" id="L370">        assertType(&quot;node inside column&quot;,ImageTag.class,node);</span>
+<span class="fc" id="L371">        ImageTag imageTag = (ImageTag)node;</span>
+        // Get the data from the node
+<span class="fc" id="L373">        assertEquals(&quot;Image location&quot;,&quot;http://www.cia.gov/graphics/images_home2/cia_banners_template3_01.gif&quot;,imageTag.getImageURL());</span>
+<span class="fc" id="L374">        assertEquals(&quot;Alt Value&quot;,&quot;Central Intelligence Agency, Director of Central Intelligence&quot;,imageTag.getAttribute(&quot;ALT&quot;));</span>
+<span class="fc" id="L375">        assertEquals(&quot;Width&quot;,&quot;241&quot;,imageTag.getAttribute(&quot;WIDTH&quot;));</span>
+<span class="fc" id="L376">        assertEquals(&quot;Height&quot;,&quot;49&quot;,imageTag.getAttribute(&quot;HEIGHT&quot;));</span>
+<span class="fc" id="L377">    }</span>
+
+    public void testDirectRelativeLinks() throws ParserException {
+<span class="fc" id="L380">        createParser(&quot;&lt;IMG SRC  = \&quot;/images/lines/li065.jpg\&quot;&gt;&quot;,&quot;http://www.cybergeo.presse.fr/REVGEO/ttsavoir/joly.htm&quot;);</span>
+<span class="fc" id="L381">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L382">        assertTrue(&quot;Node identified should be HTMLImageTag&quot;,node[0] instanceof ImageTag);</span>
+<span class="fc" id="L383">        ImageTag imageTag = (ImageTag)node[0];</span>
+<span class="fc" id="L384">        assertEquals(&quot;Image Location&quot;,&quot;http://www.cybergeo.presse.fr/images/lines/li065.jpg&quot;,imageTag.getImageURL());</span>
+
+<span class="fc" id="L386">    }</span>
+
+    /**
+     * Based on a page submitted by Claude Duguay, the image tag has IMG SRC&quot;somefile.jpg&quot; - a missing equal
+     * to sign
+     */
+    public void testMissingEqualTo() throws ParserException {
+<span class="fc" id="L393">        createParser(&quot;&lt;img src\&quot;/images/spacer.gif\&quot; width=\&quot;1\&quot; height=\&quot;1\&quot; alt=\&quot;\&quot;&gt;&quot;,&quot;http://www.htmlparser.org/subdir1/subdir2&quot;);</span>
+<span class="fc" id="L394">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L395">        assertTrue(&quot;Node identified should be HTMLImageTag&quot;,node[0] instanceof ImageTag);</span>
+<span class="fc" id="L396">        ImageTag imageTag = (ImageTag)node[0];</span>
+<span class="fc" id="L397">        assertStringEquals(&quot;Image Location&quot;,&quot;http://www.htmlparser.org/images/spacer.gif&quot;,imageTag.getImageURL());</span>
+<span class="fc" id="L398">        assertEquals(&quot;Width&quot;,&quot;1&quot;,imageTag.getAttribute(&quot;WIDTH&quot;));</span>
+<span class="fc" id="L399">        assertEquals(&quot;Height&quot;,&quot;1&quot;,imageTag.getAttribute(&quot;HEIGHT&quot;));</span>
+<span class="fc" id="L400">        assertEquals(&quot;Alt&quot;,&quot;&quot;,imageTag.getAttribute(&quot;ALT&quot;));</span>
+<span class="fc" id="L401">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

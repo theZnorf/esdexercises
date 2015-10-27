@@ -1,0 +1,2501 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>FilterBuilder.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">filterbuilder/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.parserapplications.filterbuilder</a> &gt; <span class="el_source">FilterBuilder.java</span></div><h1>FilterBuilder.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/filterbuilder/src/main/java/org/htmlparser/parserapplications/filterbuilder/FilterBuilder.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-17 21:02:25 -0400 (Sun, 17 Sep 2006) $
+// $Revision: 8 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.parserapplications.filterbuilder;
+
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Event;
+import java.awt.FileDialog;
+import java.awt.FlowLayout;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.ClipboardOwner;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DragGestureEvent;
+import java.awt.dnd.DragGestureListener;
+import java.awt.dnd.DragSource;
+import java.awt.dnd.DragSourceDragEvent;
+import java.awt.dnd.DragSourceDropEvent;
+import java.awt.dnd.DragSourceEvent;
+import java.awt.dnd.DragSourceListener;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetContext;
+import java.awt.dnd.DropTargetDragEvent;
+import java.awt.dnd.DropTargetDropEvent;
+import java.awt.dnd.DropTargetEvent;
+import java.awt.dnd.DropTargetListener;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+import java.beans.PropertyVetoException;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.LineNumberReader;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.lang.reflect.Method;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.Vector;
+
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JDesktopPane;
+import javax.swing.JFrame;
+import javax.swing.JInternalFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
+import javax.swing.JSeparator;
+import javax.swing.JSplitPane;
+import javax.swing.JTextField;
+//import javax.swing.JTextPane;
+import javax.swing.JToolBar;
+import javax.swing.JTree;
+import javax.swing.KeyStroke;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.WindowConstants;
+
+import org.htmlparser.Parser;
+import org.htmlparser.beans.FilterBean;
+import org.htmlparser.parserapplications.filterbuilder.layouts.NullLayoutManager;
+import org.htmlparser.util.EncodingChangeException;
+import org.htmlparser.util.NodeIterator;
+import org.htmlparser.util.NodeList;
+import org.htmlparser.util.ParserException;
+
+/**
+ * The main program for the FilterBuilder programming system.
+ * &lt;p&gt;ToDo:
+ * &lt;ul&gt;
+ * &lt;li&gt;thread the attribute fetching&lt;/li&gt;
+ * &lt;li&gt;CSS selector filter&lt;/li&gt;
+ * &lt;li&gt;table row filter&lt;/li&gt;
+ * &lt;li&gt;table column filter&lt;/li&gt;
+ * &lt;li&gt;trigger filter&lt;/li&gt;
+ * &lt;li&gt;undo&lt;/li&gt;
+ * &lt;li&gt;handle bad URLs&lt;/li&gt;
+ * &lt;li&gt;StringBean type secondary text output&lt;/li&gt;
+ * &lt;li&gt;context sensitive menus&lt;/li&gt;
+ * &lt;/ul&gt;
+ */
+public class FilterBuilder
+    extends
+        JFrame
+    implements
+        WindowListener,
+        ActionListener,
+        MouseListener,
+        MouseMotionListener,
+        DragGestureListener,
+        DragSourceListener,
+        DropTargetListener,
+        ClipboardOwner
+{
+    static final String TITLE = &quot;HTML Parser FilterBuilder&quot;;
+
+    static final URL mDocumentBase;
+    
+    static
+    {
+        
+        String p;
+        char ps;
+        URL base;
+
+<span class="nc" id="L150">        p = System.getProperty (&quot;user.dir&quot;);</span>
+        // if the system file separator isn't the URL file separator convert it.
+        try
+        {
+<span class="nc" id="L154">            ps = (System.getProperty (&quot;file.separator&quot;)).charAt(0);</span>
+<span class="nc bnc" id="L155" title="All 2 branches missed.">            if ('/' != ps)</span>
+<span class="nc" id="L156">                p.replace (ps, '/');</span>
+<span class="nc" id="L157">        }</span>
+<span class="nc" id="L158">        catch (StringIndexOutOfBoundsException e)</span>
+        {
+        }
+
+        try
+        {
+<span class="nc" id="L164">            base = new URL (&quot;file:///&quot; + p + &quot;/&quot;);</span>
+<span class="nc" id="L165">        }</span>
+<span class="nc" id="L166">        catch (MalformedURLException murle)</span>
+        {
+<span class="nc" id="L168">            base = null;</span>
+        }
+<span class="nc" id="L170">        mDocumentBase = base;</span>
+    }
+
+    static String mHomeDir;
+    
+    static
+    {
+        String dir;
+        File file;
+
+<span class="nc" id="L180">        dir = System.getProperty (&quot;user.home&quot;)</span>
+<span class="nc" id="L181">            + System.getProperty (&quot;file.separator&quot;)</span>
+<span class="nc" id="L182">            + &quot;.htmlparser&quot;;</span>
+<span class="nc" id="L183">        file = new File (dir);</span>
+<span class="nc bnc" id="L184" title="All 2 branches missed.">        if (!file.exists ())</span>
+<span class="nc bnc" id="L185" title="All 2 branches missed.">            if (!file.mkdirs ()) // make the directory if it doesn't exist</span>
+<span class="nc" id="L186">                throw new RuntimeException (</span>
+<span class="nc" id="L187">                    &quot;cannot create directory &quot;</span>
+<span class="nc" id="L188">                    + file.getAbsolutePath ());</span>
+<span class="nc" id="L189">        mHomeDir = file.getAbsolutePath ();</span>
+<span class="nc" id="L190">    }</span>
+    
+    /**
+     * The relative position of the mouse while dragging.
+     */
+    protected Point mBasePoint;
+
+    /**
+     * Selected commands.
+     */
+    protected Vector mSelection;
+
+    /**
+     * If true selection moved.
+     */
+    protected boolean mMoved;
+
+    /**
+     * This component is a drop target.
+     */
+    protected DropTarget mDropTarget;
+    
+    /**
+     * Enables this component to be a Drag Source.
+     */
+    protected DragSource mDragSource;
+
+    /**
+     * Kludge: Used by actionPerformed/filterAction to remember the filter menu item.
+     */
+    protected Component mCurrentComponent;
+
+    /**
+     * The main panel GUI component.
+     */
+    protected JPanel mMainPanel;
+
+    /**
+     * The main panel scrolling GUI component.
+     */
+    protected JScrollPane mMainScroller;
+
+    /**
+     * The URL input GUI component.
+     */
+    protected JTextField mURLField;
+
+    /**
+     * The output panel GUI component.
+     */
+    protected JDesktopPane mOutput;
+
+    /**
+     * Create an FilterBuilder programming environment.
+     */
+<span class="nc" id="L245">    public FilterBuilder ()</span>
+    {
+        JMenuBar menubar;
+        JToolBar toolbar;
+        JMenu menu;
+        JPanel panel;
+        JScrollPane pane;
+        JSplitPane split;
+        JMenuItem item;
+
+        // drag and drop support
+<span class="nc" id="L256">        mMainPanel = new JPanel ();</span>
+<span class="nc" id="L257">        mDropTarget = new DropTarget (mMainPanel, this);</span>
+<span class="nc" id="L258">        mDragSource = new DragSource ();</span>
+
+        // menu and toolbar
+<span class="nc" id="L261">        menubar = new JMenuBar();</span>
+<span class="nc" id="L262">        toolbar = new JToolBar ();</span>
+<span class="nc" id="L263">        toolbar.setAlignmentY (0.222222F);</span>
+
+        // file menu
+<span class="nc" id="L266">        menu = new JMenu ();</span>
+<span class="nc" id="L267">        menu.setText (&quot;File&quot;);</span>
+<span class="nc" id="L268">        menu.setActionCommand (&quot;File&quot;);</span>
+<span class="nc" id="L269">        menu.setMnemonic ((int)'F');</span>
+<span class="nc" id="L270">        makeMenuButton (&quot;New&quot;, &quot;Create a new document&quot;, &quot;New&quot;, 'N', KeyStroke.getKeyStroke (KeyEvent.VK_N, Event.CTRL_MASK), toolbar, menu);</span>
+<span class="nc" id="L271">        makeMenuButton (&quot;Open&quot;, &quot;Open an existing document&quot;, &quot;Open...&quot;, 'O', KeyStroke.getKeyStroke (KeyEvent.VK_O, Event.CTRL_MASK), toolbar, menu);</span>
+<span class="nc" id="L272">        makeMenuButton (&quot;Save&quot;, &quot;Save the active document&quot;, &quot;Save...&quot;, 'S', KeyStroke.getKeyStroke (KeyEvent.VK_S, Event.CTRL_MASK), toolbar, menu);</span>
+<span class="nc" id="L273">        makeMenuButton (&quot;SaveAs&quot;, &quot;Save the active document&quot;, &quot;Save As...&quot;, 'A', KeyStroke.getKeyStroke (KeyEvent.VK_A, Event.CTRL_MASK), null, menu);</span>
+<span class="nc" id="L274">        menu.add (new JSeparator ());</span>
+<span class="nc" id="L275">        makeMenuButton (&quot;Exit&quot;, &quot;Exit the program&quot;, &quot;Exit&quot;, 'E', KeyStroke.getKeyStroke (KeyEvent.VK_E, Event.CTRL_MASK), null, menu);</span>
+<span class="nc" id="L276">        menubar.add (menu);</span>
+        
+<span class="nc" id="L278">        toolbar.add(new JToolBar.Separator());</span>
+
+        // edit menu
+<span class="nc" id="L281">        menu = new JMenu ();</span>
+<span class="nc" id="L282">        menu.setText (&quot;Edit&quot;);</span>
+<span class="nc" id="L283">        menu.setActionCommand (&quot;Edit&quot;);</span>
+<span class="nc" id="L284">        menu.setMnemonic ((int)'E');</span>
+<span class="nc" id="L285">        makeMenuButton (&quot;Cut&quot;, &quot;Cut the selection and put it on the Clipboard&quot;, &quot;Cut&quot;, 'T', KeyStroke.getKeyStroke (KeyEvent.VK_X, Event.CTRL_MASK), toolbar, menu);</span>
+<span class="nc" id="L286">        makeMenuButton (&quot;Copy&quot;, &quot;Copy the selection and put it on the Clipboard&quot;, &quot;Copy&quot;, 'C', KeyStroke.getKeyStroke (KeyEvent.VK_C, Event.CTRL_MASK), toolbar, menu);</span>
+<span class="nc" id="L287">        makeMenuButton (&quot;Paste&quot;, &quot;Insert Clipboard contents&quot;, &quot;Paste&quot;, 'P', KeyStroke.getKeyStroke (KeyEvent.VK_V, Event.CTRL_MASK), toolbar, menu);</span>
+<span class="nc" id="L288">        makeMenuButton (&quot;Delete&quot;, &quot;Delete the selection&quot;, &quot;Delete&quot;, 'D', KeyStroke.getKeyStroke (KeyEvent.VK_DELETE, 0), toolbar, menu);</span>
+<span class="nc" id="L289">        menubar.add (menu);</span>
+
+        // filter menu
+<span class="nc" id="L292">        menu = new JMenu ();</span>
+<span class="nc" id="L293">        menu.setText (&quot;Filter&quot;);</span>
+<span class="nc" id="L294">        menu.setActionCommand (&quot;Filter&quot;);</span>
+<span class="nc" id="L295">        menu.setMnemonic ((int)'F');</span>
+<span class="nc" id="L296">        menubar.add (menu);</span>
+
+<span class="nc" id="L298">        toolbar.add (new JToolBar.Separator());</span>
+
+        // filters menu and filters toolbar
+<span class="nc" id="L301">        addFilter (menu, toolbar, &quot;org.htmlparser.parserapplications.filterbuilder.wrappers.AndFilterWrapper&quot;);</span>
+<span class="nc" id="L302">        addFilter (menu, toolbar, &quot;org.htmlparser.parserapplications.filterbuilder.wrappers.OrFilterWrapper&quot;);</span>
+<span class="nc" id="L303">        addFilter (menu, toolbar, &quot;org.htmlparser.parserapplications.filterbuilder.wrappers.NotFilterWrapper&quot;);</span>
+<span class="nc" id="L304">        menu.addSeparator ();</span>
+<span class="nc" id="L305">        toolbar.add (new JToolBar.Separator ());</span>
+
+<span class="nc" id="L307">        addFilter (menu, toolbar, &quot;org.htmlparser.parserapplications.filterbuilder.wrappers.StringFilterWrapper&quot;);</span>
+<span class="nc" id="L308">        addFilter (menu, toolbar, &quot;org.htmlparser.parserapplications.filterbuilder.wrappers.RegexFilterWrapper&quot;);</span>
+<span class="nc" id="L309">        addFilter (menu, toolbar, &quot;org.htmlparser.parserapplications.filterbuilder.wrappers.TagNameFilterWrapper&quot;);</span>
+<span class="nc" id="L310">        addFilter (menu, toolbar, &quot;org.htmlparser.parserapplications.filterbuilder.wrappers.NodeClassFilterWrapper&quot;);</span>
+<span class="nc" id="L311">        addFilter (menu, toolbar, &quot;org.htmlparser.parserapplications.filterbuilder.wrappers.HasAttributeFilterWrapper&quot;);</span>
+<span class="nc" id="L312">        menu.addSeparator ();</span>
+<span class="nc" id="L313">        toolbar.add (new JToolBar.Separator ());</span>
+
+<span class="nc" id="L315">        addFilter (menu, toolbar, &quot;org.htmlparser.parserapplications.filterbuilder.wrappers.HasParentFilterWrapper&quot;);</span>
+<span class="nc" id="L316">        addFilter (menu, toolbar, &quot;org.htmlparser.parserapplications.filterbuilder.wrappers.HasChildFilterWrapper&quot;);</span>
+<span class="nc" id="L317">        addFilter (menu, toolbar, &quot;org.htmlparser.parserapplications.filterbuilder.wrappers.HasSiblingFilterWrapper&quot;);</span>
+<span class="nc" id="L318">        menu.addSeparator ();</span>
+<span class="nc" id="L319">        toolbar.add (new JToolBar.Separator ());</span>
+
+        // operation menu
+<span class="nc" id="L322">        menu = new JMenu ();</span>
+<span class="nc" id="L323">        menu.setText (&quot;Operation&quot;);</span>
+<span class="nc" id="L324">        menu.setActionCommand (&quot;Operation&quot;);</span>
+<span class="nc" id="L325">        menu.setMnemonic ((int)'r');</span>
+<span class="nc" id="L326">        item = new JMenuItem ();</span>
+<span class="nc" id="L327">        item.setText (&quot;Expand&quot;);</span>
+<span class="nc" id="L328">        item.setActionCommand (&quot;expandAction&quot;);</span>
+<span class="nc" id="L329">        item.addActionListener (this);</span>
+<span class="nc" id="L330">        menu.add (item);</span>
+<span class="nc" id="L331">        item = new JMenuItem ();</span>
+<span class="nc" id="L332">        item.setText (&quot;Collapse&quot;);</span>
+<span class="nc" id="L333">        item.setActionCommand (&quot;collapseAction&quot;);</span>
+<span class="nc" id="L334">        item.addActionListener (this);</span>
+<span class="nc" id="L335">        menu.add (item);</span>
+<span class="nc" id="L336">        menu.addSeparator ();</span>
+<span class="nc" id="L337">        item = new JMenuItem ();</span>
+<span class="nc" id="L338">        item.setText (&quot;Expand All&quot;);</span>
+<span class="nc" id="L339">        item.setActionCommand (&quot;expandAllAction&quot;);</span>
+<span class="nc" id="L340">        item.addActionListener (this);</span>
+<span class="nc" id="L341">        menu.add (item);</span>
+<span class="nc" id="L342">        item = new JMenuItem ();</span>
+<span class="nc" id="L343">        item.setText (&quot;Collapse All&quot;);</span>
+<span class="nc" id="L344">        item.setActionCommand (&quot;collapseAllAction&quot;);</span>
+<span class="nc" id="L345">        item.addActionListener (this);</span>
+<span class="nc" id="L346">        menu.add (item);</span>
+<span class="nc" id="L347">        menu.addSeparator ();</span>
+<span class="nc" id="L348">        item = new JMenuItem (&quot;Fetch Page&quot;);</span>
+<span class="nc" id="L349">        item.setActionCommand (&quot;fetchAction&quot;);</span>
+<span class="nc" id="L350">        item.addActionListener (this);</span>
+<span class="nc" id="L351">        menu.add (item);</span>
+<span class="nc" id="L352">        item = new JMenuItem (&quot;Execute Filter&quot;);</span>
+<span class="nc" id="L353">        item.setActionCommand (&quot;executeAction&quot;);</span>
+<span class="nc" id="L354">        item.addActionListener (this);</span>
+<span class="nc" id="L355">        menu.add (item);</span>
+<span class="nc" id="L356">        menubar.add (menu);</span>
+
+        // help menu
+<span class="nc" id="L359">        menu = new JMenu ();</span>
+<span class="nc" id="L360">        menu.setText (&quot;Help&quot;);</span>
+<span class="nc" id="L361">        menu.setActionCommand (&quot;Help&quot;);</span>
+<span class="nc" id="L362">        menu.setMnemonic ((int)'H');</span>
+<span class="nc" id="L363">        item = new JMenuItem (&quot;Filtering&quot;);</span>
+<span class="nc" id="L364">        item.setActionCommand (&quot;filteringAction&quot;);</span>
+<span class="nc" id="L365">        item.addActionListener (this);</span>
+<span class="nc" id="L366">        menu.add (item);</span>
+<span class="nc" id="L367">        item = new JMenuItem (&quot;Instructions&quot;);</span>
+<span class="nc" id="L368">        item.setActionCommand (&quot;instructionsAction&quot;);</span>
+<span class="nc" id="L369">        item.addActionListener (this);</span>
+<span class="nc" id="L370">        menu.add (item);</span>
+<span class="nc" id="L371">        item = new JMenuItem (&quot;Tutorial&quot;);</span>
+<span class="nc" id="L372">        item.setActionCommand (&quot;tutorialAction&quot;);</span>
+<span class="nc" id="L373">        item.addActionListener (this);</span>
+<span class="nc" id="L374">        menu.add (item);</span>
+<span class="nc" id="L375">        item = new JMenuItem (&quot;Hints&quot;);</span>
+<span class="nc" id="L376">        item.setActionCommand (&quot;hintsAction&quot;);</span>
+<span class="nc" id="L377">        item.addActionListener (this);</span>
+<span class="nc" id="L378">        menu.add (item);</span>
+<span class="nc" id="L379">        makeMenuButton (&quot;About&quot;, &quot;Display program information, version number and copyright&quot;, &quot;About&quot;, 'B', KeyStroke.getKeyStroke (KeyEvent.VK_H, Event.CTRL_MASK), toolbar, menu);</span>
+<span class="nc" id="L380">        menubar.add (menu);</span>
+
+<span class="nc" id="L382">        setJMenuBar (menubar);</span>
+
+        // toolbar panel
+<span class="nc" id="L385">        panel = new JPanel ();</span>
+<span class="nc" id="L386">        panel.setLayout (new FlowLayout (FlowLayout.LEFT,0,0));</span>
+<span class="nc" id="L387">        panel.add (toolbar);</span>
+<span class="nc" id="L388">        getContentPane().setLayout (new BorderLayout (0,0));</span>
+<span class="nc" id="L389">        getContentPane ().add (BorderLayout.NORTH, panel);</span>
+
+        // URL entry
+<span class="nc" id="L392">        mURLField = new JTextField ();</span>
+<span class="nc" id="L393">        mURLField.setToolTipText (&quot;Enter the URL to view&quot;);</span>
+//        mTextField.addActionListener (this);
+<span class="nc" id="L395">        mURLField.setText (&quot;http://sourceforge.org/projects/htmlparser&quot;);</span>
+<span class="nc" id="L396">        getContentPane().add (BorderLayout.SOUTH, mURLField);</span>
+
+        // application setup
+<span class="nc" id="L399">        setTitle (TITLE);</span>
+<span class="nc" id="L400">        setDefaultCloseOperation (WindowConstants.DO_NOTHING_ON_CLOSE);</span>
+<span class="nc" id="L401">        setSize (640, 480);</span>
+<span class="nc" id="L402">        setVisible (false);</span>
+
+        // main panel
+<span class="nc" id="L405">        mMainPanel.setLayout (new NullLayoutManager ());</span>
+<span class="nc" id="L406">        mMainScroller = new JScrollPane (</span>
+<span class="nc" id="L407">                mMainPanel,</span>
+<span class="nc" id="L408">                ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,</span>
+<span class="nc" id="L409">                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);</span>
+
+<span class="nc" id="L411">        split = new JSplitPane ();</span>
+<span class="nc" id="L412">        pane = new JScrollPane ();</span>
+<span class="nc" id="L413">        pane.setViewportView (mMainScroller);</span>
+<span class="nc" id="L414">        split.setLeftComponent (pane);</span>
+
+<span class="nc" id="L416">        mOutput = new JDesktopPane ();</span>
+<span class="nc" id="L417">        split.setRightComponent (mOutput);</span>
+
+<span class="nc" id="L419">        getContentPane().add (BorderLayout.CENTER, split);</span>
+
+        // shenanigans to get the splitter bar at the midpoint
+<span class="nc" id="L422">        setVisible (true);</span>
+<span class="nc" id="L423">        split.setDividerLocation (0.5);</span>
+<span class="nc" id="L424">        setVisible (false);</span>
+
+        // listeners
+<span class="nc" id="L427">        addWindowListener (this);</span>
+<span class="nc" id="L428">        setIconImage (Toolkit.getDefaultToolkit ().getImage (&quot;images/program16.gif&quot;));</span>
+<span class="nc" id="L429">        addMouseListener (this);</span>
+<span class="nc" id="L430">        addMouseMotionListener (this);</span>
+
+        // clipboard buffer
+<span class="nc" id="L433">        mSelection = new Vector ();</span>
+<span class="nc" id="L434">    }</span>
+
+    /**
+     * Creates a new instance of an FilterBuilder environment with the given title.
+     * @param title the title for the new frame.
+     * @see #FilterBuilder()
+     */
+    public FilterBuilder (String title)
+    {
+<span class="nc" id="L443">        this ();</span>
+<span class="nc" id="L444">        setTitle (title);</span>
+<span class="nc" id="L445">    }</span>
+
+    /**
+     * Makes menu and toolbar items for commands.
+     * @param name The name of the command.
+     * @param description A description for the tooltip.
+     * @param text The text for the menu.
+     * @param mnemonic The navigation mnemonic.
+     * @param key Accelerator key.
+     * @param toolbar The toolbar to add the button to.
+     * @param menu The menu to add the menu item to.
+     */
+    protected void makeMenuButton (
+            String name,
+            String description,
+            String text,
+            int mnemonic,
+            KeyStroke key,
+            JToolBar toolbar,
+            JMenu menu)
+    {
+        JButton button;
+        JMenuItem item;
+        ImageIcon icon;
+        String command;
+
+<span class="nc" id="L471">        command = name.toLowerCase ();</span>
+        try
+        {
+<span class="nc" id="L474">            icon = new ImageIcon (getURL (&quot;images/&quot; + command + &quot;.gif&quot;));</span>
+<span class="nc" id="L475">        }</span>
+<span class="nc" id="L476">        catch (java.net.MalformedURLException error)</span>
+        {
+<span class="nc" id="L478">            icon = null;</span>
+        }
+
+<span class="nc" id="L481">        item = new JMenuItem ();</span>
+<span class="nc" id="L482">        item.setText (text);</span>
+<span class="nc" id="L483">        item.setActionCommand (command + &quot;Action&quot;);</span>
+<span class="nc" id="L484">        item.setAccelerator (key);</span>
+<span class="nc" id="L485">        item.setMnemonic (mnemonic);</span>
+<span class="nc" id="L486">        item.setIcon (icon);</span>
+<span class="nc" id="L487">        item.addActionListener (this);</span>
+<span class="nc" id="L488">        menu.add (item);</span>
+
+<span class="nc bnc" id="L490" title="All 2 branches missed.">        if (null != toolbar)</span>
+        {
+<span class="nc" id="L492">            button = new JButton ();</span>
+<span class="nc" id="L493">            button.setDefaultCapable (false);</span>
+<span class="nc" id="L494">            button.setToolTipText (description);</span>
+<span class="nc" id="L495">            button.setMnemonic (mnemonic);</span>
+<span class="nc" id="L496">            button.setActionCommand (command + &quot;Action&quot;);</span>
+<span class="nc" id="L497">            button.setMargin (new Insets (0, 0, 0, 0));</span>
+<span class="nc" id="L498">            button.setIcon (icon);</span>
+<span class="nc" id="L499">            button.addActionListener (this);</span>
+<span class="nc" id="L500">            toolbar.add (button);</span>
+        }
+<span class="nc" id="L502">    }</span>
+
+    /**
+     * Get a url for the given resource specification.
+     * @param spec The name of the resource.
+     * @return The fully formed URL.
+     * @exception MalformedURLException In the case that the document base
+     * or name of the resource cannot be turned into a URL.
+     */
+    protected URL getURL (String spec)
+        throws MalformedURLException
+    {
+        URL ret;
+
+<span class="nc bnc" id="L516" title="All 2 branches missed.">        if (null == (ret = getClass ().getResource (spec)))</span>
+<span class="nc bnc" id="L517" title="All 4 branches missed.">            if ((null != mDocumentBase) &amp;&amp; (-1 == spec.indexOf (&quot;//&quot;)))</span>
+<span class="nc" id="L518">                ret =  new URL (mDocumentBase, spec);</span>
+            else
+<span class="nc" id="L520">                ret = new URL (spec);</span>
+
+<span class="nc" id="L522">        return ret;</span>
+    }
+
+    /**
+     * Creates a new button for the given class.
+     * @param class_name The name of the Filter class.
+     * @return A fully functional button with name, tool tip,
+     * icon and drag recognizer.
+     */
+    public JButton makeFilterButton (String class_name)
+    {
+        Filter filter;
+        JButton ret;
+
+<span class="nc" id="L536">        ret = new JButton ();</span>
+<span class="nc" id="L537">        filter = Filter.instantiate (class_name);</span>
+<span class="nc bnc" id="L538" title="All 2 branches missed.">        if (null != filter)</span>
+        {
+<span class="nc" id="L540">            ret.setName (class_name); // filter.getNodeFilter ().getClass ().getName ());</span>
+<span class="nc" id="L541">            ret.setToolTipText (filter.getDescription ());</span>
+<span class="nc" id="L542">            ret.setMargin (new Insets (0, 0, 0, 0));</span>
+<span class="nc" id="L543">            ret.setIcon (filter.getIcon ());</span>
+<span class="nc" id="L544">            mDragSource.createDefaultDragGestureRecognizer (</span>
+<span class="nc" id="L545">                ret,</span>
+<span class="nc" id="L546">                DnDConstants.ACTION_MOVE,</span>
+<span class="nc" id="L547">                this);</span>
+<span class="nc" id="L548">            ret.setActionCommand (&quot;filterAction&quot;);</span>
+<span class="nc" id="L549">            ret.addActionListener (this);</span>
+        }
+        
+<span class="nc" id="L552">        return (ret);</span>
+    }
+
+    /**
+     * Add a filter to the GUI.
+     * Adds the filter specified by class_name to the menu, toolbar and
+     * starts listening for actions.
+     * @param menu The menu to add the filter to.
+     * @param toolbar The toolbar to add the filter to.
+     * @param class_name The class name for the filter wrapper.
+     * From the wrapper, the NodeFilter, description and icon can be obtained.
+     */
+    public void addFilter (JMenu menu, JToolBar toolbar, String class_name)
+    {
+        Filter filter;
+
+<span class="nc" id="L568">        filter = Filter.instantiate (class_name);</span>
+<span class="nc bnc" id="L569" title="All 2 branches missed.">        if (null != filter)</span>
+        {
+            String name;
+            String description;
+            Icon icon;
+            String text;
+            JMenuItem item;
+
+<span class="nc" id="L577">            name = filter.getNodeFilter ().getClass ().getName ();</span>
+<span class="nc" id="L578">            description = filter.getDescription ();</span>
+<span class="nc" id="L579">            icon = filter.getIcon ();</span>
+<span class="nc" id="L580">            text = name.substring (name.lastIndexOf ('.') + 1);</span>
+
+<span class="nc" id="L582">            item = new JMenuItem ();</span>
+<span class="nc" id="L583">            item.setName (class_name);</span>
+<span class="nc" id="L584">            item.setText (text);</span>
+<span class="nc" id="L585">            item.setActionCommand (&quot;filterAction&quot;);</span>
+//            item.setAccelerator (key);
+//            item.setMnemonic (mnemonic);
+<span class="nc" id="L588">            item.setToolTipText (description);</span>
+<span class="nc" id="L589">            item.setIcon (icon);</span>
+<span class="nc" id="L590">            item.addActionListener (this);</span>
+<span class="nc" id="L591">            menu.add (item);</span>
+            
+<span class="nc" id="L593">            toolbar.add (makeFilterButton (class_name));</span>
+        }
+<span class="nc" id="L595">    }</span>
+
+    /**
+     * Adds a set of filters to the main panel or a sublist.
+     * Sets up the GUI components as drop targets and mouse listeners,
+     * and performs a relayout to display them.
+     * @param filters The filter wrappers to add.
+     * @param point The point at which to start adding (list == null).
+     * @param list The list to add to (point not used), or &lt;code&gt;null&lt;/code&gt;
+     * for the main panel.
+     */
+    protected void insertFilters (Filter[] filters, Point point, SubFilterList list)
+    {
+        Dimension dimension;
+
+<span class="nc bnc" id="L610" title="All 2 branches missed.">        if (null == list)</span>
+        {
+<span class="nc bnc" id="L612" title="All 2 branches missed.">            for (int i = 0; i &lt; filters.length; i++)</span>
+            {
+<span class="nc" id="L614">	            filters[i].setLocation (point);</span>
+<span class="nc" id="L615">	            mMainPanel.add (filters[i]);</span>
+<span class="nc" id="L616">	            dimension = filters[i].getPreferredSize ();</span>
+<span class="nc" id="L617">	            point.y += dimension.height;</span>
+            }
+<span class="nc" id="L619">        }</span>
+        else
+<span class="nc bnc" id="L621" title="All 2 branches missed.">            for (int i = 0; i &lt; filters.length; i++)</span>
+<span class="nc" id="L622">                list.addFilter (filters[i]);</span>
+<span class="nc" id="L623">        setupDropTargets (filters);</span>
+<span class="nc" id="L624">        setupMouseListeners (filters);</span>
+<span class="nc" id="L625">        relayout ();</span>
+<span class="nc" id="L626">    }</span>
+
+    /**
+     * Sets the position of the mouse in the component.
+     * 
+     * @param point The point where the mouse position is.
+     */
+    protected void setBasePoint (Point point)
+    {
+<span class="nc" id="L635">        mBasePoint = point;</span>
+<span class="nc" id="L636">    }</span>
+    
+    /**
+     * Gets the current base point of the mouse pointer.
+     * This value is used to offset the drag position
+     * to maintain the mouse position at the same
+     * relative position within the card while dragging.
+     * 
+     * @return The current base point of the mouse pointer.
+     */
+    protected Point getBasePoint ()
+    {
+<span class="nc" id="L648">        return (mBasePoint);</span>
+    }
+
+    /**
+     * Get the enclosing sub filter list if any.
+     * @param component The component that's supposedly enclosed.
+     * @return The enclosing component or &lt;code&gt;null&lt;/code&gt; otherwise.
+     */
+    protected SubFilterList getEnclosing (Component component)
+    {
+        do
+<span class="nc" id="L659">            component = component.getParent ();</span>
+<span class="nc bnc" id="L660" title="All 2 branches missed.">        while (     (null != component)</span>
+<span class="nc bnc" id="L661" title="All 2 branches missed.">                &amp;&amp; !(component instanceof SubFilterList));</span>
+
+<span class="nc" id="L663">        return ((SubFilterList)component);</span>
+    }
+
+    /**
+     * Get the enclosed sub filter list if any.
+     * @param component The component that's supposedly enclosing the list.
+     * @return The enclosed component or &lt;code&gt;null&lt;/code&gt; otherwise.
+     */
+    protected SubFilterList getEnclosed (Component component)
+    {
+        Component[] list;
+
+<span class="nc bnc" id="L675" title="All 2 branches missed.">        if (component instanceof Container)</span>
+        {
+<span class="nc" id="L677">            list = ((Container)component).getComponents  ();</span>
+<span class="nc bnc" id="L678" title="All 2 branches missed.">            for (int i = 0; i &lt; list.length; i++)</span>
+<span class="nc bnc" id="L679" title="All 2 branches missed.">                if (list[i] instanceof SubFilterList)</span>
+<span class="nc" id="L680">                    return ((SubFilterList)list[i]);</span>
+        }
+
+<span class="nc" id="L683">        return (null);</span>
+    }
+
+
+    /**
+     * Makes a program like:
+     * &lt;pre&gt;
+     * // Generated by FilterBuilder. http://htmlparser.org
+     * // [aced0005737200206f72672e68746d6c7061727365722e66696c746572732e416e6446696c74657224c30516b2b7b2120200015b000b6d5072656469636174657374001c5b4c6f72672f68746d6c7061727365722f4e6f646546696c7465723b78707572001c5b4c6f72672e68746d6c7061727365722e4e6f646546696c7465723b8f17479b1d5f7992020000787000000002737200246f72672e68746d6c7061727365722e66696c746572732e5461674e616d6546696c746572b28b2601a614890f0200014c00056d4e616d657400124c6a6176612f6c616e672f537472696e673b78707400044d455441737200296f72672e68746d6c7061727365722e66696c746572732e48617341747472696275746546696c74657296abdfb3b0714cda0200024c000a6d41747472696275746571007e00064c00066d56616c756571007e000678707400046e616d6570]
+     *                                                                                                                                                         
+     * import org.htmlparser.*;
+     * import org.htmlparser.filters.*;
+     * import org.htmlparser.beans.*;
+     * import org.htmlparser.util.*;
+     *                                                                                                                                                         
+     * public class Test
+     * {
+     *     public static void main (String args[])
+     *     {
+     *         TagNameFilter filter0 = new TagNameFilter ();
+     *         filter0.setName (&quot;META&quot;);
+     *         HasAttributeFilter filter1 = new HasAttributeFilter ();
+     *         filter1.setAttributeName (&quot;name&quot;);
+     *         NodeFilter[] array0 = new NodeFilter[2];
+     *         array0[0] = filter0;
+     *         array0[1] = filter1;
+     *         AndFilter filter2 = new AndFilter ();
+     *         filter2.setPredicates (array0);
+     *         NodeFilter[] array1 = new NodeFilter[1];
+     *         array1[0] = filter2;
+     *         FilterBean bean = new FilterBean ();
+     *         bean.setFilters (array1);
+     *         if (0 != args.length)
+     *         {
+     *             bean.setURL (args[0]);
+     *             System.out.println (bean.getNodes ().toHtml ());
+     *         }
+     *         else
+     *             System.out.println (&quot;Usage: java -classpath .:htmlparser.jar:htmllexer.jar Test &lt;url&gt;&quot;);
+     *     }
+     * }
+     * &lt;/pre&gt;
+     * @param name The name of the class. 
+     * @param out The buffer to append to.
+     * @param bean The bean to extract the filters from to make the program.
+     */
+    protected void makeProgram (String name, StringBuffer out, FilterBean bean)
+    {
+        // so we need to keep track of filters and arrays of filters to give them unique numbers
+        // each Filter is responsible for outputting it's code and returning it's variable name
+        int[] context; // 0 - indent, 1 - next filter variable #, 2 - next array of filters variable #
+        String[] names;
+        Filter[] filters;
+        String array;
+
+<span class="nc" id="L738">        filters = (Filter[])bean.getFilters ();</span>
+
+<span class="nc" id="L740">        context = new int[3];</span>
+<span class="nc" id="L741">        context[0] = 0;</span>
+
+<span class="nc" id="L743">        Filter.spaces (out, context[0]);</span>
+<span class="nc" id="L744">        out.append (&quot;// Generated by FilterBuilder. http://htmlparser.org&quot;);</span>
+<span class="nc" id="L745">        Filter.newline (out);</span>
+<span class="nc" id="L746">        Filter.spaces (out, context[0]);</span>
+<span class="nc" id="L747">        out.append (&quot;// &quot;);</span>
+        try
+        {
+<span class="nc" id="L750">            out.append (Filter.deconstitute (filters));</span>
+<span class="nc" id="L751">        }</span>
+<span class="nc" id="L752">        catch (IOException ioe)</span>
+        {
+<span class="nc" id="L754">            ioe.printStackTrace ();</span>
+        }
+<span class="nc" id="L756">        Filter.newline (out);</span>
+<span class="nc" id="L757">        Filter.newline (out);</span>
+
+<span class="nc" id="L759">        Filter.spaces (out, context[0]);</span>
+<span class="nc" id="L760">        out.append (&quot;import org.htmlparser.*;&quot;);</span>
+<span class="nc" id="L761">        Filter.newline (out);</span>
+<span class="nc" id="L762">        Filter.spaces (out, context[0]);</span>
+<span class="nc" id="L763">        out.append (&quot;import org.htmlparser.filters.*;&quot;);</span>
+<span class="nc" id="L764">        Filter.newline (out);</span>
+<span class="nc" id="L765">        Filter.spaces (out, context[0]);</span>
+<span class="nc" id="L766">        out.append (&quot;import org.htmlparser.beans.*;&quot;);</span>
+<span class="nc" id="L767">        Filter.newline (out);</span>
+<span class="nc" id="L768">        Filter.spaces (out, context[0]);</span>
+<span class="nc" id="L769">        out.append (&quot;import org.htmlparser.util.*;&quot;);</span>
+<span class="nc" id="L770">        Filter.newline (out);</span>
+<span class="nc" id="L771">        Filter.newline (out);</span>
+
+<span class="nc" id="L773">        Filter.spaces (out, context[0]);</span>
+<span class="nc" id="L774">        out.append (&quot;public class &quot;);</span>
+<span class="nc" id="L775">        out.append (name);</span>
+<span class="nc" id="L776">        Filter.newline (out);</span>
+<span class="nc" id="L777">        Filter.spaces (out, context[0]);</span>
+<span class="nc" id="L778">        out.append (&quot;{&quot;);</span>
+
+<span class="nc" id="L780">        context[0] = 4;</span>
+<span class="nc" id="L781">        Filter.newline (out);</span>
+<span class="nc" id="L782">        Filter.spaces (out, context[0]);</span>
+<span class="nc" id="L783">        out.append (&quot;public static void main (String args[])&quot;);</span>
+<span class="nc" id="L784">        Filter.newline (out);</span>
+<span class="nc" id="L785">        Filter.spaces (out, context[0]);</span>
+<span class="nc" id="L786">        out.append (&quot;{&quot;);</span>
+<span class="nc" id="L787">        Filter.newline (out);</span>
+        
+<span class="nc" id="L789">        context[0] = 8;</span>
+<span class="nc" id="L790">        names = new String [filters.length];</span>
+<span class="nc bnc" id="L791" title="All 2 branches missed.">        for (int i = 0; i &lt; names.length; i++)</span>
+<span class="nc" id="L792">            names[i] = filters[i].toJavaCode (out, context);</span>
+
+<span class="nc" id="L794">        array = &quot;array&quot; + context[2]++;</span>
+<span class="nc" id="L795">        Filter.spaces (out, context[0]);</span>
+<span class="nc" id="L796">        out.append (&quot;NodeFilter[] &quot;);</span>
+<span class="nc" id="L797">        out.append (array);</span>
+<span class="nc" id="L798">        out.append (&quot; = new NodeFilter[&quot;);</span>
+<span class="nc" id="L799">        out.append (filters.length);</span>
+<span class="nc" id="L800">        out.append (&quot;];&quot;);</span>
+<span class="nc" id="L801">        Filter.newline (out);</span>
+<span class="nc bnc" id="L802" title="All 2 branches missed.">        for (int i = 0; i &lt; filters.length; i++)</span>
+        {
+<span class="nc" id="L804">            Filter.spaces (out, context[0]);</span>
+<span class="nc" id="L805">	        out.append (array);</span>
+<span class="nc" id="L806">	        out.append (&quot;[&quot;);</span>
+<span class="nc" id="L807">	        out.append (i);</span>
+<span class="nc" id="L808">	        out.append (&quot;] = &quot;);</span>
+<span class="nc" id="L809">	        out.append (names[i]);</span>
+<span class="nc" id="L810">	        out.append (&quot;;&quot;);</span>
+<span class="nc" id="L811">	        Filter.newline (out);</span>
+        }
+
+<span class="nc" id="L814">        Filter.spaces (out, context[0]);</span>
+<span class="nc" id="L815">        out.append (&quot;FilterBean bean = new FilterBean ();&quot;);</span>
+<span class="nc" id="L816">        Filter.newline (out);</span>
+<span class="nc" id="L817">        Filter.spaces (out, context[0]);</span>
+<span class="nc" id="L818">        out.append (&quot;bean.setFilters (&quot;);</span>
+<span class="nc" id="L819">        out.append (array);</span>
+<span class="nc" id="L820">        out.append (&quot;);&quot;);</span>
+<span class="nc" id="L821">        Filter.newline (out);</span>
+<span class="nc" id="L822">        Filter.spaces (out, context[0]);</span>
+<span class="nc" id="L823">        out.append (&quot;if (0 != args.length)&quot;);</span>
+<span class="nc" id="L824">        Filter.newline (out);</span>
+<span class="nc" id="L825">        Filter.spaces (out, context[0]);</span>
+<span class="nc" id="L826">        out.append (&quot;{&quot;);</span>
+<span class="nc" id="L827">        Filter.newline (out);</span>
+<span class="nc" id="L828">        context[0] = 12;</span>
+<span class="nc" id="L829">        Filter.spaces (out, context[0]);</span>
+<span class="nc" id="L830">        out.append (&quot;bean.setURL (args[0]);&quot;);</span>
+<span class="nc" id="L831">        Filter.newline (out);</span>
+<span class="nc" id="L832">        Filter.spaces (out, context[0]);</span>
+<span class="nc" id="L833">        out.append (&quot;System.out.println (bean.getNodes ().toHtml ());&quot;);</span>
+<span class="nc" id="L834">        Filter.newline (out);</span>
+<span class="nc" id="L835">        context[0] = 8;</span>
+<span class="nc" id="L836">        Filter.spaces (out, context[0]);</span>
+<span class="nc" id="L837">        out.append (&quot;}&quot;);</span>
+<span class="nc" id="L838">        Filter.newline (out);</span>
+<span class="nc" id="L839">        Filter.spaces (out, context[0]);</span>
+<span class="nc" id="L840">        out.append (&quot;else&quot;);</span>
+<span class="nc" id="L841">        Filter.newline (out);</span>
+<span class="nc" id="L842">        context[0] = 12;</span>
+<span class="nc" id="L843">        Filter.spaces (out, context[0]);</span>
+<span class="nc" id="L844">        String sep = System.getProperty (&quot;path.separator&quot;);</span>
+<span class="nc" id="L845">        out.append (&quot;System.out.println (\&quot;Usage: java -classpath .&quot; + sep + &quot;htmlparser.jar&quot; + sep + &quot;htmllexer.jar &quot;);</span>
+<span class="nc" id="L846">        out.append (name);</span>
+<span class="nc" id="L847">        out.append (&quot; &lt;url&gt;\&quot;);&quot;);</span>
+<span class="nc" id="L848">        Filter.newline (out);</span>
+        
+<span class="nc" id="L850">        context[0] = 4;</span>
+<span class="nc" id="L851">        Filter.spaces (out, context[0]);</span>
+<span class="nc" id="L852">        out.append (&quot;}&quot;);</span>
+<span class="nc" id="L853">        Filter.newline (out);</span>
+
+<span class="nc" id="L855">        context[0] = 0;</span>
+<span class="nc" id="L856">        Filter.spaces (out, context[0]);</span>
+<span class="nc" id="L857">        out.append (&quot;}&quot;);</span>
+<span class="nc" id="L858">        Filter.newline (out);</span>
+<span class="nc" id="L859">    }</span>
+
+    /**
+     * Extracts a java class name from a file name.
+     * ToDo: make this package-smart somehow.
+     * @param file The name of the file.
+     * @return The name of the class.
+     */
+    protected String classFromFile (String file)
+    {
+        String filesep;
+        int index;
+
+        // remove any path
+<span class="nc" id="L873">        filesep = System.getProperty (&quot;file.separator&quot;);</span>
+<span class="nc" id="L874">        index = file.lastIndexOf (filesep);</span>
+<span class="nc bnc" id="L875" title="All 2 branches missed.">        if (-1 != index)</span>
+<span class="nc" id="L876">            file = file.substring (index + filesep.length ());</span>
+        // remove the extension
+<span class="nc" id="L878">        index = file.indexOf ('.');</span>
+<span class="nc bnc" id="L879" title="All 2 branches missed.">        if (-1 != index)</span>
+<span class="nc" id="L880">            file = file.substring (0, index);</span>
+
+<span class="nc" id="L882">        return (file);</span>
+    }
+
+    /**
+     * Save the workspace contents to file.
+     * @param name The name of the file to save it under.
+     */
+    public void save (String name)
+    {
+        Filter[] selections;
+        FilterBean bean;
+        StringBuffer buffer;
+        PrintWriter out;
+<span class="nc" id="L895">        String ok = &quot;OK&quot;;</span>
+
+<span class="nc" id="L897">        selections = getFilters ();</span>
+<span class="nc bnc" id="L898" title="All 2 branches missed.">        if (0 != selections.length)</span>
+        {
+<span class="nc" id="L900">            bean = new FilterBean ();</span>
+<span class="nc" id="L901">            bean.setURL (mURLField.getText ());</span>
+<span class="nc" id="L902">            bean.setFilters (selections);</span>
+<span class="nc" id="L903">            buffer = new StringBuffer ();</span>
+<span class="nc" id="L904">            makeProgram (classFromFile (name), buffer, bean);</span>
+            try
+            {
+<span class="nc" id="L907">                out = new PrintWriter (new FileWriter (name), true);</span>
+                try
+                {
+<span class="nc" id="L910">                    out.write (buffer.toString ());</span>
+<span class="nc" id="L911">                    out.flush ();</span>
+<span class="nc" id="L912">                }</span>
+                finally
+<span class="nc" id="L914">                {</span>
+<span class="nc" id="L915">                    out.close ();</span>
+<span class="nc" id="L916">                }</span>
+<span class="nc" id="L917">            }</span>
+<span class="nc" id="L918">            catch (IOException ioe)</span>
+            {
+<span class="nc" id="L920">                ioe.printStackTrace ();</span>
+            }
+<span class="nc" id="L922">        }</span>
+        else // ToDo: grey out save option if nothing to save...
+<span class="nc" id="L924">            JOptionPane.showOptionDialog (</span>
+<span class="nc" id="L925">                mMainPanel,</span>
+<span class="nc" id="L926">                &quot;No filters to save.&quot;,</span>
+<span class="nc" id="L927">                &quot;Oops&quot;,</span>
+<span class="nc" id="L928">                JOptionPane.DEFAULT_OPTION,</span>
+<span class="nc" id="L929">                JOptionPane.ERROR_MESSAGE,</span>
+<span class="nc" id="L930">                null,</span>
+<span class="nc" id="L931">                new String[] { ok },</span>
+<span class="nc" id="L932">                ok);</span>
+<span class="nc" id="L933">    }</span>
+
+    /**
+     * The action to take when &quot;New&quot; menu or button pressed.
+     */
+    protected void newAction ()
+    {
+<span class="nc" id="L940">        mMainPanel.removeAll ();</span>
+<span class="nc" id="L941">        mSelection.clear ();</span>
+<span class="nc" id="L942">        relayout ();</span>
+<span class="nc" id="L943">    }</span>
+
+    /**
+     * The action to take when &quot;Open&quot; menu or button pressed.
+     */
+    protected void openAction ()
+    {
+        FileDialog dialog;
+        File file;
+
+<span class="nc" id="L953">        dialog = new FileDialog (this);</span>
+<span class="nc" id="L954">        dialog.setMode (FileDialog.LOAD);</span>
+<span class="nc" id="L955">        dialog.setTitle (&quot;Open&quot;);</span>
+<span class="nc" id="L956">        dialog.setDirectory (mHomeDir);</span>
+<span class="nc" id="L957">        dialog.setVisible (true);</span>
+<span class="nc bnc" id="L958" title="All 2 branches missed.">        if (null != dialog.getFile ())</span>
+        {
+<span class="nc" id="L960">            mHomeDir = dialog.getDirectory ();</span>
+<span class="nc" id="L961">            file = new File (mHomeDir + dialog.getFile ());</span>
+<span class="nc" id="L962">            open (file.getAbsolutePath ());</span>
+<span class="nc" id="L963">            setTitle (TITLE + &quot; - &quot; + file.getAbsolutePath ());</span>
+        }
+<span class="nc" id="L965">    }</span>
+
+    /**
+     * The action to take when &quot;Save&quot; menu or button pressed.
+     */
+    protected void saveAction ()
+    {
+        String title;
+        int index;
+        File file;
+        FileDialog dialog;
+
+<span class="nc" id="L977">        title = getTitle ();</span>
+<span class="nc" id="L978">        index = title.indexOf (&quot; - &quot;);</span>
+<span class="nc bnc" id="L979" title="All 2 branches missed.">        if (-1 != index)</span>
+<span class="nc" id="L980">            file = new File (title.substring (index + 3));</span>
+        else
+        {
+<span class="nc" id="L983">            dialog = new FileDialog (this);</span>
+<span class="nc" id="L984">            dialog.setMode (FileDialog.SAVE);</span>
+<span class="nc" id="L985">            dialog.setTitle (&quot;Save&quot;);</span>
+<span class="nc" id="L986">            dialog.setDirectory (mHomeDir);        </span>
+<span class="nc" id="L987">            dialog.setVisible (true);</span>
+<span class="nc bnc" id="L988" title="All 2 branches missed.">	        if (null != dialog.getFile ())</span>
+	        {
+<span class="nc" id="L990">	            mHomeDir = dialog.getDirectory ();</span>
+<span class="nc" id="L991">	            file = new File (mHomeDir + dialog.getFile ());</span>
+<span class="nc" id="L992">	            setTitle (TITLE + &quot; - &quot; + file.getAbsolutePath ());</span>
+<span class="nc" id="L993">	        }</span>
+	        else
+<span class="nc" id="L995">	            file = null;</span>
+        }
+<span class="nc bnc" id="L997" title="All 2 branches missed.">        if (null != file)</span>
+<span class="nc" id="L998">            save (file.getAbsolutePath ());</span>
+<span class="nc" id="L999">    }</span>
+
+    /**
+     * The action to take when &quot;Save As&quot; menu or button pressed.
+     */
+    protected void saveasAction ()
+    {
+<span class="nc" id="L1006">        setTitle (TITLE);</span>
+<span class="nc" id="L1007">        saveAction ();</span>
+<span class="nc" id="L1008">    }</span>
+
+    /**
+     * The action to take when &quot;Exit&quot; menu or button pressed.
+     */
+    protected void exitAction ()
+    {
+<span class="nc" id="L1015">        exitApplication ();</span>
+<span class="nc" id="L1016">    }</span>
+
+    /**
+     * The action to take when &quot;Cut&quot; menu or button pressed.
+     */
+    protected void cutAction ()
+    {
+        String string;
+        StringSelection contents;
+        Clipboard cb;
+            
+        // get the selection
+<span class="nc" id="L1028">        string = serializeSelection ();</span>
+        // copy to clipboard
+<span class="nc" id="L1030">        contents = new StringSelection (string);</span>
+<span class="nc" id="L1031">        cb = Toolkit.getDefaultToolkit ().getSystemClipboard ();</span>
+<span class="nc" id="L1032">        cb.setContents (contents, this);</span>
+        // delete the selection
+<span class="nc" id="L1034">        deleteSelection ();</span>
+<span class="nc" id="L1035">        relayout ();</span>
+<span class="nc" id="L1036">    }</span>
+
+    /**
+     * The action to take when &quot;Copy&quot; menu or button pressed.
+     */
+    protected void copyAction ()
+    {
+        String string;
+        StringSelection contents;
+        Clipboard cb;
+            
+        // get the selection
+<span class="nc" id="L1048">        string = serializeSelection ();</span>
+        // copy to clipboard
+<span class="nc" id="L1050">        contents = new StringSelection (string);</span>
+<span class="nc" id="L1051">        cb = Toolkit.getDefaultToolkit ().getSystemClipboard ();</span>
+<span class="nc" id="L1052">        cb.setContents (contents, this);</span>
+<span class="nc" id="L1053">    }</span>
+
+    /**
+     * The action to take when &quot;Paste&quot; menu or button pressed.
+     */
+    protected void pasteAction ()
+    {
+        Clipboard cb;
+        Transferable content;
+        String string;
+        Filter[] filters;
+        Point point;
+        SubFilterList list;
+            
+        // get the text
+<span class="nc" id="L1068">        cb = Toolkit.getDefaultToolkit ().getSystemClipboard ();</span>
+<span class="nc" id="L1069">        content = cb.getContents (this);</span>
+<span class="nc bnc" id="L1070" title="All 2 branches missed.">        if (content.isDataFlavorSupported (DataFlavor.stringFlavor))</span>
+        {
+            try
+            {
+<span class="nc" id="L1074">                string = (String)content.getTransferData (DataFlavor.stringFlavor);</span>
+                // deserialize it and add into the selection
+<span class="nc" id="L1076">                filters = Filter.reconstitute (string, new Parser (mURLField.getText ()));</span>
+                // add it to the (single) selected object or main panel
+<span class="nc bnc" id="L1078" title="All 2 branches missed.">                if (isSingleSelection ()</span>
+<span class="nc bnc" id="L1079" title="All 2 branches missed.">                        &amp;&amp; (null != (list = getEnclosed (getSelection ()[0]))))</span>
+                {
+<span class="nc bnc" id="L1081" title="All 2 branches missed.">                    for (int i = 0; i &lt; filters.length; i++)</span>
+<span class="nc" id="L1082">                        list.addFilter (filters[i]);</span>
+<span class="nc" id="L1083">                }</span>
+                else
+                {
+<span class="nc" id="L1086">                    point = new Point (0,0);</span>
+<span class="nc bnc" id="L1087" title="All 2 branches missed.">                    for (int i = 0; i &lt; filters.length; i++)</span>
+                    {
+<span class="nc" id="L1089">                        filters[i].setLocation (point);</span>
+<span class="nc" id="L1090">                        mMainPanel.add (filters[i]);</span>
+<span class="nc" id="L1091">                        point.y += filters[i].getPreferredSize ().height;</span>
+                    }
+                }
+<span class="nc" id="L1094">                setupMouseListeners (filters);</span>
+<span class="nc" id="L1095">                setupDropTargets (filters);</span>
+<span class="nc" id="L1096">                relayout ();</span>
+<span class="nc" id="L1097">            }</span>
+<span class="nc" id="L1098">            catch (Exception e)</span>
+            {
+<span class="nc" id="L1100">                e.printStackTrace ();</span>
+            }
+        }
+<span class="nc" id="L1103">    }</span>
+
+    /**
+     * The action to take when &quot;Delete&quot; menu or button pressed.
+     */
+    protected void deleteAction ()
+    {
+        // delete the selection
+<span class="nc" id="L1111">        deleteSelection ();</span>
+<span class="nc" id="L1112">        relayout ();</span>
+<span class="nc" id="L1113">    }</span>
+
+    /**
+     * The action to take when a filter menu or button pressed.
+     */
+    protected void filterAction ()
+    {
+        String cls;
+        Filter filter;
+        SubFilterList list;
+        Point point;
+        
+        // retrieve the source component placed there by actionPerformed
+<span class="nc" id="L1126">        cls = mCurrentComponent.getName ();</span>
+<span class="nc" id="L1127">        filter = Filter.instantiate (cls);</span>
+        // need this to get the underlying filter prepped?
+        try
+        {
+<span class="nc" id="L1131">            filter = Filter.wrap (filter.getNodeFilter (), new Parser (mURLField.getText ()));</span>
+<span class="nc" id="L1132">        }</span>
+<span class="nc" id="L1133">        catch (ParserException pe)</span>
+        {
+<span class="nc" id="L1135">            pe.printStackTrace ();</span>
+        }
+        // add it to the (single) selected object or main panel
+<span class="nc bnc" id="L1138" title="All 2 branches missed.">        if (isSingleSelection ()</span>
+<span class="nc bnc" id="L1139" title="All 2 branches missed.">                &amp;&amp; (null != (list = getEnclosed (getSelection ()[0]))))</span>
+        {
+<span class="nc" id="L1141">            insertFilters (new Filter[] {filter}, null, list);</span>
+<span class="nc" id="L1142">        }</span>
+        else
+        {
+<span class="nc" id="L1145">            point = new Point (50,50); // find where and who to stick it into</span>
+<span class="nc" id="L1146">            insertFilters (new Filter[] {filter}, point, null);</span>
+        }
+<span class="nc" id="L1148">    }</span>
+    
+    /**
+     * The action to take when &quot;Fetch&quot; menu pressed.
+     */
+    protected void fetchAction ()
+    {
+        JInternalFrame frame;
+        Dimension dimension;
+        Parser parser;
+        NodeList list;
+
+        // set up an internal frame for the results
+<span class="nc" id="L1161">        frame = new JInternalFrame (mURLField.getText ()); </span>
+<span class="nc" id="L1162">        frame.setClosable (true); </span>
+<span class="nc" id="L1163">        frame.setResizable (true);</span>
+<span class="nc" id="L1164">        dimension = mOutput.getSize ();</span>
+<span class="nc" id="L1165">        frame.setBounds (0, 0, dimension.width, dimension.height);</span>
+<span class="nc" id="L1166">        list = new NodeList ();</span>
+        try
+        {
+<span class="nc" id="L1169">	        parser = new Parser (mURLField.getText ());</span>
+	        try
+	        {
+<span class="nc bnc" id="L1172" title="All 2 branches missed.">		        for (NodeIterator iterator = parser.elements (); iterator.hasMoreNodes (); )</span>
+<span class="nc" id="L1173">		            list.add (iterator.nextNode ());</span>
+<span class="nc" id="L1174">	        }</span>
+<span class="nc" id="L1175">	        catch (EncodingChangeException ece)</span>
+	        {
+<span class="nc" id="L1177">	            list.removeAll ();</span>
+<span class="nc" id="L1178">	            parser.reset ();</span>
+<span class="nc bnc" id="L1179" title="All 2 branches missed.">		        for (NodeIterator iterator = parser.elements (); iterator.hasMoreNodes (); )</span>
+<span class="nc" id="L1180">		            list.add (iterator.nextNode ());</span>
+	        }
+<span class="nc" id="L1182">        }</span>
+<span class="nc" id="L1183">        catch (ParserException pe)</span>
+        {
+<span class="nc" id="L1185">            pe.printStackTrace ();</span>
+        }
+<span class="nc" id="L1187">        JTree tree = new JTree (new HtmlTreeModel (list));</span>
+<span class="nc" id="L1188">        tree.setRootVisible (false);</span>
+<span class="nc" id="L1189">        tree.setCellRenderer (new HtmlTreeCellRenderer ());</span>
+<span class="nc" id="L1190">        JScrollPane treeView = new JScrollPane (tree);</span>
+<span class="nc" id="L1191">		frame.setContentPane (new JScrollPane (</span>
+<span class="nc" id="L1192">		    treeView,</span>
+<span class="nc" id="L1193">		    ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,</span>
+<span class="nc" id="L1194">		    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED));</span>
+<span class="nc" id="L1195">        mOutput.add (frame, new Integer (1));   </span>
+        try
+        {
+<span class="nc" id="L1198">            frame.setSelected (true); </span>
+<span class="nc" id="L1199">        }</span>
+<span class="nc" id="L1200">        catch (PropertyVetoException pve)</span>
+        {
+<span class="nc" id="L1202">            pve.printStackTrace ();</span>
+        }
+<span class="nc" id="L1204">        frame.show (); </span>
+<span class="nc" id="L1205">    }</span>
+
+    /**
+     * The action to take when &quot;Execute&quot; menu or button pressed.
+     */
+    protected void executeAction ()
+    {
+        Filter[] selections;
+        FilterBean bean;
+        JInternalFrame frame;
+        Dimension dimension;
+//        JTextPane text;
+
+<span class="nc" id="L1218">        selections = getSelection ();</span>
+<span class="nc bnc" id="L1219" title="All 2 branches missed.">        if (0 == selections.length)</span>
+<span class="nc" id="L1220">            selections = getFilters ();</span>
+<span class="nc bnc" id="L1221" title="All 2 branches missed.">        if (0 != selections.length)</span>
+        {
+<span class="nc" id="L1223">            bean = new FilterBean ();</span>
+<span class="nc" id="L1224">            bean.setURL (mURLField.getText ());</span>
+<span class="nc" id="L1225">            bean.setFilters (selections);</span>
+            
+            // set up an internal frame for the results
+<span class="nc" id="L1228">            frame = new JInternalFrame (bean.getURL ()); </span>
+<span class="nc" id="L1229">            frame.setClosable (true); </span>
+<span class="nc" id="L1230">            frame.setResizable (true);</span>
+<span class="nc" id="L1231">            dimension = mOutput.getSize ();</span>
+<span class="nc" id="L1232">            frame.setBounds (0, 0, dimension.width, dimension.height / 2);</span>
+<span class="nc" id="L1233">            JTree tree = new JTree (new HtmlTreeModel (bean.getNodes ()));</span>
+<span class="nc" id="L1234">            tree.setRootVisible (false);</span>
+<span class="nc" id="L1235">            tree.setCellRenderer (new HtmlTreeCellRenderer ());</span>
+<span class="nc" id="L1236">            JScrollPane treeView = new JScrollPane (tree);</span>
+<span class="nc" id="L1237">			frame.setContentPane (new JScrollPane (</span>
+<span class="nc" id="L1238">			    treeView,</span>
+<span class="nc" id="L1239">			    ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,</span>
+<span class="nc" id="L1240">			    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED));</span>
+//            text = new JTextPane ();
+//            text.setText (bean.getNodes ().toHtml ());
+//            frame.setContentPane (new JScrollPane (
+//                    text,
+//                    ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+//                    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED));
+<span class="nc" id="L1247">            mOutput.add (frame, new Integer(2)); // layer 2?   </span>
+            try
+            {
+<span class="nc" id="L1250">                frame.setSelected (true); </span>
+<span class="nc" id="L1251">            }</span>
+<span class="nc" id="L1252">            catch (PropertyVetoException pve)</span>
+            {
+<span class="nc" id="L1254">                pve.printStackTrace ();</span>
+            }
+<span class="nc" id="L1256">            frame.show (); </span>
+        }
+<span class="nc" id="L1258">    }</span>
+
+    /**
+     * The action to take when &quot;Instructions&quot; menu pressed.
+     */
+    protected void instructionsAction ()
+    {
+<span class="nc" id="L1265">        String instructions =</span>
+<span class="nc" id="L1266">            &quot;&lt;html&gt;&quot; +</span>
+            &quot;Enter the target URL in the text box at the bottom of the window.&lt;br&gt;&quot; +
+            &quot;Choose 'Fetch Page' from the Operations menu to see the whole page.&lt;br&gt;&quot; +
+            &quot;Pick filters from the Filter menu or drag them from the toolbar.&lt;br&gt;&quot; +
+            &quot;Filters such as And, Or, Not, HasParent, HasChild and HasSibling contain other filters:&lt;br&gt;&quot; +
+            &quot;&lt;ul&gt;&lt;li&gt;drag new filters into their blank areas at the bottom&lt;/li&gt;&quot; +
+            &quot;&lt;li&gt;cut an existing filter and paste into a selected filter&lt;/li&gt;&lt;/ul&gt;&quot; +
+            &quot;Build the filter incrementally, choosing 'Execute Filter' to test the selected filter.&lt;br&gt;&quot; +
+            &quot;Save creates a .java file that runs the top level filter.&lt;br&gt;&quot; +
+            &quot;Right click on a filter displays a pop-up menu.&lt;br&gt;&quot; +
+            &quot;Double click on a blue item in the result pane expands the tree.&quot; +
+            &quot;&lt;/html&gt;&quot;;
+<span class="nc" id="L1278">        String close = &quot;Close&quot;;</span>
+<span class="nc" id="L1279">        JOptionPane.showOptionDialog (</span>
+        // not .showMessageDialog(
+<span class="nc" id="L1281">            mMainPanel,</span>
+<span class="nc" id="L1282">            instructions,</span>
+<span class="nc" id="L1283">            &quot;FilterBuilder Instructons&quot;,</span>
+            // remove this:
+<span class="nc" id="L1285">            JOptionPane.DEFAULT_OPTION,</span>
+<span class="nc" id="L1286">            JOptionPane.INFORMATION_MESSAGE,</span>
+            // and remove rest of these:
+<span class="nc" id="L1288">            null,</span>
+<span class="nc" id="L1289">            new String[] { close },</span>
+<span class="nc" id="L1290">            close);</span>
+<span class="nc" id="L1291">    }</span>
+
+    /**
+     * The action to take when &quot;Filtering&quot; menu pressed.
+     */
+    protected void filteringAction ()
+    {
+<span class="nc" id="L1298">        String instructions =</span>
+<span class="nc" id="L1299">            &quot;&lt;html&gt;&quot; +</span>
+            &quot;The HTML Parser filter subsystem extracts items from a web page,&lt;br&gt;&quot; +
+            &quot;corresponding to the use-case 'I want this little piece of information from http://yadda'.&lt;br&gt;&quot; +
+            &quot;The web page is considered a heirarchical tree of nodes. Usually the root node is &amp;lt;html&amp;gt;,&lt;br&gt;&quot; +
+            &quot;intermediate level nodes are &amp;lt;div&amp;gt; and &amp;lt;table&amp;gt; for example,&lt;br&gt;&quot; +
+            &quot;and leaf nodes are things like text or &amp;lt;img&amp;gt;.&lt;br&gt;&quot; +
+            &quot;Any node that isn't the root node has a 'parent' node.&lt;br&gt;&quot; +
+            &quot;Leaf nodes, by definition, have no 'children'.&lt;br&gt;&quot; +
+            &quot;A filter is a Java class that answers the simple question:&lt;br&gt;&quot; +
+            &quot;&lt;pre&gt;Is this node acceptable? True or false.&lt;/pre&gt;&lt;br&gt;&quot; +
+            &quot;Some filters know the answer just by looking at the node,&lt;br&gt;&quot; +
+            &quot;while others must ask other filters, sometimes looking up or down the node heirarchy.&lt;br&gt;&quot; +
+            &quot;&lt;b&gt;The FilterBuilder is a program for making other programs that use filters.&lt;/b&gt;&lt;br&gt;&quot; +
+            &quot;By combining different types of filters, specific nodes can be isolated from the&lt;br&gt;&quot; +
+            &quot;target web page.&lt;br&gt;&quot; +
+            &quot;The results are usually passed on to another part of the users program&lt;br&gt;&quot; +
+            &quot;that does something useful with them.&lt;br&gt;&quot; +
+            &quot;The filters available include:&lt;br&gt;&quot; +
+            &quot;&lt;ul&gt;&quot; +
+            &quot;&lt;li&gt;AndFilter - The main 'combining' filter, answers &lt;code&gt;true&lt;/code&gt; only if&lt;br&gt;&quot; +
+            &quot;all it's subfilters (predicates) are &lt;code&gt;true&lt;/code&gt;.&lt;/li&gt;&quot; +
+            &quot;&lt;li&gt;OrFilter - A 'combining' filter that answers &lt;code&gt;true&lt;/code&gt; if&lt;br&gt;&quot; +
+            &quot;any of it's subfilters (predicates) are &lt;code&gt;true&lt;/code&gt;.&lt;/li&gt;&quot; +
+            &quot;&lt;li&gt;NotFilter - A 'reversing' filter that answers &lt;code&gt;true&lt;/code&gt; if&lt;br&gt;&quot; +
+            &quot;it's subfilter (predicate) is &lt;code&gt;false&lt;/code&gt;.&lt;/li&gt;&quot; +
+            &quot;&lt;li&gt;StringFilter - A 'leaf' filter that answers &lt;code&gt;true&lt;/code&gt; if&lt;br&gt;&quot; +
+            &quot;the node is text and it contains a certain sequence of characters.&lt;br&gt;&quot; +
+            &quot;It can be made case insensitive, but in this case a 'locale' must be&lt;br&gt;&quot; +
+            &quot;supplied as a context for upper-case conversion.&lt;/li&gt;&quot; +
+            &quot;&lt;li&gt;RegexFilter - A 'leaf' filter that answers &lt;code&gt;true&lt;/code&gt; if&lt;br&gt;&quot; +
+            &quot;the node is text and it contains a certain pattern (regular expression).&lt;br&gt;&quot; +
+            &quot;Regular expressions are descibed in the java.util.regex.Pattern class documentation.&lt;/li&gt;&quot; +
+            &quot;&lt;li&gt;TagNameFilter - A filter that answers &lt;code&gt;true&lt;/code&gt; if&lt;br&gt;&quot; +
+            &quot;the node is a tag and it has a certain name,&quot; +
+            &quot;i.e. &amp;lt;div&amp;gt; would match the name &lt;code&gt;DIV&lt;/code&gt;.&lt;/li&gt;&quot; +
+            &quot;&lt;li&gt;NodeClassFilter - A filter that answers &lt;code&gt;true&lt;/code&gt; if&lt;br&gt;&quot; +
+            &quot;the node is a certain tag class. Not recommended, use TagNameFilter instead.&lt;/li&gt;&quot; +
+            &quot;&lt;li&gt;HasAttributeFilter - A filter that answers &lt;code&gt;true&lt;/code&gt; if&lt;br&gt;&quot; +
+            &quot;the node is a tag and it has a certain attribute,&lt;br&gt;&quot; +
+            &quot;i.e. &amp;lt;script language=javascript&amp;gt; would match the attribute &lt;code&gt;LANGUAGE&lt;/code&gt;.&lt;br&gt;&quot; +
+            &quot;It can be further restricted to have a certain attribute value as well,&lt;br&gt;&quot; +
+            &quot;i.e. 'javascript' in this example.&lt;/li&gt;&quot; +
+            &quot;&lt;li&gt;HasParentFilter - A filter that answers &lt;code&gt;true&lt;/code&gt; if&lt;br&gt;&quot; +
+            &quot;the node is a child of a node that is acceptable to a certain filter.&lt;br&gt;&quot; +
+            &quot;This can be made recursive, which means the acceptable parent can be&lt;br&gt;&quot; +
+            &quot;further up the heirarchy than just the immediate parent node.&lt;/li&gt;&quot; +
+            &quot;&lt;li&gt;HasChildFilter - A filter that answers &lt;code&gt;true&lt;/code&gt; if&lt;br&gt;&quot; +
+            &quot;the node is a parent of a node that is acceptable to a certain filter.&lt;br&gt;&quot; +
+            &quot;This can be made recursive, which means the acceptable child can be&lt;br&gt;&quot; +
+            &quot;further down the heirarchy than just the immediate children nodes.&lt;/li&gt;&quot; +
+            &quot;&lt;li&gt;HasSiblingFilter - A filter that answers &lt;code&gt;true&lt;/code&gt; if&lt;br&gt;&quot; +
+            &quot;the node is a sibling (they have a common parent) of a node that is&lt;br&gt;&quot; +
+            &quot;acceptable to a certain filter.&lt;/li&gt;&quot; +
+            &quot;&lt;/ul&gt;&quot; +
+            &quot;&lt;/html&gt;&quot;;
+<span class="nc" id="L1354">        String close = &quot;Close&quot;;</span>
+<span class="nc" id="L1355">        JOptionPane.showOptionDialog (</span>
+        // not .showMessageDialog(
+<span class="nc" id="L1357">            mMainPanel,</span>
+<span class="nc" id="L1358">            instructions,</span>
+<span class="nc" id="L1359">            &quot;FilterBuilder Instructons&quot;,</span>
+            // remove this:
+<span class="nc" id="L1361">            JOptionPane.DEFAULT_OPTION,</span>
+<span class="nc" id="L1362">            JOptionPane.INFORMATION_MESSAGE,</span>
+            // and remove rest of these:
+<span class="nc" id="L1364">            null,</span>
+<span class="nc" id="L1365">            new String[] { close },</span>
+<span class="nc" id="L1366">            close);</span>
+<span class="nc" id="L1367">    }</span>
+
+    /**
+     * The action to take when &quot;Tutorial&quot; menu pressed.
+     */
+    protected void tutorialAction ()
+    {
+<span class="nc" id="L1374">        String instructions =</span>
+<span class="nc" id="L1375">            &quot;&lt;html&gt;&quot; +</span>
+            &quot;To get the title text from a page:&lt;br&gt;&quot; +
+            &quot;&lt;ul&gt;&lt;li&gt;Choose 'New' from the File menu.&lt;/li&gt;&quot; +
+            &quot;&lt;li&gt;Choose 'AndFilter' from the Filter menu.&lt;/li&gt;&quot; +
+            &quot;&lt;li&gt;Select the And filter so it is highlighted.&lt;/li&gt;&quot; +
+            &quot;&lt;li&gt;Choose 'HasParent' from the Filter menu.&lt;/li&gt;&quot; +
+            &quot;&lt;li&gt;Toggle the 'Recursive' checkbox on in the HasParent filter.&lt;/li&gt;&quot; +
+            &quot;&lt;li&gt;Select the HasParent filter so it is highlighted.&lt;/li&gt;&quot; +
+            &quot;&lt;li&gt;Choose 'TagName' from the Filter menu.&lt;br&gt;&quot; +
+            &quot;&lt;i&gt;Alternatively, you can drag the TagName filter (icon Hello-BOB)&lt;br&gt;&quot; +
+            &quot;from the toolbar and drop inside the HasParent filter&lt;/i&gt;&lt;/li&gt;&quot; +
+            &quot;&lt;li&gt;Choose 'TITLE' from the TagName combo-box.&lt;/li&gt;&quot; +
+            &quot;&lt;li&gt;Select the And filter and choose 'Execute Filter' from the&lt;br&gt;&quot; +
+            &quot;Operations menu to test it.&lt;/li&gt;&quot; +
+            &quot;&lt;li&gt;If there is unwanted non-text nodes in the result&lt;br&gt;&quot; +
+            &quot;select the And filter and choose 'RegexFilter' from the Filter menu.&lt;/li&gt;&quot; +
+            &quot;&lt;li&gt;Test it again, as above.&lt;/li&gt;&quot; +
+            &quot;&lt;li&gt;Choose 'Save' from the File menu and enter a filename like GetTitle.java&lt;/li&gt;&quot; +
+            &quot;&lt;li&gt;Compile the java file and run it.&lt;/li&gt;&lt;/ul&gt;&quot; +
+            &quot;&lt;/html&gt;&quot;;
+<span class="nc" id="L1395">        String close = &quot;Close&quot;;</span>
+<span class="nc" id="L1396">        JOptionPane.showOptionDialog (</span>
+        // not .showMessageDialog(
+<span class="nc" id="L1398">            mMainPanel,</span>
+<span class="nc" id="L1399">            instructions,</span>
+<span class="nc" id="L1400">            &quot;FilterBuilder Tutorial&quot;,</span>
+            // remove this:
+<span class="nc" id="L1402">            JOptionPane.DEFAULT_OPTION,</span>
+<span class="nc" id="L1403">            JOptionPane.INFORMATION_MESSAGE,</span>
+            // and remove rest of these:
+<span class="nc" id="L1405">            null,</span>
+<span class="nc" id="L1406">            new String[] { close },</span>
+<span class="nc" id="L1407">            close);</span>
+<span class="nc" id="L1408">    }</span>
+
+    /**
+     * The action to take when &quot;Hints&quot; menu pressed.
+     */
+    protected void hintsAction ()
+    {
+<span class="nc" id="L1415">        String instructions =</span>
+<span class="nc" id="L1416">            &quot;&lt;html&gt;&quot; +</span>
+            &quot;Hints:&lt;br&gt;&quot; +
+            &quot;&lt;ul&gt;&lt;li&gt;There is no undo yet, so save often.&lt;/li&gt;&quot; +
+            &quot;&lt;li&gt;Recursive HasParent and HasChild filters can be costly.&lt;/li&gt;&quot; +
+            &quot;&lt;li&gt;RegexFilter is more expensive than StringFilter.&lt;/li&gt;&quot; +
+            &quot;&lt;li&gt;The order of predicates in And and Or filters matters for performance,&lt;br&gt;&quot; +
+            &quot;put cheap tests first.&lt;/li&gt;&quot; +
+            &quot;&lt;li&gt;The same node may show up more than once in the results,&lt;br&gt;&quot; +
+            &quot;and at more than one nesting depth, depending on the filter used.&lt;/li&gt;&quot; +
+            &quot;&lt;li&gt;Typing in a tag name in the TagName filter is not recommended,&lt;br&gt;&quot; +
+            &quot;since extraneous characters can be added. Use an item from the list instead.&lt;/li&gt;&lt;/ul&gt;&quot; +
+            &quot;&lt;/html&gt;&quot;;
+<span class="nc" id="L1428">        String close = &quot;Close&quot;;</span>
+<span class="nc" id="L1429">        JOptionPane.showOptionDialog (</span>
+        // not .showMessageDialog(
+<span class="nc" id="L1431">            mMainPanel,</span>
+<span class="nc" id="L1432">            instructions,</span>
+<span class="nc" id="L1433">            &quot;FilterBuilder Hints&quot;,</span>
+            // remove this:
+<span class="nc" id="L1435">            JOptionPane.DEFAULT_OPTION,</span>
+<span class="nc" id="L1436">            JOptionPane.INFORMATION_MESSAGE,</span>
+            // and remove rest of these:
+<span class="nc" id="L1438">            null,</span>
+<span class="nc" id="L1439">            new String[] { close },</span>
+<span class="nc" id="L1440">            close);</span>
+<span class="nc" id="L1441">    }</span>
+
+    /**
+     * The action to take when &quot;About&quot; menu or button pressed.
+     */
+    protected void aboutAction ()
+    {
+<span class="nc" id="L1448">        String close = &quot;Close&quot;;</span>
+<span class="nc" id="L1449">        JOptionPane.showOptionDialog (</span>
+        // not .showMessageDialog(
+<span class="nc" id="L1451">            mMainPanel,</span>
+<span class="nc" id="L1452">            &quot;&lt;html&gt;&lt;center&gt;&lt;font color=black&gt;The HTML Parser &lt;font color=blue&gt;&lt;b&gt;FilterBuilder&lt;/b&gt;&lt;/font&gt;&lt;br&gt;&lt;i&gt;by Derrick Oswald&lt;/i&gt;&amp;nbsp;&amp;nbsp;&lt;b&gt;DerrickOswald@users.sourceforge.net&lt;/b&gt;&lt;br&gt;http://htmlparser.org&lt;br&gt;&lt;br&gt;&lt;font size=-2&gt;Copyright &amp;copy; 2005&lt;/font&gt;&lt;/center&gt;&lt;/html&gt;&quot;,</span>
+<span class="nc" id="L1453">            &quot;About FilterBuilder&quot;,</span>
+            // remove this:
+<span class="nc" id="L1455">            JOptionPane.DEFAULT_OPTION,</span>
+<span class="nc" id="L1456">            JOptionPane.INFORMATION_MESSAGE,</span>
+            // and remove rest of these:
+<span class="nc" id="L1458">            null,</span>
+<span class="nc" id="L1459">            new String[] { close },</span>
+<span class="nc" id="L1460">            close);</span>
+<span class="nc" id="L1461">    }</span>
+
+    /**
+     * The action to take when &quot;Expand&quot; menu chosen.
+     */
+    public void expandAction ()
+    {
+<span class="nc" id="L1468">        setExpanded (getSelection (), true, false);</span>
+<span class="nc" id="L1469">    }</span>
+
+    /**
+     * The action to take when &quot;Collapse&quot; menu chosen.
+     */
+    public void collapseAction ()
+    {
+<span class="nc" id="L1476">        setExpanded (getSelection (), false, false);</span>
+<span class="nc" id="L1477">    }</span>
+
+    /**
+     * The action to take when &quot;Expand All&quot; menu chosen.
+     */
+    public void expandAllAction ()
+    {
+<span class="nc" id="L1484">        setExpanded (getSelection (), true, true);</span>
+<span class="nc" id="L1485">    }</span>
+
+    /**
+     * The action to take when &quot;Collapse&quot; menu chosen.
+     */
+    public void collapseAllAction ()
+    {
+<span class="nc" id="L1492">        setExpanded (getSelection (), false, true);</span>
+<span class="nc" id="L1493">    }</span>
+
+    /**
+     * Set up mouse listeners.
+     * Sets &lt;code&gt;this&lt;/code&gt; up to listen to each command
+     * in the list as a MouseListener.
+     * Recursively descends the tree adding to all contained elements also.
+     * @param filters The container with commands in it.
+     */
+    public void setupMouseListeners (Filter[] filters)
+    {
+        SubFilterList list;
+
+<span class="nc bnc" id="L1506" title="All 2 branches missed.">        for (int i = 0; i &lt; filters.length; i++)</span>
+        {
+            // set us up as a mouse listener on it
+<span class="nc" id="L1509">            ((Component)filters[i]).addMouseListener (this);</span>
+<span class="nc" id="L1510">            ((Component)filters[i]).addMouseMotionListener (this);</span>
+<span class="nc" id="L1511">            list = getEnclosed (filters[i]);</span>
+<span class="nc bnc" id="L1512" title="All 2 branches missed.">            if (null != list)</span>
+<span class="nc" id="L1513">                setupMouseListeners (list.getFilters ());</span>
+        }
+<span class="nc" id="L1515">    }</span>
+
+    /**
+     * Set up drop targets.
+     * Recursively descends the filter tree and sets up
+     * the filter lists as drop targets.
+     * @param filters The container with filters in it.
+     */
+    public void setupDropTargets (Filter[] filters)
+    {
+        SubFilterList list;
+        Component[] components;
+
+<span class="nc bnc" id="L1528" title="All 2 branches missed.">        for (int i = 0; i &lt; filters.length; i++)</span>
+        {
+<span class="nc" id="L1530">            list = getEnclosed (filters[i]);</span>
+<span class="nc bnc" id="L1531" title="All 2 branches missed.">            if (null != list)</span>
+            {
+<span class="nc" id="L1533">                components = list.getDropTargets ();</span>
+<span class="nc bnc" id="L1534" title="All 2 branches missed.">                for (int j = 0; j &lt; components.length; j++)</span>
+<span class="nc" id="L1535">                    new DropTarget (components[j], this);</span>
+<span class="nc" id="L1536">                setupDropTargets (list.getFilters ());</span>
+            }
+        }
+<span class="nc" id="L1539">    }</span>
+
+    /**
+     * Expand or collapse filters, possibly recursively.
+     * @param filters The list of filters to expand or collapse.
+     * @param expanded If &lt;code&gt;true&lt;/code&gt; the filters are expanded,
+     * otherwise they are collapsed.
+     * @param recursive If &lt;code&gt;true&lt;/code&gt; the filters are processed
+     * recursively.
+     */
+    public void setExpanded (
+        Filter[] filters,
+        boolean expanded,
+        boolean recursive)
+    {
+        SubFilterList list;
+
+<span class="nc bnc" id="L1556" title="All 2 branches missed.">        for (int i = 0; i &lt; filters.length; i++)</span>
+        {
+<span class="nc bnc" id="L1558" title="All 4 branches missed.">            if (recursive &amp;&amp; (null != (list = getEnclosed (filters[i]))))</span>
+<span class="nc" id="L1559">                setExpanded (list.getFilters (), expanded, recursive);</span>
+<span class="nc" id="L1560">            filters[i].setExpanded (expanded);</span>
+        }
+<span class="nc" id="L1562">    }</span>
+
+    /**
+     * Retrieve the top level filters in the main window.
+     * @return The top level filters.
+     */
+    public Filter[] getFilters ()
+    {
+        Component[] components;
+        Filter[] ret;
+
+<span class="nc" id="L1573">        components = mMainPanel.getComponents ();</span>
+<span class="nc" id="L1574">        ret = new Filter[components.length];</span>
+<span class="nc" id="L1575">        System.arraycopy (components, 0, ret, 0, components.length);</span>
+        
+<span class="nc" id="L1577">        return (ret);</span>
+    }
+
+    /**
+     * Redo the layout.
+     */
+    public void relayout ()
+    {
+<span class="nc" id="L1585">        mMainPanel.invalidate ();</span>
+<span class="nc" id="L1586">        mMainScroller.invalidate ();</span>
+<span class="nc" id="L1587">        mMainScroller.validate ();</span>
+<span class="nc" id="L1588">        mMainScroller.repaint ();</span>
+<span class="nc" id="L1589">    }</span>
+
+    /**
+     * Read a workspace from file.
+     * The current contents are erased.
+     * @param name The name of the file to open.
+     */
+    public void open (String name)
+    {
+        LineNumberReader reader;
+        String line;
+        Filter[] filters;
+        Point point;
+        Dimension dimension;
+
+        try
+        {
+<span class="nc" id="L1606">            reader = new LineNumberReader (new FileReader (name));</span>
+<span class="nc bnc" id="L1607" title="All 2 branches missed.">            while (null != (line = reader.readLine ()))</span>
+<span class="nc bnc" id="L1608" title="All 2 branches missed.">                if (line.startsWith (&quot;// [&quot;))</span>
+                {
+<span class="nc" id="L1610">                    line = line.substring (3);</span>
+    	            try
+    	            {
+<span class="nc" id="L1613">    	                filters = Filter.reconstitute (line, new Parser (mURLField.getText ()));</span>
+<span class="nc" id="L1614">    	                mMainPanel.removeAll ();</span>
+<span class="nc" id="L1615">    	                point = new Point ();</span>
+<span class="nc bnc" id="L1616" title="All 2 branches missed.">    	                for (int i = 0; i &lt; filters.length; i++)</span>
+    	                {
+<span class="nc" id="L1618">    	                    dimension = filters[i].getPreferredSize ();</span>
+<span class="nc" id="L1619">    	                    mMainPanel.add (filters[i]);</span>
+<span class="nc" id="L1620">    	                    filters[i].setLocation (point);</span>
+<span class="nc" id="L1621">    	                    point.y += dimension.height;</span>
+    	                }
+<span class="nc" id="L1623">    	                setupMouseListeners (filters);</span>
+<span class="nc" id="L1624">    	                setupDropTargets (filters);</span>
+<span class="nc" id="L1625">    	                relayout ();</span>
+<span class="nc" id="L1626">    	            }</span>
+<span class="nc" id="L1627">    	            catch (ParserException pe)</span>
+    	            {
+<span class="nc" id="L1629">    	                pe.printStackTrace ();</span>
+    	            }
+<span class="nc" id="L1631">                    break;</span>
+                }
+<span class="nc" id="L1633">            reader.close ();</span>
+<span class="nc" id="L1634">        }</span>
+<span class="nc" id="L1635">        catch (IOException ioe)</span>
+        {
+<span class="nc" id="L1637">            ioe.printStackTrace ();</span>
+        }
+<span class="nc" id="L1639">    }</span>
+
+    /**
+     * Exit back to the operating system.
+     */
+    void exitApplication ()
+    {
+<span class="nc" id="L1646">        this.setVisible (false);    // hide the Frame</span>
+<span class="nc" id="L1647">        this.dispose ();            // free the system resources</span>
+<span class="nc" id="L1648">        System.exit (0);            // close the application</span>
+<span class="nc" id="L1649">    }</span>
+
+    /**
+     * Show a pop up context menu.
+     * Shows a context sensitive popup menu at the location of the
+     * mouse event.
+     * @param event The mouse event that initiates the popup.
+     */
+    public void showContextMenu (MouseEvent event)
+    {
+        JPopupMenu menu;
+        JMenuItem item;
+
+<span class="nc" id="L1662">        menu = new JPopupMenu ();</span>
+<span class="nc" id="L1663">        menu.setName (&quot;Popup&quot;);</span>
+
+<span class="nc" id="L1665">        item = new JMenuItem (&quot;Expand&quot;);</span>
+<span class="nc" id="L1666">        item.setActionCommand (&quot;expandAction&quot;);</span>
+<span class="nc" id="L1667">        item.addActionListener (this);</span>
+<span class="nc" id="L1668">        menu.add (item);</span>
+
+<span class="nc" id="L1670">        item = new JMenuItem (&quot;Collapse&quot;);</span>
+<span class="nc" id="L1671">        item.setActionCommand (&quot;collapseAction&quot;);</span>
+<span class="nc" id="L1672">        item.addActionListener (this);</span>
+<span class="nc" id="L1673">        menu.add (item);</span>
+
+<span class="nc" id="L1675">        menu.addSeparator ();</span>
+
+<span class="nc" id="L1677">        item = new JMenuItem (&quot;Expand All&quot;);</span>
+<span class="nc" id="L1678">        item.setActionCommand (&quot;expandAllAction&quot;);</span>
+<span class="nc" id="L1679">        item.addActionListener (this);</span>
+<span class="nc" id="L1680">        menu.add (item);</span>
+
+<span class="nc" id="L1682">        item = new JMenuItem (&quot;CollapseAll&quot;);</span>
+<span class="nc" id="L1683">        item.setActionCommand (&quot;collapseAllAction&quot;);</span>
+<span class="nc" id="L1684">        item.addActionListener (this);</span>
+<span class="nc" id="L1685">        menu.add (item);</span>
+
+<span class="nc" id="L1687">        menu.addSeparator ();</span>
+
+<span class="nc" id="L1689">        item = new JMenuItem (&quot;Cut&quot;);</span>
+<span class="nc" id="L1690">        item.setActionCommand (&quot;cutAction&quot;);</span>
+<span class="nc" id="L1691">        item.addActionListener (this);</span>
+<span class="nc" id="L1692">        menu.add (item);</span>
+
+<span class="nc" id="L1694">        item = new JMenuItem (&quot;Copy&quot;);</span>
+<span class="nc" id="L1695">        item.setActionCommand (&quot;copyAction&quot;);</span>
+<span class="nc" id="L1696">        item.addActionListener (this);</span>
+<span class="nc" id="L1697">        menu.add (item);</span>
+
+<span class="nc" id="L1699">        item = new JMenuItem (&quot;Paste&quot;);</span>
+<span class="nc" id="L1700">        item.setActionCommand (&quot;pasteAction&quot;);</span>
+<span class="nc" id="L1701">        item.addActionListener (this);</span>
+<span class="nc" id="L1702">        menu.add (item);</span>
+
+<span class="nc" id="L1704">        item = new JMenuItem (&quot;Delete&quot;);</span>
+<span class="nc" id="L1705">        item.setActionCommand (&quot;deleteAction&quot;);</span>
+<span class="nc" id="L1706">        item.addActionListener (this);</span>
+<span class="nc" id="L1707">        menu.add (item);</span>
+
+<span class="nc" id="L1709">        menu.addSeparator ();</span>
+
+<span class="nc" id="L1711">        item = new JMenuItem (&quot;Execute Filter&quot;);</span>
+<span class="nc" id="L1712">        item.setActionCommand (&quot;executeAction&quot;);</span>
+<span class="nc" id="L1713">        item.addActionListener (this);</span>
+<span class="nc" id="L1714">        menu.add (item);</span>
+
+<span class="nc" id="L1716">        menu.show (event.getComponent (), event.getX (), event.getY ());</span>
+<span class="nc" id="L1717">    }</span>
+
+    //
+    // selection manipulation
+    //
+
+    /**
+     * Add a filter to the current selection set.
+     * @param filter The filter to add.
+     */
+    protected void addSelection (Filter filter)
+    {
+<span class="nc bnc" id="L1729" title="All 2 branches missed.">        if (!selectionContains (filter))</span>
+<span class="nc" id="L1730">            mSelection.addElement (filter);</span>
+<span class="nc" id="L1731">        filter.setSelected (true);</span>
+<span class="nc" id="L1732">        mMoved = false;</span>
+<span class="nc" id="L1733">    }</span>
+
+    /**
+     * Remove a filter from the current selection set.
+     * @param filter The filter to remove.
+     */
+    protected void removeSelection (Filter filter)
+    {
+<span class="nc" id="L1741">        mSelection.removeElement (filter); // no harm if not contained</span>
+<span class="nc" id="L1742">        filter.setSelected (false);</span>
+<span class="nc" id="L1743">    }</span>
+
+    /**
+     * Select(highlight)/deselect the current selection set.
+     * @param select If &lt;code&gt;true&lt;/code&gt; turn on highlighting,
+     * turn it off otherwise.
+     */
+    protected void selectSelection (boolean select)
+    {
+        int count;
+        Filter filter;
+        
+<span class="nc" id="L1755">        count = mSelection.size ();</span>
+<span class="nc bnc" id="L1756" title="All 2 branches missed.">        for (int i = 0; i &lt; count; i++)</span>
+        {
+<span class="nc" id="L1758">            filter = (Filter)mSelection.elementAt (i);</span>
+<span class="nc" id="L1759">            filter.setSelected (select);</span>
+        }
+<span class="nc" id="L1761">    }</span>
+
+    /**
+     * Clear (empty) the current selection set.
+     */
+    protected void clearSelection ()
+    {
+<span class="nc" id="L1768">        selectSelection (false);</span>
+<span class="nc" id="L1769">        mSelection.removeAllElements ();</span>
+<span class="nc" id="L1770">    }</span>
+
+    /**
+     * Move the current selection set as a group.
+     * @param translation The displacement to move them all by.
+     */
+    protected void moveSelection (Point translation)
+    {
+        int count;
+        Filter filter;
+        Point point;
+        
+<span class="nc" id="L1782">        count = mSelection.size ();</span>
+<span class="nc bnc" id="L1783" title="All 2 branches missed.">        for (int i = 0; i &lt; count; i++)</span>
+        {
+<span class="nc" id="L1785">            filter = (Filter)mSelection.elementAt (i);</span>
+<span class="nc" id="L1786">            point = filter.getLocation ();</span>
+<span class="nc" id="L1787">            point.translate (translation.x, translation.y);</span>
+<span class="nc" id="L1788">            synchronized (filter.getTreeLock ())</span>
+            {
+<span class="nc" id="L1790">                filter.setLocation (point.x, point.y);</span>
+            }
+        }
+<span class="nc" id="L1793">        mMoved = true;</span>
+<span class="nc" id="L1794">    }</span>
+
+    /**
+     * Check if the current selection set contains the given filter.
+     * @param filter The filter to check.
+     * @return &lt;code&gt;true&lt;/code&gt; if the filter is a member,
+     * &lt;code&gt;false&lt;/code&gt; otherwise.
+     */
+    protected boolean selectionContains (Filter filter)
+    {
+<span class="nc" id="L1804">        return (mSelection.contains (filter));</span>
+    }
+
+    /**
+     * Return the last filter added to the selection set.
+     * @return The last filter added or &lt;code&gt;null&lt;/code&gt; if the current
+     * selection set is empty.
+     */
+    protected Filter lastSelected ()
+    {
+        Filter ret;
+        
+<span class="nc" id="L1816">        ret = null;</span>
+
+<span class="nc bnc" id="L1818" title="All 2 branches missed.">        if (0 &lt; mSelection.size ())</span>
+<span class="nc" id="L1819">            ret = (Filter)mSelection.lastElement ();</span>
+            
+<span class="nc" id="L1821">        return (ret);</span>
+    }
+
+    /**
+     * Return the current selection set as an array.
+     * @return The array of selected filters.
+     */
+    protected Filter[] getSelection ()
+    {
+        Filter[] ret;
+
+<span class="nc" id="L1832">        ret = new Filter[mSelection.size ()];</span>
+<span class="nc" id="L1833">        mSelection.copyInto (ret);</span>
+
+<span class="nc" id="L1835">        return (ret);</span>
+    }
+
+    /**
+     * Serialize the current selection set.
+     * @return The serialized form of the set of filters.
+     */
+    public String serializeSelection ()
+    {
+        Filter[] filters;
+        StringWriter writer;
+        PrintWriter out;
+
+<span class="nc" id="L1848">        filters = getSelection ();</span>
+<span class="nc" id="L1849">        writer = new StringWriter (200);</span>
+<span class="nc" id="L1850">        out = new PrintWriter (writer, false);</span>
+        try
+        {
+<span class="nc" id="L1853">            out.println (Filter.deconstitute (filters));</span>
+<span class="nc" id="L1854">        }</span>
+<span class="nc" id="L1855">        catch (IOException ioe)</span>
+        {
+<span class="nc" id="L1857">            ioe.printStackTrace ();</span>
+        }
+        finally
+<span class="nc" id="L1860">        {</span>
+<span class="nc" id="L1861">            out.close ();</span>
+<span class="nc" id="L1862">        }</span>
+        
+<span class="nc" id="L1864">        return (writer.getBuffer ().toString ());</span>
+    }
+
+    /**
+     * Delete the current selection set from the filters in the GUI.
+     */
+    public void deleteSelection ()
+    {
+        Filter[] filters;
+        SubFilterList list;
+
+<span class="nc" id="L1875">        filters = getSelection ();</span>
+<span class="nc bnc" id="L1876" title="All 2 branches missed.">        for (int i = 0; i &lt; filters.length; i++)</span>
+        {
+<span class="nc" id="L1878">            list = getEnclosing (filters[i]);</span>
+<span class="nc bnc" id="L1879" title="All 2 branches missed.">            if (null != list)</span>
+<span class="nc" id="L1880">                list.removeFilter (filters[i]);</span>
+            else
+<span class="nc" id="L1882">                mMainPanel.remove (filters[i]);</span>
+        }
+<span class="nc" id="L1884">        mSelection.clear ();</span>
+<span class="nc" id="L1885">    }</span>
+    
+    /**
+     * Check if there is more than one filter selected.
+     * @return &lt;code&gt;true&lt;/code&gt; if only one filter is selected,
+     * &lt;code&gt;false&lt;/code&gt; otherwise.
+     */
+    public boolean isSingleSelection ()
+    {
+<span class="nc bnc" id="L1894" title="All 2 branches missed.">        return (1 == mSelection.size());</span>
+    }
+
+    //
+    // MouseListener interface
+    //
+
+    /**
+     * Invoked when the mouse has been clicked on a component.
+     * @param event The mouse clicked event.
+     */
+    public void mouseClicked (MouseEvent event)
+    {
+        Object component;
+        Filter filter;
+        SubFilterList list;
+        int modifiers;
+        boolean contained;
+        Filter[] filters;
+        
+<span class="nc" id="L1914">        component = event.getSource ();</span>
+<span class="nc bnc" id="L1915" title="All 2 branches missed.">        if (component instanceof Filter)</span>
+        {
+<span class="nc" id="L1917">            filter = (Filter)component;</span>
+<span class="nc" id="L1918">            modifiers = event.getModifiers ();</span>
+<span class="nc" id="L1919">            contained = selectionContains (filter);</span>
+            
+<span class="nc bnc" id="L1921" title="All 2 branches missed.">            if (0 != (modifiers &amp; InputEvent.SHIFT_MASK))</span>
+            {
+                // add everything from last selected to this command
+<span class="nc" id="L1924">                list = getEnclosed (filter);</span>
+<span class="nc bnc" id="L1925" title="All 2 branches missed.">                if (null != list)</span>
+<span class="nc" id="L1926">                    filters = list.getFilters ();</span>
+                else
+<span class="nc" id="L1928">                    filters = getFilters ();</span>
+<span class="nc" id="L1929">                Filter last = lastSelected ();</span>
+<span class="nc bnc" id="L1930" title="All 2 branches missed.">                if (null == last)</span>
+<span class="nc" id="L1931">                    addSelection (filter);</span>
+                else
+                {
+<span class="nc" id="L1934">                    int current = -1;</span>
+<span class="nc" id="L1935">                    int recent = -1;</span>
+<span class="nc bnc" id="L1936" title="All 2 branches missed.">                    for (int i = 0; i &lt; filters.length; i++)</span>
+                    {
+<span class="nc bnc" id="L1938" title="All 2 branches missed.">                        if (filters[i] == filter)</span>
+<span class="nc" id="L1939">                            current = i;</span>
+<span class="nc bnc" id="L1940" title="All 2 branches missed.">                        if (filters[i] == last)</span>
+<span class="nc" id="L1941">                            recent = i;</span>
+                    }
+<span class="nc bnc" id="L1943" title="All 4 branches missed.">                    if ((current != -1) &amp;&amp; (recent != -1))</span>
+<span class="nc bnc" id="L1944" title="All 2 branches missed.">                        for (int i = Math.min (current, recent);</span>
+<span class="nc" id="L1945">                            i &lt;= Math.max (current, recent); i++)</span>
+<span class="nc" id="L1946">                        addSelection (filters[i]);</span>
+                }
+<span class="nc" id="L1948">            }</span>
+<span class="nc bnc" id="L1949" title="All 2 branches missed.">            else if (0 != (modifiers &amp; InputEvent.CTRL_MASK))</span>
+            {
+                // add just the new command
+<span class="nc bnc" id="L1952" title="All 2 branches missed.">                if (contained)</span>
+<span class="nc" id="L1953">                    removeSelection (filter);</span>
+                else
+<span class="nc" id="L1955">                    addSelection (filter);</span>
+<span class="nc" id="L1956">            }</span>
+<span class="nc bnc" id="L1957" title="All 2 branches missed.">            else if (0 != (modifiers &amp; InputEvent.BUTTON3_MASK))</span>
+            {
+<span class="nc bnc" id="L1959" title="All 2 branches missed.">                if (!selectionContains (filter))</span>
+                {
+<span class="nc" id="L1961">	                clearSelection ();</span>
+<span class="nc" id="L1962">	                addSelection (filter);</span>
+                }
+<span class="nc" id="L1964">                showContextMenu (event);</span>
+<span class="nc" id="L1965">            }</span>
+            else
+            {
+<span class="nc" id="L1968">                clearSelection ();</span>
+<span class="nc" id="L1969">                addSelection (filter);</span>
+            }
+<span class="nc" id="L1971">        }</span>
+        else
+<span class="nc" id="L1973">            clearSelection ();</span>
+<span class="nc" id="L1974">    }</span>
+
+    /**
+     * Invoked when a mouse button has been released on a component.
+     * @param event The mouse released event.
+     */
+    public void mouseReleased (MouseEvent event)
+    {
+<span class="nc" id="L1982">    }</span>
+
+    /**
+     * Invoked when the mouse enters a component.
+     * @param event The mouse entered event.
+     */
+    public void mouseEntered (MouseEvent event)
+    {
+<span class="nc" id="L1990">    }</span>
+
+    /**
+     * Invoked when the mouse exits a component.
+     * @param event The mouse exited event.
+     */
+    public void mouseExited (MouseEvent event)
+    {
+<span class="nc" id="L1998">    }</span>
+
+    /**
+     * Invoked when a mouse button has been pressed on a component.
+     * @param event The mouse pressed event.
+     */
+    public void mousePressed (MouseEvent event)
+    {
+        Object component;
+        Point newpoint;
+        Point upperleft;
+        
+<span class="nc" id="L2010">        component = event.getSource ();</span>
+<span class="nc bnc" id="L2011" title="All 2 branches missed.">        if (component instanceof Filter)</span>
+        {
+            // translate the point relative to the enclosing container
+<span class="nc" id="L2014">            newpoint = event.getPoint ();</span>
+<span class="nc" id="L2015">            upperleft = ((Component)component).getLocation ();</span>
+<span class="nc" id="L2016">            newpoint.translate (upperleft.x, upperleft.y);</span>
+<span class="nc" id="L2017">            setBasePoint (newpoint);</span>
+<span class="nc" id="L2018">        }</span>
+        else
+<span class="nc" id="L2020">            setBasePoint (null);</span>
+<span class="nc" id="L2021">    }</span>
+
+    //
+    // MouseMotionListener interface
+    //
+    
+    /**
+     * Mouse drag notification.
+     * Invoked when a mouse button is pressed on a component and
+     * then dragged. Mouse drag events will continue to be
+     * delivered to the component where the first originated
+     * until the mouse button is released (regardless of whether
+     * the mouse position is within the bounds of the component).
+     * @param event The mouse drag event.
+     */
+    public synchronized void mouseDragged (MouseEvent event)
+    {
+        Object component;
+        Filter filter;
+        Point base;
+        Point newpoint;
+        Point upperleft;
+        Point translation;
+        
+<span class="nc" id="L2045">        component = event.getSource ();</span>
+<span class="nc bnc" id="L2046" title="All 2 branches missed.">        if (component instanceof Filter)</span>
+        {
+<span class="nc" id="L2048">            filter = (Filter)component;</span>
+<span class="nc bnc" id="L2049" title="All 2 branches missed.">            if (selectionContains (filter)) // drag on a selected item</span>
+            {
+<span class="nc bnc" id="L2051" title="All 2 branches missed.">                if (null == getEnclosing (filter)) // not contained</span>
+                    try
+                    {
+<span class="nc" id="L2054">                        base = getBasePoint ();</span>
+<span class="nc bnc" id="L2055" title="All 2 branches missed.">                        if (null != base)</span>
+                        {
+<span class="nc" id="L2057">                            newpoint = event.getPoint ();</span>
+                            // translate the point relative to the enclosing container
+<span class="nc" id="L2059">                            upperleft = filter.getLocation ();</span>
+<span class="nc" id="L2060">                            newpoint.translate (upperleft.x, upperleft.y);</span>
+                            // get the difference between this point and the old base
+<span class="nc" id="L2062">                            translation = new Point (</span>
+<span class="nc" id="L2063">                                newpoint.x - base.x,</span>
+<span class="nc" id="L2064">                                newpoint.y - base.y);</span>
+                            // update the base point
+<span class="nc" id="L2066">                            setBasePoint (newpoint);</span>
+                            // apply this difference to the selection
+<span class="nc" id="L2068">                            moveSelection (translation);</span>
+                        }    
+<span class="nc" id="L2070">                    }</span>
+<span class="nc" id="L2071">                    catch (Exception e)</span>
+                    {
+                    }
+<span class="nc" id="L2074">            }</span>
+            else
+<span class="nc" id="L2076">                mouseClicked (event); // a small slip shouldn't stop a click</span>
+        }
+<span class="nc" id="L2078">    }</span>
+
+    /**
+     * Mouse move notification.
+     * Invoked when the mouse button has been moved on a component
+     * (with no buttons no down).    
+     * @param event The mouse moved event.
+     */
+    public void mouseMoved (MouseEvent event)
+    {
+<span class="nc" id="L2088">    }</span>
+
+    //
+    // WindowListener interface
+    //
+
+    /**
+     * Invoked the first time a window is made visible.
+     * &lt;i&gt;Not used.&lt;/i&gt;
+     * @param event The window event.
+     */
+<span class="nc" id="L2099">    public void windowOpened (WindowEvent event) {}</span>
+
+    /**
+     * Handles window closing event.
+     * Performs function &lt;code&gt;exitApplication()&lt;/code&gt;.
+     * @param event The window event.
+     */
+    public void windowClosing (WindowEvent event)
+    {
+<span class="nc bnc" id="L2108" title="All 2 branches missed.">        if (event.getSource () == this)</span>
+<span class="nc" id="L2109">            exitApplication ();</span>
+<span class="nc" id="L2110">    }</span>
+
+    /**
+     * Invoked when a window has been closed as the result
+     * of calling dispose on the window.
+     * &lt;i&gt;Not used.&lt;/i&gt;
+     * @param event The window event.
+     */
+<span class="nc" id="L2118">    public void windowClosed (WindowEvent event) {}</span>
+
+    /**
+     * Invoked when a window is changed from a normal to a
+     * minimized state. For many platforms, a minimized window 
+     * is displayed as the icon specified in the window's 
+     * iconImage property.
+     * &lt;i&gt;Not used.&lt;/i&gt;
+     * @param event The window event.
+     */
+<span class="nc" id="L2128">    public void windowIconified (WindowEvent event) {}</span>
+
+    /**
+     * Invoked when a window is changed from a minimized
+     * to a normal state.
+     * &lt;i&gt;Not used.&lt;/i&gt;
+     * @param event The window event.
+     */
+<span class="nc" id="L2136">    public void windowDeiconified (WindowEvent event) {}</span>
+
+    /**
+     * Invoked when the window is set to be the user's
+     * active window, which means the window (or one of its
+     * subcomponents) will receive keyboard events.
+     * &lt;i&gt;Not used.&lt;/i&gt;
+     * @param event The window event.
+     */
+<span class="nc" id="L2145">    public void windowActivated (WindowEvent event) {}</span>
+
+    /**
+     * Invoked when a window is no longer the user's active
+     * window, which means that keyboard events will no longer
+     * be delivered to the window or its subcomponents.
+     * &lt;i&gt;Not used.&lt;/i&gt;
+     * @param event The window event.
+     */
+<span class="nc" id="L2154">    public void windowDeactivated (WindowEvent event) {}</span>
+
+    //
+    // ActionListener interface
+    //
+
+    /**
+     * Handles menu and toolbar item choices.
+     * @param event The action even that triggers this function.
+     */
+    public void actionPerformed (ActionEvent event)
+    {
+        Object object;
+        String action;
+        
+<span class="nc" id="L2169">        object = event.getSource();</span>
+//        if (object instanceof JButton)
+//        {
+//            String url;
+//            url = mURLField.getText ();
+//            mURLField.selectAll ();
+//            //setURL (url);
+//        }
+<span class="nc bnc" id="L2177" title="All 2 branches missed.">        if (object instanceof JButton)</span>
+<span class="nc" id="L2178">            action = ((JButton)object).getActionCommand ();</span>
+<span class="nc bnc" id="L2179" title="All 2 branches missed.">        else if (object instanceof JMenuItem)</span>
+<span class="nc" id="L2180">            action = ((JMenuItem)object).getActionCommand ();</span>
+        else
+<span class="nc" id="L2182">            action = null;</span>
+
+<span class="nc bnc" id="L2184" title="All 2 branches missed.">        if (object instanceof Component)</span>
+<span class="nc" id="L2185">            mCurrentComponent = (Component)object;</span>
+
+<span class="nc bnc" id="L2187" title="All 2 branches missed.">        if (null != action)</span>
+            try
+            {
+<span class="nc" id="L2190">                Method method = this.getClass ().getDeclaredMethod (action, new Class[0]);</span>
+<span class="nc" id="L2191">                method.invoke (this, new Object[0]);</span>
+<span class="nc" id="L2192">            }</span>
+<span class="nc" id="L2193">            catch (NoSuchMethodException nsme)</span>
+            {
+<span class="nc" id="L2195">                System.out.println (&quot;no &quot; + action + &quot; method found&quot;);</span>
+            }
+<span class="nc" id="L2197">            catch (Exception e)</span>
+            {
+<span class="nc" id="L2199">                e.printStackTrace ();</span>
+            }
+<span class="nc" id="L2201">    }</span>
+
+    //
+    // ClipboardOwner interface
+    //
+
+    /**
+     * Notifies this object that it is no longer the owner
+     * of the contents of the clipboard.
+     * @param clipboard The clipboard that is no longer owned.
+     * @param contents The contents which this owner had placed on the clipboard.
+     */
+    public void lostOwnership (Clipboard clipboard, Transferable contents)
+    {
+<span class="nc" id="L2215">        System.out.println (&quot;lost clipboard ownership&quot;);</span>
+<span class="nc" id="L2216">    }</span>
+
+    //
+    // DragGestureListener interface
+    //
+
+    /**
+     * A DragGestureRecognizer has detected a platform-dependent drag initiating gesture.
+     * It is notifying this listener in order for it to initiate the action for the user.
+     * @param event The DragGestureEvent describing the gesture that has just occurred.
+     */
+    public void dragGestureRecognized (DragGestureEvent event)
+    {
+        Component component;
+        String cls;
+        Filter filter;
+        StringSelection text;
+        
+        
+<span class="nc" id="L2235">        component = event.getComponent ();</span>
+        try
+        {
+<span class="nc" id="L2238">            cls = component.getName ();  // (String)Filter.mWrappers.get (component.getName ());</span>
+<span class="nc bnc" id="L2239" title="All 2 branches missed.">            if (null != cls)</span>
+            {
+<span class="nc" id="L2241">                filter = Filter.instantiate (cls);</span>
+<span class="nc" id="L2242">                text = new StringSelection (Filter.deconstitute (new Filter[] { filter })); </span>
+<span class="nc" id="L2243">                mDragSource.startDrag (event, DragSource.DefaultMoveDrop, text, this);</span>
+            }
+<span class="nc" id="L2245">        }</span>
+<span class="nc" id="L2246">        catch (Exception e)</span>
+        {
+<span class="nc" id="L2248">            e.printStackTrace ();</span>
+        }
+<span class="nc" id="L2250">    }</span>
+
+    //
+    // DragSourceListener interface
+    //
+
+    /**
+     * This message goes to DragSourceListener,
+     * informing it that the dragging has ended.
+     * @param event Details about the drop event.
+     */
+    public void dragDropEnd (DragSourceDropEvent event)
+    {   
+<span class="nc" id="L2263">        if (event.getDropSuccess ())</span>
+        {
+            // System.out.println (&quot;added new class&quot;);
+        }
+<span class="nc" id="L2267">    }</span>
+
+    /**
+     * This message goes to DragSourceListener,
+     * informing it that the dragging has entered the DropSite.
+     * @param event Details about the drag event.
+     */
+    public void dragEnter (DragSourceDragEvent event)
+    {
+        // System.out.println (&quot;dragEnter&quot;);
+<span class="nc" id="L2277">    }</span>
+
+    /**
+     * This message goes to DragSourceListener, informing it that the dragging 
+     * has exited the DropSite.
+     * @param event Details about the drag event.
+     */
+    public void dragExit (DragSourceEvent event)
+    {
+        // System.out.println( &quot;dragExit&quot;);
+<span class="nc" id="L2287">    }</span>
+
+    /**
+     * This message goes to DragSourceListener, informing it that the dragging is currently 
+     * ocurring over the DropSite.
+     * @param event Details about the drag event.
+     */
+    public void dragOver (DragSourceDragEvent event)
+    {
+        // System.out.println( &quot;dragExit&quot;);
+<span class="nc" id="L2297">    }</span>
+
+    /**
+     * This is invoked when the user changes the dropAction.
+     * @param event Details about the drop action event.
+     */
+    public void dropActionChanged (DragSourceDragEvent event)
+    {
+        // System.out.println( &quot;dropActionChanged&quot;); 
+<span class="nc" id="L2306">    }</span>
+
+    //
+    // DropTargetListener interface
+    //
+
+    /**
+     * This is invoked when you are dragging over the DropSite.
+     * @param event Details about the drag event.
+     */
+    public void dragEnter (DropTargetDragEvent event)
+    {
+        // debug messages for diagnostics 
+        // event.acceptDrag (DnDConstants.ACTION_MOVE);
+        // System.out.println (&quot;dragEnter&quot;);
+        DropTargetContext context;
+        Component component;
+        SubFilterList list;
+
+        // find the enclosing filter
+<span class="nc" id="L2326">        context = event.getDropTargetContext ();</span>
+<span class="nc" id="L2327">        component = context.getComponent ();</span>
+<span class="nc bnc" id="L2328" title="All 2 branches missed.">        while (     (null != component)</span>
+<span class="nc bnc" id="L2329" title="All 2 branches missed.">                &amp;&amp; !(component instanceof SubFilterList)</span>
+<span class="nc bnc" id="L2330" title="All 2 branches missed.">                &amp;&amp; !(component == mMainPanel))</span>
+<span class="nc" id="L2331">            component = component.getParent ();</span>
+<span class="nc bnc" id="L2332" title="All 2 branches missed.">        if (component instanceof SubFilterList)</span>
+<span class="nc" id="L2333">            list = (SubFilterList)component;</span>
+        else
+<span class="nc" id="L2335">            list = null;</span>
+        // so either list is the enclosing list,
+        // or list is null and the target component is the main panel
+
+<span class="nc bnc" id="L2339" title="All 2 branches missed.">        if (null != list)</span>
+<span class="nc bnc" id="L2340" title="All 2 branches missed.">            if (!list.canAccept ())</span>
+<span class="nc" id="L2341">                event.rejectDrag ();</span>
+            else
+<span class="nc" id="L2343">                list.setSelected (true);</span>
+<span class="nc" id="L2344">    }</span>
+
+    /**
+     * Thi ss invoked when you are exit the DropSite without dropping.
+     * @param event Details about the drag event.
+     */
+    public void dragExit (DropTargetEvent event)
+    {
+        // debug messages for diagnostics 
+        // event.acceptDrag (DnDConstants.ACTION_MOVE);
+        // System.out.println (&quot;dragEnter&quot;);
+        DropTargetContext context;
+        Component component;
+        SubFilterList list;
+
+        // find the enclosing filter
+<span class="nc" id="L2360">        context = event.getDropTargetContext ();</span>
+<span class="nc" id="L2361">        component = context.getComponent ();</span>
+<span class="nc bnc" id="L2362" title="All 2 branches missed.">        while (     (null != component)</span>
+<span class="nc bnc" id="L2363" title="All 2 branches missed.">                &amp;&amp; !(component instanceof SubFilterList)</span>
+<span class="nc bnc" id="L2364" title="All 2 branches missed.">                &amp;&amp; !(component == mMainPanel))</span>
+<span class="nc" id="L2365">            component = component.getParent ();</span>
+<span class="nc bnc" id="L2366" title="All 2 branches missed.">        if (component instanceof SubFilterList)</span>
+<span class="nc" id="L2367">            list = (SubFilterList)component;</span>
+        else
+<span class="nc" id="L2369">            list = null;</span>
+        // so either list is the enclosing list,
+        // or list is null and the target component is the main panel
+
+<span class="nc bnc" id="L2373" title="All 2 branches missed.">        if (null != list)</span>
+<span class="nc" id="L2374">            list.setSelected (false);</span>
+<span class="nc" id="L2375">    }</span>
+
+    /**
+     * This is invoked when a drag operation is going on.
+     * @param event Details about the drag event.
+     */
+    public void dragOver (DropTargetDragEvent event)
+    {
+        // System.out.println( &quot;dragOver&quot;);
+<span class="nc" id="L2384">    }</span>
+
+    /**
+     * This is invoked when a drop has occurred.
+     * @param event The drop event.
+     */
+    public void drop (DropTargetDropEvent event)
+    {
+        DropTargetContext context;
+        Component component;
+        SubFilterList list;
+        String s;
+        Point point;
+        Filter[] filters;
+        boolean accept;
+
+        // find the enclosing filter
+<span class="nc" id="L2401">        context = event.getDropTargetContext ();</span>
+<span class="nc" id="L2402">        component = context.getComponent ();</span>
+<span class="nc bnc" id="L2403" title="All 2 branches missed.">        while (     (null != component)</span>
+<span class="nc bnc" id="L2404" title="All 2 branches missed.">                &amp;&amp; !(component instanceof SubFilterList)</span>
+<span class="nc bnc" id="L2405" title="All 2 branches missed.">                &amp;&amp; !(component == mMainPanel))</span>
+<span class="nc" id="L2406">            component = component.getParent ();</span>
+<span class="nc bnc" id="L2407" title="All 2 branches missed.">        if (component instanceof SubFilterList)</span>
+<span class="nc" id="L2408">            list = (SubFilterList)component;</span>
+        else
+<span class="nc" id="L2410">            list = null;</span>
+        // so either list is the enclosing list,
+        // or list is null and the target component is the main panel
+
+        try 
+        {
+<span class="nc" id="L2416">            accept = false;</span>
+<span class="nc" id="L2417">            Transferable transferable = event.getTransferable();</span>
+                                   
+            // we accept only Strings      
+<span class="nc bnc" id="L2420" title="All 2 branches missed.">            if (transferable.isDataFlavorSupported (DataFlavor.stringFlavor))</span>
+            {
+<span class="nc" id="L2422">                accept = true;</span>
+<span class="nc" id="L2423">                event.acceptDrop (DnDConstants.ACTION_MOVE);</span>
+<span class="nc" id="L2424">                s = (String)transferable.getTransferData (DataFlavor.stringFlavor);</span>
+<span class="nc" id="L2425">                point = event.getLocation ();</span>
+                try
+                {
+                    // get the filter and add into the target
+<span class="nc" id="L2429">                    filters = Filter.reconstitute (s, new Parser (mURLField.getText ()));</span>
+<span class="nc bnc" id="L2430" title="All 2 branches missed.">                    if (0 &lt; filters.length)</span>
+<span class="nc" id="L2431">                        insertFilters (filters, point, list);</span>
+<span class="nc bnc" id="L2432" title="All 2 branches missed.">                    if (null != list)</span>
+<span class="nc" id="L2433">                        list.setSelected (false);</span>
+<span class="nc" id="L2434">                }</span>
+<span class="nc" id="L2435">                catch (Exception e)</span>
+                {
+<span class="nc" id="L2437">                    e.printStackTrace ();</span>
+                }
+                // signal the drop was successful
+<span class="nc" id="L2440">                context.dropComplete (accept);</span>
+<span class="nc" id="L2441">            } </span>
+            else
+<span class="nc" id="L2443">                event.rejectDrop();</span>
+<span class="nc" id="L2444">        }</span>
+<span class="nc" id="L2445">        catch (IOException exception)</span>
+        {
+<span class="nc" id="L2447">            exception.printStackTrace();</span>
+<span class="nc" id="L2448">            System.err.println( &quot;Exception&quot; + exception.getMessage());</span>
+<span class="nc" id="L2449">            event.rejectDrop();</span>
+        } 
+<span class="nc" id="L2451">        catch (UnsupportedFlavorException ufException)</span>
+        {
+<span class="nc" id="L2453">            ufException.printStackTrace();</span>
+<span class="nc" id="L2454">            System.err.println( &quot;Exception&quot; + ufException.getMessage());</span>
+<span class="nc" id="L2455">            event.rejectDrop();</span>
+        }
+<span class="nc" id="L2457">    }</span>
+
+    /**
+     * This is invoked if the user modifies the current drop gesture.
+     * @param event Details about the drop action change event.
+     */
+    public void dropActionChanged (DropTargetDragEvent event)
+    {
+        // System.out.println( &quot;dropActionChanged&quot;);
+<span class="nc" id="L2466">    }</span>
+
+    /**
+     * The entry point for this application.
+     * Creates a new FilterBuilder and makes it visible.
+     * @param args [0] optional URL to operate on.
+     */
+    public static void main (String args[])
+    {
+        try
+        {
+            // set the Look and Feel to the the native system
+//            try
+//            {
+//                javax.swing.UIManager.setLookAndFeel (javax.swing.UIManager.getSystemLookAndFeelClassName ());
+//            } 
+//            catch (Exception e)
+//            { 
+//            }
+
+            // create a new instance of our application's frame, and make it visible
+<span class="nc" id="L2487">            FilterBuilder builder = new FilterBuilder ();</span>
+<span class="nc bnc" id="L2488" title="All 2 branches missed.">            if (0 != args.length)</span>
+<span class="nc" id="L2489">                builder.mURLField.setText (args[0]);</span>
+<span class="nc" id="L2490">            builder.setVisible (true);</span>
+<span class="nc" id="L2491">        } </span>
+<span class="nc" id="L2492">        catch (Throwable t)</span>
+        {
+<span class="nc" id="L2494">            t.printStackTrace ();</span>
+            // ensure the application exits with an error condition
+<span class="nc" id="L2496">            System.exit (1);</span>
+        }
+<span class="nc" id="L2498">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

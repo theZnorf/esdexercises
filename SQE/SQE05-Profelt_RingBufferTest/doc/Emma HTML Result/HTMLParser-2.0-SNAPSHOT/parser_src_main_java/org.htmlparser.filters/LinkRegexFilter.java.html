@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>LinkRegexFilter.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.filters</a> &gt; <span class="el_source">LinkRegexFilter.java</span></div><h1>LinkRegexFilter.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 John Derrick
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/main/java/org/htmlparser/filters/LinkRegexFilter.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.filters;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.htmlparser.Node;
+import org.htmlparser.NodeFilter;
+import org.htmlparser.tags.LinkTag;
+
+/**
+ * This class accepts tags of class LinkTag that contain a link matching a given
+ * regex pattern. Use this filter to extract LinkTag nodes with URLs that match
+ * the desired regex pattern.
+ */
+public class LinkRegexFilter implements NodeFilter
+{
+    /**
+     * The regular expression to use on the link.
+     */
+    protected Pattern mRegex;
+
+    /**
+     * Creates a LinkRegexFilter that accepts LinkTag nodes containing
+     * a URL that matches the supplied regex pattern.
+     * The match is case insensitive.
+     * @param regexPattern The pattern to match.
+     */
+    public LinkRegexFilter (String regexPattern)
+    {
+<span class="nc" id="L55">        this (regexPattern, true);</span>
+<span class="nc" id="L56">    }</span>
+
+    /**
+     * Creates a LinkRegexFilter that accepts LinkTag nodes containing
+     * a URL that matches the supplied regex pattern.
+     * @param regexPattern The regex pattern to match.
+     * @param caseSensitive Specifies case sensitivity for the matching process.
+     */
+<span class="nc" id="L64">    public LinkRegexFilter (String regexPattern, boolean caseSensitive)</span>
+    {
+<span class="nc bnc" id="L66" title="All 2 branches missed.">        if (caseSensitive)</span>
+<span class="nc" id="L67">            mRegex = Pattern.compile (regexPattern);</span>
+        else
+<span class="nc" id="L69">            mRegex = Pattern.compile (regexPattern,</span>
+<span class="nc" id="L70">                Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);</span>
+<span class="nc" id="L71">    }</span>
+
+    /**
+     * Accept nodes that are a LinkTag and have a URL
+     * that matches the regex pattern supplied in the constructor.
+     * @param node The node to check.
+     * @return &lt;code&gt;true&lt;/code&gt; if the node is a link with the pattern.
+     */
+    public boolean accept (Node node)
+    {
+        boolean ret;
+
+<span class="nc" id="L83">        ret = false;</span>
+<span class="nc bnc" id="L84" title="All 2 branches missed.">        if (LinkTag.class.isAssignableFrom (node.getClass ()))</span>
+        {
+<span class="nc" id="L86">            String link = ((LinkTag)node).getLink ();</span>
+<span class="nc" id="L87">            Matcher matcher = mRegex.matcher (link);</span>
+<span class="nc" id="L88">            ret = matcher.find ();</span>
+        }
+
+<span class="nc" id="L91">        return (ret);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

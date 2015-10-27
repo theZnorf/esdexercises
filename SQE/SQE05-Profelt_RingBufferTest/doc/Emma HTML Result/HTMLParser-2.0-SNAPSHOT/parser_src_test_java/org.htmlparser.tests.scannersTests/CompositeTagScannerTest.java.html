@@ -1,0 +1,766 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>CompositeTagScannerTest.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tests.scannersTests</a> &gt; <span class="el_source">CompositeTagScannerTest.java</span></div><h1>CompositeTagScannerTest.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Somik Raha
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/test/java/org/htmlparser/tests/scannersTests/CompositeTagScannerTest.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tests.scannersTests;
+
+import org.htmlparser.Node;
+import org.htmlparser.PrototypicalNodeFactory;
+import org.htmlparser.Tag;
+import org.htmlparser.Text;
+import org.htmlparser.nodes.AbstractNode;
+import org.htmlparser.scanners.CompositeTagScanner;
+import org.htmlparser.tags.CompositeTag;
+import org.htmlparser.tags.Div;
+import org.htmlparser.tags.LinkTag;
+import org.htmlparser.tags.TableColumn;
+import org.htmlparser.tags.TableRow;
+import org.htmlparser.tags.TableTag;
+import org.htmlparser.tests.ParserTestCase;
+import org.htmlparser.util.ParserException;
+
+public class CompositeTagScannerTest extends ParserTestCase {
+    static
+    {
+<span class="fc" id="L46">        System.setProperty (&quot;org.htmlparser.tests.scannersTests.CompositeTagScannerTest&quot;, &quot;CompositeTagScannerTest&quot;);</span>
+<span class="fc" id="L47">    }</span>
+
+    public CompositeTagScannerTest(String name) {
+<span class="fc" id="L50">        super(name);</span>
+<span class="fc" id="L51">    }</span>
+
+    private CustomTag parseCustomTag(int expectedNodeCount) throws ParserException {
+<span class="fc" id="L54">        parser.setNodeFactory (new PrototypicalNodeFactory (new CustomTag ()));</span>
+<span class="fc" id="L55">        parseAndAssertNodeCount(expectedNodeCount);</span>
+<span class="fc" id="L56">        assertType(&quot;node&quot;,CustomTag.class,node[0]);</span>
+<span class="fc" id="L57">        CustomTag customTag = (CustomTag)node[0];</span>
+<span class="fc" id="L58">        return customTag;</span>
+    }
+
+    public void testEmptyCompositeTag() throws ParserException {
+<span class="fc" id="L62">        String html = &quot;&lt;Custom/&gt;&quot;;</span>
+<span class="fc" id="L63">        createParser(html);</span>
+<span class="fc" id="L64">        CustomTag customTag = parseCustomTag(1);</span>
+<span class="fc" id="L65">        assertEquals(&quot;child count&quot;,0,customTag.getChildCount());</span>
+<span class="fc" id="L66">        assertTrue(&quot;custom tag should be xml end tag&quot;,customTag.isEmptyXmlTag());</span>
+<span class="fc" id="L67">        assertEquals(&quot;starting loc&quot;,0,customTag.getStartPosition ());</span>
+<span class="fc" id="L68">        assertEquals(&quot;ending loc&quot;,9,customTag.getEndPosition ());</span>
+<span class="fc" id="L69">        assertEquals(&quot;starting line position&quot;,0,customTag.getStartingLineNumber());</span>
+<span class="fc" id="L70">        assertEquals(&quot;ending line position&quot;,0,customTag.getEndingLineNumber());</span>
+<span class="fc" id="L71">        assertStringEquals(&quot;html&quot;,html,customTag.toHtml());</span>
+<span class="fc" id="L72">    }</span>
+
+    public void testEmptyCompositeTagAnotherStyle() throws ParserException {
+<span class="fc" id="L75">        String html = &quot;&lt;Custom&gt;&lt;/Custom&gt;&quot;;</span>
+<span class="fc" id="L76">        createParser(html);</span>
+<span class="fc" id="L77">        CustomTag customTag = parseCustomTag(1);</span>
+<span class="fc" id="L78">        assertEquals(&quot;child count&quot;,0,customTag.getChildCount());</span>
+<span class="fc" id="L79">        assertFalse(&quot;custom tag should not be xml end tag&quot;,customTag.isEmptyXmlTag());</span>
+<span class="fc" id="L80">        assertEquals(&quot;starting loc&quot;,0,customTag.getStartPosition ());</span>
+<span class="fc" id="L81">        assertEquals(&quot;ending loc&quot;,8,customTag.getEndPosition ());</span>
+<span class="fc" id="L82">        assertEquals(&quot;starting line position&quot;,0,customTag.getStartingLineNumber());</span>
+<span class="fc" id="L83">        assertEquals(&quot;ending line position&quot;,0,customTag.getEndingLineNumber());</span>
+<span class="fc" id="L84">        assertEquals(&quot;html&quot;,html,customTag.toHtml());</span>
+<span class="fc" id="L85">    }</span>
+
+    public void testCompositeTagWithOneTextChild() throws ParserException {
+<span class="fc" id="L88">        String html = </span>
+<span class="fc" id="L89">            &quot;&lt;Custom&gt;&quot; +</span>
+                &quot;Hello&quot; +
+            &quot;&lt;/Custom&gt;&quot;;
+<span class="fc" id="L92">        createParser(html);</span>
+<span class="fc" id="L93">        CustomTag customTag = parseCustomTag(1);</span>
+<span class="fc" id="L94">        assertEquals(&quot;child count&quot;,1,customTag.getChildCount());</span>
+<span class="fc" id="L95">        assertFalse(&quot;custom tag should not be xml end tag&quot;,customTag.isEmptyXmlTag());</span>
+<span class="fc" id="L96">        assertEquals(&quot;starting loc&quot;,0,customTag.getStartPosition ());</span>
+<span class="fc" id="L97">        assertEquals(&quot;ending loc&quot;,8,customTag.getEndPosition ());</span>
+<span class="fc" id="L98">        assertEquals(&quot;starting line position&quot;,0,customTag.getStartingLineNumber());</span>
+<span class="fc" id="L99">        assertEquals(&quot;ending line position&quot;,0,customTag.getEndingLineNumber());</span>
+<span class="fc" id="L100">        Node child = customTag.childAt(0);</span>
+<span class="fc" id="L101">        assertType(&quot;child&quot;,Text.class,child);</span>
+<span class="fc" id="L102">        assertStringEquals(&quot;child text&quot;,&quot;Hello&quot;,child.toPlainTextString());</span>
+<span class="fc" id="L103">    }</span>
+
+    public void testCompositeTagWithTagChild() throws ParserException {
+<span class="fc" id="L106">        String childtag = &quot;&lt;Hello&gt;&quot;;</span>
+<span class="fc" id="L107">        createParser(</span>
+<span class="fc" id="L108">            &quot;&lt;Custom&gt;&quot; +</span>
+<span class="fc" id="L109">                childtag +</span>
+<span class="fc" id="L110">            &quot;&lt;/Custom&gt;&quot;</span>
+        );
+<span class="fc" id="L112">        CustomTag customTag = parseCustomTag(1);</span>
+<span class="fc" id="L113">        assertEquals(&quot;child count&quot;,1,customTag.getChildCount());</span>
+<span class="fc" id="L114">        assertFalse(&quot;custom tag should not be xml end tag&quot;,customTag.isEmptyXmlTag());</span>
+<span class="fc" id="L115">        assertEquals(&quot;starting loc&quot;,0,customTag.getStartPosition ());</span>
+<span class="fc" id="L116">        assertEquals(&quot;ending loc&quot;,8,customTag.getEndPosition ());</span>
+<span class="fc" id="L117">        assertEquals(&quot;custom tag starting loc&quot;,0,customTag.getStartPosition ());</span>
+<span class="fc" id="L118">        assertEquals(&quot;custom tag ending loc&quot;,24,customTag.getEndTag ().getEndPosition ());</span>
+
+<span class="fc" id="L120">        Node child = customTag.childAt(0);</span>
+<span class="fc" id="L121">        assertType(&quot;child&quot;,Tag.class,child);</span>
+<span class="fc" id="L122">        assertStringEquals(&quot;child html&quot;,childtag,child.toHtml());</span>
+<span class="fc" id="L123">    }</span>
+
+    public void testCompositeTagWithAnotherTagChild() throws ParserException {
+<span class="fc" id="L126">        String childtag = &quot;&lt;Another/&gt;&quot;;</span>
+<span class="fc" id="L127">        createParser(</span>
+<span class="fc" id="L128">            &quot;&lt;Custom&gt;&quot; +</span>
+<span class="fc" id="L129">                 childtag +</span>
+<span class="fc" id="L130">            &quot;&lt;/Custom&gt;&quot;</span>
+        );
+<span class="fc" id="L132">        parser.setNodeFactory (</span>
+<span class="fc" id="L133">            new PrototypicalNodeFactory (</span>
+                new Tag[]
+<span class="fc" id="L135">                {</span>
+<span class="fc" id="L136">                    new CustomTag (),</span>
+<span class="fc" id="L137">                    new AnotherTag (true),</span>
+                }));
+<span class="fc" id="L139">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L140">        assertType(&quot;node&quot;,CustomTag.class,node[0]);</span>
+<span class="fc" id="L141">        CustomTag customTag = (CustomTag)node[0];</span>
+<span class="fc" id="L142">        assertEquals(&quot;child count&quot;,1,customTag.getChildCount());</span>
+<span class="fc" id="L143">        assertFalse(&quot;custom tag should not be xml end tag&quot;,customTag.isEmptyXmlTag());</span>
+<span class="fc" id="L144">        assertEquals(&quot;starting loc&quot;,0,customTag.getStartPosition ());</span>
+<span class="fc" id="L145">        assertEquals(&quot;ending loc&quot;,8,customTag.getEndPosition ());</span>
+<span class="fc" id="L146">        assertEquals(&quot;custom tag starting loc&quot;,0,customTag.getStartPosition ());</span>
+<span class="fc" id="L147">        assertEquals(&quot;custom tag ending loc&quot;,27,customTag.getEndTag ().getEndPosition ());</span>
+
+<span class="fc" id="L149">        Node child = customTag.childAt(0);</span>
+<span class="fc" id="L150">        assertType(&quot;child&quot;,AnotherTag.class,child);</span>
+<span class="fc" id="L151">        AnotherTag tag = (AnotherTag)child;</span>
+<span class="fc" id="L152">        assertEquals(&quot;another tag start pos&quot;,8,tag.getStartPosition ());</span>
+<span class="fc" id="L153">        assertEquals(&quot;another tag ending pos&quot;,18,tag.getEndPosition ());</span>
+
+<span class="fc" id="L155">        assertEquals(&quot;custom end tag start pos&quot;,18,customTag.getEndTag().getStartPosition ());</span>
+<span class="fc" id="L156">        assertStringEquals(&quot;child html&quot;,childtag,child.toHtml());</span>
+<span class="fc" id="L157">    }</span>
+
+    public void testParseTwoCompositeTags() throws ParserException {
+<span class="fc" id="L160">        createParser(</span>
+<span class="fc" id="L161">            &quot;&lt;Custom&gt;&quot; +</span>
+            &quot;&lt;/Custom&gt;&quot; +
+            &quot;&lt;Custom/&gt;&quot;
+        );
+<span class="fc" id="L165">        parser.setNodeFactory (new PrototypicalNodeFactory (new CustomTag ()));</span>
+<span class="fc" id="L166">        parseAndAssertNodeCount(2);</span>
+<span class="fc" id="L167">        assertType(&quot;tag 1&quot;,CustomTag.class,node[0]);</span>
+<span class="fc" id="L168">        assertType(&quot;tag 2&quot;,CustomTag.class,node[1]);</span>
+<span class="fc" id="L169">    }</span>
+
+    public void testXmlTypeCompositeTags() throws ParserException {
+<span class="fc" id="L172">        createParser(</span>
+<span class="fc" id="L173">            &quot;&lt;Custom&gt;&quot; +</span>
+                &quot;&lt;Another name=\&quot;subtag\&quot;/&gt;&quot; +
+                &quot;&lt;Custom /&gt;&quot; +
+            &quot;&lt;/Custom&gt;&quot; +
+            &quot;&lt;Custom/&gt;&quot;
+        );
+<span class="fc" id="L179">        parser.setNodeFactory (</span>
+<span class="fc" id="L180">            new PrototypicalNodeFactory (</span>
+<span class="fc" id="L181">                new Tag[] {</span>
+<span class="fc" id="L182">                    new CustomTag (),</span>
+<span class="fc" id="L183">                    new AnotherTag (false),</span>
+                }));
+<span class="fc" id="L185">        parseAndAssertNodeCount(2);</span>
+<span class="fc" id="L186">        assertType(&quot;first node&quot;,CustomTag.class,node[0]);</span>
+<span class="fc" id="L187">        assertType(&quot;second node&quot;,CustomTag.class,node[1]);</span>
+<span class="fc" id="L188">        CustomTag customTag = (CustomTag)node[0];</span>
+<span class="fc" id="L189">        Node node = customTag.childAt(0);</span>
+<span class="fc" id="L190">        assertType(&quot;first child&quot;,AnotherTag.class,node);</span>
+<span class="fc" id="L191">        node = customTag.childAt(1);</span>
+<span class="fc" id="L192">        assertType(&quot;second child&quot;,CustomTag.class,node);</span>
+<span class="fc" id="L193">    }</span>
+
+    public void testCompositeTagWithNestedTag() throws ParserException {
+<span class="fc" id="L196">        createParser(</span>
+<span class="fc" id="L197">            &quot;&lt;Custom&gt;&quot; +</span>
+                &quot;&lt;Another&gt;&quot; +
+                    &quot;Hello&quot; +
+                &quot;&lt;/Another&gt;&quot; +
+                &quot;&lt;Custom/&gt;&quot; +
+            &quot;&lt;/Custom&gt;&quot; +
+            &quot;&lt;Custom/&gt;&quot;
+        );
+<span class="fc" id="L205">        parser.setNodeFactory (</span>
+<span class="fc" id="L206">            new PrototypicalNodeFactory (</span>
+<span class="fc" id="L207">                new Tag[] {</span>
+<span class="fc" id="L208">                    new CustomTag (),</span>
+<span class="fc" id="L209">                    new AnotherTag (false),</span>
+                }));
+<span class="fc" id="L211">        parseAndAssertNodeCount(2);</span>
+<span class="fc" id="L212">        assertType(&quot;first node&quot;,CustomTag.class,node[0]);</span>
+<span class="fc" id="L213">        assertType(&quot;second node&quot;,CustomTag.class,node[1]);</span>
+<span class="fc" id="L214">        CustomTag customTag = (CustomTag)node[0];</span>
+<span class="fc" id="L215">        Node node = customTag.childAt(0);</span>
+<span class="fc" id="L216">        assertType(&quot;first child&quot;,AnotherTag.class,node);</span>
+<span class="fc" id="L217">        AnotherTag anotherTag = (AnotherTag)node;</span>
+<span class="fc" id="L218">        assertEquals(&quot;another tag children count&quot;,1,anotherTag.getChildCount());</span>
+<span class="fc" id="L219">        node = anotherTag.childAt(0);</span>
+<span class="fc" id="L220">        assertType(&quot;nested child&quot;,Text.class,node);</span>
+<span class="fc" id="L221">        Text text = (Text)node;</span>
+<span class="fc" id="L222">        assertEquals(&quot;text&quot;,&quot;Hello&quot;,text.toPlainTextString());</span>
+<span class="fc" id="L223">    }</span>
+
+    public void testCompositeTagWithTwoNestedTags() throws ParserException {
+<span class="fc" id="L226">        createParser(</span>
+<span class="fc" id="L227">            &quot;&lt;Custom&gt;&quot; +</span>
+                &quot;&lt;Another&gt;&quot; +
+                    &quot;Hello&quot; +
+                &quot;&lt;/Another&gt;&quot; +
+                &quot;&lt;unknown&gt;&quot; +
+                    &quot;World&quot; +
+                &quot;&lt;/unknown&gt;&quot; +
+                &quot;&lt;Custom/&gt;&quot; +
+            &quot;&lt;/Custom&gt;&quot; +
+            &quot;&lt;Custom/&gt;&quot;
+        );
+<span class="fc" id="L238">        parser.setNodeFactory (</span>
+<span class="fc" id="L239">            new PrototypicalNodeFactory (</span>
+<span class="fc" id="L240">                new Tag[] {</span>
+<span class="fc" id="L241">                    new CustomTag (),</span>
+<span class="fc" id="L242">                    new AnotherTag (false),</span>
+                }));
+<span class="fc" id="L244">        parseAndAssertNodeCount(2);</span>
+<span class="fc" id="L245">        assertType(&quot;first node&quot;,CustomTag.class,node[0]);</span>
+<span class="fc" id="L246">        assertType(&quot;second node&quot;,CustomTag.class,node[1]);</span>
+<span class="fc" id="L247">        CustomTag customTag = (CustomTag)node[0];</span>
+<span class="fc" id="L248">        assertEquals(&quot;first custom tag children count&quot;,5,customTag.getChildCount());</span>
+<span class="fc" id="L249">        Node node = customTag.childAt(0);</span>
+<span class="fc" id="L250">        assertType(&quot;first child&quot;,AnotherTag.class,node);</span>
+<span class="fc" id="L251">        AnotherTag anotherTag = (AnotherTag)node;</span>
+<span class="fc" id="L252">        assertEquals(&quot;another tag children count&quot;,1,anotherTag.getChildCount());</span>
+<span class="fc" id="L253">        node = anotherTag.childAt(0);</span>
+<span class="fc" id="L254">        assertType(&quot;nested child&quot;,Text.class,node);</span>
+<span class="fc" id="L255">        Text text = (Text)node;</span>
+<span class="fc" id="L256">        assertEquals(&quot;text&quot;,&quot;Hello&quot;,text.toPlainTextString());</span>
+<span class="fc" id="L257">    }</span>
+
+    public void testErroneousCompositeTag() throws ParserException {
+<span class="fc" id="L260">        String html = &quot;&lt;custom&gt;&quot;;</span>
+<span class="fc" id="L261">        createParser(html);</span>
+<span class="fc" id="L262">        CustomTag customTag = parseCustomTag(1);</span>
+<span class="fc" id="L263">        assertEquals(&quot;child count&quot;,0,customTag.getChildCount());</span>
+<span class="fc" id="L264">        assertFalse(&quot;custom tag should not be xml end tag&quot;,customTag.isEmptyXmlTag());</span>
+<span class="fc" id="L265">        assertEquals(&quot;starting loc&quot;,0,customTag.getStartPosition ());</span>
+<span class="fc" id="L266">        assertEquals(&quot;ending loc&quot;,8,customTag.getEndPosition ());</span>
+<span class="fc" id="L267">        assertEquals(&quot;starting line position&quot;,0,customTag.getStartingLineNumber());</span>
+<span class="fc" id="L268">        assertEquals(&quot;ending line position&quot;,0,customTag.getEndingLineNumber());</span>
+<span class="fc" id="L269">        assertStringEquals(&quot;html&quot;,html + &quot;&lt;/custom&gt;&quot;,customTag.toHtml());</span>
+<span class="fc" id="L270">    }</span>
+
+    public void testErroneousCompositeTagWithChildren() throws ParserException {
+<span class="fc" id="L273">        String html = &quot;&lt;custom&gt;&quot; + &quot;&lt;firstChild&gt;&quot; + &quot;&lt;secondChild&gt;&quot;;</span>
+<span class="fc" id="L274">        createParser(html);</span>
+<span class="fc" id="L275">        CustomTag customTag = parseCustomTag(1);</span>
+<span class="fc" id="L276">        assertEquals(&quot;child count&quot;,2,customTag.getChildCount());</span>
+<span class="fc" id="L277">        assertFalse(&quot;custom tag should not be xml end tag&quot;,customTag.isEmptyXmlTag());</span>
+<span class="fc" id="L278">        assertEquals(&quot;starting loc&quot;,0,customTag.getStartPosition ());</span>
+<span class="fc" id="L279">        assertEquals(&quot;ending loc&quot;,8,customTag.getEndPosition ());</span>
+<span class="fc" id="L280">        assertEquals(&quot;starting line position&quot;,0,customTag.getStartingLineNumber());</span>
+<span class="fc" id="L281">        assertEquals(&quot;ending line position&quot;,0,customTag.getEndingLineNumber());</span>
+<span class="fc" id="L282">        assertStringEquals(&quot;html&quot;,html + &quot;&lt;/custom&gt;&quot;,customTag.toHtml());</span>
+<span class="fc" id="L283">    }</span>
+
+    public void testErroneousCompositeTagWithChildrenAndLineBreak() throws ParserException {
+<span class="fc" id="L286">        String html = &quot;&lt;custom&gt;&quot; + &quot;&lt;firstChild&gt;&quot; + &quot;\n&quot; + &quot;&lt;secondChild&gt;&quot;;</span>
+<span class="fc" id="L287">        createParser(html);</span>
+<span class="fc" id="L288">        CustomTag customTag = parseCustomTag(1);</span>
+<span class="fc" id="L289">        assertEquals(&quot;child count&quot;,3,customTag.getChildCount());</span>
+<span class="fc" id="L290">        assertFalse(&quot;custom tag should not be xml end tag&quot;,customTag.isEmptyXmlTag());</span>
+<span class="fc" id="L291">        assertEquals(&quot;starting loc&quot;,0,customTag.getStartPosition ());</span>
+<span class="fc" id="L292">        assertEquals(&quot;ending loc&quot;,8,customTag.getEndPosition ());</span>
+<span class="fc" id="L293">        assertEquals(&quot;starting line position&quot;,0,customTag.getStartingLineNumber());</span>
+<span class="fc" id="L294">        assertEquals(&quot;ending line position&quot;,1,customTag.getEndTag ().getEndingLineNumber());</span>
+<span class="fc" id="L295">        assertStringEquals(&quot;html&quot;, html + &quot;&lt;/custom&gt;&quot;, customTag.toHtml()</span>
+        );
+<span class="fc" id="L297">    }</span>
+
+    public void testTwoConsecutiveErroneousCompositeTags() throws ParserException {
+<span class="fc" id="L300">        String tag1 = &quot;&lt;custom&gt;something&quot;;</span>
+<span class="fc" id="L301">        String tag2 = &quot;&lt;custom&gt;&lt;/endtag&gt;&quot;;</span>
+<span class="fc" id="L302">        createParser(tag1 + tag2);</span>
+<span class="fc" id="L303">        parser.setNodeFactory (new PrototypicalNodeFactory (new CustomTag (false)));</span>
+<span class="fc" id="L304">        parseAndAssertNodeCount(2);</span>
+<span class="fc" id="L305">        CustomTag customTag = (CustomTag)node[0];</span>
+<span class="fc" id="L306">        assertEquals(&quot;child count&quot;,1,customTag.getChildCount());</span>
+<span class="fc" id="L307">        assertFalse(&quot;custom tag should not be xml end tag&quot;,customTag.isEmptyXmlTag());</span>
+<span class="fc" id="L308">        assertEquals(&quot;starting loc&quot;,0,customTag.getStartPosition ());</span>
+<span class="fc" id="L309">        assertEquals(&quot;ending loc&quot;,8,customTag.getEndPosition ());</span>
+<span class="fc" id="L310">        assertEquals(&quot;ending loc of custom tag&quot;,17,customTag.getEndTag ().getEndPosition ());</span>
+<span class="fc" id="L311">        assertEquals(&quot;starting line position&quot;,0,customTag.getStartingLineNumber());</span>
+<span class="fc" id="L312">        assertEquals(&quot;ending line position&quot;,0,customTag.getEndTag ().getEndingLineNumber());</span>
+<span class="fc" id="L313">        assertStringEquals(&quot;1st custom tag&quot;, tag1 + &quot;&lt;/custom&gt;&quot;, customTag.toHtml());</span>
+<span class="fc" id="L314">        customTag = (CustomTag)node[1];</span>
+<span class="fc" id="L315">        assertStringEquals(&quot;2nd custom tag&quot;, tag2 + &quot;&lt;/custom&gt;&quot;, customTag.toHtml());</span>
+<span class="fc" id="L316">    }</span>
+
+    public void testCompositeTagWithErroneousAnotherTagAndLineBreak() throws ParserException {
+<span class="fc" id="L319">        String another = &quot;&lt;another&gt;&quot;;</span>
+<span class="fc" id="L320">        String custom = &quot;&lt;custom&gt;\n&lt;/custom&gt;&quot;;</span>
+<span class="fc" id="L321">        createParser(</span>
+<span class="fc" id="L322">            another +</span>
+<span class="fc" id="L323">            custom</span>
+        );
+<span class="fc" id="L325">        parser.setNodeFactory (</span>
+<span class="fc" id="L326">            new PrototypicalNodeFactory (</span>
+<span class="fc" id="L327">                new Tag[] {</span>
+<span class="fc" id="L328">                    new CustomTag (),</span>
+<span class="fc" id="L329">                    new AnotherTag (false),</span>
+                }));
+<span class="fc" id="L331">        parseAndAssertNodeCount(2);</span>
+<span class="fc" id="L332">        AnotherTag anotherTag = (AnotherTag)node[0];</span>
+<span class="fc" id="L333">        assertEquals(&quot;another tag child count&quot;,0,anotherTag.getChildCount());</span>
+
+<span class="fc" id="L335">        CustomTag customTag = (CustomTag)node[1];</span>
+<span class="fc" id="L336">        assertEquals(&quot;child count&quot;,1,customTag.getChildCount());</span>
+<span class="fc" id="L337">        assertFalse(&quot;custom tag should not be xml end tag&quot;,customTag.isEmptyXmlTag());</span>
+<span class="fc" id="L338">        assertEquals(&quot;starting loc&quot;,9,customTag.getStartPosition ());</span>
+<span class="fc" id="L339">        assertEquals(&quot;ending loc&quot;,17,customTag.getEndPosition ());</span>
+<span class="fc" id="L340">        assertEquals(&quot;starting line position&quot;,0,customTag.getStartingLineNumber());</span>
+<span class="fc" id="L341">        assertEquals(&quot;ending line position&quot;,1,customTag.getEndTag ().getEndingLineNumber());</span>
+<span class="fc" id="L342">        assertStringEquals(&quot;another tag html&quot;,another + &quot;&lt;/another&gt;&quot;,anotherTag.toHtml());</span>
+<span class="fc" id="L343">        assertStringEquals(&quot;custom tag html&quot;,custom,customTag.toHtml());</span>
+<span class="fc" id="L344">    }</span>
+
+    public void testCompositeTagWithErroneousAnotherTag() throws ParserException {
+<span class="fc" id="L347">        createParser(</span>
+<span class="fc" id="L348">            &quot;&lt;custom&gt;&quot; +</span>
+                &quot;&lt;another&gt;&quot; +
+            &quot;&lt;/custom&gt;&quot;
+        );
+<span class="fc" id="L352">        parser.setNodeFactory (</span>
+<span class="fc" id="L353">            new PrototypicalNodeFactory (</span>
+                new Tag[]
+<span class="fc" id="L355">                {</span>
+<span class="fc" id="L356">                    new CustomTag (),</span>
+<span class="fc" id="L357">                    new AnotherTag (true),</span>
+                }));
+<span class="fc" id="L359">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L360">        assertType(&quot;node&quot;,CustomTag.class,node[0]);</span>
+<span class="fc" id="L361">        CustomTag customTag = (CustomTag)node[0];</span>
+<span class="fc" id="L362">        assertEquals(&quot;child count&quot;,1,customTag.getChildCount());</span>
+<span class="fc" id="L363">        assertFalse(&quot;custom tag should be xml end tag&quot;,customTag.isEmptyXmlTag());</span>
+<span class="fc" id="L364">        assertEquals(&quot;starting loc&quot;,0,customTag.getStartPosition ());</span>
+<span class="fc" id="L365">        assertEquals(&quot;ending loc&quot;,8,customTag.getEndPosition ());</span>
+<span class="fc" id="L366">        AnotherTag anotherTag = (AnotherTag)customTag.childAt(0);</span>
+<span class="fc" id="L367">        assertEquals(&quot;another tag ending loc&quot;,17,anotherTag.getEndPosition ());</span>
+<span class="fc" id="L368">        assertEquals(&quot;starting line position&quot;,0,customTag.getStartingLineNumber());</span>
+<span class="fc" id="L369">        assertEquals(&quot;ending line position&quot;,0,customTag.getEndingLineNumber());</span>
+<span class="fc" id="L370">        assertStringEquals(&quot;html&quot;,&quot;&lt;custom&gt;&lt;another&gt;&lt;/another&gt;&lt;/custom&gt;&quot;,customTag.toHtml());</span>
+<span class="fc" id="L371">    }</span>
+
+    public void testCompositeTagWithDeadlock() throws ParserException {
+<span class="fc" id="L374">        createParser(</span>
+<span class="fc" id="L375">            &quot;&lt;custom&gt;&quot; +</span>
+                &quot;&lt;another&gt;something&quot; +
+            &quot;&lt;/custom&gt;&quot;+
+            &quot;&lt;custom&gt;&quot; +
+                &quot;&lt;another&gt;else&lt;/another&gt;&quot; +
+            &quot;&lt;/custom&gt;&quot;
+        );
+<span class="fc" id="L382">        parser.setNodeFactory (</span>
+<span class="fc" id="L383">            new PrototypicalNodeFactory (</span>
+                new Tag[]
+<span class="fc" id="L385">                {</span>
+<span class="fc" id="L386">                    new CustomTag (),</span>
+<span class="fc" id="L387">                    new AnotherTag (true),</span>
+                }));
+<span class="fc" id="L389">        parseAndAssertNodeCount(2);</span>
+<span class="fc" id="L390">        assertType(&quot;node&quot;,CustomTag.class,node[0]);</span>
+<span class="fc" id="L391">        CustomTag customTag = (CustomTag)node[0];</span>
+
+<span class="fc" id="L393">        assertEquals(&quot;child count&quot;,1,customTag.getChildCount());</span>
+<span class="fc" id="L394">        assertFalse(&quot;custom tag should not be xml end tag&quot;,customTag.isEmptyXmlTag());</span>
+<span class="fc" id="L395">        assertEquals(&quot;starting loc&quot;,0,customTag.getStartPosition ());</span>
+<span class="fc" id="L396">        assertEquals(&quot;ending loc&quot;,8,customTag.getEndPosition ());</span>
+<span class="fc" id="L397">        assertEquals(&quot;starting line position&quot;,0,customTag.getStartingLineNumber());</span>
+<span class="fc" id="L398">        assertEquals(&quot;ending line position&quot;,0,customTag.getEndingLineNumber());</span>
+<span class="fc" id="L399">        AnotherTag anotherTag = (AnotherTag)customTag.childAt(0);</span>
+<span class="fc" id="L400">        assertEquals(&quot;anotherTag child count&quot;,1,anotherTag.getChildCount());</span>
+<span class="fc" id="L401">        Text stringNode = (Text)anotherTag.childAt(0);</span>
+<span class="fc" id="L402">        assertStringEquals(&quot;anotherTag child text&quot;,&quot;something&quot;,stringNode.toPlainTextString());</span>
+<span class="fc" id="L403">        assertStringEquals(</span>
+<span class="fc" id="L404">            &quot;first custom tag html&quot;,</span>
+<span class="fc" id="L405">            &quot;&lt;custom&gt;&lt;another&gt;something&lt;/another&gt;&lt;/custom&gt;&quot;,</span>
+<span class="fc" id="L406">            customTag.toHtml()</span>
+        );
+<span class="fc" id="L408">        customTag = (CustomTag)node[1];</span>
+<span class="fc" id="L409">        assertStringEquals(</span>
+<span class="fc" id="L410">            &quot;second custom tag html&quot;,</span>
+<span class="fc" id="L411">            &quot;&lt;custom&gt;&lt;another&gt;else&lt;/another&gt;&lt;/custom&gt;&quot;,</span>
+<span class="fc" id="L412">            customTag.toHtml()</span>
+        );
+<span class="fc" id="L414">    }</span>
+
+    public void testCompositeTagCorrectionWithSplitLines() throws ParserException {
+<span class="fc" id="L417">        createParser(</span>
+<span class="fc" id="L418">            &quot;&lt;custom&gt;&quot; +</span>
+                &quot;&lt;another&gt;&lt;abcdefg&gt;\n&quot; +
+            &quot;&lt;/custom&gt;&quot;
+        );
+<span class="fc" id="L422">        parser.setNodeFactory (</span>
+<span class="fc" id="L423">            new PrototypicalNodeFactory (</span>
+                new Tag[]
+<span class="fc" id="L425">                {</span>
+<span class="fc" id="L426">                    new CustomTag (),</span>
+<span class="fc" id="L427">                    new AnotherTag (true),</span>
+                }));
+<span class="fc" id="L429">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L430">        assertType(&quot;node&quot;,CustomTag.class,node[0]);</span>
+<span class="fc" id="L431">        CustomTag customTag = (CustomTag)node[0];</span>
+<span class="fc" id="L432">        assertEquals(&quot;child count&quot;,1,customTag.getChildCount());</span>
+<span class="fc" id="L433">        assertFalse(&quot;custom tag should not be xml end tag&quot;,customTag.isEmptyXmlTag());</span>
+<span class="fc" id="L434">        assertEquals(&quot;starting loc&quot;,0,customTag.getStartPosition ());</span>
+<span class="fc" id="L435">        assertEquals(&quot;ending loc&quot;,8,customTag.getEndPosition ());</span>
+<span class="fc" id="L436">        AnotherTag anotherTag = (AnotherTag)customTag.childAt(0);</span>
+<span class="fc" id="L437">        assertEquals(&quot;anotherTag child count&quot;,2,anotherTag.getChildCount());</span>
+<span class="fc" id="L438">        assertEquals(&quot;anotherTag end loc&quot;,27,anotherTag.getEndTag ().getEndPosition ());</span>
+<span class="fc" id="L439">        assertEquals(&quot;custom end tag begin loc&quot;,27,customTag.getEndTag().getStartPosition ());</span>
+<span class="fc" id="L440">        assertEquals(&quot;custom end tag end loc&quot;,36,customTag.getEndTag().getEndPosition ());</span>
+<span class="fc" id="L441">    }</span>
+
+    public void testCompositeTagWithSelfChildren() throws ParserException
+    {
+<span class="fc" id="L445">        String tag1 = &quot;&lt;custom&gt;&quot;;</span>
+<span class="fc" id="L446">        String tag2 = &quot;&lt;custom&gt;something&lt;/custom&gt;&quot;;</span>
+<span class="fc" id="L447">        String tag3 = &quot;&lt;/custom&gt;&quot;;</span>
+<span class="fc" id="L448">        createParser(tag1 + tag2 + tag3);</span>
+<span class="fc" id="L449">        parser.setNodeFactory (</span>
+<span class="fc" id="L450">            new PrototypicalNodeFactory (</span>
+<span class="fc" id="L451">                new Tag[] {</span>
+<span class="fc" id="L452">                    new CustomTag (false),</span>
+<span class="fc" id="L453">                    new AnotherTag (false),</span>
+                }));
+<span class="fc" id="L455">        parseAndAssertNodeCount(3);</span>
+
+<span class="fc" id="L457">        CustomTag customTag = (CustomTag)node[0];</span>
+<span class="fc" id="L458">        assertEquals(&quot;child count&quot;,0,customTag.getChildCount());</span>
+<span class="fc" id="L459">        assertFalse(&quot;custom tag should not be xml end tag&quot;,customTag.isEmptyXmlTag());</span>
+
+<span class="fc" id="L461">        assertStringEquals(</span>
+<span class="fc" id="L462">            &quot;first custom tag html&quot;,</span>
+<span class="fc" id="L463">            tag1 + &quot;&lt;/custom&gt;&quot;,</span>
+<span class="fc" id="L464">            customTag.toHtml()</span>
+        );
+<span class="fc" id="L466">        customTag = (CustomTag)node[1];</span>
+<span class="fc" id="L467">        assertStringEquals(</span>
+<span class="fc" id="L468">            &quot;second custom tag html&quot;,</span>
+<span class="fc" id="L469">            tag2,</span>
+<span class="fc" id="L470">            customTag.toHtml()</span>
+        );
+<span class="fc" id="L472">        Tag endTag = (Tag)node[2];</span>
+<span class="fc" id="L473">        assertStringEquals(</span>
+<span class="fc" id="L474">            &quot;third custom tag html&quot;,</span>
+<span class="fc" id="L475">            tag3,</span>
+<span class="fc" id="L476">            endTag.toHtml()</span>
+        );
+<span class="fc" id="L478">    }</span>
+
+    public void testParentConnections() throws ParserException {
+<span class="fc" id="L481">        String tag1 = &quot;&lt;custom&gt;&quot;;</span>
+<span class="fc" id="L482">        String tag2 = &quot;&lt;custom&gt;something&lt;/custom&gt;&quot;;</span>
+<span class="fc" id="L483">        String tag3 = &quot;&lt;/custom&gt;&quot;;</span>
+<span class="fc" id="L484">        createParser(tag1 + tag2 + tag3);</span>
+<span class="fc" id="L485">        parser.setNodeFactory (</span>
+<span class="fc" id="L486">            new PrototypicalNodeFactory (</span>
+<span class="fc" id="L487">                new Tag[] {</span>
+<span class="fc" id="L488">                    new CustomTag (false),</span>
+<span class="fc" id="L489">                    new AnotherTag (false),</span>
+                }));
+<span class="fc" id="L491">        parseAndAssertNodeCount(3);</span>
+
+<span class="fc" id="L493">        CustomTag customTag = (CustomTag)node[0];</span>
+
+<span class="fc" id="L495">        assertStringEquals(</span>
+<span class="fc" id="L496">            &quot;first custom tag html&quot;,</span>
+<span class="fc" id="L497">            tag1 + &quot;&lt;/custom&gt;&quot;,</span>
+<span class="fc" id="L498">            customTag.toHtml()</span>
+        );
+<span class="fc" id="L500">        assertNull(</span>
+<span class="fc" id="L501">            &quot;first custom tag should have no parent&quot;,</span>
+<span class="fc" id="L502">            customTag.getParent()</span>
+        );
+
+<span class="fc" id="L505">        customTag = (CustomTag)node[1];</span>
+<span class="fc" id="L506">        assertStringEquals(</span>
+<span class="fc" id="L507">            &quot;second custom tag html&quot;,</span>
+<span class="fc" id="L508">            tag2,</span>
+<span class="fc" id="L509">            customTag.toHtml()</span>
+        );
+<span class="fc" id="L511">        assertNull(</span>
+<span class="fc" id="L512">            &quot;second custom tag should have no parent&quot;,</span>
+<span class="fc" id="L513">            customTag.getParent()</span>
+        );
+
+<span class="fc" id="L516">        Node firstChild = customTag.childAt(0);</span>
+<span class="fc" id="L517">        assertType(&quot;firstChild&quot;,Text.class,firstChild);</span>
+<span class="fc" id="L518">        Node parent = firstChild.getParent();</span>
+<span class="fc" id="L519">        assertNotNull(&quot;first child parent should not be null&quot;,parent);</span>
+<span class="fc" id="L520">        assertSame(&quot;parent and custom tag should be the same&quot;,customTag,parent);</span>
+
+<span class="fc" id="L522">        Tag endTag = (Tag)node[2];</span>
+<span class="fc" id="L523">        assertStringEquals(</span>
+<span class="fc" id="L524">            &quot;third custom tag html&quot;,</span>
+<span class="fc" id="L525">            tag3,</span>
+<span class="fc" id="L526">            endTag.toHtml()</span>
+        );
+<span class="fc" id="L528">        assertNull(</span>
+<span class="fc" id="L529">            &quot;end tag should have no parent&quot;,</span>
+<span class="fc" id="L530">            endTag.getParent()</span>
+        );
+
+<span class="fc" id="L533">    }</span>
+
+    public void testUrlBeingProvidedToCreateTag() throws ParserException {
+<span class="fc" id="L536">        createParser(&quot;&lt;Custom/&gt;&quot;,&quot;http://www.yahoo.com&quot;);</span>
+
+<span class="fc" id="L538">        parser.setNodeFactory (new PrototypicalNodeFactory (new CustomTag ()));</span>
+<span class="fc" id="L539">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L540">        assertStringEquals(&quot;url&quot;,&quot;http://www.yahoo.com&quot;,((AbstractNode)node[0]).getPage ().getUrl ());</span>
+<span class="fc" id="L541">    }</span>
+
+    public void testComplexNesting() throws ParserException {
+<span class="fc" id="L544">        createParser(</span>
+<span class="fc" id="L545">            &quot;&lt;custom&gt;&quot; +</span>
+                &quot;&lt;custom&gt;&quot; +
+                    &quot;&lt;another&gt;&quot; +
+                &quot;&lt;/custom&gt;&quot; +
+                &quot;&lt;custom&gt;&quot; +
+                    &quot;&lt;another&gt;&quot; +
+                &quot;&lt;/custom&gt;&quot; +
+            &quot;&lt;/custom&gt;&quot;
+        );
+<span class="fc" id="L554">        parser.setNodeFactory (</span>
+<span class="fc" id="L555">            new PrototypicalNodeFactory (</span>
+<span class="fc" id="L556">                new Tag[] {</span>
+<span class="fc" id="L557">                    new CustomTag (),</span>
+<span class="fc" id="L558">                    new AnotherTag (false),</span>
+                }));
+<span class="fc" id="L560">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L561">        assertType(&quot;root node&quot;,CustomTag.class, node[0]);</span>
+<span class="fc" id="L562">        CustomTag root = (CustomTag)node[0];</span>
+<span class="fc" id="L563">        assertNodeCount(&quot;child count&quot;,2,root.getChildrenAsNodeArray());</span>
+<span class="fc" id="L564">        Node child = root.childAt(0);</span>
+<span class="fc" id="L565">        assertType(&quot;child&quot;,CustomTag.class,child);</span>
+<span class="fc" id="L566">        CustomTag customChild = (CustomTag)child;</span>
+<span class="fc" id="L567">        assertNodeCount(&quot;grand child count&quot;,1,customChild.getChildrenAsNodeArray());</span>
+<span class="fc" id="L568">        Node grandchild = customChild.childAt(0);</span>
+<span class="fc" id="L569">        assertType(&quot;grandchild&quot;,AnotherTag.class,grandchild);</span>
+<span class="fc" id="L570">    }</span>
+
+    public void testDisallowedChildren() throws ParserException {
+<span class="fc" id="L573">        createParser(</span>
+<span class="fc" id="L574">            &quot;&lt;custom&gt;\n&quot; +</span>
+            &quot;Hello&quot; +
+            &quot;&lt;custom&gt;\n&quot; +
+            &quot;World&quot; +
+            &quot;&lt;custom&gt;\n&quot; +
+            &quot;Hey\n&quot; +
+            &quot;&lt;/custom&gt;&quot;
+        );
+<span class="fc" id="L582">        parser.setNodeFactory (new PrototypicalNodeFactory (new CustomTag (false)));</span>
+<span class="fc" id="L583">        parseAndAssertNodeCount(3);</span>
+<span class="fc bfc" id="L584" title="All 2 branches covered.">        for (int i=0;i&lt;nodeCount;i++) {</span>
+<span class="fc" id="L585">            assertType(&quot;node &quot;+i,CustomTag.class,node[i]);</span>
+        }
+<span class="fc" id="L587">    }</span>
+
+    public static class CustomScanner extends CompositeTagScanner {
+<span class="fc" id="L590">        private static final String MATCH_NAME [] = { &quot;CUSTOM&quot; };</span>
+<span class="fc" id="L591">        public CustomScanner() {</span>
+<span class="fc" id="L592">        }</span>
+
+        public String[] getID() {
+<span class="nc" id="L595">            return MATCH_NAME;</span>
+        }
+    }
+
+    public static class AnotherScanner extends CompositeTagScanner {
+<span class="fc" id="L600">        private static final String MATCH_NAME [] = { &quot;ANOTHER&quot; };</span>
+<span class="fc" id="L601">        public AnotherScanner() {</span>
+<span class="fc" id="L602">        }</span>
+
+        public String[] getID() {
+<span class="nc" id="L605">            return MATCH_NAME;</span>
+        }
+
+        protected boolean isBrokenTag() {
+<span class="nc" id="L609">            return false;</span>
+        }
+
+    }
+
+    public static class CustomTag extends CompositeTag
+    {
+        /**
+         * The set of names handled by this tag.
+         */
+<span class="fc" id="L619">        private static final String[] mIds = new String[] {&quot;CUSTOM&quot;};</span>
+
+        protected String[] mEnders;
+
+        /**
+         * The default scanner for custom tags.
+         */
+<span class="fc" id="L626">        protected final static CustomScanner mCustomScanner = new CustomScanner ();</span>
+
+        public CustomTag ()
+        {
+<span class="fc" id="L630">            this (true);</span>
+<span class="fc" id="L631">        }</span>
+
+<span class="fc" id="L633">        public CustomTag (boolean selfChildrenAllowed)</span>
+        {
+<span class="fc bfc" id="L635" title="All 2 branches covered.">            if (selfChildrenAllowed)</span>
+<span class="fc" id="L636">                mEnders = new String[0];</span>
+            else
+<span class="fc" id="L638">                mEnders = mIds;</span>
+<span class="fc" id="L639">            setThisScanner (mCustomScanner);</span>
+<span class="fc" id="L640">        }</span>
+
+        /**
+         * Return the set of names handled by this tag.
+         * @return The names to be matched that create tags of this type.
+         */
+        public String[] getIds ()
+        {
+<span class="fc" id="L648">            return (mIds);</span>
+        }
+
+        /**
+         * Return the set of tag names that cause this tag to finish.
+         * @return The names of following tags that stop further scanning.
+         */
+        public String[] getEnders ()
+        {
+<span class="fc" id="L657">            return (mEnders);</span>
+        }
+
+        
+    }
+
+    public static class AnotherTag extends CompositeTag
+    {
+        /**
+         * The set of names handled by this tag.
+         */
+<span class="fc" id="L668">        private static final String[] mIds = new String[] {&quot;ANOTHER&quot;};</span>
+
+        /**
+         * The set of tag names that indicate the end of this tag.
+         */
+        private final String[] mEnders;
+
+        /**
+         * The set of end tag names that indicate the end of this tag.
+         */
+        private final String[] mEndTagEnders;
+
+        /**
+         * The default scanner for custom tags.
+         */
+<span class="fc" id="L683">        protected final static AnotherScanner mAnotherScanner = new AnotherScanner ();</span>
+
+<span class="fc" id="L685">        public AnotherTag (boolean acceptCustomTagsButDontAcceptCustomEndTags)</span>
+        {
+<span class="fc bfc" id="L687" title="All 2 branches covered.">            if (acceptCustomTagsButDontAcceptCustomEndTags)</span>
+            {
+<span class="fc" id="L689">                mEnders = new String[0];</span>
+<span class="fc" id="L690">                mEndTagEnders = new String[] {&quot;CUSTOM&quot;};</span>
+<span class="fc" id="L691">            }</span>
+            else
+            {
+<span class="fc" id="L694">                mEnders = new String[] {&quot;CUSTOM&quot;};</span>
+<span class="fc" id="L695">                mEndTagEnders = new String[] {&quot;CUSTOM&quot;};</span>
+            }
+<span class="fc" id="L697">            setThisScanner (mAnotherScanner);</span>
+<span class="fc" id="L698">        }</span>
+
+        /**
+         * Return the set of names handled by this tag.
+         * @return The names to be matched that create tags of this type.
+         */
+        public String[] getIds ()
+        {
+<span class="fc" id="L706">            return (mIds);</span>
+        }
+
+        /**
+         * Return the set of tag names that cause this tag to finish.
+         * @return The names of following tags that stop further scanning.
+         */
+        public String[] getEnders ()
+        {
+<span class="fc" id="L715">            return (mEnders);</span>
+        }
+
+        /**
+         * Return the set of end tag names that cause this tag to finish.
+         * @return The names of following end tags that stop further scanning.
+         */
+        public String[] getEndTagEnders ()
+        {
+<span class="fc" id="L724">            return (mEndTagEnders);</span>
+        }
+    }
+
+    /**
+     * Extracted from &quot;http://scores.nba.com/games/20031029/scoreboard.html&quot;
+     * which has a lot of table columns with unclosed DIV tags because the
+     * closing DIV doesn't have a slash.
+     * This caused java.lang.StackOverflowError on Windows.
+     * Tests the new non-recursive CompositeTagScanner with the walk back
+     * through the parse stack.
+     * See also Bug #750117 StackOverFlow while Node-Iteration and
+     * others.
+     */
+    public void testInvalidNesting () throws ParserException
+    {
+<span class="fc" id="L740">        String html = &quot;&lt;table cellspacing=\&quot;2\&quot; cellpadding=\&quot;0\&quot; border=\&quot;0\&quot; width=\&quot;600\&quot;&gt;\n&quot;</span>
+            + &quot;&lt;tr&gt;\n&quot;
+            + &quot;&lt;td&gt;&lt;div class=\&quot;ScoreBoardSec\&quot;&gt;&amp;nbsp;&lt;a  target=\&quot;_parent\&quot; class=\&quot;ScoreBoardSec\&quot; href=\&quot;http://www.nba.com/heat/\&quot;&gt;Heat&lt;/a&gt;&lt;div&gt;&lt;/td&gt;\n&quot;
+            + &quot;&lt;/tr&gt;\n&quot;
+            + &quot;&lt;/table&gt;&quot;;
+<span class="fc" id="L745">        createParser (html);</span>
+<span class="fc" id="L746">        parseAndAssertNodeCount (1);</span>
+<span class="fc" id="L747">        assertType (&quot;table&quot;, TableTag.class, node[0]);</span>
+<span class="fc" id="L748">        TableTag table = (TableTag)node[0];</span>
+<span class="pc bpc" id="L749" title="1 of 2 branches missed.">        assertTrue (&quot;table should have 3 nodes&quot;, 3 == table.getChildCount ());</span>
+<span class="fc" id="L750">        assertType (&quot;row&quot;, TableRow.class, table.childAt (1));</span>
+<span class="fc" id="L751">        TableRow row = (TableRow)table.childAt (1);</span>
+<span class="pc bpc" id="L752" title="1 of 2 branches missed.">        assertTrue (&quot;row should have 3 nodes&quot;, 3 == row.getChildCount ());</span>
+<span class="fc" id="L753">        assertType (&quot;column&quot;, TableColumn.class, row.childAt (1));</span>
+<span class="fc" id="L754">        TableColumn column = (TableColumn)row.childAt (1);</span>
+<span class="pc bpc" id="L755" title="1 of 2 branches missed.">        assertTrue (&quot;column should have 1 node&quot;, 1 == column.getChildCount ());</span>
+<span class="fc" id="L756">        assertType (&quot;element&quot;, Div.class, column.childAt (0));</span>
+<span class="fc" id="L757">        Div div = (Div)column.childAt (0);</span>
+<span class="pc bpc" id="L758" title="1 of 2 branches missed.">        assertTrue (&quot;div should have 3 nodes&quot;, 3 == div.getChildCount ());</span>
+<span class="fc" id="L759">        assertType (&quot;link&quot;, LinkTag.class, div.childAt (1));</span>
+<span class="fc" id="L760">        LinkTag link = (LinkTag)div.childAt (1);</span>
+<span class="fc" id="L761">        assertTrue (&quot;link contents&quot;, link.getLink ().equals (&quot;http://www.nba.com/heat/&quot;));</span>
+<span class="fc" id="L762">        assertType (&quot;bogus div&quot;, Div.class, div.childAt (2));</span>
+<span class="pc bpc" id="L763" title="1 of 2 branches missed.">        assertTrue (&quot;bogus div should have no children&quot;, 0 == ((Div)div.childAt (2)).getChildCount ());</span>
+<span class="fc" id="L764">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

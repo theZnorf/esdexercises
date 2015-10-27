@@ -1,0 +1,1245 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>ParserUtils.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.util</a> &gt; <span class="el_source">ParserUtils.java</span></div><h1>ParserUtils.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Somik Raha
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/main/java/org/htmlparser/util/ParserUtils.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.util;
+
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+
+import org.htmlparser.Node;
+import org.htmlparser.NodeFilter;
+import org.htmlparser.Parser;
+import org.htmlparser.Tag;
+import org.htmlparser.filters.NodeClassFilter;
+import org.htmlparser.filters.TagNameFilter;
+import org.htmlparser.lexer.Lexer;
+import org.htmlparser.lexer.Page;
+import org.htmlparser.tags.CompositeTag;
+import org.htmlparser.util.NodeList;
+import org.htmlparser.util.ParserException;
+
+
+<span class="nc" id="L44">public class ParserUtils</span>
+{
+    public static String removeChars(String s, char occur) {
+<span class="fc" id="L47">        StringBuffer newString = new StringBuffer();</span>
+        char ch;
+<span class="fc bfc" id="L49" title="All 2 branches covered.">        for (int i = 0; i &lt; s.length(); i++) {</span>
+<span class="fc" id="L50">            ch = s.charAt(i);</span>
+<span class="fc bfc" id="L51" title="All 2 branches covered.">            if (ch != occur)</span>
+<span class="fc" id="L52">                newString.append(ch);</span>
+        }
+<span class="fc" id="L54">        return newString.toString();</span>
+    }
+
+    public static String removeEscapeCharacters(String inputString) {
+<span class="nc" id="L58">        inputString = ParserUtils.removeChars(inputString, '\r');</span>
+<span class="nc" id="L59">        inputString = ParserUtils.removeChars(inputString, '\n');</span>
+<span class="nc" id="L60">        inputString = ParserUtils.removeChars(inputString, '\t');</span>
+<span class="nc" id="L61">        return inputString;</span>
+    }
+
+    public static String removeTrailingBlanks(String text) {
+<span class="fc" id="L65">        char ch = ' ';</span>
+<span class="fc bfc" id="L66" title="All 2 branches covered.">        while (ch == ' ') {</span>
+<span class="fc" id="L67">            ch = text.charAt(text.length() - 1);</span>
+<span class="fc bfc" id="L68" title="All 2 branches covered.">            if (ch == ' ')</span>
+<span class="fc" id="L69">                text = text.substring(0, text.length() - 1);</span>
+        }
+<span class="fc" id="L71">        return text;</span>
+    }
+
+    /**
+     * Search given node and pick up any objects of given type.
+     * @param node The node to search.
+     * @param type The class to search for.
+     * @return A node array with the matching nodes.
+     */
+    public static Node[] findTypeInNode(Node node, Class type)
+    {
+        NodeFilter filter;
+        NodeList ret;
+        
+<span class="fc" id="L85">        ret = new NodeList ();</span>
+<span class="fc" id="L86">        filter = new NodeClassFilter (type);</span>
+<span class="fc" id="L87">        node.collectInto (ret, filter);</span>
+
+<span class="fc" id="L89">        return (ret.toNodeArray ());</span>
+    }
+
+    /**
+     * Split the input string considering as string separator
+     * all the not numerical characters
+     * with the only exception of the characters specified in charsDoNotBeRemoved param.
+     * &lt;BR&gt;For example if you call splitButDigits(&amp;quot;&amp;lt;DIV&amp;gt;  +12.5, +3.4 &amp;lt;/DIV&amp;gt;&amp;quot;, &amp;quot;+.&amp;quot;),
+     * &lt;BR&gt;you obtain an array of strings {&amp;quot;+12.5&amp;quot;, &amp;quot;+3.4&amp;quot;} as output (1,2,3,4 and 5 are digits and +,. are chars that do not be removed).
+     * @param input The string in input.
+     * @param charsDoNotBeRemoved The chars that do not be removed.
+     * @return The array of strings as output.
+    */
+    public static String[] splitButDigits (String input, String charsDoNotBeRemoved)
+    {
+ 	
+<span class="fc" id="L105">        ArrayList output = new ArrayList();</span>
+<span class="fc" id="L106">        int minCapacity = 0;</span>
+<span class="fc" id="L107">        StringBuffer str = new StringBuffer();</span>
+
+<span class="fc" id="L109">        boolean charFound = false;</span>
+<span class="fc" id="L110">        boolean toBeAdd = false;</span>
+<span class="fc bfc" id="L111" title="All 2 branches covered.">        for (int index=0; index&lt;input.length(); index++)</span>
+        {    
+<span class="fc" id="L113">            charFound=false;</span>
+<span class="fc bfc" id="L114" title="All 2 branches covered.">            for (int charsCount=0; charsCount&lt;charsDoNotBeRemoved.length(); charsCount++)</span>
+<span class="fc bfc" id="L115" title="All 2 branches covered.">                if (charsDoNotBeRemoved.charAt(charsCount)==input.charAt(index))</span>
+<span class="fc" id="L116">                    charFound=true;</span>
+<span class="fc bfc" id="L117" title="All 4 branches covered.">            if ((Character.isDigit(input.charAt(index))) || (charFound))</span>
+            {
+<span class="fc" id="L119">                str.append(input.charAt(index));</span>
+<span class="fc" id="L120">                toBeAdd=false;</span>
+<span class="fc" id="L121">            }</span>
+            else
+<span class="fc bfc" id="L123" title="All 2 branches covered.">                if (!toBeAdd)</span>
+<span class="fc" id="L124">                    toBeAdd=true;</span>
+            // finished to parse one string
+<span class="fc bfc" id="L126" title="All 4 branches covered.">            if (toBeAdd &amp;&amp; (str.length()!=0)) {</span>
+<span class="fc" id="L127">                minCapacity++;</span>
+<span class="fc" id="L128">                output.ensureCapacity(minCapacity);</span>
+<span class="pc bpc" id="L129" title="1 of 2 branches missed.">                if (output.add(str.toString()))</span>
+<span class="fc" id="L130">                    str = new StringBuffer();</span>
+                else
+<span class="nc" id="L132">                    minCapacity--;</span>
+            }
+        }
+        // add the last string
+<span class="pc bpc" id="L136" title="1 of 2 branches missed.">        if (str.length()!=0) {</span>
+<span class="nc" id="L137">            minCapacity++;</span>
+<span class="nc" id="L138">            output.ensureCapacity(minCapacity);</span>
+<span class="nc bnc" id="L139" title="All 2 branches missed.">            if (output.add(str.toString()))</span>
+<span class="nc" id="L140">                str = new StringBuffer();</span>
+            else
+<span class="nc" id="L142">                minCapacity--;</span>
+        }
+
+<span class="fc" id="L145">        output.trimToSize();</span>
+<span class="fc" id="L146">        Object[] outputObj = output.toArray();</span>
+<span class="fc" id="L147">        String[] outputStr = new String[output.size()];</span>
+<span class="fc bfc" id="L148" title="All 2 branches covered.">        for (int i=0; i&lt;output.size(); i++)</span>
+<span class="fc" id="L149">            outputStr[i] = new String((String) outputObj[i]);</span>
+<span class="fc" id="L150">        return outputStr;</span>
+        
+    }
+    
+    /**
+     * Remove from the input string all the not numerical characters
+     * with the only exception of the characters specified in charsDoNotBeRemoved param.
+     * &lt;BR&gt;For example if you call trimButDigits(&amp;quot;&amp;lt;DIV&amp;gt;  +12.5 &amp;lt;/DIV&amp;gt;&amp;quot;, &amp;quot;+.&amp;quot;),
+     * &lt;BR&gt;you obtain a string &amp;quot;+12.5&amp;quot; as output (1,2 and 5 are digits and +,. are chars that do not be removed).
+     * &lt;BR&gt;For example if you call trimButDigits(&amp;quot;&amp;lt;DIV&amp;gt;  +1 2 . 5 &amp;lt;/DIV&amp;gt;&amp;quot;, &amp;quot;+.&amp;quot;),
+     * &lt;BR&gt;you obtain a string &amp;quot;+12.5&amp;quot; as output (the spaces between 1 and 2, 2 and ., . and 5 are removed).
+     * @param input The string in input.
+     * @param charsDoNotBeRemoved The chars that do not be removed.
+     * @return The string as output.
+    */
+    public static String trimButDigits (String input, String charsDoNotBeRemoved)
+    {
+ 	
+<span class="fc" id="L168">        StringBuffer output = new StringBuffer();</span>
+
+<span class="fc" id="L170">        boolean charFound=false;</span>
+<span class="fc bfc" id="L171" title="All 2 branches covered.">        for (int index=0; index&lt;input.length(); index++)</span>
+        {    
+<span class="fc" id="L173">            charFound=false;</span>
+<span class="fc bfc" id="L174" title="All 2 branches covered.">            for (int charsCount=0; charsCount&lt;charsDoNotBeRemoved.length(); charsCount++)</span>
+<span class="fc bfc" id="L175" title="All 2 branches covered.">                if (charsDoNotBeRemoved.charAt(charsCount)==input.charAt(index))</span>
+<span class="fc" id="L176">                    charFound=true;</span>
+<span class="fc bfc" id="L177" title="All 4 branches covered.">            if ((Character.isDigit(input.charAt(index))) || (charFound))</span>
+<span class="fc" id="L178">                output.append(input.charAt(index));</span>
+        }
+
+<span class="fc" id="L181">        return output.toString();</span>
+        
+    }
+    
+    /**
+     * Remove from the beginning and the end of the input string all the not numerical characters
+     * with the only exception of the characters specified in charsDoNotBeRemoved param.
+     * &lt;BR&gt;The removal process removes only chars at the beginning and at the end of the string.
+     * &lt;BR&gt;For example if you call trimButDigitsBeginEnd(&amp;quot;&amp;lt;DIV&amp;gt;  +12.5 &amp;lt;/DIV&amp;gt;&amp;quot;, &amp;quot;+.&amp;quot;),
+     * &lt;BR&gt;you obtain a string &amp;quot;+12.5&amp;quot; as output (1,2 and 5 are digits and +,. are chars that do not be removed).
+     * &lt;BR&gt;For example if you call trimButDigitsBeginEnd(&amp;quot;&amp;lt;DIV&amp;gt;  +1 2 . 5 &amp;lt;/DIV&amp;gt;&amp;quot;, &amp;quot;+.&amp;quot;),
+     * &lt;BR&gt;you obtain a string &amp;quot;+1 2 . 5&amp;quot; as output (the spacess inside the string are not removed).
+     * @param input - The string in input.
+     * @param charsDoNotBeRemoved - The chars that do not be removed.
+     * @return The string as output.
+    */
+    public static String trimButDigitsBeginEnd (String input, String charsDoNotBeRemoved)
+    {
+ 	
+<span class="fc" id="L200">        String output = new String();</span>
+
+<span class="fc" id="L202">        int begin=0;</span>
+<span class="fc" id="L203">        int end=input.length()-1;</span>
+<span class="fc" id="L204">        boolean charFound=false;</span>
+<span class="fc" id="L205">        boolean ok=true;</span>
+<span class="pc bpc" id="L206" title="1 of 4 branches missed.">        for (int index=begin; (index&lt;input.length()) &amp;&amp; ok; index++)</span>
+        {                
+<span class="fc" id="L208">            charFound=false;</span>
+<span class="fc bfc" id="L209" title="All 2 branches covered.">            for (int charsCount=0; charsCount&lt;charsDoNotBeRemoved.length(); charsCount++)</span>
+<span class="fc bfc" id="L210" title="All 2 branches covered.">                if (charsDoNotBeRemoved.charAt(charsCount)==input.charAt(index))</span>
+<span class="fc" id="L211">                    charFound=true;</span>
+<span class="pc bpc" id="L212" title="1 of 4 branches missed.">            if ( (Character.isDigit(input.charAt(index))) || (charFound) )</span>
+            {
+<span class="fc" id="L214">                begin=index;</span>
+<span class="fc" id="L215">                ok=false;</span>
+            }
+        }
+<span class="fc" id="L218">        ok=true;</span>
+<span class="pc bpc" id="L219" title="1 of 4 branches missed.">        for (int index=end; (index&gt;=0) &amp;&amp; ok; index--)</span>
+        {
+<span class="fc" id="L221">            charFound=false;</span>
+<span class="fc bfc" id="L222" title="All 2 branches covered.">            for (int charsCount=0; charsCount&lt;charsDoNotBeRemoved.length(); charsCount++)</span>
+<span class="pc bpc" id="L223" title="1 of 2 branches missed.">                if (charsDoNotBeRemoved.charAt(charsCount)==input.charAt(index))</span>
+<span class="nc" id="L224">                    charFound=true;</span>
+<span class="pc bpc" id="L225" title="1 of 4 branches missed.">            if ( (Character.isDigit(input.charAt(index))) || (charFound) )</span>
+            {
+<span class="fc" id="L227">                end=index;</span>
+<span class="fc" id="L228">                ok=false;</span>
+            }
+        }
+<span class="fc" id="L231">        output=input.substring(begin,end+1);</span>
+
+<span class="fc" id="L233">        return output;</span>
+        
+    }
+    
+    /**
+     * Split the input string considering as string separator
+     * all the spaces and tabs like chars and
+     * the chars specified in the input variable charsToBeRemoved.
+     * &lt;BR&gt;For example if you call splitSpaces(&amp;quot;&amp;lt;DIV&amp;gt;  +12.5, +3.4 &amp;lt;/DIV&amp;gt;&amp;quot;, &amp;quot;&amp;lt;&gt;DIV/,&amp;quot;),
+     * &amp;lt;BR&gt;you obtain an array of strings {&amp;quot;+12.5&amp;quot;, &amp;quot;+3.4&amp;quot;} as output (space chars and &amp;lt;,&amp;gt;,D,I,V,/ and the comma are chars that must be removed).
+     * @param input The string in input.
+     * @param charsToBeRemoved The chars to be removed.
+     * @return The array of strings as output.
+    */
+    public static String[] splitSpaces (String input, String charsToBeRemoved)
+    {
+ 	
+<span class="fc" id="L250">        ArrayList output = new ArrayList();</span>
+<span class="fc" id="L251">        int minCapacity = 0;</span>
+<span class="fc" id="L252">        StringBuffer str = new StringBuffer();</span>
+
+<span class="fc" id="L254">        boolean charFound = false;</span>
+<span class="fc" id="L255">        boolean toBeAdd = false;</span>
+<span class="fc bfc" id="L256" title="All 2 branches covered.">        for (int index=0; index&lt;input.length(); index++)</span>
+        {    
+<span class="fc" id="L258">            charFound=false;</span>
+<span class="fc bfc" id="L259" title="All 2 branches covered.">            for (int charsCount=0; charsCount&lt;charsToBeRemoved.length(); charsCount++)</span>
+<span class="fc bfc" id="L260" title="All 2 branches covered.">                if (charsToBeRemoved.charAt(charsCount)==input.charAt(index))</span>
+<span class="fc" id="L261">                    charFound=true;</span>
+<span class="pc bpc" id="L262" title="1 of 6 branches missed.">            if (!((Character.isWhitespace(input.charAt(index))) || (Character.isSpaceChar(input.charAt(index))) || (charFound)))</span>
+            {
+<span class="fc" id="L264">                str.append(input.charAt(index));</span>
+<span class="fc" id="L265">                toBeAdd=false;</span>
+<span class="fc" id="L266">            }</span>
+            else
+<span class="fc bfc" id="L268" title="All 2 branches covered.">                if (!toBeAdd)</span>
+<span class="fc" id="L269">                    toBeAdd=true;</span>
+            // finished to parse one string
+<span class="fc bfc" id="L271" title="All 4 branches covered.">            if (toBeAdd &amp;&amp; (str.length()!=0)) {</span>
+<span class="fc" id="L272">                minCapacity++;</span>
+<span class="fc" id="L273">                output.ensureCapacity(minCapacity);</span>
+<span class="pc bpc" id="L274" title="1 of 2 branches missed.">                if (output.add(str.toString()))</span>
+<span class="fc" id="L275">                    str = new StringBuffer();</span>
+                else
+<span class="nc" id="L277">                    minCapacity--;</span>
+            }
+        }
+        // add the last string
+<span class="pc bpc" id="L281" title="1 of 2 branches missed.">        if (str.length()!=0) {</span>
+<span class="nc" id="L282">            minCapacity++;</span>
+<span class="nc" id="L283">            output.ensureCapacity(minCapacity);</span>
+<span class="nc bnc" id="L284" title="All 2 branches missed.">            if (output.add(str.toString()))</span>
+<span class="nc" id="L285">                str = new StringBuffer();</span>
+            else
+<span class="nc" id="L287">                minCapacity--;</span>
+        }
+
+<span class="fc" id="L290">        output.trimToSize();</span>
+<span class="fc" id="L291">        Object[] outputObj = output.toArray();</span>
+<span class="fc" id="L292">        String[] outputStr = new String[output.size()];</span>
+<span class="fc bfc" id="L293" title="All 2 branches covered.">        for (int i=0; i&lt;output.size(); i++)</span>
+<span class="fc" id="L294">            outputStr[i] = new String((String) outputObj[i]);</span>
+<span class="fc" id="L295">        return outputStr;</span>
+        
+    }
+
+    /**
+     * Remove from the input string all the spaces and tabs like chars.
+     * Remove also the chars specified in the input variable charsToBeRemoved.
+     * &lt;BR&gt;For example if you call trimSpaces(&amp;quot;&amp;lt;DIV&amp;gt;  +12.5 &amp;lt;/DIV&amp;gt;&amp;quot;, &amp;quot;&amp;lt;&gt;DIV/&amp;quot;),
+     * &lt;BR&gt;you obtain a string &amp;quot;+12.5&amp;quot; as output (space chars and &amp;lt;,&amp;gt;,D,I,V,/ are chars that must be removed).
+     * &lt;BR&gt;For example if you call trimSpaces(&amp;quot;&amp;lt;DIV&amp;gt;  Trim All Spaces Also The Ones Inside The String &amp;lt;/DIV&amp;gt;&amp;quot;, &amp;quot;&amp;lt;&gt;DIV/&amp;quot;),
+     * &lt;BR&gt;you obtain a string &amp;quot;TrimAllSpacesAlsoTheOnesInsideTheString&amp;quot; as output (all the spaces inside the string are removed).
+     * @param input The string in input.
+     * @param charsToBeRemoved The chars to be removed.
+     * @return The string as output.
+    */
+    public static String trimSpaces (String input, String charsToBeRemoved)
+    {
+ 	
+<span class="fc" id="L313">        StringBuffer output = new StringBuffer();</span>
+
+<span class="fc" id="L315">        boolean charFound=false;</span>
+<span class="fc bfc" id="L316" title="All 2 branches covered.">        for (int index=0; index&lt;input.length(); index++)</span>
+        {    
+<span class="fc" id="L318">            charFound=false;</span>
+<span class="fc bfc" id="L319" title="All 2 branches covered.">            for (int charsCount=0; charsCount&lt;charsToBeRemoved.length(); charsCount++)</span>
+<span class="fc bfc" id="L320" title="All 2 branches covered.">                if (charsToBeRemoved.charAt(charsCount)==input.charAt(index))</span>
+<span class="fc" id="L321">                    charFound=true;</span>
+<span class="pc bpc" id="L322" title="1 of 6 branches missed.">            if (!((Character.isWhitespace(input.charAt(index))) || (Character.isSpaceChar(input.charAt(index))) || (charFound)))</span>
+<span class="fc" id="L323">                output.append(input.charAt(index));</span>
+        }
+
+<span class="fc" id="L326">        return output.toString();</span>
+
+    }
+
+    /**
+     * Remove from the beginning and the end of the input string all the spaces and tabs like chars.
+     * Remove also the chars specified in the input variable charsToBeRemoved.
+     * &lt;BR&gt;The removal process removes only chars at the beginning and at the end of the string.
+     * &lt;BR&gt;For example if you call trimSpacesBeginEnd(&amp;quot;&amp;lt;DIV&amp;gt;  +12.5 &amp;lt;/DIV&amp;gt;&amp;quot;, &amp;quot;&amp;lt;&gt;DIV/&amp;quot;),
+     * &lt;BR&gt;you obtain a string &amp;quot;+12.5&amp;quot; as output (space chars and &amp;lt;,&amp;gt;,D,I,V,/ are chars that must be removed).
+     * &lt;BR&gt;For example if you call trimSpacesBeginEnd(&amp;quot;&amp;lt;DIV&amp;gt;  Trim all spaces but not the ones inside the string &amp;lt;/DIV&amp;gt;&amp;quot;, &amp;quot;&amp;lt;&gt;DIV/&amp;quot;),
+     * &lt;BR&gt;you obtain a string &amp;quot;Trim all spaces but not the ones inside the string&amp;quot; as output (all the spaces inside the string are preserved).
+     * @param input The string in input.
+     * @param charsToBeRemoved The chars to be removed.
+     * @return The string as output.
+    */
+    public static String trimSpacesBeginEnd (String input, String charsToBeRemoved)
+    {
+ 	
+<span class="fc" id="L345">        String output = new String();</span>
+
+<span class="fc" id="L347">        int begin=0;</span>
+<span class="fc" id="L348">        int end=input.length()-1;</span>
+<span class="fc" id="L349">        boolean charFound=false;</span>
+<span class="fc" id="L350">        boolean ok=true;</span>
+<span class="fc bfc" id="L351" title="All 4 branches covered.">        for (int index=begin; (index&lt;input.length()) &amp;&amp; ok; index++)</span>
+        {                
+<span class="fc" id="L353">            charFound=false;</span>
+<span class="fc bfc" id="L354" title="All 2 branches covered.">            for (int charsCount=0; charsCount&lt;charsToBeRemoved.length(); charsCount++)</span>
+<span class="fc bfc" id="L355" title="All 2 branches covered.">                if (charsToBeRemoved.charAt(charsCount)==input.charAt(index))</span>
+<span class="fc" id="L356">                    charFound=true;</span>
+<span class="pc bpc" id="L357" title="1 of 6 branches missed.">            if (!( (Character.isWhitespace(input.charAt(index))) || (Character.isSpaceChar(input.charAt(index))) || (charFound) ))</span>
+            {
+<span class="fc" id="L359">                begin=index;</span>
+<span class="fc" id="L360">                ok=false;</span>
+            }
+        }
+<span class="fc" id="L363">        ok=true;</span>
+<span class="fc bfc" id="L364" title="All 4 branches covered.">        for (int index=end; (index&gt;=0) &amp;&amp; ok; index--)</span>
+        {
+<span class="fc" id="L366">            charFound=false;</span>
+<span class="fc bfc" id="L367" title="All 2 branches covered.">            for (int charsCount=0; charsCount&lt;charsToBeRemoved.length(); charsCount++)</span>
+<span class="fc bfc" id="L368" title="All 2 branches covered.">                if (charsToBeRemoved.charAt(charsCount)==input.charAt(index))</span>
+<span class="fc" id="L369">                    charFound=true;</span>
+<span class="pc bpc" id="L370" title="1 of 6 branches missed.">            if (!( (Character.isWhitespace(input.charAt(index))) || (Character.isSpaceChar(input.charAt(index))) || (charFound) ))</span>
+            {
+<span class="fc" id="L372">                end=index;</span>
+<span class="fc" id="L373">                ok=false;</span>
+            }
+        }
+<span class="fc" id="L376">        output=input.substring(begin,end+1);</span>
+
+<span class="fc" id="L378">        return output;</span>
+        
+    }
+    
+    /**
+     * Split the input string considering as string separator
+     * all the characters
+     * with the only exception of the characters specified in charsDoNotBeRemoved param.
+     * &lt;BR&gt;For example if you call splitButChars(&amp;quot;&amp;lt;DIV&amp;gt;  +12.5, +3.4 &amp;lt;/DIV&amp;gt;&amp;quot;, &amp;quot;+.1234567890&amp;quot;),
+     * &lt;BR&gt;you obtain an array of strings {&amp;quot;+12.5&amp;quot;, &amp;quot;+3.4&amp;quot;} as output (+,.,1,2,3,4,5,6,7,8,9,0 are chars that do not be removed).
+     * @param input The string in input.
+     * @param charsDoNotBeRemoved The chars that do not be removed.
+     * @return The array of strings as output.
+    */
+    public static String[] splitButChars (String input, String charsDoNotBeRemoved)
+    {
+ 	
+<span class="fc" id="L395">        ArrayList output = new ArrayList();</span>
+<span class="fc" id="L396">        int minCapacity = 0;</span>
+<span class="fc" id="L397">        StringBuffer str = new StringBuffer();</span>
+
+<span class="fc" id="L399">        boolean charFound = false;</span>
+<span class="fc" id="L400">        boolean toBeAdd = false;</span>
+<span class="fc bfc" id="L401" title="All 2 branches covered.">        for (int index=0; index&lt;input.length(); index++)</span>
+        {    
+<span class="fc" id="L403">            charFound=false;</span>
+<span class="fc bfc" id="L404" title="All 2 branches covered.">            for (int charsCount=0; charsCount&lt;charsDoNotBeRemoved.length(); charsCount++)</span>
+<span class="fc bfc" id="L405" title="All 2 branches covered.">                if (charsDoNotBeRemoved.charAt(charsCount)==input.charAt(index))</span>
+<span class="fc" id="L406">                    charFound=true;</span>
+<span class="fc bfc" id="L407" title="All 2 branches covered.">            if (charFound)</span>
+            {
+<span class="fc" id="L409">                str.append(input.charAt(index));</span>
+<span class="fc" id="L410">                toBeAdd=false;</span>
+<span class="fc" id="L411">            }</span>
+            else
+<span class="fc bfc" id="L413" title="All 2 branches covered.">                if (!toBeAdd)</span>
+<span class="fc" id="L414">                    toBeAdd=true;</span>
+            // finished to parse one string
+<span class="fc bfc" id="L416" title="All 4 branches covered.">            if (toBeAdd &amp;&amp; (str.length()!=0)) {</span>
+<span class="fc" id="L417">                minCapacity++;</span>
+<span class="fc" id="L418">                output.ensureCapacity(minCapacity);</span>
+<span class="pc bpc" id="L419" title="1 of 2 branches missed.">                if (output.add(str.toString()))</span>
+<span class="fc" id="L420">                    str = new StringBuffer();</span>
+                else
+<span class="nc" id="L422">                    minCapacity--;</span>
+            }
+        }
+        // add the last string
+<span class="pc bpc" id="L426" title="1 of 2 branches missed.">        if (str.length()!=0) {</span>
+<span class="nc" id="L427">            minCapacity++;</span>
+<span class="nc" id="L428">            output.ensureCapacity(minCapacity);</span>
+<span class="nc bnc" id="L429" title="All 2 branches missed.">            if (output.add(str.toString()))</span>
+<span class="nc" id="L430">                str = new StringBuffer();</span>
+            else
+<span class="nc" id="L432">                minCapacity--;</span>
+        }
+
+<span class="fc" id="L435">        output.trimToSize();</span>
+<span class="fc" id="L436">        Object[] outputObj = output.toArray();</span>
+<span class="fc" id="L437">        String[] outputStr = new String[output.size()];</span>
+<span class="fc bfc" id="L438" title="All 2 branches covered.">        for (int i=0; i&lt;output.size(); i++)</span>
+<span class="fc" id="L439">            outputStr[i] = new String((String) outputObj[i]);</span>
+<span class="fc" id="L440">        return outputStr;</span>
+        
+    }
+    
+    /**
+     * Remove from the input string all the characters
+     * with the only exception of the characters specified in charsDoNotBeRemoved param.
+     * &lt;BR&gt;For example if you call trimButChars(&amp;quot;&amp;lt;DIV&amp;gt;  +12.5 &amp;lt;/DIV&amp;gt;&amp;quot;, &amp;quot;+.1234567890&amp;quot;),
+     * &lt;BR&gt;you obtain a string &amp;quot;+12.5&amp;quot; as output (+,.,1,2,3,4,5,6,7,8,9,0 are chars that do not be removed).
+     * &lt;BR&gt;For example if you call trimButChars(&amp;quot;&amp;lt;DIV&amp;gt;  +1 2 . 5 &amp;lt;/DIV&amp;gt;&amp;quot;, &amp;quot;+.1234567890&amp;quot;),
+     * &lt;BR&gt;you obtain a string &amp;quot;+12.5&amp;quot; as output (the spaces between 1 and 2, 2 and ., . and 5 are removed).
+     * @param input The string in input.
+     * @param charsDoNotBeRemoved The chars that do not be removed.
+     * @return The string as output.
+    */
+    public static String trimButChars (String input, String charsDoNotBeRemoved)
+    {
+ 	
+<span class="fc" id="L458">        StringBuffer output = new StringBuffer();</span>
+
+<span class="fc" id="L460">        boolean charFound=false;</span>
+<span class="fc bfc" id="L461" title="All 2 branches covered.">        for (int index=0; index&lt;input.length(); index++)</span>
+        {    
+<span class="fc" id="L463">            charFound=false;</span>
+<span class="fc bfc" id="L464" title="All 2 branches covered.">            for (int charsCount=0; charsCount&lt;charsDoNotBeRemoved.length(); charsCount++)</span>
+<span class="fc bfc" id="L465" title="All 2 branches covered.">                if (charsDoNotBeRemoved.charAt(charsCount)==input.charAt(index))</span>
+<span class="fc" id="L466">                    charFound=true;</span>
+<span class="fc bfc" id="L467" title="All 2 branches covered.">            if (charFound)</span>
+<span class="fc" id="L468">                output.append(input.charAt(index));</span>
+        }
+        
+<span class="fc" id="L471">        return output.toString();</span>
+        
+    }
+    
+    /**
+     * Remove from the beginning and the end of the input string all the characters
+     * with the only exception of the characters specified in charsDoNotBeRemoved param.
+     * &lt;BR&gt;The removal process removes only chars at the beginning and at the end of the string.
+     * &lt;BR&gt;For example if you call trimButCharsBeginEnd(&amp;quot;&amp;lt;DIV&amp;gt;  +12.5 &amp;lt;/DIV&amp;gt;&amp;quot;, &amp;quot;+.1234567890&amp;quot;),
+     * &lt;BR&gt;you obtain a string &amp;quot;+12.5&amp;quot; as output (+,.,1,2,3,4,5,6,7,8,9,0 are chars that do not be removed).
+     * &lt;BR&gt;For example if you call trimButCharsBeginEnd(&amp;quot;&amp;lt;DIV&amp;gt;  +1 2 . 5 &amp;lt;/DIV&amp;gt;&amp;quot;, &amp;quot;+.1234567890&amp;quot;),
+     * &lt;BR&gt;you obtain a string &amp;quot;+1 2 . 5&amp;quot; as output (the spaces inside the string are not removed).
+     * @param input The string in input.
+     * @param charsDoNotBeRemoved The chars that do not be removed.
+     * @return The string as output.
+    */
+    public static String trimButCharsBeginEnd (String input, String charsDoNotBeRemoved)
+    {
+ 	
+<span class="fc" id="L490">        String output = new String();</span>
+
+<span class="fc" id="L492">        int begin=0;</span>
+<span class="fc" id="L493">        int end=input.length()-1;</span>
+<span class="fc" id="L494">        boolean charFound=false;</span>
+<span class="fc" id="L495">        boolean ok=true;</span>
+<span class="pc bpc" id="L496" title="1 of 4 branches missed.">        for (int index=begin; (index&lt;input.length()) &amp;&amp; ok; index++)</span>
+        {                
+<span class="fc" id="L498">            charFound=false;</span>
+<span class="fc bfc" id="L499" title="All 2 branches covered.">            for (int charsCount=0; charsCount&lt;charsDoNotBeRemoved.length(); charsCount++)</span>
+<span class="fc bfc" id="L500" title="All 2 branches covered.">                if (charsDoNotBeRemoved.charAt(charsCount)==input.charAt(index))</span>
+<span class="fc" id="L501">                    charFound=true;</span>
+<span class="fc bfc" id="L502" title="All 2 branches covered.">            if (charFound)</span>
+            {
+<span class="fc" id="L504">                begin=index;</span>
+<span class="fc" id="L505">                ok=false;</span>
+            }
+        }
+<span class="fc" id="L508">        ok=true;</span>
+<span class="pc bpc" id="L509" title="1 of 4 branches missed.">        for (int index=end; (index&gt;=0) &amp;&amp; ok; index--)</span>
+        {
+<span class="fc" id="L511">            charFound=false;</span>
+<span class="fc bfc" id="L512" title="All 2 branches covered.">            for (int charsCount=0; charsCount&lt;charsDoNotBeRemoved.length(); charsCount++)</span>
+<span class="fc bfc" id="L513" title="All 2 branches covered.">                if (charsDoNotBeRemoved.charAt(charsCount)==input.charAt(index))</span>
+<span class="fc" id="L514">                    charFound=true;</span>
+<span class="fc bfc" id="L515" title="All 2 branches covered.">            if (charFound)</span>
+            {
+<span class="fc" id="L517">                end=index;</span>
+<span class="fc" id="L518">                ok=false;</span>
+            }
+        }
+<span class="fc" id="L521">        output=input.substring(begin,end+1);</span>
+
+<span class="fc" id="L523">        return output;</span>
+        
+    }
+
+    /**
+     * Split the input string considering as string separator
+     * the chars specified in the input variable charsToBeRemoved.
+     * &lt;BR&gt;For example if you call splitChars(&amp;quot;&amp;lt;DIV&amp;gt;  +12.5, +3.4 &amp;lt;/DIV&amp;gt;&amp;quot;, &amp;quot; &lt;&gt;DIV/,&amp;quot;),
+     * &lt;BR&gt;you obtain an array of strings {&amp;quot;+12.5&amp;quot;, &amp;quot;+3.4&amp;quot;} as output (space chars and &amp;lt;,&amp;gt;,D,I,V,/ and the comma are chars that must be removed).
+     * @param input The string in input.
+     * @param charsToBeRemoved The chars to be removed.
+     * @return The array of strings as output.
+    */
+    public static String[] splitChars (String input, String charsToBeRemoved)
+    {
+ 	
+<span class="fc" id="L539">        ArrayList output = new ArrayList();</span>
+<span class="fc" id="L540">        int minCapacity = 0;</span>
+<span class="fc" id="L541">        StringBuffer str = new StringBuffer();</span>
+
+<span class="fc" id="L543">        boolean charFound = false;</span>
+<span class="fc" id="L544">        boolean toBeAdd = false;</span>
+<span class="fc bfc" id="L545" title="All 2 branches covered.">        for (int index=0; index&lt;input.length(); index++)</span>
+        {    
+<span class="fc" id="L547">            charFound=false;</span>
+<span class="fc bfc" id="L548" title="All 2 branches covered.">            for (int charsCount=0; charsCount&lt;charsToBeRemoved.length(); charsCount++)</span>
+<span class="fc bfc" id="L549" title="All 2 branches covered.">                if (charsToBeRemoved.charAt(charsCount)==input.charAt(index))</span>
+<span class="fc" id="L550">                    charFound=true;</span>
+<span class="fc bfc" id="L551" title="All 2 branches covered.">            if (!(charFound))</span>
+            {
+<span class="fc" id="L553">                str.append(input.charAt(index));</span>
+<span class="fc" id="L554">                toBeAdd=false;</span>
+<span class="fc" id="L555">            }</span>
+            else
+<span class="fc bfc" id="L557" title="All 2 branches covered.">                if (!toBeAdd)</span>
+<span class="fc" id="L558">                    toBeAdd=true;</span>
+            // finished to parse one string
+<span class="fc bfc" id="L560" title="All 4 branches covered.">            if (toBeAdd &amp;&amp; (str.length()!=0)) {</span>
+<span class="fc" id="L561">                minCapacity++;</span>
+<span class="fc" id="L562">                output.ensureCapacity(minCapacity);</span>
+<span class="pc bpc" id="L563" title="1 of 2 branches missed.">                if (output.add(str.toString()))</span>
+<span class="fc" id="L564">                    str = new StringBuffer();</span>
+                else
+<span class="nc" id="L566">                    minCapacity--;</span>
+            }
+        }
+        // add the last string
+<span class="pc bpc" id="L570" title="1 of 2 branches missed.">        if (str.length()!=0) {</span>
+<span class="nc" id="L571">            minCapacity++;</span>
+<span class="nc" id="L572">            output.ensureCapacity(minCapacity);</span>
+<span class="nc bnc" id="L573" title="All 2 branches missed.">            if (output.add(str.toString()))</span>
+<span class="nc" id="L574">                str = new StringBuffer();</span>
+            else
+<span class="nc" id="L576">                minCapacity--;</span>
+        }
+
+<span class="fc" id="L579">        output.trimToSize();</span>
+<span class="fc" id="L580">        Object[] outputObj = output.toArray();</span>
+<span class="fc" id="L581">        String[] outputStr = new String[output.size()];</span>
+<span class="fc bfc" id="L582" title="All 2 branches covered.">        for (int i=0; i&lt;output.size(); i++)</span>
+<span class="fc" id="L583">            outputStr[i] = new String((String) outputObj[i]);</span>
+<span class="fc" id="L584">        return outputStr;</span>
+        
+    }
+
+    /**
+     * Remove from the input string all the chars specified in the input variable charsToBeRemoved.
+     * &lt;BR&gt;For example if you call trimChars(&amp;quot;&amp;lt;DIV&amp;gt;  +12.5 &amp;lt;/DIV&amp;gt;&amp;quot;, &amp;quot;&lt;&gt;DIV/ &amp;quot;),
+     * &lt;BR&gt;you obtain a string &amp;quot;+12.5&amp;quot; as output (&amp;lt;,&amp;gt;,D,I,V,/ and space char are chars that must be removed).
+     * &lt;BR&gt;For example if you call trimChars(&amp;quot;&amp;lt;DIV&amp;gt;  Trim All Chars Also The Ones Inside The String &amp;lt;/DIV&amp;gt;&amp;quot;, &amp;quot;&lt;&gt;DIV/ &amp;quot;),
+     * &lt;BR&gt;you obtain a string &amp;quot;TrimAllCharsAlsoTheOnesInsideTheString&amp;quot; as output (all the spaces inside the string are removed).
+     * @param input The string in input.
+     * @param charsToBeRemoved The chars to be removed.
+     * @return The string as output.
+    */
+    public static String trimChars (String input, String charsToBeRemoved)
+    {
+ 	
+<span class="fc" id="L601">        StringBuffer output = new StringBuffer();</span>
+
+<span class="fc" id="L603">        boolean charFound=false;</span>
+<span class="fc bfc" id="L604" title="All 2 branches covered.">        for (int index=0; index&lt;input.length(); index++)</span>
+        {    
+<span class="fc" id="L606">            charFound=false;</span>
+<span class="fc bfc" id="L607" title="All 2 branches covered.">            for (int charsCount=0; charsCount&lt;charsToBeRemoved.length(); charsCount++)</span>
+<span class="fc bfc" id="L608" title="All 2 branches covered.">                if (charsToBeRemoved.charAt(charsCount)==input.charAt(index))</span>
+<span class="fc" id="L609">                    charFound=true;</span>
+<span class="fc bfc" id="L610" title="All 2 branches covered.">            if (!(charFound))</span>
+<span class="fc" id="L611">                output.append(input.charAt(index));</span>
+        }
+
+<span class="fc" id="L614">        return output.toString();</span>
+
+    }
+
+    /**
+     * Remove from the beginning and the end of the input string all the chars specified in the input variable charsToBeRemoved.
+     * &lt;BR&gt;The removal process removes only chars at the beginning and at the end of the string.
+     * &lt;BR&gt;For example if you call trimCharsBeginEnd(&amp;quot;&amp;lt;DIV&amp;gt;  +12.5 &amp;lt;/DIV&amp;gt;&amp;quot;, &amp;quot;&lt;&gt;DIV/ &amp;quot;),
+     * &lt;BR&gt;you obtain a string &amp;quot;+12.5&amp;quot; as output (' ' is a space char and &amp;lt;,&amp;gt;,D,I,V,/ are chars that must be removed).
+     * &lt;BR&gt;For example if you call trimCharsBeginEnd(&amp;quot;&amp;lt;DIV&amp;gt;  Trim all spaces but not the ones inside the string &amp;lt;/DIV&amp;gt;&amp;quot;, &amp;quot;&lt;&gt;DIV/ &amp;quot;),
+     * &lt;BR&gt;you obtain a string &amp;quot;Trim all spaces but not the ones inside the string&amp;quot; as output (all the spaces inside the string are preserved).
+     * @param input The string in input.
+     * @param charsToBeRemoved The chars to be removed.
+     * @return The string as output.
+    */
+    public static String trimCharsBeginEnd (String input, String charsToBeRemoved)
+    {
+ 	
+<span class="fc" id="L632">        String output = new String();</span>
+
+<span class="fc" id="L634">        int begin=0;</span>
+<span class="fc" id="L635">        int end=input.length()-1;</span>
+<span class="fc" id="L636">        boolean charFound=false;</span>
+<span class="fc" id="L637">        boolean ok=true;</span>
+<span class="pc bpc" id="L638" title="1 of 4 branches missed.">        for (int index=begin; (index&lt;input.length()) &amp;&amp; ok; index++)</span>
+        {                
+<span class="fc" id="L640">            charFound=false;</span>
+<span class="fc bfc" id="L641" title="All 2 branches covered.">            for (int charsCount=0; charsCount&lt;charsToBeRemoved.length(); charsCount++)</span>
+<span class="fc bfc" id="L642" title="All 2 branches covered.">                if (charsToBeRemoved.charAt(charsCount)==input.charAt(index))</span>
+<span class="fc" id="L643">                    charFound=true;</span>
+<span class="fc bfc" id="L644" title="All 2 branches covered.">            if (!(charFound))</span>
+            {
+<span class="fc" id="L646">                begin=index;</span>
+<span class="fc" id="L647">                ok=false;</span>
+            }
+        }
+<span class="fc" id="L650">        ok=true;</span>
+<span class="pc bpc" id="L651" title="1 of 4 branches missed.">        for (int index=end; (index&gt;=0) &amp;&amp; ok; index--)</span>
+        {
+<span class="fc" id="L653">            charFound=false;</span>
+<span class="fc bfc" id="L654" title="All 2 branches covered.">            for (int charsCount=0; charsCount&lt;charsToBeRemoved.length(); charsCount++)</span>
+<span class="fc bfc" id="L655" title="All 2 branches covered.">                if (charsToBeRemoved.charAt(charsCount)==input.charAt(index))</span>
+<span class="fc" id="L656">                    charFound=true;</span>
+<span class="fc bfc" id="L657" title="All 2 branches covered.">            if (!(charFound))</span>
+            {
+<span class="fc" id="L659">                end=index;</span>
+<span class="fc" id="L660">                ok=false;</span>
+            }
+        }
+<span class="fc" id="L663">        output=input.substring(begin,end+1);</span>
+
+<span class="fc" id="L665">        return output;</span>
+        
+    }
+
+    /**
+     * Split the input string in a string array,
+     * considering the tags as delimiter for splitting.
+     * @see ParserUtils#splitTags (String input, String[] tags, boolean recursive, boolean insideTag).
+     */
+    public static String[] splitTags (String input, String[] tags)
+        throws ParserException, UnsupportedEncodingException
+    {
+<span class="fc" id="L677">        return splitTags (input, tags, true, true);</span>
+    }
+    
+    /**
+     * Split the input string in a string array,
+     * considering the tags as delimiter for splitting.
+     * &lt;BR&gt;For example if you call splitTags(&amp;quot;Begin &amp;lt;DIV&amp;gt;&amp;lt;DIV&amp;gt;  +12.5 &amp;lt;/DIV&amp;gt;&amp;lt;/DIV&amp;gt; ALL OK&amp;quot;, new String[] {&amp;quot;DIV&amp;quot;}),
+     * &lt;BR&gt;you obtain a string array {&amp;quot;Begin &amp;quot;, &amp;quot; ALL OK&amp;quot;} as output (splitted &amp;lt;DIV&amp;gt; tags and their content recursively).
+     * &lt;BR&gt;For example if you call splitTags(&amp;quot;Begin &amp;lt;DIV&amp;gt;&amp;lt;DIV&amp;gt;  +12.5 &amp;lt;/DIV&amp;gt;&amp;lt;/DIV&amp;gt; ALL OK&amp;quot;, new String[] {&amp;quot;DIV&amp;quot;}, false, false),
+     * &lt;BR&gt;you obtain a string array {&amp;quot;Begin &amp;quot;, &amp;quot;&amp;lt;DIV&amp;gt;  +12.5 &amp;lt;/DIV&amp;gt;&amp;quot;, &amp;quot; ALL OK&amp;quot;} as output (splitted &amp;lt;DIV&amp;gt; tags and not their content and no recursively).
+     * &lt;BR&gt;For example if you call splitTags(&amp;quot;Begin &amp;lt;DIV&amp;gt;&amp;lt;DIV&amp;gt;  +12.5 &amp;lt;/DIV&amp;gt;&amp;lt;/DIV&amp;gt; ALL OK&amp;quot;, new String[] {&amp;quot;DIV&amp;quot;}, true, false),
+     * &lt;BR&gt;you obtain a string array {&amp;quot;Begin &amp;quot;, &amp;quot;  +12.5 &amp;quot;, &amp;quot; ALL OK&amp;quot;} as output (splitted &amp;lt;DIV&amp;gt; tags and not their content recursively).
+     * &lt;BR&gt;For example if you call splitTags(&amp;quot;Begin &amp;lt;DIV&amp;gt;&amp;lt;DIV&amp;gt;  +12.5 &amp;lt;/DIV&amp;gt;&amp;lt;/DIV&amp;gt; ALL OK&amp;quot;, new String[] {&amp;quot;DIV&amp;quot;}, false, true),
+     * &lt;BR&gt;you obtain a string array {&amp;quot;Begin &amp;quot;, &amp;quot; ALL OK&amp;quot;} as output (splitted &amp;lt;DIV&amp;gt; tags and their content).
+     * @param input The string in input.
+     * @param tags The tags to be used as splitting delimiter.
+     * @param recursive Optional parameter (true if not present), if true delete all the tags recursively.
+     * @param insideTag Optional parameter (true if not present), if true delete also the content of the tags.
+     * @return The string array containing the strings delimited by tags.
+     */
+    public static String[] splitTags (String input, String[] tags, boolean recursive, boolean insideTag)
+        throws ParserException, UnsupportedEncodingException
+    {
+ 	
+<span class="fc" id="L701">        ArrayList outputArrayList = new ArrayList();</span>
+<span class="fc" id="L702">        int minCapacity = 0;</span>
+<span class="fc" id="L703">        String output = new String();</span>
+<span class="fc" id="L704">        String inputModified = new String(input);</span>
+<span class="fc" id="L705">        String[] outputStr = new String[] {};</span>
+        
+<span class="fc" id="L707">        String dummyString = createDummyString (' ', input.length());</span>
+        
+        // loop inside the different tags to be trimmed
+<span class="fc bfc" id="L710" title="All 2 branches covered.">        for (int i=0; i&lt;tags.length; i++)</span>
+        {
+            
+            // loop inside the tags of the same type
+<span class="fc" id="L714">            NodeList links = getLinks (inputModified, tags[i], recursive);</span>
+<span class="fc bfc" id="L715" title="All 2 branches covered.">            for (int j=0; j&lt;links.size(); j++)</span>
+            {
+<span class="fc" id="L717">                CompositeTag beginTag = (CompositeTag)links.elementAt(j);</span>
+<span class="fc" id="L718">                Tag endTag = beginTag.getEndTag();</span>
+
+                // positions of begin and end tags
+<span class="fc" id="L721">                int beginTagBegin = beginTag.getStartPosition ();</span>
+<span class="fc" id="L722">                int endTagBegin = beginTag.getEndPosition ();</span>
+<span class="fc" id="L723">                int beginTagEnd = endTag.getStartPosition ();</span>
+<span class="fc" id="L724">                int endTagEnd = endTag.getEndPosition ();</span>
+
+<span class="fc bfc" id="L726" title="All 2 branches covered.">                if (insideTag)</span>
+                {
+<span class="fc" id="L728">                    dummyString = modifyDummyString (new String(dummyString), beginTagBegin, endTagEnd);</span>
+<span class="fc" id="L729">                }</span>
+                else
+                {
+<span class="fc" id="L732">                    dummyString = modifyDummyString (new String(dummyString), beginTagBegin, endTagBegin);</span>
+<span class="fc" id="L733">                    dummyString = modifyDummyString (new String(dummyString), beginTagEnd, endTagEnd);</span>
+                }
+            }
+<span class="pc bpc" id="L736" title="1 of 4 branches missed.">            for (int k=dummyString.indexOf(' '); (k&lt;dummyString.length()) &amp;&amp; (k!=-1);)</span>
+            {
+<span class="fc" id="L738">                int kNew = dummyString.indexOf('*',k);</span>
+<span class="fc bfc" id="L739" title="All 2 branches covered.">                if (kNew!=-1)</span>
+                {
+<span class="fc" id="L741">                    output = inputModified.substring(k,kNew);</span>
+<span class="fc" id="L742">                    k = dummyString.indexOf(' ',kNew);</span>
+                    
+<span class="fc" id="L744">                    minCapacity++;</span>
+<span class="fc" id="L745">                    outputArrayList.ensureCapacity(minCapacity);</span>
+<span class="pc bpc" id="L746" title="1 of 2 branches missed.">                    if (outputArrayList.add(output))</span>
+<span class="fc" id="L747">                        output = new String();</span>
+                    else
+<span class="nc" id="L749">                        minCapacity--;</span>
+<span class="nc" id="L750">                }</span>
+                else
+                {
+<span class="fc" id="L753">                    output = inputModified.substring(k,dummyString.length());</span>
+<span class="fc" id="L754">                    k = kNew;</span>
+                    
+<span class="fc" id="L756">                    minCapacity++;</span>
+<span class="fc" id="L757">                    outputArrayList.ensureCapacity(minCapacity);</span>
+<span class="pc bpc" id="L758" title="1 of 2 branches missed.">                    if (outputArrayList.add(output))</span>
+<span class="fc" id="L759">                        output = new String();</span>
+                    else
+<span class="nc" id="L761">                        minCapacity--;</span>
+                }
+            }
+<span class="fc" id="L764">            StringBuffer outputStringBuffer = new StringBuffer();</span>
+<span class="fc" id="L765">            outputArrayList.trimToSize();</span>
+<span class="fc" id="L766">            Object[] outputObj = outputArrayList.toArray();</span>
+<span class="fc" id="L767">            outputStr = new String[outputArrayList.size()];</span>
+<span class="fc bfc" id="L768" title="All 2 branches covered.">            for (int j=0; j&lt;outputArrayList.size(); j++)</span>
+            {
+<span class="fc" id="L770">                outputStr[j] = new String((String) outputObj[j]);</span>
+<span class="fc" id="L771">                outputStringBuffer.append(outputStr[j]);</span>
+            }
+<span class="fc" id="L773">            outputArrayList = new ArrayList();</span>
+<span class="fc" id="L774">            inputModified = new String(outputStringBuffer.toString());</span>
+<span class="fc" id="L775">            dummyString = createDummyString (' ', inputModified.length());</span>
+        }
+        
+<span class="fc" id="L778">        return outputStr;</span>
+        
+    }
+    
+    /**
+     * Split the input string in a string array,
+     * considering the tags as delimiter for splitting.
+     * &lt;BR&gt;Use Class class as input parameter
+     * instead of tags[] string array.
+     * @see ParserUtils#splitTags (String input, String[] tags, boolean recursive, boolean insideTag).
+     */
+    public static String[] splitTags (String input, Class nodeType)
+        throws ParserException, UnsupportedEncodingException
+    {
+<span class="nc" id="L792">        return splitTags (input, new NodeClassFilter (nodeType), true, true);</span>
+    }
+    
+    /**
+     * Split the input string in a string array,
+     * considering the tags as delimiter for splitting.
+     * &lt;BR&gt;Use Class class as input parameter
+     * instead of tags[] string array.
+     * @see ParserUtils#splitTags (String input, String[] tags, boolean recursive, boolean insideTag).
+     */
+    public static String[] splitTags (String input, Class nodeType, boolean recursive, boolean insideTag)
+        throws ParserException, UnsupportedEncodingException
+    {
+<span class="nc" id="L805">        return splitTags (input, new NodeClassFilter (nodeType), recursive, insideTag);</span>
+    }
+ 	
+    /**
+     * Split the input string in a string array,
+     * considering the tags as delimiter for splitting.
+     * &lt;BR&gt;Use NodeFilter class as input parameter
+     * instead of tags[] string array.
+     * @see ParserUtils#splitTags (String input, String[] tags, boolean recursive, boolean insideTag).
+     */
+    public static String[] splitTags (String input, NodeFilter filter)
+        throws ParserException, UnsupportedEncodingException
+    {
+<span class="fc" id="L818">        return splitTags (input, filter, true, true);</span>
+    }
+    
+    /**
+     * Split the input string in a string array,
+     * considering the tags as delimiter for splitting.
+     * &lt;BR&gt;Use NodeFilter class as input parameter
+     * instead of tags[] string array.
+     * @see ParserUtils#splitTags (String input, String[] tags, boolean recursive, boolean insideTag).
+     */
+    public static String[] splitTags (String input, NodeFilter filter, boolean recursive, boolean insideTag)
+        throws ParserException, UnsupportedEncodingException
+    {
+ 	
+<span class="fc" id="L832">        ArrayList outputArrayList = new ArrayList();</span>
+<span class="fc" id="L833">        int minCapacity = 0;</span>
+<span class="fc" id="L834">        String output = new String();</span>
+        
+<span class="fc" id="L836">        String dummyString = createDummyString (' ', input.length());</span>
+
+        // loop inside the tags of the same type
+<span class="fc" id="L839">        NodeList links = getLinks (input, filter, recursive);</span>
+<span class="fc bfc" id="L840" title="All 2 branches covered.">        for (int j=0; j&lt;links.size(); j++)</span>
+        {
+<span class="fc" id="L842">            CompositeTag beginTag = (CompositeTag)links.elementAt(j);</span>
+<span class="fc" id="L843">            Tag endTag = beginTag.getEndTag();</span>
+
+            // positions of begin and end tags
+<span class="fc" id="L846">            int beginTagBegin = beginTag.getStartPosition ();</span>
+<span class="fc" id="L847">            int endTagBegin = beginTag.getEndPosition ();</span>
+<span class="fc" id="L848">            int beginTagEnd = endTag.getStartPosition ();</span>
+<span class="fc" id="L849">            int endTagEnd = endTag.getEndPosition ();</span>
+
+<span class="fc bfc" id="L851" title="All 2 branches covered.">            if (insideTag)</span>
+            {
+<span class="fc" id="L853">                dummyString = modifyDummyString (new String(dummyString), beginTagBegin, endTagEnd);</span>
+<span class="fc" id="L854">            }</span>
+            else
+            {
+<span class="fc" id="L857">                dummyString = modifyDummyString (new String(dummyString), beginTagBegin, endTagBegin);</span>
+<span class="fc" id="L858">                dummyString = modifyDummyString (new String(dummyString), beginTagEnd, endTagEnd);</span>
+            }
+        }
+<span class="pc bpc" id="L861" title="1 of 4 branches missed.">        for (int k=dummyString.indexOf(' '); (k&lt;dummyString.length()) &amp;&amp; (k!=-1);)</span>
+        {
+<span class="fc" id="L863">            int kNew = dummyString.indexOf('*',k);</span>
+<span class="fc bfc" id="L864" title="All 2 branches covered.">            if (kNew!=-1)</span>
+            {
+<span class="fc" id="L866">                output = input.substring(k,kNew);</span>
+<span class="fc" id="L867">                k = dummyString.indexOf(' ',kNew);</span>
+                    
+<span class="fc" id="L869">                minCapacity++;</span>
+<span class="fc" id="L870">                outputArrayList.ensureCapacity(minCapacity);</span>
+<span class="pc bpc" id="L871" title="1 of 2 branches missed.">                if (outputArrayList.add(output))</span>
+<span class="fc" id="L872">                    output = new String();</span>
+                else
+<span class="nc" id="L874">                    minCapacity--;</span>
+<span class="nc" id="L875">            }</span>
+            else
+            {
+<span class="fc" id="L878">                output = input.substring(k,dummyString.length());</span>
+<span class="fc" id="L879">                k = kNew;</span>
+                    
+<span class="fc" id="L881">                minCapacity++;</span>
+<span class="fc" id="L882">                outputArrayList.ensureCapacity(minCapacity);</span>
+<span class="pc bpc" id="L883" title="1 of 2 branches missed.">                if (outputArrayList.add(output))</span>
+<span class="fc" id="L884">                    output = new String();</span>
+                else
+<span class="nc" id="L886">                    minCapacity--;</span>
+            }
+            
+        }
+        
+<span class="fc" id="L891">        outputArrayList.trimToSize();</span>
+<span class="fc" id="L892">        Object[] outputObj = outputArrayList.toArray();</span>
+<span class="fc" id="L893">        String[] outputStr = new String[outputArrayList.size()];</span>
+<span class="fc bfc" id="L894" title="All 2 branches covered.">        for (int i=0; i&lt;outputArrayList.size(); i++)</span>
+<span class="fc" id="L895">            outputStr[i] = new String((String) outputObj[i]);</span>
+<span class="fc" id="L896">        return outputStr;</span>
+        
+    }
+
+    /**
+     * Trim the input string, removing all the tags in the input string.
+     * &lt;BR&gt;The method trims all the substrings included in the input string of the following type:
+     * &amp;quot;&amp;lt;XXX&amp;gt;&amp;quot;, where XXX could be a string of any type.
+     * &lt;BR&gt;If you set to true the inside parameter, the method deletes also the YYY string in the following input string:
+     * &amp;quot;&amp;lt;XXX&amp;gt;YYY&amp;lt;ZZZ&amp;gt;&amp;quot;, note that ZZZ is not necessary the closing tag of XXX.
+     * @param input The string in input.
+     * @param inside If true, it forces the method to delete also what is inside the tags.
+     * @return The string without tags.
+     */
+    public static String trimAllTags (String input, boolean inside)
+    {
+ 	
+<span class="fc" id="L913">        StringBuffer output = new StringBuffer();</span>
+
+<span class="fc bfc" id="L915" title="All 2 branches covered.">        if (inside) {</span>
+<span class="pc bpc" id="L916" title="2 of 6 branches missed.">            if ((input.indexOf('&lt;')==-1) || (input.lastIndexOf('&gt;')==-1) || (input.lastIndexOf('&gt;')&lt;input.indexOf('&lt;'))) {</span>
+<span class="fc" id="L917">                output.append(input);</span>
+<span class="fc" id="L918">            } else {</span>
+<span class="fc" id="L919">                output.append(input.substring(0, input.indexOf('&lt;')));</span>
+<span class="fc" id="L920">                output.append(input.substring(input.lastIndexOf('&gt;')+1, input.length()));</span>
+            }
+<span class="fc" id="L922">        } else {</span>
+<span class="fc" id="L923">            boolean write = true;</span>
+<span class="fc bfc" id="L924" title="All 2 branches covered.">            for (int index=0; index&lt;input.length(); index++)</span>
+            {    
+<span class="pc bpc" id="L926" title="1 of 4 branches missed.">                if (input.charAt(index)=='&lt;' &amp;&amp; write)</span>
+<span class="fc" id="L927">                    write = false;</span>
+<span class="fc bfc" id="L928" title="All 2 branches covered.">                if (write)</span>
+<span class="fc" id="L929">                    output.append(input.charAt(index));</span>
+<span class="pc bpc" id="L930" title="1 of 4 branches missed.">                if (input.charAt(index)=='&gt;' &amp;&amp; (!write))</span>
+<span class="fc" id="L931">                    write = true;</span>
+            }
+        }
+
+<span class="fc" id="L935">        return output.toString();</span>
+    }
+    
+
+    /**
+     * Trim all tags in the input string and
+     * return a string like the input one
+     * without the tags and their content.
+     * @see ParserUtils#trimTags (String input, String[] tags, boolean recursive, boolean insideTag).
+     */
+    public static String trimTags (String input, String[] tags)
+        throws ParserException, UnsupportedEncodingException
+    {
+<span class="fc" id="L948">        return trimTags (input, tags, true, true);</span>
+    }
+    
+    /**
+     * Trim all tags in the input string and
+     * return a string like the input one
+     * without the tags and their content (optional).
+     * &lt;BR&gt;For example if you call trimTags(&amp;quot;&amp;lt;DIV&amp;gt;&amp;lt;DIV&amp;gt;  +12.5 &amp;lt;/DIV&amp;gt;&amp;lt;/DIV&amp;gt; ALL OK&amp;quot;, new String[] {&amp;quot;DIV&amp;quot;}),
+     * &lt;BR&gt;you obtain a string &amp;quot; ALL OK&amp;quot; as output (trimmed &amp;lt;DIV&amp;gt; tags and their content recursively).
+     * &lt;BR&gt;For example if you call trimTags(&amp;quot;&amp;lt;DIV&amp;gt;&amp;lt;DIV&amp;gt;  +12.5 &amp;lt;/DIV&amp;gt;&amp;lt;/DIV&amp;gt; ALL OK&amp;quot;, new String[] {&amp;quot;DIV&amp;quot;}, false, false),
+     * &lt;BR&gt;you obtain a string &amp;quot;&amp;lt;DIV&amp;gt;  +12.5 &amp;lt;/DIV&amp;gt; ALL OK&amp;quot; as output (trimmed &amp;lt;DIV&amp;gt; tags and not their content and no recursively).
+     * &lt;BR&gt;For example if you call trimTags(&amp;quot;&amp;lt;DIV&amp;gt;&amp;lt;DIV&amp;gt;  +12.5 &amp;lt;/DIV&amp;gt;&amp;lt;/DIV&amp;gt; ALL OK&amp;quot;, new String[] {&amp;quot;DIV&amp;quot;}, true, false),
+     * &lt;BR&gt;you obtain a string &amp;quot;  +12.5  ALL OK&amp;quot; as output (trimmed &amp;lt;DIV&amp;gt; tags and not their content recursively).
+     * &lt;BR&gt;For example if you call trimTags(&amp;quot;&amp;lt;DIV&amp;gt;&amp;lt;DIV&amp;gt;  +12.5 &amp;lt;/DIV&amp;gt;&amp;lt;/DIV&amp;gt; ALL OK&amp;quot;, new String[] {&amp;quot;DIV&amp;quot;}, false, true),
+     * &lt;BR&gt;you obtain a string &amp;quot; ALL OK&amp;quot; as output (trimmed &amp;lt;DIV&amp;gt; tags and their content).
+     * @param input The string in input.
+     * @param tags The tags to be removed.
+     * @param recursive Optional parameter (true if not present), if true delete all the tags recursively.
+     * @param insideTag Optional parameter (true if not present), if true delete also the content of the tags.
+     * @return The string without tags.
+     */
+    public static String trimTags (String input, String[] tags, boolean recursive, boolean insideTag)
+        throws ParserException, UnsupportedEncodingException
+    {
+ 	
+<span class="fc" id="L973">        StringBuffer output = new StringBuffer();</span>
+<span class="fc" id="L974">        String inputModified = new String(input);</span>
+<span class="fc" id="L975">        String dummyString = createDummyString (' ', input.length());</span>
+            
+        // loop inside the different tags to be trimmed
+<span class="fc bfc" id="L978" title="All 2 branches covered.">        for (int i=0; i&lt;tags.length; i++)</span>
+        {
+<span class="fc" id="L980">            output = new StringBuffer();</span>
+            
+            // loop inside the tags of the same type
+<span class="fc" id="L983">            NodeList links = getLinks (inputModified, tags[i], recursive);</span>
+<span class="fc bfc" id="L984" title="All 2 branches covered.">            for (int j=0; j&lt;links.size(); j++)</span>
+            {
+<span class="fc" id="L986">                CompositeTag beginTag = (CompositeTag)links.elementAt(j);</span>
+<span class="fc" id="L987">                Tag endTag = beginTag.getEndTag();</span>
+
+                // positions of begin and end tags
+<span class="fc" id="L990">                int beginTagBegin = beginTag.getStartPosition ();</span>
+<span class="fc" id="L991">                int endTagBegin = beginTag.getEndPosition ();</span>
+<span class="fc" id="L992">                int beginTagEnd = endTag.getStartPosition ();</span>
+<span class="fc" id="L993">                int endTagEnd = endTag.getEndPosition ();</span>
+
+
+<span class="fc bfc" id="L996" title="All 2 branches covered.">                if (insideTag)</span>
+                {
+<span class="fc" id="L998">                    dummyString = modifyDummyString (new String(dummyString), beginTagBegin, endTagEnd);</span>
+<span class="fc" id="L999">                }</span>
+                else
+                {
+<span class="fc" id="L1002">                    dummyString = modifyDummyString (new String(dummyString), beginTagBegin, endTagBegin);</span>
+<span class="fc" id="L1003">                    dummyString = modifyDummyString (new String(dummyString), beginTagEnd, endTagEnd);</span>
+                }
+            }
+<span class="pc bpc" id="L1006" title="1 of 4 branches missed.">            for (int k=dummyString.indexOf(' '); (k&lt;dummyString.length()) &amp;&amp; (k!=-1);)</span>
+            {
+<span class="fc" id="L1008">                int kNew = dummyString.indexOf('*',k);</span>
+<span class="fc bfc" id="L1009" title="All 2 branches covered.">                if (kNew!=-1)</span>
+                {
+<span class="fc" id="L1011">                    output = output.append(inputModified.substring(k,kNew));</span>
+<span class="fc" id="L1012">                    k = dummyString.indexOf(' ',kNew);</span>
+<span class="fc" id="L1013">                }</span>
+                else
+                {
+<span class="fc" id="L1016">                    output = output.append(inputModified.substring(k,dummyString.length()));</span>
+<span class="fc" id="L1017">                    k = kNew;</span>
+                }
+            }
+<span class="fc" id="L1020">            inputModified = new String(output);</span>
+<span class="fc" id="L1021">            dummyString = createDummyString (' ', inputModified.length());</span>
+        }
+        
+<span class="fc" id="L1024">        return output.toString();</span>
+        
+    }
+    
+    /**
+     * Trim all tags in the input string and
+     * return a string like the input one
+     * without the tags and their content.
+     * &lt;BR&gt;Use Class class as input parameter
+     * instead of tags[] string array.
+     * @see ParserUtils#trimTags (String input, String[] tags, boolean recursive, boolean insideTag).
+     */
+    public static String trimTags (String input, Class nodeType)
+        throws ParserException, UnsupportedEncodingException
+    {
+<span class="nc" id="L1039">        return trimTags (input, new NodeClassFilter (nodeType), true, true);</span>
+    }
+
+    /**
+     * Trim all tags in the input string and
+     * return a string like the input one
+     * without the tags and their content (optional).
+     * &lt;BR&gt;Use Class class as input parameter
+     * instead of tags[] string array.
+     * @see ParserUtils#trimTags (String input, String[] tags, boolean recursive, boolean insideTag).
+     */
+    public static String trimTags (String input, Class nodeType, boolean recursive, boolean insideTag)
+        throws ParserException, UnsupportedEncodingException
+    {
+<span class="nc" id="L1053">        return trimTags (input, new NodeClassFilter (nodeType), recursive, insideTag);</span>
+    }
+
+    /**
+     * Trim all tags in the input string and
+     * return a string like the input one
+     * without the tags and their content.
+     * &lt;BR&gt;Use NodeFilter class as input parameter
+     * instead of tags[] string array.
+     * @see ParserUtils#trimTags (String input, String[] tags, boolean recursive, boolean insideTag).
+     */
+    public static String trimTags (String input, NodeFilter filter)
+        throws ParserException, UnsupportedEncodingException
+    {
+<span class="fc" id="L1067">        return trimTags (input, filter, true, true);</span>
+    }
+    
+    /**
+     * Trim all tags in the input string and
+     * return a string like the input one
+     * without the tags and their content (optional).
+     * &lt;BR&gt;Use NodeFilter class as input parameter
+     * instead of tags[] string array.
+     * @see ParserUtils#trimTags (String input, String[] tags, boolean recursive, boolean insideTag).
+     */
+    public static String trimTags (String input, NodeFilter filter, boolean recursive, boolean insideTag)
+        throws ParserException, UnsupportedEncodingException
+    {
+ 	
+<span class="fc" id="L1082">        StringBuffer output = new StringBuffer();</span>
+        
+<span class="fc" id="L1084">        String dummyString = createDummyString (' ', input.length());</span>
+
+        // loop inside the tags of the same type
+<span class="fc" id="L1087">        NodeList links = getLinks (input, filter, recursive);</span>
+<span class="fc bfc" id="L1088" title="All 2 branches covered.">        for (int j=0; j&lt;links.size(); j++)</span>
+        {
+<span class="fc" id="L1090">            CompositeTag beginTag = (CompositeTag)links.elementAt(j);</span>
+<span class="fc" id="L1091">            Tag endTag = beginTag.getEndTag();</span>
+
+            // positions of begin and end tags
+<span class="fc" id="L1094">            int beginTagBegin = beginTag.getStartPosition ();</span>
+<span class="fc" id="L1095">            int endTagBegin = beginTag.getEndPosition ();</span>
+<span class="fc" id="L1096">            int beginTagEnd = endTag.getStartPosition ();</span>
+<span class="fc" id="L1097">            int endTagEnd = endTag.getEndPosition ();</span>
+
+<span class="fc bfc" id="L1099" title="All 2 branches covered.">            if (insideTag)</span>
+            {
+<span class="fc" id="L1101">                dummyString = modifyDummyString (new String(dummyString), beginTagBegin, endTagEnd);</span>
+<span class="fc" id="L1102">            }</span>
+            else
+            {
+<span class="fc" id="L1105">                dummyString = modifyDummyString (new String(dummyString), beginTagBegin, endTagBegin);</span>
+<span class="fc" id="L1106">                dummyString = modifyDummyString (new String(dummyString), beginTagEnd, endTagEnd);</span>
+            }
+        }
+<span class="pc bpc" id="L1109" title="1 of 4 branches missed.">        for (int k=dummyString.indexOf(' '); (k&lt;dummyString.length()) &amp;&amp; (k!=-1);)</span>
+        {
+<span class="fc" id="L1111">            int kNew = dummyString.indexOf('*',k);</span>
+<span class="fc bfc" id="L1112" title="All 2 branches covered.">            if (kNew!=-1)</span>
+            {
+<span class="fc" id="L1114">                output = output.append(input.substring(k,kNew));</span>
+<span class="fc" id="L1115">                k = dummyString.indexOf(' ',kNew);</span>
+<span class="fc" id="L1116">            }</span>
+            else
+            {
+<span class="fc" id="L1119">                output = output.append(input.substring(k,dummyString.length()));</span>
+<span class="fc" id="L1120">                k = kNew;</span>
+            }
+            
+        }
+        
+<span class="fc" id="L1125">        return output.toString();</span>
+        
+    }
+    
+    /**
+     * Create a Parser Object having a String Object as input (instead of a url or a string representing the url location).
+     * &lt;BR&gt;The string will be parsed as it would be a file.
+     * @param input The string in input.
+     * @return The Parser Object with the string as input stream.
+     */
+    public static Parser createParserParsingAnInputString (String input)
+        throws ParserException, UnsupportedEncodingException
+    {
+ 	
+<span class="fc" id="L1139">        Parser parser = new Parser();</span>
+<span class="fc" id="L1140">        Lexer lexer = new Lexer();</span>
+<span class="fc" id="L1141">        Page page = new Page(input);</span>
+<span class="fc" id="L1142">        lexer.setPage(page);</span>
+<span class="fc" id="L1143">        parser.setLexer(lexer);</span>
+        
+<span class="fc" id="L1145">        return parser;</span>
+        
+    }
+
+    private static NodeList getLinks (String output, String tag, boolean recursive)
+        throws ParserException, UnsupportedEncodingException
+    {
+        
+<span class="fc" id="L1153">        Parser parser = new Parser();</span>
+<span class="fc" id="L1154">        NodeFilter filterLink = new TagNameFilter (tag);</span>
+<span class="fc" id="L1155">        NodeList links = new NodeList ();</span>
+<span class="fc" id="L1156">        parser = createParserParsingAnInputString(output);</span>
+<span class="fc" id="L1157">        links = parser.extractAllNodesThatMatch(filterLink);</span>
+
+        // loop to remove tags added recursively
+        // so if you have selected 'not recursive option'
+        // you have only the tag container and not the contained tags.
+<span class="fc bfc" id="L1162" title="All 2 branches covered.">        if (!recursive)</span>
+        {
+<span class="fc bfc" id="L1164" title="All 2 branches covered.">            for (int j=0; j&lt;links.size(); j++)</span>
+            {
+<span class="fc" id="L1166">                CompositeTag jStartTag = (CompositeTag)links.elementAt(j);</span>
+<span class="fc" id="L1167">                Tag jEndTag = jStartTag.getEndTag();</span>
+<span class="fc" id="L1168">                int jStartTagBegin = jStartTag.getStartPosition ();</span>
+<span class="fc" id="L1169">                int jEndTagEnd = jEndTag.getEndPosition ();</span>
+<span class="fc bfc" id="L1170" title="All 2 branches covered.">                for (int k=0; k&lt;links.size(); k++)</span>
+                {
+<span class="fc" id="L1172">                    CompositeTag kStartTag = (CompositeTag)links.elementAt(k);</span>
+<span class="fc" id="L1173">                    Tag kEndTag = kStartTag.getEndTag();</span>
+<span class="fc" id="L1174">                    int kStartTagBegin = kStartTag.getStartPosition ();</span>
+<span class="fc" id="L1175">                    int kEndTagEnd = kEndTag.getEndPosition ();</span>
+<span class="pc bpc" id="L1176" title="2 of 6 branches missed.">                    if ((k!=j) &amp;&amp; (kStartTagBegin&gt;jStartTagBegin) &amp;&amp; (kEndTagEnd&lt;jEndTagEnd))</span>
+                    {
+<span class="fc" id="L1178">                        links.remove(k);</span>
+<span class="fc" id="L1179">                        k--;</span>
+<span class="fc" id="L1180">                        j--;</span>
+                    }
+                }
+            }
+        }
+        
+<span class="fc" id="L1186">        return links;</span>
+        
+    }
+    
+    private static NodeList getLinks (String output, NodeFilter filter, boolean recursive)
+        throws ParserException, UnsupportedEncodingException
+    {
+        
+<span class="fc" id="L1194">        Parser parser = new Parser();</span>
+<span class="fc" id="L1195">        NodeList links = new NodeList ();</span>
+<span class="fc" id="L1196">        parser = createParserParsingAnInputString(output);</span>
+<span class="fc" id="L1197">        links = parser.extractAllNodesThatMatch(filter);</span>
+
+        // loop to remove tags added recursively
+        // so if you have selected 'not recursive option'
+        // you have only the tag container and not the contained tags.
+<span class="fc bfc" id="L1202" title="All 2 branches covered.">        if (!recursive)</span>
+        {
+<span class="fc bfc" id="L1204" title="All 2 branches covered.">            for (int j=0; j&lt;links.size(); j++)</span>
+            {
+<span class="fc" id="L1206">                CompositeTag jStartTag = (CompositeTag)links.elementAt(j);</span>
+<span class="fc" id="L1207">                Tag jEndTag = jStartTag.getEndTag();</span>
+<span class="fc" id="L1208">                int jStartTagBegin = jStartTag.getStartPosition ();</span>
+<span class="fc" id="L1209">                int jEndTagEnd = jEndTag.getEndPosition ();</span>
+<span class="fc bfc" id="L1210" title="All 2 branches covered.">                for (int k=0; k&lt;links.size(); k++)</span>
+                {
+<span class="fc" id="L1212">                    CompositeTag kStartTag = (CompositeTag)links.elementAt(k);</span>
+<span class="fc" id="L1213">                    Tag kEndTag = kStartTag.getEndTag();</span>
+<span class="fc" id="L1214">                    int kStartTagBegin = kStartTag.getStartPosition ();</span>
+<span class="fc" id="L1215">                    int kEndTagEnd = kEndTag.getEndPosition ();</span>
+<span class="fc bfc" id="L1216" title="All 6 branches covered.">                    if ((k!=j) &amp;&amp; (kStartTagBegin&gt;jStartTagBegin) &amp;&amp; (kEndTagEnd&lt;jEndTagEnd))</span>
+                    {
+<span class="fc" id="L1218">                        links.remove(k);</span>
+<span class="fc" id="L1219">                        k--;</span>
+<span class="fc" id="L1220">                        j--;</span>
+                    }
+                }
+            }
+        }
+        
+<span class="fc" id="L1226">        return links;</span>
+        
+    }
+    
+    private static String createDummyString (char fillingChar, int length)
+    {
+<span class="fc" id="L1232">        StringBuffer dummyStringBuffer = new StringBuffer();</span>
+<span class="fc bfc" id="L1233" title="All 2 branches covered.">        for (int j=0; j&lt;length; j++)</span>
+<span class="fc" id="L1234">            dummyStringBuffer = dummyStringBuffer.append(fillingChar);</span>
+<span class="fc" id="L1235">        return new String(dummyStringBuffer);</span>
+    }
+    
+    private static String modifyDummyString (String dummyString, int beginTag, int endTag)
+    {
+<span class="fc" id="L1240">        String dummyStringInterval = createDummyString ('*', endTag-beginTag);</span>
+<span class="fc" id="L1241">        return new String(dummyString.substring(0, beginTag) + dummyStringInterval + dummyString.substring(endTag, dummyString.length()));</span>
+    }
+    
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

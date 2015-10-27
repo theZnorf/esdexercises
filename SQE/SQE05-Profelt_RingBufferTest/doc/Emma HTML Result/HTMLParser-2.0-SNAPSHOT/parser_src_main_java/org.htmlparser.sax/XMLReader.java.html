@@ -1,0 +1,694 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>XMLReader.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.sax</a> &gt; <span class="el_source">XMLReader.java</span></div><h1>XMLReader.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/main/java/org/htmlparser/sax/XMLReader.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.sax;
+
+import java.io.IOException;
+import org.htmlparser.lexer.Lexer;
+import org.htmlparser.lexer.Page;
+
+import org.xml.sax.ContentHandler;
+import org.xml.sax.DTDHandler;
+import org.xml.sax.EntityResolver;
+import org.xml.sax.ErrorHandler;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXNotRecognizedException;
+import org.xml.sax.SAXNotSupportedException;
+import org.xml.sax.SAXParseException;
+import org.xml.sax.helpers.NamespaceSupport;
+
+import org.htmlparser.Node;
+import org.htmlparser.Parser;
+import org.htmlparser.Remark;
+import org.htmlparser.Tag;
+import org.htmlparser.Text;
+import org.htmlparser.util.DefaultParserFeedback;
+import org.htmlparser.util.NodeIterator;
+import org.htmlparser.util.NodeList;
+import org.htmlparser.util.ParserException;
+import org.htmlparser.util.ParserFeedback;
+
+/**
+ * SAX parser.
+ * Generates callbacks on the {@link ContentHandler} based on encountered nodes.
+ * &lt;br&gt;&lt;em&gt;Preliminary&lt;/em&gt;.
+ * &lt;pre&gt;
+ * org.xml.sax.XMLReader reader = org.xml.sax.helpers.XMLReaderFactory.createXMLReader (&quot;org.htmlparser.sax.XMLReader&quot;);
+ * org.xml.sax.ContentHandler content = new MyContentHandler ();
+ * reader.setContentHandler (content);
+ * org.xml.sax.ErrorHandler errors = new MyErrorHandler ();
+ * reader.setErrorHandler (errors);
+ * reader.parse (&quot;http://cbc.ca&quot;);
+ * &lt;/pre&gt;
+ */
+public class XMLReader
+    implements
+        org.xml.sax.XMLReader
+{
+    /**
+     * Determines if namespace handling is on.
+     * All XMLReaders are required to recognize the feature names:
+     * &lt;ul&gt;
+     * &lt;li&gt;&lt;code&gt;http://xml.org/sax/features/namespaces&lt;/code&gt; -
+     *     a value of &quot;true&quot; indicates namespace URIs and unprefixed
+     *     local names for element and attribute names will be available&lt;/li&gt;
+     * &lt;li&gt;&lt;code&gt;http://xml.org/sax/features/namespace-prefixes&lt;/code&gt; -
+     *     a value of &quot;true&quot; indicates that XML qualified names (with
+     *     prefixes) and attributes (including xmlns* attributes) will
+     *     be available.
+     * &lt;/ul&gt;
+     */
+    protected boolean mNameSpaces; // namespaces
+
+    /**
+     * Determines if namespace prefix handling is on.
+     * @see #mNameSpaces
+     */
+    protected boolean mNameSpacePrefixes; // namespace-prefixes
+
+    /**
+     * &lt;em&gt; not implemented&lt;/em&gt;
+     */
+    protected EntityResolver mEntityResolver;
+
+    /**
+     * &lt;em&gt; not implemented&lt;/em&gt;
+     */
+    protected DTDHandler mDTDHandler;
+
+    /**
+     * The content callback object.
+     */
+    protected ContentHandler mContentHandler;
+
+    /**
+     * The error handler object.
+     */
+    protected ErrorHandler mErrorHandler;
+
+    /**
+     * The underlying DOM parser.
+     */
+    protected Parser mParser;
+
+    /**
+     * Namspace utility object.
+     */
+    protected NamespaceSupport mSupport;
+
+    /**
+     * Qualified name parts.
+     */
+    protected String mParts[];
+
+    /**
+     * Create an SAX parser.
+     */
+<span class="nc" id="L130">    public XMLReader ()</span>
+    {
+<span class="nc" id="L132">        mNameSpaces = true;</span>
+<span class="nc" id="L133">        mNameSpacePrefixes = false;</span>
+        
+<span class="nc" id="L135">        mEntityResolver = null;</span>
+<span class="nc" id="L136">        mDTDHandler = null;</span>
+<span class="nc" id="L137">        mContentHandler = null;</span>
+<span class="nc" id="L138">        mErrorHandler = null;</span>
+
+<span class="nc" id="L140">        mSupport = new NamespaceSupport ();</span>
+<span class="nc" id="L141">        mSupport.pushContext ();</span>
+<span class="nc" id="L142">        mSupport.declarePrefix (&quot;&quot;, &quot;http://www.w3.org/TR/REC-html40&quot;);</span>
+        // todo:
+        //    xmlns:html='http://www.w3.org/TR/REC-html40'
+        // or xmlns:html='http://www.w3.org/1999/xhtml'
+<span class="nc" id="L146">        mParts = new String[3];</span>
+<span class="nc" id="L147">    }</span>
+    
+    ////////////////////////////////////////////////////////////////////
+    // Configuration.
+    ////////////////////////////////////////////////////////////////////
+
+
+    /**
+     * Look up the value of a feature flag.
+     *
+     * &lt;p&gt;The feature name is any fully-qualified URI.  It is
+     * possible for an XMLReader to recognize a feature name but
+     * temporarily be unable to return its value.
+     * Some feature values may be available only in specific
+     * contexts, such as before, during, or after a parse.
+     * Also, some feature values may not be programmatically accessible.
+     * (In the case of an adapter for SAX1 {@link Parser}, there is no
+     * implementation-independent way to expose whether the underlying
+     * parser is performing validation, expanding external entities,
+     * and so forth.) &lt;/p&gt;
+     *
+     * &lt;p&gt;All XMLReaders are required to recognize the
+     * http://xml.org/sax/features/namespaces and the
+     * http://xml.org/sax/features/namespace-prefixes feature names.&lt;/p&gt;
+     *
+     * &lt;p&gt;Typical usage is something like this:&lt;/p&gt;
+     *
+     * &lt;pre&gt;
+     * XMLReader r = new MySAXDriver();
+     *
+     *                         // try to activate validation
+     * try {
+     *   r.setFeature(&quot;http://xml.org/sax/features/validation&quot;, true);
+     * } catch (SAXException e) {
+     *   System.err.println(&quot;Cannot activate validation.&quot;); 
+     * }
+     *
+     *                         // register event handlers
+     * r.setContentHandler(new MyContentHandler());
+     * r.setErrorHandler(new MyErrorHandler());
+     *
+     *                         // parse the first document
+     * try {
+     *   r.parse(&quot;http://www.foo.com/mydoc.xml&quot;);
+     * } catch (IOException e) {
+     *   System.err.println(&quot;I/O exception reading XML document&quot;);
+     * } catch (SAXException e) {
+     *   System.err.println(&quot;XML exception reading document.&quot;);
+     * }
+     * &lt;/pre&gt;
+     *
+     * &lt;p&gt;Implementors are free (and encouraged) to invent their own features,
+     * using names built on their own URIs.&lt;/p&gt;
+     *
+     * @param name The feature name, which is a fully-qualified URI.
+     * @return The current value of the feature (true or false).
+     * @exception org.xml.sax.SAXNotRecognizedException If the feature
+     *            value can't be assigned or retrieved.
+     * @exception org.xml.sax.SAXNotSupportedException When the
+     *            XMLReader recognizes the feature name but 
+     *            cannot determine its value at this time.
+     * @see #setFeature
+     */
+    public boolean getFeature (String name)
+        throws SAXNotRecognizedException, SAXNotSupportedException
+    {
+        boolean ret;
+
+<span class="nc bnc" id="L215" title="All 2 branches missed.">        if (name.equals (&quot;http://xml.org/sax/features/namespaces&quot;))</span>
+<span class="nc" id="L216">            ret = mNameSpaces;</span>
+<span class="nc bnc" id="L217" title="All 2 branches missed.">        else if (name.equals (&quot;http://xml.org/sax/features/namespace-prefixes&quot;))</span>
+<span class="nc" id="L218">            ret = mNameSpacePrefixes;</span>
+        else
+<span class="nc" id="L220">            throw new SAXNotSupportedException (name + &quot; not yet understood&quot;);</span>
+
+<span class="nc" id="L222">        return (ret);</span>
+    }
+
+
+    /**
+     * Set the value of a feature flag.
+     *
+     * &lt;p&gt;The feature name is any fully-qualified URI.  It is
+     * possible for an XMLReader to expose a feature value but
+     * to be unable to change the current value.
+     * Some feature values may be immutable or mutable only 
+     * in specific contexts, such as before, during, or after 
+     * a parse.&lt;/p&gt;
+     *
+     * &lt;p&gt;All XMLReaders are required to support setting
+     * http://xml.org/sax/features/namespaces to true and
+     * http://xml.org/sax/features/namespace-prefixes to false.&lt;/p&gt;
+     *
+     * @param name The feature name, which is a fully-qualified URI.
+     * @param value The requested value of the feature (true or false).
+     * @exception org.xml.sax.SAXNotRecognizedException If the feature
+     *            value can't be assigned or retrieved.
+     * @exception org.xml.sax.SAXNotSupportedException When the
+     *            XMLReader recognizes the feature name but 
+     *            cannot set the requested value.
+     * @see #getFeature
+     */
+    public void setFeature (String name, boolean value)
+	throws SAXNotRecognizedException, SAXNotSupportedException
+    {
+<span class="nc bnc" id="L252" title="All 2 branches missed.">        if (name.equals (&quot;http://xml.org/sax/features/namespaces&quot;))</span>
+<span class="nc" id="L253">            mNameSpaces = value;</span>
+<span class="nc bnc" id="L254" title="All 2 branches missed.">        else if (name.equals (&quot;http://xml.org/sax/features/namespace-prefixes&quot;))</span>
+<span class="nc" id="L255">            mNameSpacePrefixes = value;</span>
+        else
+<span class="nc" id="L257">            throw new SAXNotSupportedException (name + &quot; not yet understood&quot;);</span>
+<span class="nc" id="L258">    }</span>
+
+
+    /**
+     * Look up the value of a property.
+     *
+     * &lt;p&gt;The property name is any fully-qualified URI.  It is
+     * possible for an XMLReader to recognize a property name but
+     * temporarily be unable to return its value.
+     * Some property values may be available only in specific
+     * contexts, such as before, during, or after a parse.&lt;/p&gt;
+     *
+     * &lt;p&gt;XMLReaders are not required to recognize any specific
+     * property names, though an initial core set is documented for
+     * SAX2.&lt;/p&gt;
+     *
+     * &lt;p&gt;Implementors are free (and encouraged) to invent their own properties,
+     * using names built on their own URIs.&lt;/p&gt;
+     *
+     * @param name The property name, which is a fully-qualified URI.
+     * @return The current value of the property.
+     * @exception org.xml.sax.SAXNotRecognizedException If the property
+     *            value can't be assigned or retrieved.
+     * @exception org.xml.sax.SAXNotSupportedException When the
+     *            XMLReader recognizes the property name but 
+     *            cannot determine its value at this time.
+     * @see #setProperty
+     */
+    public Object getProperty (String name)
+	throws SAXNotRecognizedException, SAXNotSupportedException
+    {
+<span class="nc" id="L289">        throw new SAXNotSupportedException (name + &quot; not yet understood&quot;);</span>
+    }
+
+
+    /**
+     * Set the value of a property.
+     *
+     * &lt;p&gt;The property name is any fully-qualified URI.  It is
+     * possible for an XMLReader to recognize a property name but
+     * to be unable to change the current value.
+     * Some property values may be immutable or mutable only 
+     * in specific contexts, such as before, during, or after 
+     * a parse.&lt;/p&gt;
+     *
+     * &lt;p&gt;XMLReaders are not required to recognize setting
+     * any specific property names, though a core set is defined by 
+     * SAX2.&lt;/p&gt;
+     *
+     * &lt;p&gt;This method is also the standard mechanism for setting
+     * extended handlers.&lt;/p&gt;
+     *
+     * @param name The property name, which is a fully-qualified URI.
+     * @param value The requested value for the property.
+     * @exception org.xml.sax.SAXNotRecognizedException If the property
+     *            value can't be assigned or retrieved.
+     * @exception org.xml.sax.SAXNotSupportedException When the
+     *            XMLReader recognizes the property name but 
+     *            cannot set the requested value.
+     */
+    public void setProperty (String name, Object value)
+	throws SAXNotRecognizedException, SAXNotSupportedException
+    {
+<span class="nc" id="L321">        throw new SAXNotSupportedException (name + &quot; not yet understood&quot;);</span>
+    }
+
+    ////////////////////////////////////////////////////////////////////
+    // Event handlers.
+    ////////////////////////////////////////////////////////////////////
+
+
+    /**
+     * Allow an application to register an entity resolver.
+     *
+     * &lt;p&gt;If the application does not register an entity resolver,
+     * the XMLReader will perform its own default resolution.&lt;/p&gt;
+     *
+     * &lt;p&gt;Applications may register a new or different resolver in the
+     * middle of a parse, and the SAX parser must begin using the new
+     * resolver immediately.&lt;/p&gt;
+     *
+     * @param resolver The entity resolver.
+     * @see #getEntityResolver
+     */
+    public void setEntityResolver (EntityResolver resolver)
+    {
+<span class="nc" id="L344">        mEntityResolver = resolver;</span>
+<span class="nc" id="L345">    }</span>
+
+
+    /**
+     * Return the current entity resolver.
+     *
+     * @return The current entity resolver, or null if none
+     *         has been registered.
+     * @see #setEntityResolver
+     */
+    public EntityResolver getEntityResolver ()
+    {
+<span class="nc" id="L357">        return (mEntityResolver);</span>
+    }
+
+
+    /**
+     * Allow an application to register a DTD event handler.
+     *
+     * &lt;p&gt;If the application does not register a DTD handler, all DTD
+     * events reported by the SAX parser will be silently ignored.&lt;/p&gt;
+     *
+     * &lt;p&gt;Applications may register a new or different handler in the
+     * middle of a parse, and the SAX parser must begin using the new
+     * handler immediately.&lt;/p&gt;
+     *
+     * @param handler The DTD handler.
+     * @see #getDTDHandler
+     */
+    public void setDTDHandler (DTDHandler handler)
+    {
+<span class="nc" id="L376">        mDTDHandler = handler;</span>
+<span class="nc" id="L377">    }</span>
+
+
+    /**
+     * Return the current DTD handler.
+     *
+     * @return The current DTD handler, or null if none
+     *         has been registered.
+     * @see #setDTDHandler
+     */
+    public DTDHandler getDTDHandler ()
+    {
+<span class="nc" id="L389">        return (mDTDHandler);</span>
+    }
+
+
+    /**
+     * Allow an application to register a content event handler.
+     *
+     * &lt;p&gt;If the application does not register a content handler, all
+     * content events reported by the SAX parser will be silently
+     * ignored.&lt;/p&gt;
+     *
+     * &lt;p&gt;Applications may register a new or different handler in the
+     * middle of a parse, and the SAX parser must begin using the new
+     * handler immediately.&lt;/p&gt;
+     *
+     * @param handler The content handler.
+     * @see #getContentHandler
+     */
+    public void setContentHandler (ContentHandler handler)
+    {
+<span class="nc" id="L409">        mContentHandler = handler;</span>
+<span class="nc" id="L410">    }</span>
+
+
+    /**
+     * Return the current content handler.
+     *
+     * @return The current content handler, or null if none
+     *         has been registered.
+     * @see #setContentHandler
+     */
+    public ContentHandler getContentHandler ()
+    {
+<span class="nc" id="L422">        return (mContentHandler);</span>
+    }
+
+
+    /**
+     * Allow an application to register an error event handler.
+     *
+     * &lt;p&gt;If the application does not register an error handler, all
+     * error events reported by the SAX parser will be silently
+     * ignored; however, normal processing may not continue.  It is
+     * highly recommended that all SAX applications implement an
+     * error handler to avoid unexpected bugs.&lt;/p&gt;
+     *
+     * &lt;p&gt;Applications may register a new or different handler in the
+     * middle of a parse, and the SAX parser must begin using the new
+     * handler immediately.&lt;/p&gt;
+     *
+     * @param handler The error handler.
+     * @see #getErrorHandler
+     */
+    public void setErrorHandler (ErrorHandler handler)
+    {
+<span class="nc" id="L444">        mErrorHandler = handler;</span>
+<span class="nc" id="L445">    }</span>
+
+
+    /**
+     * Return the current error handler.
+     *
+     * @return The current error handler, or null if none
+     *         has been registered.
+     * @see #setErrorHandler
+     */
+    public ErrorHandler getErrorHandler ()
+    {
+<span class="nc" id="L457">        return (mErrorHandler);</span>
+    }
+
+
+    ////////////////////////////////////////////////////////////////////
+    // Parsing.
+    ////////////////////////////////////////////////////////////////////
+
+    /**
+     * Parse an XML document.
+     *
+     * &lt;p&gt;The application can use this method to instruct the XML
+     * reader to begin parsing an XML document from any valid input
+     * source (a character stream, a byte stream, or a URI).&lt;/p&gt;
+     *
+     * &lt;p&gt;Applications may not invoke this method while a parse is in
+     * progress (they should create a new XMLReader instead for each
+     * nested XML document).  Once a parse is complete, an
+     * application may reuse the same XMLReader object, possibly with a
+     * different input source.
+     * Configuration of the XMLReader object (such as handler bindings and
+     * values established for feature flags and properties) is unchanged
+     * by completion of a parse, unless the definition of that aspect of
+     * the configuration explicitly specifies other behavior.
+     * (For example, feature flags or properties exposing
+     * characteristics of the document being parsed.)
+     * &lt;/p&gt;
+     *
+     * &lt;p&gt;During the parse, the XMLReader will provide information
+     * about the XML document through the registered event
+     * handlers.&lt;/p&gt;
+     *
+     * &lt;p&gt;This method is synchronous: it will not return until parsing
+     * has ended.  If a client application wants to terminate 
+     * parsing early, it should throw an exception.&lt;/p&gt;
+     *
+     * @param input The input source for the top-level of the
+     *        XML document.
+     * @exception org.xml.sax.SAXException Any SAX exception, possibly
+     *            wrapping another exception.
+     * @exception java.io.IOException An IO exception from the parser,
+     *            possibly from a byte stream or character stream
+     *            supplied by the application.
+     * @see org.xml.sax.InputSource
+     * @see #parse(java.lang.String)
+     * @see #setEntityResolver
+     * @see #setDTDHandler
+     * @see #setContentHandler
+     * @see #setErrorHandler 
+     */
+    public void parse (InputSource input)
+	throws IOException, SAXException
+    {
+        Locator locator;
+        ParserFeedback feedback;
+
+<span class="nc bnc" id="L513" title="All 2 branches missed.">        if (null != mContentHandler)</span>
+            try
+            {
+<span class="nc" id="L516">                mParser = new Parser (</span>
+<span class="nc" id="L517">                    new Lexer (</span>
+<span class="nc" id="L518">                        new Page (</span>
+<span class="nc" id="L519">                            input.getByteStream (),</span>
+<span class="nc" id="L520">                            input.getEncoding ())));</span>
+<span class="nc" id="L521">                locator = new Locator (mParser);</span>
+<span class="nc bnc" id="L522" title="All 2 branches missed.">                if (null != mErrorHandler)</span>
+<span class="nc" id="L523">                    feedback = new Feedback (mErrorHandler, locator);</span>
+                else
+<span class="nc" id="L525">                    feedback = new DefaultParserFeedback (0);</span>
+<span class="nc" id="L526">                mParser.setFeedback (feedback);</span>
+<span class="nc" id="L527">                mContentHandler.setDocumentLocator (locator);</span>
+                try
+                {
+<span class="nc" id="L530">                    mContentHandler.startDocument ();</span>
+<span class="nc" id="L531">                    for (NodeIterator iterator = mParser.elements ();</span>
+<span class="nc bnc" id="L532" title="All 2 branches missed.">                                        iterator.hasMoreNodes ();</span>
+<span class="nc" id="L533">                        doSAX (iterator.nextNode ()));</span>
+<span class="nc" id="L534">                    mContentHandler.endDocument ();</span>
+<span class="nc" id="L535">                }</span>
+<span class="nc" id="L536">                catch (SAXException se)</span>
+                {
+<span class="nc bnc" id="L538" title="All 2 branches missed.">                    if (null != mErrorHandler)</span>
+<span class="nc" id="L539">                        mErrorHandler.fatalError (new SAXParseException (</span>
+<span class="nc" id="L540">                            &quot;contentHandler threw me&quot;, locator, se));</span>
+                }
+<span class="nc" id="L542">            }</span>
+<span class="nc" id="L543">            catch (ParserException pe)</span>
+            {
+<span class="nc bnc" id="L545" title="All 2 branches missed.">                if (null != mErrorHandler)</span>
+<span class="nc" id="L546">                    mErrorHandler.fatalError (new SAXParseException (</span>
+<span class="nc" id="L547">                        pe.getMessage (), &quot;&quot;, &quot;&quot;, 0, 0));</span>
+            }
+<span class="nc" id="L549">    }</span>
+
+    /**
+     * Parse an XML document from a system identifier (URI).
+     *
+     * &lt;p&gt;This method is a shortcut for the common case of reading a
+     * document from a system identifier.  It is the exact
+     * equivalent of the following:&lt;/p&gt;
+     *
+     * &lt;pre&gt;
+     * parse(new InputSource(systemId));
+     * &lt;/pre&gt;
+     *
+     * &lt;p&gt;If the system identifier is a URL, it must be fully resolved
+     * by the application before it is passed to the parser.&lt;/p&gt;
+     *
+     * @param systemId The system identifier (URI).
+     * @exception org.xml.sax.SAXException Any SAX exception, possibly
+     *            wrapping another exception.
+     * @exception java.io.IOException An IO exception from the parser,
+     *            possibly from a byte stream or character stream
+     *            supplied by the application.
+     * @see #parse(org.xml.sax.InputSource)
+     */
+    public void parse (String systemId)
+	throws IOException, SAXException
+    {
+        Locator locator;
+        ParserFeedback feedback;
+
+<span class="nc bnc" id="L579" title="All 2 branches missed.">        if (null != mContentHandler)</span>
+            try
+            {
+<span class="nc" id="L582">                mParser = new Parser (systemId);</span>
+<span class="nc" id="L583">                locator = new Locator (mParser);</span>
+<span class="nc bnc" id="L584" title="All 2 branches missed.">                if (null != mErrorHandler)</span>
+<span class="nc" id="L585">                    feedback = new Feedback (mErrorHandler, locator);</span>
+                else
+<span class="nc" id="L587">                    feedback = new DefaultParserFeedback (DefaultParserFeedback.QUIET);</span>
+<span class="nc" id="L588">                mParser.setFeedback (feedback);</span>
+
+                // OK, try a simplistic parse
+<span class="nc" id="L591">                mContentHandler.setDocumentLocator (locator);</span>
+                try
+                {
+<span class="nc" id="L594">                    mContentHandler.startDocument ();</span>
+<span class="nc bnc" id="L595" title="All 2 branches missed.">                    for (NodeIterator iterator = mParser.elements (); iterator.hasMoreNodes (); )</span>
+<span class="nc" id="L596">                        doSAX (iterator.nextNode ());</span>
+<span class="nc" id="L597">                    mContentHandler.endDocument ();</span>
+<span class="nc" id="L598">                }</span>
+<span class="nc" id="L599">                catch (SAXException se)</span>
+                {
+<span class="nc bnc" id="L601" title="All 2 branches missed.">                    if (null != mErrorHandler)</span>
+<span class="nc" id="L602">                        mErrorHandler.fatalError (</span>
+<span class="nc" id="L603">                            new SAXParseException (&quot;contentHandler threw me&quot;, locator, se));</span>
+                }
+<span class="nc" id="L605">            }</span>
+<span class="nc" id="L606">            catch (ParserException pe)</span>
+            {
+<span class="nc bnc" id="L608" title="All 2 branches missed.">                if (null != mErrorHandler)</span>
+<span class="nc" id="L609">                    mErrorHandler.fatalError (</span>
+<span class="nc" id="L610">                        new SAXParseException (pe.getMessage (), &quot;&quot;, systemId, 0, 0));</span>
+
+            }
+<span class="nc" id="L613">    }</span>
+
+    /**
+     * Process nodes recursively on the DocumentHandler.
+     * Calls methods on the handler based on the type and whether it's an end tag.
+     * Processes composite tags recursively.
+     * Does rudimentary namespace processing according to the state of {@link #mNameSpaces}
+     * and {@link #mNameSpacePrefixes}. 
+     * @param node The htmlparser node to traverse.
+     * @exception ParserException If a parse error occurs.
+     * @exception SAXException If a SAX error occurs.
+     */
+    protected void doSAX (Node node)
+        throws
+            ParserException,
+            SAXException
+    {
+        Tag tag;
+        Tag end;
+
+<span class="nc bnc" id="L633" title="All 2 branches missed.">        if (node instanceof Remark)</span>
+        {
+<span class="nc" id="L635">            String text = mParser.getLexer ().getPage ().getText (node.getStartPosition (), node.getEndPosition ());</span>
+<span class="nc" id="L636">            mContentHandler.ignorableWhitespace (text.toCharArray (), 0, text.length ());</span>
+<span class="nc" id="L637">        }</span>
+<span class="nc bnc" id="L638" title="All 2 branches missed.">        else if (node instanceof Text)</span>
+        {
+<span class="nc" id="L640">            String text = mParser.getLexer ().getPage ().getText (node.getStartPosition (), node.getEndPosition ());</span>
+<span class="nc" id="L641">            mContentHandler.characters (text.toCharArray (), 0, text.length ());</span>
+<span class="nc" id="L642">        }</span>
+<span class="nc bnc" id="L643" title="All 2 branches missed.">        else if (node instanceof Tag)</span>
+        {
+<span class="nc" id="L645">            tag = (Tag)node;</span>
+<span class="nc bnc" id="L646" title="All 2 branches missed.">            if (mNameSpaces)</span>
+<span class="nc" id="L647">                mSupport.processName (tag.getTagName (), mParts, false);</span>
+            else
+            {
+<span class="nc" id="L650">                mParts[0] = &quot;&quot;;</span>
+<span class="nc" id="L651">                mParts[1] = &quot;&quot;;</span>
+            }
+<span class="nc bnc" id="L653" title="All 2 branches missed.">            if (mNameSpacePrefixes)</span>
+<span class="nc" id="L654">                mParts[2] = tag.getTagName ();</span>
+<span class="nc bnc" id="L655" title="All 2 branches missed.">            else if (mNameSpaces)</span>
+<span class="nc" id="L656">                mParts[2] = &quot;&quot;;</span>
+            else
+<span class="nc" id="L658">                mParts[2] = tag.getTagName ();</span>
+
+<span class="nc" id="L660">            mContentHandler.startElement (</span>
+<span class="nc" id="L661">                mParts[0], // uri</span>
+<span class="nc" id="L662">                mParts[1], // local</span>
+<span class="nc" id="L663">                mParts[2], // raw</span>
+<span class="nc" id="L664">                new Attributes (tag, mSupport, mParts));</span>
+<span class="nc" id="L665">            NodeList children = tag.getChildren ();</span>
+<span class="nc bnc" id="L666" title="All 2 branches missed.">            if (null != children)</span>
+<span class="nc bnc" id="L667" title="All 2 branches missed.">                for (int i = 0; i &lt; children.size (); i++)</span>
+<span class="nc" id="L668">                    doSAX (children.elementAt (i));</span>
+<span class="nc" id="L669">            end = tag.getEndTag ();</span>
+<span class="nc bnc" id="L670" title="All 2 branches missed.">            if (null != end)</span>
+            {
+<span class="nc bnc" id="L672" title="All 2 branches missed.">                if (mNameSpaces)</span>
+<span class="nc" id="L673">                    mSupport.processName (end.getTagName (), mParts, false);</span>
+                else
+                {
+<span class="nc" id="L676">                    mParts[0] = &quot;&quot;;</span>
+<span class="nc" id="L677">                    mParts[1] = &quot;&quot;;</span>
+                }
+<span class="nc bnc" id="L679" title="All 2 branches missed.">                if (mNameSpacePrefixes)</span>
+<span class="nc" id="L680">                    mParts[2] = end.getTagName ();</span>
+<span class="nc bnc" id="L681" title="All 2 branches missed.">                else if (mNameSpaces)</span>
+<span class="nc" id="L682">                    mParts[2] = &quot;&quot;;</span>
+                else
+<span class="nc" id="L684">                    mParts[2] = end.getTagName ();</span>
+<span class="nc" id="L685">                mContentHandler.endElement (</span>
+<span class="nc" id="L686">                    mParts[0], // uri</span>
+<span class="nc" id="L687">                    mParts[1], // local</span>
+<span class="nc" id="L688">                    mParts[2]); // raw</span>
+            }
+        }
+<span class="nc" id="L691">    }</span>
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

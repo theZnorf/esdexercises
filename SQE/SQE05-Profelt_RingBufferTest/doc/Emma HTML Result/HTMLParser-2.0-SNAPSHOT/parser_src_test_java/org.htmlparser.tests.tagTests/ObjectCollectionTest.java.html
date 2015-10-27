@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>ObjectCollectionTest.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tests.tagTests</a> &gt; <span class="el_source">ObjectCollectionTest.java</span></div><h1>ObjectCollectionTest.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Somik Raha
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/test/java/org/htmlparser/tests/tagTests/ObjectCollectionTest.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 13:37:00 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 5 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tests.tagTests;
+
+import org.htmlparser.Node;
+import org.htmlparser.PrototypicalNodeFactory;
+import org.htmlparser.Tag;
+import org.htmlparser.filters.NodeClassFilter;
+import org.htmlparser.tags.Div;
+import org.htmlparser.tags.Span;
+import org.htmlparser.tags.TableTag;
+import org.htmlparser.tests.ParserTestCase;
+import org.htmlparser.util.NodeList;
+import org.htmlparser.util.ParserException;
+import org.htmlparser.util.ParserUtils;
+
+public class ObjectCollectionTest extends ParserTestCase {
+
+    static
+    {
+<span class="fc" id="L44">        System.setProperty (&quot;org.htmlparser.tests.tagTests.ObjectCollectionTest&quot;, &quot;ObjectCollectionTest&quot;);</span>
+<span class="fc" id="L45">    }</span>
+
+    public ObjectCollectionTest(String name) {
+<span class="fc" id="L48">        super(name);</span>
+<span class="fc" id="L49">    }</span>
+
+    private void assertSpanContent(Node[] spans) {
+<span class="fc" id="L52">        assertEquals(&quot;number of span objects expected&quot;,2,spans.length);</span>
+<span class="fc" id="L53">        assertType(&quot;span&quot;,Span.class,spans[0]);</span>
+<span class="fc" id="L54">        assertType(&quot;span&quot;,Span.class,spans[1]);</span>
+<span class="fc" id="L55">        assertStringEquals(</span>
+<span class="fc" id="L56">            &quot;span[0] text&quot;,</span>
+<span class="fc" id="L57">            &quot;The Refactoring Challenge&quot;,</span>
+<span class="fc" id="L58">            spans[0].toPlainTextString()</span>
+        );
+<span class="fc" id="L60">        assertStringEquals(</span>
+<span class="fc" id="L61">            &quot;span[1] text&quot;,</span>
+<span class="fc" id="L62">            &quot;&amp;#013;id: 6&quot;,</span>
+<span class="fc" id="L63">            spans[1].toPlainTextString()</span>
+        );
+<span class="fc" id="L65">    }</span>
+    private void assertSpanContent(NodeList spans) {
+<span class="fc" id="L67">        assertEquals(&quot;number of span objects expected&quot;,2,spans.size ());</span>
+<span class="fc" id="L68">        assertType(&quot;span&quot;,Span.class,spans.elementAt (0));</span>
+<span class="fc" id="L69">        assertType(&quot;span&quot;,Span.class,spans.elementAt (1));</span>
+<span class="fc" id="L70">        assertStringEquals(</span>
+<span class="fc" id="L71">            &quot;span[0] text&quot;,</span>
+<span class="fc" id="L72">            &quot;The Refactoring Challenge&quot;,</span>
+<span class="fc" id="L73">            spans.elementAt (0).toPlainTextString()</span>
+        );
+<span class="fc" id="L75">        assertStringEquals(</span>
+<span class="fc" id="L76">            &quot;span[1] text&quot;,</span>
+<span class="fc" id="L77">            &quot;&amp;#013;id: 6&quot;,</span>
+<span class="fc" id="L78">            spans.elementAt (1).toPlainTextString()</span>
+        );
+<span class="fc" id="L80">    }</span>
+
+    public void testSimpleSearch() throws ParserException {
+<span class="fc" id="L83">        createParser(</span>
+<span class="fc" id="L84">            &quot;&lt;SPAN&gt;The Refactoring Challenge&lt;/SPAN&gt;&quot; +</span>
+            &quot;&lt;SPAN&gt;&amp;#013;id: 6&lt;/SPAN&gt;&quot;
+        );
+<span class="fc" id="L87">        parser.setNodeFactory (new PrototypicalNodeFactory (new Span ()));</span>
+<span class="fc" id="L88">        assertSpanContent(parser.extractAllNodesThatMatch (new NodeClassFilter (Span.class)));</span>
+<span class="fc" id="L89">    }</span>
+
+    public void testOneLevelNesting() throws ParserException {
+<span class="fc" id="L92">        createParser(</span>
+<span class="fc" id="L93">            &quot;&lt;DIV&gt;&quot; +</span>
+            &quot;   &lt;SPAN&gt;The Refactoring Challenge&lt;/SPAN&gt;&quot; +
+            &quot;   &lt;SPAN&gt;&amp;#013;id: 6&lt;/SPAN&gt;&quot; +
+            &quot;&lt;/DIV&gt;&quot;
+        );
+<span class="fc" id="L98">        parser.setNodeFactory (</span>
+<span class="fc" id="L99">            new PrototypicalNodeFactory (</span>
+                new Tag[]
+<span class="fc" id="L101">                {</span>
+<span class="fc" id="L102">                    new Div (),</span>
+<span class="fc" id="L103">                    new Span (),</span>
+                }));
+<span class="fc" id="L105">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L106">        Div div = (Div)node[0];</span>
+<span class="fc" id="L107">        Node[] spans = ParserUtils.findTypeInNode (div, Span.class);</span>
+<span class="fc" id="L108">        assertSpanContent(spans);</span>
+<span class="fc" id="L109">    }</span>
+
+    public void testTwoLevelNesting() throws ParserException {
+<span class="fc" id="L112">        createParser(</span>
+<span class="fc" id="L113">            &quot;&lt;table&gt;&quot; +</span>
+            &quot;   &lt;DIV&gt;&quot; +
+            &quot;       &lt;SPAN&gt;The Refactoring Challenge&lt;/SPAN&gt;&quot; +
+            &quot;       &lt;SPAN&gt;&amp;#013;id: 6&lt;/SPAN&gt;&quot; +
+            &quot;   &lt;/DIV&gt;&quot; +
+            &quot;&lt;/table&gt;&quot;
+        );
+<span class="fc" id="L120">        parser.setNodeFactory (</span>
+<span class="fc" id="L121">            new PrototypicalNodeFactory (</span>
+                new Tag[]
+<span class="fc" id="L123">                {</span>
+<span class="fc" id="L124">                    new Div (),</span>
+<span class="fc" id="L125">                    new Span (),</span>
+<span class="fc" id="L126">                    new TableTag (),</span>
+                }));
+<span class="fc" id="L128">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L129">        TableTag tableTag = (TableTag)node[0];</span>
+<span class="fc" id="L130">        Node[] spans = ParserUtils.findTypeInNode (tableTag, Span.class);</span>
+<span class="fc" id="L131">        assertSpanContent(spans);</span>
+<span class="fc" id="L132">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

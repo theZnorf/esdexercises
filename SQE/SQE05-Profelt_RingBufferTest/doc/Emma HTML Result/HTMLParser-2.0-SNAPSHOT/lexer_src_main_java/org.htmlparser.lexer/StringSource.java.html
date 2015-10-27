@@ -1,0 +1,438 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>StringSource.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">lexer/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.lexer</a> &gt; <span class="el_source">StringSource.java</span></div><h1>StringSource.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/lexer/src/main/java/org/htmlparser/lexer/StringSource.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.lexer;
+
+import java.io.IOException;
+import org.htmlparser.util.ParserException;
+
+/**
+ * A source of characters based on a String.
+ */
+public class StringSource
+    extends
+        Source
+{
+    /**
+     * The source of characters.
+     */
+    protected String mString;
+
+    /**
+     * The current offset into the string.
+     */
+    protected int mOffset;
+
+    /**
+     * The encoding to report.
+     * Only used by {@link #getEncoding}.
+     */
+    protected String mEncoding;
+
+    /**
+     * The bookmark.
+     */
+    protected int mMark;
+
+    /**
+     * Construct a source using the provided string.
+     * Until it is set, the encoding will be reported as ISO-8859-1.
+     * @param string The source of characters.
+     */
+    public StringSource (String string)
+    {
+<span class="fc" id="L66">        this (string, &quot;ISO-8859-1&quot;);</span>
+<span class="fc" id="L67">    }</span>
+
+    /**
+     * Construct a source using the provided string and encoding.
+     * The encoding is only used by {@link #getEncoding}.
+     * @param string The source of characters.
+     * @param character_set The encoding to report.
+     */
+<span class="fc" id="L75">    public StringSource (String string, String character_set)</span>
+    {
+<span class="fc bfc" id="L77" title="All 2 branches covered.">        mString = (null == string) ? &quot;&quot; : string;</span>
+<span class="fc" id="L78">        mOffset = 0;</span>
+<span class="fc" id="L79">        mEncoding = character_set;</span>
+<span class="fc" id="L80">        mMark = -1;</span>
+<span class="fc" id="L81">    }</span>
+
+    /**
+     * Get the encoding being used to convert characters.
+     * @return The current encoding.
+     */
+    public String getEncoding ()
+    {
+<span class="fc" id="L89">        return (mEncoding);</span>
+    }
+
+    /**
+     * Set the encoding to the given character set.
+     * This simply sets the encoding reported by {@link #getEncoding}.
+     * @param character_set The character set to use to convert characters.
+     * @exception ParserException &lt;em&gt;Not thrown&lt;/em&gt;.
+     */
+    public void setEncoding (String character_set)
+        throws
+            ParserException
+    {
+<span class="fc" id="L102">        mEncoding = character_set;</span>
+<span class="fc" id="L103">    }</span>
+
+    //
+    // Reader overrides
+    //
+
+    /**
+     * Does nothing.
+     * It's supposed to close the source, but use destroy() instead.
+     * @exception IOException &lt;em&gt;not used&lt;/em&gt;
+     * @see #destroy
+     */
+    public void close () throws IOException
+    {
+<span class="fc" id="L117">    }</span>
+
+    /**
+     * Read a single character.
+     * @return The character read, as an integer in the range 0 to 65535
+     * (&lt;tt&gt;0x00-0xffff&lt;/tt&gt;), or {@link #EOF EOF} if the source is exhausted.
+     * @exception IOException If an I/O error occurs.
+     */
+    public int read () throws IOException
+    {
+        int ret;
+
+<span class="fc bfc" id="L129" title="All 2 branches covered.">        if (null == mString)</span>
+<span class="fc" id="L130">            throw new IOException (&quot;source is closed&quot;);</span>
+<span class="fc bfc" id="L131" title="All 2 branches covered.">        else if (mOffset &gt;= mString.length ())</span>
+<span class="fc" id="L132">            ret = EOF;</span>
+        else
+        {
+<span class="fc" id="L135">            ret = mString.charAt (mOffset);</span>
+<span class="fc" id="L136">            mOffset++;</span>
+        }
+
+<span class="fc" id="L139">        return (ret);</span>
+    }
+
+    /**
+     * Read characters into a portion of an array.
+     * @param cbuf Destination buffer
+     * @param off Offset at which to start storing characters
+     * @param len Maximum number of characters to read
+     * @return The number of characters read, or {@link #EOF EOF} if the source
+     * is exhausted.
+     * @exception IOException If an I/O error occurs.
+     */
+    public int read (char[] cbuf, int off, int len) throws IOException
+    {
+        int length;
+        int ret;
+
+<span class="pc bpc" id="L156" title="1 of 2 branches missed.">        if (null == mString)</span>
+<span class="nc" id="L157">            throw new IOException (&quot;source is closed&quot;);</span>
+        else
+        {
+<span class="fc" id="L160">            length = mString.length ();</span>
+<span class="pc bpc" id="L161" title="1 of 2 branches missed.">            if (mOffset &gt;= length)</span>
+<span class="nc" id="L162">                ret = EOF;</span>
+            else
+            {
+<span class="pc bpc" id="L165" title="1 of 2 branches missed.">                if (len &gt; length - mOffset)</span>
+<span class="nc" id="L166">                    len = length - mOffset;</span>
+<span class="fc" id="L167">                mString.getChars (mOffset, mOffset + len, cbuf, off);</span>
+<span class="fc" id="L168">                mOffset += len;</span>
+<span class="fc" id="L169">                ret = len;</span>
+            }
+        }
+
+<span class="fc" id="L173">        return (ret);</span>
+    }
+
+    /**
+     * Read characters into an array.
+     * @param cbuf Destination buffer.
+     * @return The number of characters read, or {@link #EOF EOF} if the source
+     * is exhausted.
+     * @exception IOException If an I/O error occurs.
+     */
+
+    public int read (char[] cbuf) throws IOException
+    {
+<span class="nc" id="L186">        return (read (cbuf, 0, cbuf.length));</span>
+    }
+
+    /**
+     * Tell whether this source is ready to be read.
+     * @return Equivalent to a non-zero {@link #available()}, i.e. there are
+     * still more characters to read.
+     * @exception IOException Thrown if the source is closed.
+     */
+    public boolean ready () throws IOException
+    {
+<span class="pc bpc" id="L197" title="1 of 2 branches missed.">        if (null == mString)</span>
+<span class="nc" id="L198">            throw new IOException (&quot;source is closed&quot;);</span>
+<span class="fc bfc" id="L199" title="All 2 branches covered.">        return (mOffset &lt; mString.length ());</span>
+    }
+
+    /**
+     * Reset the source.
+     * Repositions the read point to begin at zero.
+     * @exception IllegalStateException If the source has been closed.
+     */
+    public void reset ()
+        throws
+            IllegalStateException
+    {
+<span class="pc bpc" id="L211" title="1 of 2 branches missed.">        if (null == mString)</span>
+<span class="nc" id="L212">            throw new IllegalStateException (&quot;source is closed&quot;);</span>
+        else
+<span class="fc bfc" id="L214" title="All 2 branches covered.">            if (-1 != mMark)</span>
+<span class="fc" id="L215">                mOffset = mMark;</span>
+            else
+<span class="fc" id="L217">                mOffset = 0;</span>
+<span class="fc" id="L218">    }</span>
+
+    /**
+     * Tell whether this source supports the mark() operation.
+     * @return &lt;code&gt;true&lt;/code&gt;.
+     */
+    public boolean markSupported ()
+    {
+<span class="fc" id="L226">        return (true);</span>
+    }
+
+    /**
+     * Mark the present position in the source.
+     * Subsequent calls to {@link #reset()}
+     * will attempt to reposition the source to this point.
+     * @param  readAheadLimit &lt;em&gt;Not used.&lt;/em&gt;
+     * @exception IOException Thrown if the source is closed.
+     *
+     */
+    public void mark (int readAheadLimit) throws IOException
+    {
+<span class="pc bpc" id="L239" title="1 of 2 branches missed.">        if (null == mString)</span>
+<span class="nc" id="L240">            throw new IOException (&quot;source is closed&quot;);</span>
+<span class="fc" id="L241">        mMark = mOffset;</span>
+<span class="fc" id="L242">    }</span>
+
+    /**
+     * Skip characters.
+     * &lt;em&gt;Note: n is treated as an int&lt;/em&gt;
+     * @param n The number of characters to skip.
+     * @return The number of characters actually skipped
+     * @exception IllegalArgumentException If &lt;code&gt;n&lt;/code&gt; is negative.
+     * @exception IOException If the source is closed.
+     */
+    public long skip (long n)
+        throws
+            IOException,
+            IllegalArgumentException
+    {
+        int length;
+        long ret;
+
+<span class="pc bpc" id="L260" title="1 of 2 branches missed.">        if (null == mString)</span>
+<span class="nc" id="L261">            throw new IOException (&quot;source is closed&quot;);</span>
+<span class="pc bpc" id="L262" title="1 of 2 branches missed.">        if (0 &gt; n)</span>
+<span class="nc" id="L263">            throw new IllegalArgumentException (&quot;cannot skip backwards&quot;);</span>
+        else
+        {
+<span class="fc" id="L266">            length = mString.length ();</span>
+<span class="pc bpc" id="L267" title="1 of 2 branches missed.">            if (mOffset &gt;= length)</span>
+<span class="nc" id="L268">                n = 0L;</span>
+<span class="pc bpc" id="L269" title="1 of 2 branches missed.">            else if (n &gt; length - mOffset)</span>
+<span class="nc" id="L270">                n = length - mOffset;</span>
+<span class="fc" id="L271">            mOffset += n;</span>
+<span class="fc" id="L272">            ret = n;</span>
+        }
+
+<span class="fc" id="L275">        return (ret);</span>
+    }
+
+    //
+    // Methods not in your Daddy's Reader
+    //
+
+    /**
+     * Undo the read of a single character.
+     * @exception IOException If no characters have been read or the source is closed.
+     */
+    public void unread () throws IOException
+    {
+<span class="pc bpc" id="L288" title="1 of 2 branches missed.">        if (null == mString)</span>
+<span class="nc" id="L289">            throw new IOException (&quot;source is closed&quot;);</span>
+<span class="pc bpc" id="L290" title="1 of 2 branches missed.">        else if (mOffset &lt;= 0)</span>
+<span class="nc" id="L291">            throw new IOException (&quot;can't unread no characters&quot;);</span>
+        else
+<span class="fc" id="L293">            mOffset--;</span>
+<span class="fc" id="L294">    }</span>
+
+    /**
+     * Retrieve a character again.
+     * @param offset The offset of the character.
+     * @return The character at &lt;code&gt;offset&lt;/code&gt;.
+     * @exception IOException If the source is closed or an attempt is made to
+     * read beyond {@link #offset()}.
+     */
+    public char getCharacter (int offset) throws IOException
+    {
+        char ret;
+
+<span class="pc bpc" id="L307" title="1 of 2 branches missed.">        if (null == mString)</span>
+<span class="nc" id="L308">            throw new IOException (&quot;source is closed&quot;);</span>
+<span class="pc bpc" id="L309" title="1 of 2 branches missed.">        else if (offset &gt;= mOffset)</span>
+<span class="nc" id="L310">            throw new IOException (&quot;read beyond current offset&quot;);</span>
+        else
+<span class="fc" id="L312">            ret = mString.charAt (offset);</span>
+
+<span class="fc" id="L314">        return (ret);</span>
+    }
+
+    /**
+     * Retrieve characters again.
+     * @param array The array of characters.
+     * @param offset The starting position in the array where characters are to be placed.
+     * @param start The starting position, zero based.
+     * @param end The ending position
+     * (exclusive, i.e. the character at the ending position is not included),
+     * zero based.
+     * @exception IOException If the source is closed or an attempt is made to
+     * read beyond {@link #offset()}.
+     */
+    public void getCharacters (char[] array, int offset, int start, int end) throws IOException
+    {
+<span class="nc bnc" id="L330" title="All 2 branches missed.">        if (null == mString)</span>
+<span class="nc" id="L331">            throw new IOException (&quot;source is closed&quot;);</span>
+        else
+        {
+<span class="nc bnc" id="L334" title="All 2 branches missed.">            if (end &gt; mOffset)</span>
+<span class="nc" id="L335">                throw new IOException (&quot;read beyond current offset&quot;);</span>
+            else
+<span class="nc" id="L337">                mString.getChars (start, end, array, offset);</span>
+        }
+<span class="nc" id="L339">    }</span>
+
+    /**
+     * Retrieve a string comprised of characters already read.
+     * Asking for characters ahead of {@link #offset()} will throw an exception.
+     * @param offset The offset of the first character.
+     * @param length The number of characters to retrieve.
+     * @return A string containing the &lt;code&gt;length&lt;/code&gt; characters at &lt;code&gt;offset&lt;/code&gt;.
+     * @exception IOException If the source is closed or an attempt is made to
+     * read beyond {@link #offset()}.
+     */
+    public String getString (int offset, int length) throws IOException
+    {
+        String ret;
+
+<span class="pc bpc" id="L354" title="1 of 2 branches missed.">        if (null == mString)</span>
+<span class="nc" id="L355">            throw new IOException (&quot;source is closed&quot;);</span>
+        else
+        {
+<span class="pc bpc" id="L358" title="1 of 2 branches missed.">            if (offset + length &gt; mOffset)</span>
+<span class="nc" id="L359">                throw new IOException (&quot;read beyond end of string&quot;);</span>
+            else
+<span class="fc" id="L361">                ret = mString.substring (offset, offset + length);</span>
+        }
+
+<span class="fc" id="L364">        return (ret);</span>
+    }
+
+    /**
+     * Append characters already read into a &lt;code&gt;StringBuffer&lt;/code&gt;.
+     * Asking for characters ahead of {@link #offset()} will throw an exception.
+     * @param buffer The buffer to append to.
+     * @param offset The offset of the first character.
+     * @param length The number of characters to retrieve.
+     * @exception IOException If the source is closed or an attempt is made to
+     * read beyond {@link #offset()}.
+     */
+    public void getCharacters (StringBuffer buffer, int offset, int length) throws IOException
+    {
+<span class="pc bpc" id="L378" title="1 of 2 branches missed.">        if (null == mString)</span>
+<span class="nc" id="L379">            throw new IOException (&quot;source is closed&quot;);</span>
+        else
+        {
+<span class="pc bpc" id="L382" title="1 of 2 branches missed.">            if (offset + length &gt; mOffset)</span>
+<span class="nc" id="L383">                throw new IOException (&quot;read beyond end of string&quot;);</span>
+            else
+<span class="fc" id="L385">                buffer.append (mString.substring (offset, offset + length));</span>
+        }
+<span class="fc" id="L387">    }</span>
+
+    /**
+     * Close the source.
+     * Once a source has been closed, further {@link #read() read},
+     * {@link #ready ready}, {@link #mark mark}, {@link #reset reset},
+     * {@link #skip skip}, {@link #unread unread},
+     * {@link #getCharacter getCharacter} or {@link #getString getString}
+     * invocations will throw an IOException.
+     * Closing a previously-closed source, however, has no effect.
+     * @exception IOException &lt;em&gt;Not thrown&lt;/em&gt;
+     */
+    public void destroy () throws IOException
+    {
+<span class="fc" id="L401">        mString = null;</span>
+<span class="fc" id="L402">    }</span>
+
+    /**
+     * Get the position (in characters).
+     * @return The number of characters that have already been read, or
+     * {@link #EOF EOF} if the source is closed.
+     */
+    public int offset ()
+    {
+        int ret;
+
+<span class="pc bpc" id="L413" title="1 of 2 branches missed.">        if (null == mString)</span>
+<span class="nc" id="L414">            ret = EOF;</span>
+        else
+<span class="fc" id="L416">            ret = mOffset;</span>
+
+<span class="fc" id="L418">        return (ret);</span>
+    }
+
+    /**
+     * Get the number of available characters.
+     * @return The number of characters that can be read or zero if the source
+     * is closed.
+     */
+    public int available ()
+    {
+        int ret;
+
+<span class="nc bnc" id="L430" title="All 2 branches missed.">        if (null == mString)</span>
+<span class="nc" id="L431">            ret = 0;</span>
+        else
+<span class="nc" id="L433">            ret = mString.length () - mOffset;</span>
+
+<span class="nc" id="L435">        return (ret);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

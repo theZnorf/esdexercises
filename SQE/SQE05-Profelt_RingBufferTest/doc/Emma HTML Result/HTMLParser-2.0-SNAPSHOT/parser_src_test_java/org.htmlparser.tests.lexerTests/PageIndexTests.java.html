@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>PageIndexTests.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tests.lexerTests</a> &gt; <span class="el_source">PageIndexTests.java</span></div><h1>PageIndexTests.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/test/java/org/htmlparser/tests/lexerTests/PageIndexTests.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tests.lexerTests;
+
+import org.htmlparser.lexer.PageIndex;
+import org.htmlparser.tests.ParserTestCase;
+
+public class PageIndexTests extends ParserTestCase
+{
+
+    static
+    {
+<span class="fc" id="L36">        System.setProperty (&quot;org.htmlparser.tests.lexerTests.PageIndexTests&quot;, &quot;PageIndexTests&quot;);</span>
+<span class="fc" id="L37">    }</span>
+
+    /**
+     * Test the end-of-line index class.
+     */
+    public PageIndexTests (String name)
+    {
+<span class="fc" id="L44">        super (name);</span>
+<span class="fc" id="L45">    }</span>
+
+    public void testAppend1 ()
+    {
+        PageIndex index;
+        int pos;
+        int[] list;
+
+<span class="fc" id="L53">        index = new PageIndex (null);</span>
+
+<span class="fc bfc" id="L55" title="All 2 branches covered.">        for (int i = 0; i &lt; 10000; i++)</span>
+        {
+<span class="fc" id="L57">            pos = index.row (i);</span>
+<span class="pc bpc" id="L58" title="1 of 2 branches missed.">            assertTrue (&quot;append not at end&quot;, pos == i);</span>
+<span class="pc bpc" id="L59" title="1 of 2 branches missed.">            assertTrue (&quot;wrong position&quot;, pos == index.add (i));</span>
+        }
+
+<span class="fc" id="L62">        list = index.get ();</span>
+<span class="fc bfc" id="L63" title="All 2 branches covered.">        for (int i = 0; i &lt; 10000; i++)</span>
+<span class="pc bpc" id="L64" title="1 of 2 branches missed.">            assertTrue (&quot;wrong value&quot;, list[i] == i);</span>
+<span class="fc" id="L65">    }</span>
+
+    public void testAppend2 ()
+    {
+        PageIndex index;
+        int pos;
+        int[] list;
+
+<span class="fc" id="L73">        index = new PageIndex (null);</span>
+
+<span class="fc bfc" id="L75" title="All 2 branches covered.">        for (int i = 0; i &lt; 10000; i++)</span>
+        {
+<span class="fc" id="L77">            pos = index.row (i + 42);</span>
+<span class="pc bpc" id="L78" title="1 of 2 branches missed.">            assertTrue (&quot;append not at end&quot;, pos == i);</span>
+<span class="pc bpc" id="L79" title="1 of 2 branches missed.">            assertTrue (&quot;wrong position&quot;, pos == index.add (i + 42));</span>
+        }
+
+<span class="fc" id="L82">        list = index.get ();</span>
+<span class="fc bfc" id="L83" title="All 2 branches covered.">        for (int i = 0; i &lt; 10000; i++)</span>
+<span class="pc bpc" id="L84" title="1 of 2 branches missed.">            assertTrue (&quot;wrong value&quot;, list[i] == i + 42);</span>
+<span class="fc" id="L85">    }</span>
+
+    public void testAppend3 ()
+    {
+        PageIndex index;
+        int pos;
+        int[] list;
+
+<span class="fc" id="L93">        index = new PageIndex (null);</span>
+
+<span class="fc bfc" id="L95" title="All 2 branches covered.">        for (int i = 0; i &lt; 10000; i++)</span>
+        {
+<span class="fc" id="L97">            pos = index.row (i * 42);</span>
+<span class="pc bpc" id="L98" title="1 of 2 branches missed.">            assertTrue (&quot;append not at end&quot;, pos == i);</span>
+<span class="pc bpc" id="L99" title="1 of 2 branches missed.">            assertTrue (&quot;wrong position&quot;, pos == index.add (i * 42));</span>
+        }
+
+<span class="fc" id="L102">        list = index.get ();</span>
+<span class="fc bfc" id="L103" title="All 2 branches covered.">        for (int i = 0; i &lt; 10000; i++)</span>
+<span class="pc bpc" id="L104" title="1 of 2 branches missed.">            assertTrue (&quot;wrong value&quot;, list[i] == i * 42);</span>
+<span class="fc" id="L105">    }</span>
+
+    public void testInsert ()
+    {
+        PageIndex index;
+        double d;
+        int n;
+        int pos;
+        int[] list;
+
+<span class="fc" id="L115">        index = new PageIndex (null);</span>
+
+<span class="fc bfc" id="L117" title="All 2 branches covered.">        for (int i = 0; i &lt; 10000; i++)</span>
+        {
+<span class="fc" id="L119">            d = Math.random ();</span>
+<span class="fc" id="L120">            d -= 0.5;</span>
+<span class="fc" id="L121">            n = (int)(d * 100838);</span>
+<span class="fc" id="L122">            pos = index.row (n);</span>
+
+            // test for correct position
+<span class="pc bpc" id="L125" title="1 of 2 branches missed.">            if (0 &lt;= pos - 1)</span>
+<span class="nc bnc" id="L126" title="All 2 branches missed.">                assertTrue (&quot;search error less &quot; + pos + &quot; &quot; + index.elementAt (pos - 1) + &quot; &quot; + n, index.elementAt (pos - 1) &lt;= n);</span>
+<span class="pc bpc" id="L127" title="1 of 2 branches missed.">            if (pos + 1 &lt; index.size ())</span>
+<span class="nc bnc" id="L128" title="All 2 branches missed.">                assertTrue (&quot;search error greater &quot; + pos + &quot; &quot; + index.elementAt (pos + 1) + &quot; &quot; + n, index.elementAt (pos + 1) &gt; n);</span>
+        }
+
+<span class="fc" id="L131">        list = index.get ();</span>
+<span class="fc" id="L132">        n = Integer.MIN_VALUE;</span>
+<span class="pc bpc" id="L133" title="1 of 2 branches missed.">        for (int i = 0; i &lt; list.length; i++)</span>
+        {
+<span class="nc bnc" id="L135" title="All 2 branches missed.">            assertTrue (&quot;wrong order&quot;, list[i] &gt; n);</span>
+<span class="nc" id="L136">            n = list[i];</span>
+        }
+<span class="fc" id="L138">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

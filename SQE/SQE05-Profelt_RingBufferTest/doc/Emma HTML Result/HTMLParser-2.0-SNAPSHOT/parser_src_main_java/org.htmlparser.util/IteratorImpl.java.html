@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>IteratorImpl.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.util</a> &gt; <span class="el_source">IteratorImpl.java</span></div><h1>IteratorImpl.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Somik Raha
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/main/java/org/htmlparser/util/IteratorImpl.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.util;
+
+import org.htmlparser.Node;
+import org.htmlparser.Tag;
+import org.htmlparser.lexer.Cursor;
+import org.htmlparser.lexer.Lexer;
+import org.htmlparser.lexer.Page;
+import org.htmlparser.scanners.Scanner;
+import org.htmlparser.util.NodeIterator;
+
+public class IteratorImpl implements NodeIterator
+{
+    Lexer mLexer;
+    ParserFeedback mFeedback;
+    Cursor mCursor;
+
+<span class="fc" id="L42">    public IteratorImpl (Lexer lexer, ParserFeedback fb)</span>
+    {
+<span class="fc" id="L44">        mLexer = lexer;</span>
+<span class="fc" id="L45">        mFeedback = fb;</span>
+<span class="fc" id="L46">        mCursor = new Cursor (mLexer.getPage (), 0);</span>
+<span class="fc" id="L47">    }</span>
+
+    /**
+     * Check if more nodes are available.
+     * @return &lt;code&gt;true&lt;/code&gt; if a call to &lt;code&gt;nextNode()&lt;/code&gt; will succeed.
+     */
+    public boolean hasMoreNodes() throws ParserException
+    {
+        boolean ret;
+
+<span class="fc" id="L57">        mCursor.setPosition (mLexer.getPosition ());</span>
+<span class="fc bfc" id="L58" title="All 2 branches covered.">        ret = Page.EOF != mLexer.getPage ().getCharacter (mCursor); // more characters?</span>
+
+<span class="fc" id="L60">        return (ret);</span>
+    }
+
+    /**
+     * Get the next node.
+     * @return The next node in the HTML stream, or null if there are no more nodes.
+     * @exception ParserException If an unrecoverable error occurs.
+     */
+    public Node nextNode () throws ParserException
+    {
+        Tag tag;
+        Scanner scanner;
+        NodeList stack;
+        Node ret;
+
+        try
+        {
+<span class="fc" id="L77">            ret = mLexer.nextNode ();</span>
+<span class="fc bfc" id="L78" title="All 2 branches covered.">            if (null != ret)</span>
+            {
+                // kick off recursion for the top level node
+<span class="fc bfc" id="L81" title="All 2 branches covered.">                if (ret instanceof Tag)</span>
+                {
+<span class="fc" id="L83">                    tag = (Tag)ret;</span>
+<span class="fc bfc" id="L84" title="All 2 branches covered.">                    if (!tag.isEndTag ())</span>
+                    {
+                        // now recurse if there is a scanner for this type of tag
+<span class="fc" id="L87">                        scanner = tag.getThisScanner ();</span>
+<span class="pc bpc" id="L88" title="1 of 2 branches missed.">                        if (null != scanner)</span>
+                        {
+<span class="fc" id="L90">                            stack = new NodeList ();</span>
+<span class="fc" id="L91">                            ret = scanner.scan (tag, mLexer, stack);</span>
+                        }
+                    }
+                }
+            }
+<span class="fc" id="L96">        }</span>
+<span class="nc" id="L97">        catch (ParserException pe)</span>
+        {
+<span class="nc" id="L99">            throw pe; // no need to wrap an existing ParserException</span>
+        }
+<span class="nc" id="L101">        catch (Exception e)</span>
+        {
+<span class="nc" id="L103">            StringBuffer msgBuffer = new StringBuffer ();</span>
+<span class="nc" id="L104">            msgBuffer.append (&quot;Unexpected Exception occurred while reading &quot;);</span>
+<span class="nc" id="L105">            msgBuffer.append (mLexer.getPage ().getUrl ());</span>
+<span class="nc" id="L106">            msgBuffer.append (&quot;, in nextNode&quot;);</span>
+            // TODO: appendLineDetails (msgBuffer);
+<span class="nc" id="L108">            ParserException ex = new ParserException (msgBuffer.toString (), e);</span>
+<span class="nc" id="L109">            mFeedback.error (msgBuffer.toString (), ex);</span>
+<span class="nc" id="L110">            throw ex;</span>
+        }
+        
+<span class="fc" id="L113">        return (ret);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

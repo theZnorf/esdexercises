@@ -1,0 +1,437 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>HasAttributeFilterWrapper.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">filterbuilder/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.parserapplications.filterbuilder.wrappers</a> &gt; <span class="el_source">HasAttributeFilterWrapper.java</span></div><h1>HasAttributeFilterWrapper.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/filterbuilder/src/main/java/org/htmlparser/parserapplications/filterbuilder/wrappers/HasAttributeFilterWrapper.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.parserapplications.filterbuilder.wrappers;
+
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.Vector;
+
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JTextArea;
+import javax.swing.border.BevelBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
+
+import org.htmlparser.Attribute;
+import org.htmlparser.Node;
+import org.htmlparser.NodeFilter;
+import org.htmlparser.Parser;
+import org.htmlparser.Tag;
+import org.htmlparser.filters.HasAttributeFilter;
+import org.htmlparser.parserapplications.filterbuilder.Filter;
+import org.htmlparser.tags.CompositeTag;
+import org.htmlparser.util.NodeIterator;
+import org.htmlparser.util.NodeList;
+import org.htmlparser.util.ParserException;
+
+/**
+ * Wrapper for HasAttributeFilters.
+ */
+public class HasAttributeFilterWrapper
+    extends
+        Filter
+    implements
+        ActionListener,
+        DocumentListener
+{
+    /**
+     * The underlying filter.
+     */
+    protected HasAttributeFilter mFilter;
+
+    /**
+     * Combo box for attribute name.
+     */
+    protected JComboBox mAttributeName;
+
+    /**
+     * The check box for has value.
+     */
+    protected JCheckBox mValued;
+
+    /**
+     * Value to check for.
+     */
+    protected JTextArea mAttributeValue;
+
+    /**
+     * Create a wrapper over a new HasAttributeFilter.
+     */ 
+<span class="nc" id="L89">    public HasAttributeFilterWrapper ()</span>
+    {
+        String value;
+
+<span class="nc" id="L93">        mFilter = new HasAttributeFilter ();</span>
+
+        // add the attribute name choice
+<span class="nc" id="L96">        mAttributeName = new JComboBox ();</span>
+<span class="nc" id="L97">        mAttributeName.setEditable (true);</span>
+<span class="nc" id="L98">        add (mAttributeName);</span>
+<span class="nc" id="L99">        mAttributeName.addItem (mFilter.getAttributeName ());</span>
+<span class="nc" id="L100">        mAttributeName.addActionListener (this);</span>
+
+        // add the valued flag
+<span class="nc" id="L103">        value = mFilter.getAttributeValue ();</span>
+<span class="nc" id="L104">        mValued = new JCheckBox (&quot;Has Value&quot;);</span>
+<span class="nc" id="L105">        add (mValued);</span>
+<span class="nc bnc" id="L106" title="All 2 branches missed.">        mValued.setSelected (null != value);</span>
+<span class="nc" id="L107">        mValued.addActionListener (this);</span>
+
+        // add the value pattern
+<span class="nc" id="L110">        mAttributeValue = new JTextArea (2, 20);</span>
+<span class="nc" id="L111">        mAttributeValue.setBorder (new BevelBorder (BevelBorder.LOWERED));</span>
+<span class="nc" id="L112">        add (mAttributeValue);</span>
+<span class="nc bnc" id="L113" title="All 2 branches missed.">        if (null != value)</span>
+<span class="nc" id="L114">            mAttributeValue.setText (value);</span>
+        else
+<span class="nc" id="L116">            mAttributeValue.setVisible (false);</span>
+<span class="nc" id="L117">        mAttributeValue.getDocument ().addDocumentListener (this);</span>
+<span class="nc" id="L118">    }</span>
+
+    //
+    // local methods
+    //
+
+    /**
+     * Add the attribute names from the node to the set of attribute names.
+     * @param set The set to add to.
+     * @param node The node with attributes to add.
+     */
+    protected void addAttributes (Set set, Node node)
+    {
+        Vector attributes;
+        Attribute attribute;
+        String name;
+        NodeList children;
+
+<span class="nc bnc" id="L136" title="All 2 branches missed.">        if (node instanceof Tag)</span>
+        {
+<span class="nc" id="L138">            attributes = ((Tag)node).getAttributesEx ();</span>
+<span class="nc bnc" id="L139" title="All 2 branches missed.">            for (int i = 1; i &lt; attributes.size (); i++)</span>
+            {
+<span class="nc" id="L141">                attribute = (Attribute)attributes.elementAt (i);</span>
+<span class="nc" id="L142">                name = attribute.getName ();</span>
+<span class="nc bnc" id="L143" title="All 2 branches missed.">                if (null != name)</span>
+<span class="nc" id="L144">                    set.add (name);</span>
+            }
+<span class="nc bnc" id="L146" title="All 2 branches missed.">            if (node instanceof CompositeTag)</span>
+            {
+<span class="nc" id="L148">                children = ((CompositeTag)node).getChildren ();</span>
+<span class="nc bnc" id="L149" title="All 2 branches missed.">                if (null != children)</span>
+<span class="nc bnc" id="L150" title="All 2 branches missed.">                    for (int i = 0; i &lt; children.size (); i++)</span>
+<span class="nc" id="L151">                        addAttributes (set, children.elementAt (i));</span>
+            }
+        }
+<span class="nc" id="L154">    }</span>
+
+    /**
+     * Add the attribute values from the node to the set of attribute values.
+     * @param set The set to add to.
+     * @param node The node with attributes to add.
+     */
+    protected void addAttributeValues (Set set, Node node)
+    {
+        Vector attributes;
+        Attribute attribute;
+        String value;
+        NodeList children;
+
+<span class="nc bnc" id="L168" title="All 2 branches missed.">        if (node instanceof Tag)</span>
+        {
+<span class="nc" id="L170">            attributes = ((Tag)node).getAttributesEx ();</span>
+<span class="nc bnc" id="L171" title="All 2 branches missed.">            for (int i = 1; i &lt; attributes.size (); i++)</span>
+            {
+<span class="nc" id="L173">                attribute = (Attribute)attributes.elementAt (i);</span>
+<span class="nc bnc" id="L174" title="All 2 branches missed.">                if (null != attribute.getName ())</span>
+                {
+<span class="nc" id="L176">                    value = attribute.getValue ();</span>
+<span class="nc bnc" id="L177" title="All 2 branches missed.">                    if (null != value)</span>
+<span class="nc" id="L178">                        set.add (value);</span>
+                }
+            }
+<span class="nc bnc" id="L181" title="All 2 branches missed.">            if (node instanceof CompositeTag)</span>
+            {
+<span class="nc" id="L183">                children = ((CompositeTag)node).getChildren ();</span>
+<span class="nc bnc" id="L184" title="All 2 branches missed.">                if (null != children)</span>
+<span class="nc bnc" id="L185" title="All 2 branches missed.">                    for (int i = 0; i &lt; children.size (); i++)</span>
+<span class="nc" id="L186">                        addAttributeValues (set, children.elementAt (i));</span>
+            }
+        }
+<span class="nc" id="L189">    }</span>
+
+    //
+    // Filter overrides and concrete implementations
+    //
+
+    /**
+     * Get the name of the filter.
+     * @return A descriptive name for the filter.
+     */
+    public String getDescription ()
+    {
+<span class="nc" id="L201">        return (&quot;Has attribute&quot;);</span>
+    }
+
+    /**
+     * Get the resource name for the icon.
+     * @return The icon resource specification.
+     */
+    public String getIconSpec ()
+    {
+<span class="nc" id="L210">        return (&quot;images/HasAttributeFilter.gif&quot;);</span>
+    }
+
+    /**
+     * Get the underlying node filter object.
+     * @return The node filter object suitable for serialization.
+     */
+    public NodeFilter getNodeFilter ()
+    {
+        HasAttributeFilter ret;
+        
+<span class="nc" id="L221">        ret = new HasAttributeFilter ();</span>
+<span class="nc" id="L222">        ret.setAttributeName (mFilter.getAttributeName ());</span>
+<span class="nc" id="L223">        ret.setAttributeValue (mFilter.getAttributeValue ());</span>
+            
+<span class="nc" id="L225">        return (ret);</span>
+    }
+
+    /**
+     * Assign the underlying node filter for this wrapper.
+     * @param filter The filter to wrap.
+     * @param context The parser to use for conditioning this filter.
+     * Some filters need contextual information to provide to the user,
+     * i.e. for tag names or attribute names or values,
+     * so the Parser context is provided. 
+     */
+    public void setNodeFilter (NodeFilter filter, Parser context)
+    {
+        Set set;
+        String name;
+        String value;
+
+<span class="nc" id="L242">        mFilter = (HasAttributeFilter)filter;</span>
+<span class="nc" id="L243">        set = new HashSet ();</span>
+<span class="nc" id="L244">        context.reset ();</span>
+        try
+        {
+<span class="nc bnc" id="L247" title="All 2 branches missed.">            for (NodeIterator iterator = context.elements (); iterator.hasMoreNodes (); )</span>
+<span class="nc" id="L248">                addAttributes (set, iterator.nextNode ());</span>
+<span class="nc" id="L249">        }</span>
+<span class="nc" id="L250">        catch (ParserException pe)</span>
+        {
+            // oh well, we tried
+        }
+<span class="nc bnc" id="L254" title="All 2 branches missed.">        for (Iterator iterator = set.iterator (); iterator.hasNext (); )</span>
+<span class="nc" id="L255">            mAttributeName.addItem (iterator.next ());</span>
+<span class="nc" id="L256">        name = mFilter.getAttributeName ();</span>
+<span class="nc bnc" id="L257" title="All 2 branches missed.">        if (!name.equals (&quot;&quot;))</span>
+<span class="nc" id="L258">            mAttributeName.setSelectedItem (name);</span>
+<span class="nc" id="L259">        value = mFilter.getAttributeValue ();</span>
+<span class="nc bnc" id="L260" title="All 2 branches missed.">        if (null != value)</span>
+        {
+<span class="nc" id="L262">            mValued.setSelected (true);</span>
+<span class="nc" id="L263">            mAttributeValue.setVisible (true);</span>
+<span class="nc" id="L264">            mAttributeValue.setText (value);</span>
+<span class="nc" id="L265">        }</span>
+        else
+        {
+<span class="nc" id="L268">            mValued.setSelected (false);</span>
+<span class="nc" id="L269">            mAttributeValue.setVisible (false);</span>
+        }
+<span class="nc" id="L271">    }</span>
+
+    /**
+     * Get the underlying node filter's subordinate filters.
+     * @return The node filter object's contained filters.
+     */
+    public NodeFilter[] getSubNodeFilters ()
+    {
+<span class="nc" id="L279">        return (new NodeFilter[0]);</span>
+    }
+
+    /**
+     * Assign the underlying node filter's subordinate filters.
+     * @param filters The filters to insert into the underlying node filter.
+     */
+    public void setSubNodeFilters (NodeFilter[] filters)
+    {
+        // should we complain?
+<span class="nc" id="L289">    }</span>
+
+    /**
+     * Convert this filter into Java code.
+     * Output whatever text necessary and return the variable name.
+     * @param out The output buffer.
+     * @param context Three integers as follows:
+     * &lt;li&gt;indent level - the number of spaces to insert at the beginning of each line&lt;/li&gt;
+     * &lt;li&gt;filter number - the next available filter number&lt;/li&gt;
+     * &lt;li&gt;filter array number - the next available array of filters number&lt;/li&gt;
+     * @return The variable name to use when referencing this filter (usually &quot;filter&quot; + context[1]++) 
+     */
+    public String toJavaCode (StringBuffer out, int[] context)
+    {
+        String ret;
+        
+<span class="nc" id="L305">        ret = &quot;filter&quot; + context[1]++;</span>
+<span class="nc" id="L306">        spaces (out, context[0]);</span>
+<span class="nc" id="L307">        out.append (&quot;HasAttributeFilter &quot;);</span>
+<span class="nc" id="L308">        out.append (ret);</span>
+<span class="nc" id="L309">        out.append (&quot; = new HasAttributeFilter ();&quot;);</span>
+<span class="nc" id="L310">        newline (out);</span>
+<span class="nc" id="L311">        spaces (out, context[0]);</span>
+<span class="nc" id="L312">        out.append (ret);</span>
+<span class="nc" id="L313">        out.append (&quot;.setAttributeName (\&quot;&quot;);</span>
+<span class="nc" id="L314">        out.append (mFilter.getAttributeName ());</span>
+<span class="nc" id="L315">        out.append (&quot;\&quot;);&quot;);</span>
+<span class="nc" id="L316">        newline (out);</span>
+<span class="nc bnc" id="L317" title="All 2 branches missed.">        if (null != mFilter.getAttributeValue ())</span>
+        {
+<span class="nc" id="L319">            spaces (out, context[0]);</span>
+<span class="nc" id="L320">            out.append (ret);</span>
+<span class="nc" id="L321">            out.append (&quot;.setAttributeValue (\&quot;&quot;);</span>
+<span class="nc" id="L322">            out.append (mFilter.getAttributeValue ());</span>
+<span class="nc" id="L323">            out.append (&quot;\&quot;);&quot;);</span>
+<span class="nc" id="L324">            newline (out);</span>
+        }
+        
+<span class="nc" id="L327">        return (ret);</span>
+    }
+
+    //
+    // NodeFilter interface
+    //
+
+    /**
+     * Predicate to determine whether or not to keep the given node.
+     * The behaviour based on this outcome is determined by the context
+     * in which it is called. It may lead to the node being added to a list
+     * or printed out. See the calling routine for details.
+     * @return &lt;code&gt;true&lt;/code&gt; if the node is to be kept, &lt;code&gt;false&lt;/code&gt;
+     * if it is to be discarded.
+     * @param node The node to test.
+     */
+    public boolean accept (Node node)
+    {
+<span class="nc" id="L345">        return (mFilter.accept (node));</span>
+    }
+
+    //
+    // ActionListener interface
+    //
+
+    /**
+     * Invoked when an action occurs on the combo box.
+     * @param event Details about the action event.
+     */
+    public void actionPerformed (ActionEvent event)
+    {
+        Object source;
+        Object[] selection;
+        boolean valued;
+
+<span class="nc" id="L362">        source = event.getSource ();</span>
+<span class="nc bnc" id="L363" title="All 2 branches missed.">        if (source == mAttributeName)</span>
+        {
+<span class="nc" id="L365">            selection = mAttributeName.getSelectedObjects ();</span>
+<span class="nc bnc" id="L366" title="All 4 branches missed.">            if ((null != selection) &amp;&amp; (0 != selection.length))</span>
+<span class="nc" id="L367">                mFilter.setAttributeName ((String)selection[0]);</span>
+<span class="nc" id="L368">        }</span>
+<span class="nc bnc" id="L369" title="All 2 branches missed.">        else if (source == mValued)</span>
+        {
+<span class="nc" id="L371">            valued = mValued.isSelected ();</span>
+<span class="nc bnc" id="L372" title="All 2 branches missed.">            if (valued)</span>
+            {
+<span class="nc" id="L374">                mFilter.setAttributeValue (mAttributeValue.getText ());</span>
+<span class="nc" id="L375">                mAttributeValue.setVisible (true);</span>
+<span class="nc" id="L376">            }</span>
+            else
+            {
+<span class="nc" id="L379">                mAttributeValue.setVisible (false);</span>
+<span class="nc" id="L380">                mAttributeValue.setText (&quot;&quot;);</span>
+<span class="nc" id="L381">                mFilter.setAttributeValue (null);</span>
+            }
+        }
+<span class="nc" id="L384">    }</span>
+
+    //
+    // DocumentListener interface
+    //
+
+    /**
+     * Handle an insert update event.
+     * @param e Details about the insert event.
+     */
+    public void insertUpdate (DocumentEvent e)
+    {
+        Document doc;
+        
+<span class="nc" id="L398">        doc = e.getDocument ();</span>
+        try
+        {
+<span class="nc" id="L401">            mFilter.setAttributeValue (doc.getText (0, doc.getLength ()));</span>
+<span class="nc" id="L402">        }</span>
+<span class="nc" id="L403">        catch (BadLocationException ble)</span>
+        {
+<span class="nc" id="L405">            ble.printStackTrace ();</span>
+        }
+<span class="nc" id="L407">    }</span>
+
+    /**
+     * Handle a remove update event.
+     * @param e Details about the remove event.
+     */
+    public void removeUpdate (DocumentEvent e)
+    {
+        Document doc;
+        
+<span class="nc" id="L417">        doc = e.getDocument ();</span>
+        try
+        {
+<span class="nc" id="L420">            mFilter.setAttributeValue (doc.getText (0, doc.getLength ()));</span>
+<span class="nc" id="L421">        }</span>
+<span class="nc" id="L422">        catch (BadLocationException ble)</span>
+        {
+<span class="nc" id="L424">            ble.printStackTrace ();</span>
+        }
+<span class="nc" id="L426">    }</span>
+
+    /**
+     * Handle a change update event.
+     * @param e Details about the change event.
+     */
+    public void changedUpdate (DocumentEvent e)
+    {
+        // plain text components don't fire these events
+<span class="nc" id="L435">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>StringFindingVisitorTest.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tests.visitorsTests</a> &gt; <span class="el_source">StringFindingVisitorTest.java</span></div><h1>StringFindingVisitorTest.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Somik Raha
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/test/java/org/htmlparser/tests/visitorsTests/StringFindingVisitorTest.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tests.visitorsTests;
+
+import org.htmlparser.tests.ParserTestCase;
+import org.htmlparser.visitors.StringFindingVisitor;
+
+public class StringFindingVisitorTest extends ParserTestCase {
+
+    static
+    {
+<span class="fc" id="L35">        System.setProperty (&quot;org.htmlparser.tests.visitorsTests.StringFindingVisitorTest&quot;, &quot;StringFindingVisitorTest&quot;);</span>
+    }
+
+    private static final String HTML =
+        &quot;&lt;HTML&gt;&lt;HEAD&gt;&lt;TITLE&gt;This is the Title&lt;/TITLE&gt;&quot; +
+        &quot;&lt;/HEAD&gt;&lt;BODY&gt;Hello World, this is an excellent parser&lt;/BODY&gt;&lt;/HTML&gt;&quot;;
+
+    private static final String HTML_TO_SEARCH =
+        &quot;&lt;HTML&gt;&lt;HEAD&gt;&lt;TITLE&gt;test&lt;/TITLE&gt;&lt;/HEAD&gt;\n&quot;+
+        &quot;&lt;BODY&gt;&lt;H1&gt;This is a test page&lt;/H1&gt;\n&quot;+
+        &quot;Writing tests is good for code. Testing is a good\n&quot;+
+<span class="fc" id="L46">        &quot;philosophy. Test driven development is even better.\n&quot;;</span>
+
+    public StringFindingVisitorTest(String name) {
+<span class="fc" id="L49">        super(name);</span>
+<span class="fc" id="L50">    }</span>
+
+    public void testSimpleStringFind() throws Exception {
+<span class="fc" id="L53">        createParser(HTML);</span>
+<span class="fc" id="L54">        StringFindingVisitor visitor = new StringFindingVisitor(&quot;Hello&quot;);</span>
+<span class="fc" id="L55">        parser.visitAllNodesWith(visitor);</span>
+<span class="fc" id="L56">        assertTrue(&quot;Hello found&quot;, visitor.stringWasFound());</span>
+<span class="fc" id="L57">    }</span>
+
+    public void testStringNotFound() throws Exception {
+<span class="fc" id="L60">        createParser(HTML);</span>
+<span class="fc" id="L61">        StringFindingVisitor visitor = new StringFindingVisitor(&quot;industrial logic&quot;);</span>
+<span class="fc" id="L62">        parser.visitAllNodesWith(visitor);</span>
+<span class="pc bpc" id="L63" title="1 of 2 branches missed.">        assertTrue(&quot;industrial logic should not have been found&quot;, !visitor.stringWasFound());</span>
+<span class="fc" id="L64">    }</span>
+
+    public void testStringInTagNotFound() throws Exception {
+<span class="fc" id="L67">        createParser(HTML);</span>
+<span class="fc" id="L68">        StringFindingVisitor visitor = new StringFindingVisitor(&quot;HTML&quot;);</span>
+<span class="fc" id="L69">        parser.visitAllNodesWith(visitor);</span>
+<span class="pc bpc" id="L70" title="1 of 2 branches missed.">        assertTrue(&quot;HTML should not have been found&quot;, !visitor.stringWasFound());</span>
+<span class="fc" id="L71">    }</span>
+
+    public void testStringFoundInSingleStringNode() throws Exception {
+<span class="fc" id="L74">        createParser(&quot;this is some text!&quot;);</span>
+<span class="fc" id="L75">        StringFindingVisitor visitor = new StringFindingVisitor(&quot;text&quot;);</span>
+<span class="fc" id="L76">        parser.visitAllNodesWith(visitor);</span>
+<span class="fc" id="L77">        assertTrue(&quot;text should be found&quot;, visitor.stringWasFound());</span>
+<span class="fc" id="L78">    }</span>
+
+    public void testStringFoundCount() throws Exception {
+<span class="fc" id="L81">        createParser(HTML);</span>
+<span class="fc" id="L82">        StringFindingVisitor visitor = new StringFindingVisitor(&quot;is&quot;);</span>
+<span class="fc" id="L83">        parser.visitAllNodesWith(visitor);</span>
+<span class="fc" id="L84">        assertEquals(&quot;# times 'is' was found&quot;, 2, visitor.stringFoundCount());</span>
+
+<span class="fc" id="L86">        visitor = new StringFindingVisitor(&quot;and&quot;);</span>
+<span class="fc" id="L87">        parser.visitAllNodesWith(visitor);</span>
+<span class="fc" id="L88">        assertEquals(&quot;# times 'and' was found&quot;, 0, visitor.stringFoundCount());</span>
+<span class="fc" id="L89">    }</span>
+
+    public void testStringFoundMultipleTimes() throws Exception {
+<span class="fc" id="L92">        createParser(HTML_TO_SEARCH);</span>
+<span class="fc" id="L93">        StringFindingVisitor visitor = new StringFindingVisitor(&quot;TEST&quot;);</span>
+<span class="fc" id="L94">        visitor.doMultipleSearchesWithinStrings();</span>
+<span class="fc" id="L95">        parser.visitAllNodesWith(visitor);</span>
+<span class="fc" id="L96">        assertEquals(&quot;TEST found&quot;, 5, visitor.stringFoundCount());</span>
+<span class="fc" id="L97">    }</span>
+
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

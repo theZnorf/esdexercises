@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>TableTagTest.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tests.tagTests</a> &gt; <span class="el_source">TableTagTest.java</span></div><h1>TableTagTest.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/test/java/org/htmlparser/tests/tagTests/TableTagTest.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tests.tagTests;
+
+import org.htmlparser.Node;
+import org.htmlparser.Parser;
+import org.htmlparser.tags.Html;
+import org.htmlparser.tags.TableColumn;
+import org.htmlparser.tags.TableRow;
+import org.htmlparser.tags.TableTag;
+import org.htmlparser.tests.ParserTestCase;
+import org.htmlparser.util.NodeIterator;
+import org.htmlparser.util.ParserException;
+
+public class TableTagTest extends ParserTestCase
+{
+    static
+    {
+<span class="fc" id="L42">        System.setProperty (&quot;org.htmlparser.tests.tagTests.TableTagTest&quot;, &quot;TableTagTest&quot;);</span>
+<span class="fc" id="L43">    }</span>
+
+
+    public TableTagTest (String name)
+    {
+<span class="fc" id="L48">        super(name);</span>
+<span class="fc" id="L49">    }</span>
+    
+    private String createHtmlWithTable() {
+<span class="fc" id="L52">        return</span>
+<span class="fc" id="L53">        &quot;&lt;table width=\&quot;100.0%\&quot; align=\&quot;Center\&quot; cellpadding=\&quot;5.0\&quot; cellspacing=\&quot;0.0\&quot; border=\&quot;0.0\&quot;&gt;&quot;+</span>
+        &quot;   &lt;tr&gt;&quot; +
+        &quot;       &lt;td border=\&quot;0.0\&quot; valign=\&quot;Top\&quot; colspan=\&quot;5\&quot;&gt;&quot; +
+        &quot;           &lt;img src=\&quot;file:/c:/data/dev/eclipse_workspace/ShoppingServerTests/resources/pictures/fishbowl.jpg\&quot; width=\&quot;446.0\&quot; height=\&quot;335.0\&quot; /&gt;&quot; +
+        &quot;       &lt;/td&gt;&quot; +
+        &quot;       &lt;td border=\&quot;0.0\&quot; align=\&quot;Justify\&quot; valign=\&quot;Top\&quot; colspan=\&quot;7\&quot;&gt;&quot; +
+        &quot;           &lt;span&gt;The best way to improve your refactoring skills is to practice cleaning up poorly-designed code. And we've got just the thing: code we custom-designed to reek of over 90% of the code smells identified in the refactoring literature. This poorly designed code functions correctly, which you can verify by running a full suite of tests against it. Your challenge is to identify the smells in this code, determining which refactoring(s) can help you clean up the smells and implement the refactorings to arrive at a well-designed new version of the code that continues to pass its unit tests. This exercise takes place using our popular class fishbowl. There is a lot to learn from this challenge, so we recommend that you spend as much time on it as possible.&amp;#013;&lt;br /&gt;&lt;/span&gt;&quot; +
+        &quot;       &lt;/td&gt;&quot; +
+        &quot;   &lt;/tr&gt;&quot; +
+        &quot;&lt;/table&gt;&quot;;
+    }
+
+    public void testScan() throws ParserException 
+    {
+<span class="fc" id="L67">        createParser(createHtmlWithTable());</span>
+<span class="fc" id="L68">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L69">        assertTrue(node[0] instanceof TableTag);</span>
+<span class="fc" id="L70">        TableTag tableTag = (TableTag)node[0];</span>
+<span class="fc" id="L71">        assertEquals(&quot;rows&quot;,1,tableTag.getRowCount());</span>
+<span class="fc" id="L72">        TableRow row = tableTag.getRow(0);</span>
+<span class="fc" id="L73">        assertEquals(&quot;columns in row 1&quot;,2,row.getColumnCount());</span>
+<span class="fc" id="L74">        assertEquals(&quot;table width&quot;,&quot;100.0%&quot;,tableTag.getAttribute(&quot;WIDTH&quot;));</span>
+<span class="fc" id="L75">    }</span>
+
+    public void testErroneousTables() throws ParserException {
+<span class="fc" id="L78">        createParser(</span>
+<span class="fc" id="L79">            &quot;&lt;HTML&gt;\n&quot;+</span>
+                &quot;&lt;table border&gt;\n&quot;+
+                    &quot;&lt;tr&gt;\n&quot;+
+                        &quot;&lt;td&gt;Head1&lt;/td&gt;\n&quot;+
+                        &quot;&lt;td&gt;Val1&lt;/td&gt;\n&quot;+
+                    &quot;&lt;/tr&gt;\n&quot;+
+                    &quot;&lt;tr&gt;\n&quot;+
+                        &quot;&lt;td&gt;Head2&lt;/td&gt;\n&quot;+
+                        &quot;&lt;td&gt;Val2&lt;/td&gt;\n&quot;+
+                    &quot;&lt;/tr&gt;\n&quot;+
+                    &quot;&lt;tr&gt;\n&quot;+
+                        &quot;&lt;td&gt;\n&quot;+
+                            &quot;&lt;table border&gt;\n&quot;+
+                                &quot;&lt;tr&gt;\n&quot;+
+                                    &quot;&lt;td&gt;table2 Head1&lt;/td&gt;\n&quot;+
+                                    &quot;&lt;td&gt;table2 Val1&lt;/td&gt;\n&quot;+
+                                &quot;&lt;/tr&gt;\n&quot;+
+                            &quot;&lt;/table&gt;\n&quot;+
+                        &quot;&lt;/td&gt;\n&quot;+
+                    &quot;&lt;/tr&gt;\n&quot;+
+            &quot;&lt;/BODY&gt;\n&quot;+
+            &quot;&lt;/HTML&gt;&quot;
+        );
+<span class="fc" id="L102">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L103">        assertType(&quot;only tag should be a HTML tag&quot;, Html.class,node[0]);</span>
+<span class="fc" id="L104">        Html html = (Html)node[0];</span>
+<span class="fc" id="L105">        assertEquals(&quot;html tag should have 4 children&quot;, 4, html.getChildCount ());</span>
+<span class="fc" id="L106">        assertType(&quot;second tag&quot;,TableTag.class,html.getChild (1));</span>
+<span class="fc" id="L107">        TableTag table = (TableTag)html.getChild (1);</span>
+<span class="fc" id="L108">        assertEquals(&quot;rows&quot;,3,table.getRowCount());</span>
+<span class="fc" id="L109">        TableRow tr = table.getRow(2);</span>
+<span class="fc" id="L110">        assertEquals(&quot;columns&quot;,1,tr.getColumnCount());</span>
+<span class="fc" id="L111">        TableColumn td = tr.getColumns()[0];</span>
+<span class="fc" id="L112">        Node node = td.childAt(1);</span>
+<span class="fc" id="L113">        assertType(&quot;node&quot;,TableTag.class,node);</span>
+<span class="fc" id="L114">        TableTag table2 = (TableTag)node;</span>
+<span class="fc" id="L115">        assertEquals(&quot;second table row count&quot;,1,table2.getRowCount());</span>
+<span class="fc" id="L116">        tr = table2.getRow(0);</span>
+<span class="fc" id="L117">        assertEquals(&quot;second table col count&quot;,2,tr.getColumnCount());</span>
+<span class="fc" id="L118">    }</span>
+
+    /**
+     * Test many unclosed tags (causes heavy recursion).
+     * See feature request #729259 Increase maximum recursion depth.
+     * Only perform this test if it's version 1.4 or higher.
+     */
+    public void testRecursionDepth () throws ParserException
+    {
+        Parser parser;
+<span class="nc" id="L128">        String url = &quot;http://htmlparser.sourceforge.net/test/badtable2.html&quot;;</span>
+
+<span class="nc" id="L130">        parser = new Parser (url);</span>
+<span class="nc bnc" id="L131" title="All 2 branches missed.">        for (NodeIterator e = parser.elements();e.hasMoreNodes();)</span>
+<span class="nc" id="L132">            e.nextNode();</span>
+        // Note: The test will throw a StackOverFlowException,
+        // so we are successful if we get to here...
+<span class="nc" id="L135">        assertTrue (&quot;Crash&quot;, true);</span>
+<span class="nc" id="L136">    }</span>
+
+    /**
+     * See bug #742254 Nested &lt;TR&gt; &amp;&lt;TD&gt; tags should not be allowed
+     */
+    public void testUnClosed2 () throws ParserException
+    {
+<span class="fc" id="L143">        createParser (&quot;&lt;TABLE&gt;&lt;TR&gt;&lt;TD&gt;&lt;TD&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TABLE&gt;&quot;);</span>
+<span class="fc" id="L144">        parseAndAssertNodeCount (1);</span>
+<span class="fc" id="L145">        String s = node[0].toHtml ();</span>
+<span class="fc" id="L146">        assertEquals (&quot;Unclosed&quot;,&quot;&lt;TABLE&gt;&lt;TR&gt;&lt;TD&gt;&lt;/TD&gt;&lt;TD&gt;&lt;/TD&gt;&lt;/TR&gt;&lt;/TABLE&gt;&quot;,s);</span>
+<span class="fc" id="L147">    }</span>
+
+    /**
+     * See bug #750117 StackOverFlow while Node-Iteration
+     * Not reproducible.
+     */
+    public void testOverFlow () throws ParserException
+    {
+<span class="nc" id="L155">        parser =</span>
+<span class="nc" id="L156">            new Parser(</span>
+<span class="nc" id="L157">                &quot;http://www.sec.gov/Archives/edgar/data/30554/000089322002000287/w57038e10-k.htm&quot;</span>
+            );
+<span class="nc bnc" id="L159" title="All 2 branches missed.">        for (NodeIterator e = parser.elements(); e.hasMoreNodes(); )</span>
+<span class="nc" id="L160">            e.nextNode();</span>
+<span class="nc" id="L161">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

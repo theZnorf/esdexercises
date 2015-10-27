@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>AllTests.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tests.utilTests</a> &gt; <span class="el_source">AllTests.java</span></div><h1>AllTests.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Somik Raha
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/test/java/org/htmlparser/tests/utilTests/AllTests.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tests.utilTests;
+
+
+import junit.framework.TestSuite;
+
+import org.htmlparser.tests.ParserTestCase;
+
+/**
+ * Insert the type's description here.
+ * Creation date: (6/17/2001 6:07:04 PM)
+ */
+public class AllTests extends ParserTestCase
+{
+    static
+    {
+<span class="fc" id="L41">        System.setProperty (&quot;org.htmlparser.tests.utilTests.AllTests&quot;, &quot;AllTests&quot;);</span>
+<span class="fc" id="L42">    }</span>
+
+    /**
+     * AllTests constructor comment.
+     * @param name java.lang.String
+     */
+    public AllTests(String name) {
+<span class="nc" id="L49">        super(name);</span>
+<span class="nc" id="L50">    }</span>
+
+    /**
+     * Insert the method's description here.
+     * Creation date: (6/17/2001 6:07:15 PM)
+     * @return junit.framework.TestSuite
+     */
+    public static TestSuite suite()
+    {
+<span class="fc" id="L59">        TestSuite suite = new TestSuite(&quot;Utility Tests&quot;);</span>
+
+<span class="fc" id="L61">        suite.addTestSuite(BeanTest.class);</span>
+<span class="fc" id="L62">        suite.addTestSuite(HTMLParserUtilsTest.class);</span>
+<span class="fc" id="L63">        suite.addTestSuite(NodeListTest.class);</span>
+<span class="fc" id="L64">        suite.addTestSuite(NonEnglishTest.class);</span>
+<span class="fc" id="L65">        suite.addTestSuite(SortTest.class);</span>
+
+<span class="fc" id="L67">        return suite;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

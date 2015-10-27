@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>OrFilter.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.filters</a> &gt; <span class="el_source">OrFilter.java</span></div><h1>OrFilter.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/main/java/org/htmlparser/filters/OrFilter.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.filters;
+
+import org.htmlparser.Node;
+import org.htmlparser.NodeFilter;
+
+/**
+ * Accepts nodes matching any of its predicates filters (OR operation).
+ */
+public class OrFilter implements NodeFilter
+{
+    /**
+     * The predicates that are to be or'ed together;
+     */
+    protected NodeFilter[] mPredicates;
+
+    /**
+     * Creates a new instance of an OrFilter.
+     * With no predicates, this would always answer &lt;code&gt;false&lt;/code&gt;
+     * to {@link #accept}.
+     * @see #setPredicates
+     */
+<span class="nc" id="L47">    public OrFilter ()</span>
+    {
+<span class="nc" id="L49">        setPredicates (null);</span>
+<span class="nc" id="L50">    }</span>
+
+    /**
+     * Creates an OrFilter that accepts nodes acceptable to either filter.
+     * @param left One filter.
+     * @param right The other filter.
+     */
+<span class="fc" id="L57">    public OrFilter (NodeFilter left, NodeFilter right)</span>
+    {
+        NodeFilter[] predicates;
+
+<span class="fc" id="L61">        predicates = new NodeFilter[2];</span>
+<span class="fc" id="L62">        predicates[0] = left;</span>
+<span class="fc" id="L63">        predicates[1] = right;</span>
+<span class="fc" id="L64">        setPredicates (predicates);</span>
+<span class="fc" id="L65">    }</span>
+    
+    /**
+     * Creates an OrFilter that accepts nodes acceptable to any of the given filters.
+     * @param predicates The list of filters. 
+     */
+<span class="nc" id="L71">    public OrFilter (NodeFilter[] predicates)</span>
+    {
+<span class="nc" id="L73">        setPredicates (predicates);</span>
+<span class="nc" id="L74">    }</span>
+
+    /**
+     * Get the predicates used by this OrFilter.
+     * @return The predicates currently in use.
+     */
+    public NodeFilter[] getPredicates ()
+    {
+<span class="nc" id="L82">        return (mPredicates);</span>
+    }
+
+    /**
+     * Set the predicates for this OrFilter.
+     * @param predicates The list of predidcates to use in {@link #accept}.
+     */
+    public void setPredicates (NodeFilter[] predicates)
+    {
+<span class="pc bpc" id="L91" title="1 of 2 branches missed.">        if (null == predicates)</span>
+<span class="nc" id="L92">            predicates = new NodeFilter[0];</span>
+<span class="fc" id="L93">        mPredicates = predicates;</span>
+<span class="fc" id="L94">    }</span>
+
+    //
+    // NodeFilter interface
+    //
+
+    /**
+     * Accept nodes that are acceptable to any of its predicate filters.
+     * @param node The node to check.
+     * @return &lt;code&gt;true&lt;/code&gt; if any of the predicate filters find the node
+     * is acceptable, &lt;code&gt;false&lt;/code&gt; otherwise.
+     */
+    public boolean accept (Node node)
+    {
+        boolean ret;
+
+<span class="fc" id="L110">        ret = false;</span>
+
+<span class="fc bfc" id="L112" title="All 4 branches covered.">        for (int i = 0; !ret &amp;&amp; (i &lt; mPredicates.length); i++)</span>
+<span class="fc bfc" id="L113" title="All 2 branches covered.">            if (mPredicates[i].accept (node))</span>
+<span class="fc" id="L114">                ret = true;</span>
+
+<span class="fc" id="L116">        return (ret);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

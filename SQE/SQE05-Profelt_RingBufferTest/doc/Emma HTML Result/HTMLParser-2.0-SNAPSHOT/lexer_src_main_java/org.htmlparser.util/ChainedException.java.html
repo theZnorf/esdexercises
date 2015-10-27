@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>ChainedException.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">lexer/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.util</a> &gt; <span class="el_source">ChainedException.java</span></div><h1>ChainedException.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Claude Duguay
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/lexer/src/main/java/org/htmlparser/util/ChainedException.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.util;
+
+/**
+ * Support for chained exceptions in code that predates Java 1.4.
+ * A chained exception can use a Throwable argument to reference
+ * a lower level exception. The chained exception provides a
+ * stack trace that includes the message and any throwable
+ * exception included as an argument in the chain.
+ *
+ * For example:
+ *
+ *   ApplicationException: Application problem encountered;
+ *   ProcessException: Unable to process document;
+ *   java.io.IOException: Unable to open 'filename.ext'
+ *     at ChainedExceptionTest.openFile(ChainedExceptionTest.java:19)
+ *     at ChainedExceptionTest.processFile(ChainedExceptionTest.java:27)
+ *     at ChainedExceptionTest.application(ChainedExceptionTest.java:40)
+ *     at ChainedExceptionTest.main(ChainedExceptionTest.java:52)
+ *
+ * Represents the output from two nested exceptions. The outside
+ * exception is a subclass of ChainedException called
+ * ApplicationException, which includes a throwable reference.
+ * The throwable reference is also a subclass of ChainedException,
+ * called ProcessException, which in turn includes a reference to
+ * a standard IOException. In each case, the message is increasingly
+ * specific about the nature of the problem. The end user may only
+ * see the application exception, but debugging is greatly
+ * enhanced by having more details in the stack trace.
+ *
+ * @author Claude Duguay
+ **/
+
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.util.Vector;
+
+public class ChainedException
+  extends Exception
+{
+  protected Throwable throwable;
+
+<span class="nc" id="L67">  public ChainedException() {}</span>
+
+  public ChainedException(String message)
+  {
+<span class="nc" id="L71">    super(message);</span>
+<span class="nc" id="L72">  }</span>
+
+<span class="nc" id="L74">  public ChainedException(Throwable throwable)</span>
+  {
+<span class="nc" id="L76">    this.throwable = throwable;</span>
+<span class="nc" id="L77">  }</span>
+
+  public ChainedException(String message, Throwable throwable)
+  {
+<span class="fc" id="L81">    super(message);</span>
+<span class="fc" id="L82">    this.throwable = throwable;</span>
+<span class="fc" id="L83">  }</span>
+
+  public String[] getMessageChain()
+  {
+<span class="nc" id="L87">    Vector list = getMessageList();</span>
+<span class="nc" id="L88">    String[] chain = new String[list.size()];</span>
+<span class="nc" id="L89">    list.copyInto (chain);</span>
+<span class="nc" id="L90">    return chain;</span>
+  }
+
+  public Vector getMessageList()
+  {
+<span class="nc" id="L95">    Vector list = new Vector();</span>
+<span class="nc" id="L96">    list.addElement(getMessage());</span>
+<span class="nc bnc" id="L97" title="All 2 branches missed.">    if (throwable != null)</span>
+    {
+<span class="nc bnc" id="L99" title="All 2 branches missed.">      if (throwable instanceof ChainedException)</span>
+      {
+<span class="nc" id="L101">        ChainedException chain = (ChainedException)throwable;</span>
+<span class="nc" id="L102">        Vector sublist = chain.getMessageList ();</span>
+<span class="nc bnc" id="L103" title="All 2 branches missed.">        for (int i = 0; i &lt; sublist.size (); i++)</span>
+<span class="nc" id="L104">            list.addElement (sublist.elementAt (i));</span>
+<span class="nc" id="L105">      }</span>
+      else
+      {
+<span class="nc" id="L108">        String message = throwable.getMessage();</span>
+<span class="nc bnc" id="L109" title="All 4 branches missed.">        if (message != null &amp;&amp; !message.equals(&quot;&quot;))</span>
+        {
+<span class="nc" id="L111">          list.addElement (message);</span>
+        }
+      }
+    }
+<span class="nc" id="L115">    return list;</span>
+  }
+
+  public Throwable getThrowable()
+  {
+<span class="nc" id="L120">    return throwable;</span>
+  }
+
+  public void printStackTrace()
+  {
+<span class="nc" id="L125">    printStackTrace(System.err);</span>
+<span class="nc" id="L126">  }</span>
+
+  public void printStackTrace(PrintStream out)
+  {
+<span class="nc" id="L130">    synchronized (out)</span>
+    {
+<span class="nc bnc" id="L132" title="All 2 branches missed.">      if (throwable != null)</span>
+      {
+<span class="nc" id="L134">        out.println(getClass().getName() +</span>
+<span class="nc" id="L135">          &quot;: &quot; + getMessage() + &quot;;&quot;);</span>
+<span class="nc" id="L136">        throwable.printStackTrace(out);</span>
+<span class="nc" id="L137">      }</span>
+      else
+      {
+<span class="nc" id="L140">        super.printStackTrace(out);</span>
+      }
+    }
+<span class="nc" id="L143">  }</span>
+
+  public void printStackTrace(PrintWriter out)
+  {
+<span class="pc" id="L147">    synchronized (out)</span>
+    {
+<span class="pc bpc" id="L149" title="1 of 2 branches missed.">      if (throwable != null)</span>
+      {
+<span class="fc" id="L151">        out.println(getClass().getName() +</span>
+<span class="fc" id="L152">          &quot;: &quot; + getMessage() + &quot;;&quot;);</span>
+<span class="fc" id="L153">        throwable.printStackTrace(out);</span>
+<span class="fc" id="L154">      }</span>
+      else
+      {
+<span class="nc" id="L157">        super.printStackTrace(out);</span>
+      }
+    }
+<span class="fc" id="L160">  }</span>
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

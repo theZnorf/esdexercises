@@ -1,0 +1,549 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>Sort.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">lexer/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.util.sort</a> &gt; <span class="el_source">Sort.java</span></div><h1>Sort.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/lexer/src/main/java/org/htmlparser/util/sort/Sort.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.util.sort;
+
+import java.util.*;
+
+/**
+ * A quick sort algorithm to sort Vectors or arrays.
+ * Provides sort and binary search capabilities.
+ *&lt;p&gt;
+ * This all goes away in JDK 1.2.
+ * &lt;p&gt;
+ * @author James Gosling
+ * @author Kevin A. Smith
+ * @author Derrick Oswald
+ * @version 1.4, 11 June, 1997
+ */
+public class Sort
+{
+    /**
+     * No object of this class need ever be instantiated.
+     * All methods are static.
+     */
+<span class="nc" id="L47">    private Sort ()</span>
+    {
+<span class="nc" id="L49">    }</span>
+
+    /**
+     * This is a generic version of C.A.R Hoare's Quick Sort algorithm.
+     * This will handle vectors that are already
+     * sorted, and vectors with duplicate keys.
+     * Equivalent to:
+     * &lt;pre&gt;
+     * QuickSort (v, 0, v.size () - 1);
+     * &lt;/pre&gt;
+     * @param v A &lt;code&gt;Vector&lt;/code&gt; of &lt;code&gt;Ordered&lt;/code&gt; items.
+     * @exception ClassCastException If the vector contains objects that
+     * are not &lt;code&gt;Ordered&lt;/code&gt;.
+     */
+    public static void QuickSort (Vector v) throws ClassCastException
+    {
+<span class="fc" id="L65">        QuickSort (v, 0, v.size () - 1);</span>
+<span class="fc" id="L66">    }</span>
+
+    /**
+     * This is a generic version of C.A.R Hoare's Quick Sort algorithm.
+     * This will handle vectors that are already
+     * sorted, and vectors with duplicate keys.
+     * &lt;p&gt;
+     * If you think of a one dimensional vector as going from
+     * the lowest index on the left to the highest index on the right
+     * then the parameters to this function are lowest index or
+     * left and highest index or right.
+     * @param v A &lt;code&gt;Vector&lt;/code&gt; of &lt;code&gt;Ordered&lt;/code&gt; items.
+     * @param lo0 Left boundary of vector partition.
+     * @param hi0 Right boundary of vector partition.
+     * @exception ClassCastException If the vector contains objects that
+     * are not &lt;code&gt;Ordered&lt;/code&gt;.
+     */
+    public static void QuickSort (Vector v, int lo0, int hi0) throws ClassCastException
+    {
+<span class="fc" id="L85">        int lo = lo0;</span>
+<span class="fc" id="L86">        int hi = hi0;</span>
+        Ordered mid;
+
+<span class="pc bpc" id="L89" title="1 of 2 branches missed.">        if ( hi0 &gt; lo0)</span>
+        {   // arbitrarily establish partition element as the midpoint of the vector
+<span class="fc" id="L91">            mid = (Ordered)v.elementAt((lo0 + hi0) / 2);</span>
+
+            // loop through the vector until indices cross
+<span class="fc bfc" id="L94" title="All 2 branches covered.">            while (lo &lt;= hi)</span>
+            {
+                // find the first element that is greater than or equal to
+                // the partition element starting from the left index
+<span class="pc bpc" id="L98" title="1 of 4 branches missed.">                while ((lo &lt; hi0) &amp;&amp; (0 &gt; ((Ordered)v.elementAt (lo)).compare (mid)))</span>
+<span class="fc" id="L99">                    ++lo;</span>
+
+                // find an element that is smaller than or equal to
+                // the partition element starting from the right index
+<span class="fc bfc" id="L103" title="All 4 branches covered.">                while ((hi &gt; lo0) &amp;&amp; (0 &lt; ((Ordered)v.elementAt (hi)).compare (mid)))</span>
+<span class="fc" id="L104">                    --hi;</span>
+
+                // if the indexes have not crossed, swap
+<span class="pc bpc" id="L107" title="1 of 2 branches missed.">                if (lo &lt;= hi)</span>
+<span class="fc" id="L108">                    swap (v, lo++, hi--);</span>
+            }
+
+            // if the right index has not reached the left side of array
+            // must now sort the left partition
+<span class="fc bfc" id="L113" title="All 2 branches covered.">            if (lo0 &lt; hi)</span>
+<span class="fc" id="L114">                QuickSort (v, lo0, hi);</span>
+
+            // if the left index has not reached the right side of array
+            // must now sort the right partition
+<span class="pc bpc" id="L118" title="1 of 2 branches missed.">            if (lo &lt; hi0)</span>
+<span class="nc" id="L119">                QuickSort (v, lo, hi0);</span>
+        }
+<span class="fc" id="L121">    }</span>
+
+    private static void swap (Vector v, int i, int j)
+    {
+        Object o;
+
+<span class="fc" id="L127">        o = v.elementAt (i);</span>
+<span class="fc" id="L128">        v.setElementAt (v.elementAt (j), i);</span>
+<span class="fc" id="L129">        v.setElementAt (o, j);</span>
+<span class="fc" id="L130">    }</span>
+
+    /**
+     * This is a generic version of C.A.R Hoare's Quick Sort algorithm.
+     * This will handle arrays that are already sorted,
+     * and arrays with duplicate keys.
+     * &lt;p&gt;
+     * Equivalent to:
+     * &lt;pre&gt;
+     * QuickSort (a, 0, a.length - 1);
+     * &lt;/pre&gt;
+     * @param a An array of &lt;code&gt;Ordered&lt;/code&gt; items.
+     */
+    public static void QuickSort (Ordered[] a)
+    {
+<span class="fc" id="L145">        QuickSort (a, 0, a.length - 1);</span>
+<span class="fc" id="L146">    }</span>
+
+    /**
+     * This is a generic version of C.A.R Hoare's Quick Sort algorithm.
+     * This will handle arrays that are already sorted,
+     * and arrays with duplicate keys.
+     * &lt;p&gt;
+     * If you think of a one dimensional array as going from
+     * the lowest index on the left to the highest index on the right
+     * then the parameters to this function are lowest index or
+     * left and highest index or right.
+     * @param a An array of &lt;code&gt;Ordered&lt;/code&gt; items.
+     * @param lo0 Left boundary of array partition.
+     * @param hi0 Right boundary of array partition.
+     */
+    public static void QuickSort (Ordered[] a, int lo0, int hi0)
+    {
+<span class="fc" id="L163">        int lo = lo0;</span>
+<span class="fc" id="L164">        int hi = hi0;</span>
+        Ordered mid;
+
+<span class="pc bpc" id="L167" title="1 of 2 branches missed.">        if ( hi0 &gt; lo0)</span>
+        {
+            // arbitrarily establish partition element as the midpoint of the array
+<span class="fc" id="L170">            mid = a[(lo0 + hi0) / 2];</span>
+
+            // loop through the vector until indices cross
+<span class="fc bfc" id="L173" title="All 2 branches covered.">            while (lo &lt;= hi)</span>
+            {
+                // find the first element that is greater than or equal to
+                // the partition element starting from the left index
+<span class="fc bfc" id="L177" title="All 4 branches covered.">                while ((lo &lt; hi0) &amp;&amp; (0 &gt; a[lo].compare (mid)))</span>
+<span class="fc" id="L178">                    ++lo;</span>
+
+                // find an element that is smaller than or equal to
+                // the partition element starting from the right Index.
+<span class="fc bfc" id="L182" title="All 4 branches covered.">                while ((hi &gt; lo0) &amp;&amp; (0 &lt; a[hi].compare (mid)))</span>
+<span class="fc" id="L183">                    --hi;</span>
+
+                // if the indexes have not crossed, swap
+<span class="fc bfc" id="L186" title="All 2 branches covered.">                if (lo &lt;= hi)</span>
+<span class="fc" id="L187">                    swap (a, lo++, hi--);</span>
+            }
+
+            // if the right index has not reached the left side of array
+            // must now sort the left partition
+<span class="fc bfc" id="L192" title="All 2 branches covered.">            if (lo0 &lt; hi)</span>
+<span class="fc" id="L193">                QuickSort (a, lo0, hi);</span>
+
+            // if the left index has not reached the right side of array
+            // must now sort the right partition
+<span class="fc bfc" id="L197" title="All 2 branches covered.">            if (lo &lt; hi0)</span>
+<span class="fc" id="L198">                QuickSort (a, lo, hi0);</span>
+        }
+<span class="fc" id="L200">    }</span>
+
+    /**
+     * Swaps two elements of an array.
+     * @param a The array of elements.
+     * @param i The index of one item to swap.
+     * @param j The index of the other item to swap.
+     */
+    private static void swap (Object[] a, int i, int j)
+    {
+        Object o;
+<span class="fc" id="L211">        o = a[i];</span>
+<span class="fc" id="L212">        a[i] = a[j];</span>
+<span class="fc" id="L213">        a[j] = o;</span>
+<span class="fc" id="L214">    }</span>
+
+    /**
+     * This is a string version of C.A.R Hoare's Quick Sort algorithm.
+     * This will handle arrays that are already sorted,
+     * and arrays with duplicate keys.
+     * &lt;p&gt;
+     * Equivalent to:
+     * &lt;pre&gt;
+     * QuickSort (a, 0, a.length - 1);
+     * &lt;/pre&gt;
+     * @param a An array of &lt;code&gt;String&lt;/code&gt; items.
+     */
+    public static void QuickSort (String[] a)
+    {
+<span class="nc" id="L229">        QuickSort (a, 0, a.length - 1);</span>
+<span class="nc" id="L230">    }</span>
+
+    /**
+     * This is a string version of C.A.R Hoare's Quick Sort algorithm.
+     * This will handle arrays that are already sorted,
+     * and arrays with duplicate keys.
+     * &lt;p&gt;
+     * If you think of a one dimensional array as going from
+     * the lowest index on the left to the highest index on the right
+     * then the parameters to this function are lowest index or
+     * left and highest index or right.
+     * @param a An array of &lt;code&gt;String&lt;/code&gt; items.
+     * @param lo0 Left boundary of array partition.
+     * @param hi0 Right boundary of array partition.
+     */
+    public static void QuickSort (String[] a, int lo0, int hi0)
+    {
+<span class="nc" id="L247">        int lo = lo0;</span>
+<span class="nc" id="L248">        int hi = hi0;</span>
+        String mid;
+
+<span class="nc bnc" id="L251" title="All 2 branches missed.">        if ( hi0 &gt; lo0)</span>
+        {
+            // arbitrarily establish partition element as the midpoint of the array
+<span class="nc" id="L254">            mid = a[(lo0 + hi0) / 2];</span>
+
+            // loop through the vector until indices cross
+<span class="nc bnc" id="L257" title="All 2 branches missed.">            while (lo &lt;= hi)</span>
+            {
+                // find the first element that is greater than or equal to
+                // the partition element starting from the left index
+<span class="nc bnc" id="L261" title="All 4 branches missed.">                while ((lo &lt; hi0) &amp;&amp; (0 &gt; a[lo].compareTo (mid)))</span>
+<span class="nc" id="L262">                    ++lo;</span>
+
+                // find an element that is smaller than or equal to
+                // the partition element starting from the right Index.
+<span class="nc bnc" id="L266" title="All 4 branches missed.">                while ((hi &gt; lo0) &amp;&amp; (0 &lt; a[hi].compareTo (mid)))</span>
+<span class="nc" id="L267">                    --hi;</span>
+
+                // if the indexes have not crossed, swap
+<span class="nc bnc" id="L270" title="All 2 branches missed.">                if (lo &lt;= hi)</span>
+<span class="nc" id="L271">                    swap (a, lo++, hi--);</span>
+            }
+
+            // if the right index has not reached the left side of array
+            // must now sort the left partition
+<span class="nc bnc" id="L276" title="All 2 branches missed.">            if (lo0 &lt; hi)</span>
+<span class="nc" id="L277">                QuickSort (a, lo0, hi);</span>
+
+            // if the left index has not reached the right side of array
+            // must now sort the right partition
+<span class="nc bnc" id="L281" title="All 2 branches missed.">            if (lo &lt; hi0)</span>
+<span class="nc" id="L282">                QuickSort (a, lo, hi0);</span>
+        }
+<span class="nc" id="L284">    }</span>
+
+    /**
+     * This is a generic version of C.A.R Hoare's Quick Sort algorithm.
+     * This will handle Sortable objects that are already
+     * sorted, and Sortable objects with duplicate keys.
+     * &lt;p&gt;
+     * @param sortable A &lt;code&gt;Sortable&lt;/code&gt; object.
+     * @param lo0 Left boundary of partition.
+     * @param hi0 Right boundary of partition.
+     */
+    public static void QuickSort (Sortable sortable, int lo0, int hi0)
+    {
+<span class="fc" id="L297">        int lo = lo0;</span>
+<span class="fc" id="L298">        int hi = hi0;</span>
+        Ordered mid;
+        Ordered test;
+
+<span class="pc bpc" id="L302" title="1 of 2 branches missed.">        if ( hi0 &gt; lo0)</span>
+        {   // arbitrarily establish partition element as the midpoint of the vector
+<span class="fc" id="L304">            mid = sortable.fetch ((lo0 + hi0) / 2, null);</span>
+<span class="fc" id="L305">            test = null;</span>
+
+            // loop through the vector until indices cross
+<span class="fc bfc" id="L308" title="All 2 branches covered.">            while (lo &lt;= hi)</span>
+            {
+                // find the first element that is greater than or equal to
+                // the partition element starting from the left index
+<span class="fc bfc" id="L312" title="All 4 branches covered.">                while ((lo &lt; hi0) &amp;&amp; (0 &gt; (test = sortable.fetch (lo, test)).compare (mid)))</span>
+<span class="fc" id="L313">                    ++lo;</span>
+
+                // find an element that is smaller than or equal to
+                // the partition element starting from the right index
+<span class="fc bfc" id="L317" title="All 4 branches covered.">                while ((hi &gt; lo0) &amp;&amp; (0 &lt; (test = sortable.fetch (hi, test)).compare (mid)))</span>
+<span class="fc" id="L318">                    --hi;</span>
+
+                // if the indexes have not crossed, swap
+<span class="fc bfc" id="L321" title="All 2 branches covered.">                if (lo &lt;= hi)</span>
+<span class="fc" id="L322">                    sortable.swap (lo++, hi--);</span>
+            }
+
+            // if the right index has not reached the left side of array
+            // must now sort the left partition
+<span class="fc bfc" id="L327" title="All 2 branches covered.">            if (lo0 &lt; hi)</span>
+<span class="fc" id="L328">                QuickSort (sortable, lo0, hi);</span>
+
+            // if the left index has not reached the right side of array
+            // must now sort the right partition
+<span class="fc bfc" id="L332" title="All 2 branches covered.">            if (lo &lt; hi0)</span>
+<span class="fc" id="L333">                QuickSort (sortable, lo, hi0);</span>
+        }
+<span class="fc" id="L335">    }</span>
+
+    /**
+     * This is a generic version of C.A.R Hoare's Quick Sort algorithm.
+     * This will handle Sortable objects that are already
+     * sorted, and Sortable objects with duplicate keys.
+     * &lt;p&gt;
+     * Equivalent to:
+     * &lt;pre&gt;
+     * QuickSort (sortable, sortable.first (), sortable.last ());
+     * &lt;/pre&gt;
+     * @param sortable A &lt;code&gt;Sortable&lt;/code&gt; object.
+     */
+    public static void QuickSort (Sortable sortable)
+    {
+<span class="fc" id="L350">        QuickSort (sortable, sortable.first (), sortable.last ());</span>
+<span class="fc" id="L351">    }</span>
+
+    /**
+     * Sort a Hashtable.
+     * @param h A Hashtable with String or Ordered keys.
+     * @return A sorted array of the keys.
+     * @exception ClassCastException If the keys of the hashtable
+     * are not &lt;code&gt;Ordered&lt;/code&gt;.
+     */
+    public static Object[] QuickSort (Hashtable h) throws ClassCastException
+    {
+        Enumeration e;
+        boolean are_strings;
+        Object[] ret;
+
+        // make the array
+<span class="nc" id="L367">        ret = new Ordered[h.size ()];</span>
+<span class="nc" id="L368">        e = h.keys ();</span>
+<span class="nc" id="L369">        are_strings = true; // until proven otherwise</span>
+<span class="nc bnc" id="L370" title="All 2 branches missed.">        for (int i = 0; i &lt; ret.length; i++)</span>
+        {
+<span class="nc" id="L372">            ret[i] = e.nextElement ();</span>
+<span class="nc bnc" id="L373" title="All 4 branches missed.">            if (are_strings &amp;&amp; !(ret[i] instanceof String))</span>
+<span class="nc" id="L374">                are_strings = false;</span>
+        }
+
+        // sort it
+<span class="nc bnc" id="L378" title="All 2 branches missed.">        if (are_strings)</span>
+<span class="nc" id="L379">            QuickSort ((String[])ret);</span>
+        else
+<span class="nc" id="L381">            QuickSort ((Ordered[])ret);</span>
+
+<span class="nc" id="L383">        return (ret);</span>
+    }
+
+    /**
+     * Binary search for an object
+     * @param set The collection of &lt;code&gt;Ordered&lt;/code&gt; objects.
+     * @param ref The name to search for.
+     * @param lo The lower index within which to look.
+     * @param hi The upper index within which to look.
+     * @return The index at which reference was found or is to be inserted.
+     */
+    public static int bsearch (Sortable set, Ordered ref, int lo, int hi)
+    {   int num;
+        int mid;
+        Ordered ordered;
+        int half;
+        int result;
+        int ret;
+
+<span class="fc" id="L402">        ret = -1;</span>
+
+<span class="fc" id="L404">        num = (hi - lo) + 1;</span>
+<span class="fc" id="L405">        ordered = null;</span>
+<span class="fc bfc" id="L406" title="All 4 branches covered.">        while ((-1 == ret) &amp;&amp; (lo &lt;= hi))</span>
+        {
+<span class="fc" id="L408">            half = num / 2;</span>
+<span class="fc bfc" id="L409" title="All 2 branches covered.">            mid = lo + ((0 != (num &amp; 1)) ? half : half - 1);</span>
+<span class="fc" id="L410">            ordered = set.fetch (mid, ordered);</span>
+<span class="fc" id="L411">            result = ref.compare (ordered);</span>
+<span class="fc bfc" id="L412" title="All 2 branches covered.">            if (0 == result)</span>
+<span class="fc" id="L413">                ret = mid;</span>
+<span class="fc bfc" id="L414" title="All 2 branches covered.">            else if (0 &gt; result)</span>
+            {
+<span class="fc" id="L416">                hi = mid - 1;</span>
+<span class="fc bfc" id="L417" title="All 2 branches covered.">                num = ((0 != (num &amp; 1)) ? half : half - 1);</span>
+<span class="fc" id="L418">            }</span>
+            else
+            {
+<span class="fc" id="L421">                lo = mid + 1;</span>
+<span class="fc" id="L422">                num = half;</span>
+            }
+        }
+<span class="fc bfc" id="L425" title="All 2 branches covered.">        if (-1 == ret)</span>
+<span class="fc" id="L426">            ret = lo;</span>
+
+<span class="fc" id="L428">        return (ret);</span>
+    }
+
+    /**
+     * Binary search for an object
+     * @param set The collection of &lt;code&gt;Ordered&lt;/code&gt; objects.
+     * @param ref The name to search for.
+     * @return The index at which reference was found or is to be inserted.
+     */
+    public static int bsearch (Sortable set, Ordered ref)
+    {
+<span class="fc" id="L439">        return (bsearch (set, ref, set.first (), set.last ()));</span>
+    }
+
+    /**
+     * Binary search for an object
+     * @param vector The vector of &lt;code&gt;Ordered&lt;/code&gt; objects.
+     * @param ref The name to search for.
+     * @param lo The lower index within which to look.
+     * @param hi The upper index within which to look.
+     * @return The index at which reference was found or is to be inserted.
+     */
+    public static int bsearch (Vector vector, Ordered ref, int lo, int hi)
+    {   int num;
+        int mid;
+        int half;
+        int result;
+        int ret;
+
+<span class="fc" id="L457">        ret = -1;</span>
+
+<span class="fc" id="L459">        num = (hi - lo) + 1;</span>
+<span class="pc bpc" id="L460" title="1 of 4 branches missed.">        while ((-1 == ret) &amp;&amp; (lo &lt;= hi))</span>
+        {
+<span class="fc" id="L462">            half = num / 2;</span>
+<span class="fc bfc" id="L463" title="All 2 branches covered.">            mid = lo + ((0 != (num &amp; 1)) ? half : half - 1);</span>
+<span class="fc" id="L464">            result = ref.compare (vector.elementAt (mid));</span>
+<span class="pc bpc" id="L465" title="1 of 2 branches missed.">            if (0 == result)</span>
+<span class="nc" id="L466">                ret = mid;</span>
+<span class="pc bpc" id="L467" title="1 of 2 branches missed.">            else if (0 &gt; result)</span>
+            {
+<span class="nc" id="L469">                hi = mid - 1;</span>
+<span class="nc bnc" id="L470" title="All 2 branches missed.">                num = ((0 != (num &amp; 1)) ? half : half - 1);</span>
+<span class="nc" id="L471">            }</span>
+            else
+            {
+<span class="fc" id="L474">                lo = mid + 1;</span>
+<span class="fc" id="L475">                num = half;</span>
+            }
+        }
+<span class="pc bpc" id="L478" title="1 of 2 branches missed.">        if (-1 == ret)</span>
+<span class="fc" id="L479">            ret = lo;</span>
+
+<span class="fc" id="L481">        return (ret);</span>
+    }
+
+    /**
+     * Binary search for an object
+     * @param vector The vector of &lt;code&gt;Ordered&lt;/code&gt; objects.
+     * @param ref The name to search for.
+     * @return The index at which reference was found or is to be inserted.
+     */
+    public static int bsearch (Vector vector, Ordered ref)
+    {
+<span class="fc" id="L492">        return (bsearch (vector, ref, 0, vector.size () - 1));</span>
+    }
+
+    /**
+     * Binary search for an object
+     * @param array The array of &lt;code&gt;Ordered&lt;/code&gt; objects.
+     * @param ref The name to search for.
+     * @param lo The lower index within which to look.
+     * @param hi The upper index within which to look.
+     * @return The index at which reference was found or is to be inserted.
+     */
+    public static int bsearch (Ordered[] array, Ordered ref, int lo, int hi)
+    {   int num;
+        int mid;
+        int half;
+        int result;
+        int ret;
+
+<span class="fc" id="L510">        ret = -1;</span>
+
+<span class="fc" id="L512">        num = (hi - lo) + 1;</span>
+<span class="pc bpc" id="L513" title="1 of 4 branches missed.">        while ((-1 == ret) &amp;&amp; (lo &lt;= hi))</span>
+        {
+<span class="fc" id="L515">            half = num / 2;</span>
+<span class="pc bpc" id="L516" title="1 of 2 branches missed.">            mid = lo + ((0 != (num &amp; 1)) ? half : half - 1);</span>
+<span class="fc" id="L517">            result = ref.compare (array[mid]);</span>
+<span class="fc bfc" id="L518" title="All 2 branches covered.">            if (0 == result)</span>
+<span class="fc" id="L519">                ret = mid;</span>
+<span class="fc bfc" id="L520" title="All 2 branches covered.">            else if (0 &gt; result)</span>
+            {
+<span class="fc" id="L522">                hi = mid - 1;</span>
+<span class="pc bpc" id="L523" title="1 of 2 branches missed.">                num = ((0 != (num &amp; 1)) ? half : half - 1);</span>
+<span class="fc" id="L524">            }</span>
+            else
+            {
+<span class="fc" id="L527">                lo = mid + 1;</span>
+<span class="fc" id="L528">                num = half;</span>
+            }
+        }
+<span class="pc bpc" id="L531" title="1 of 2 branches missed.">        if (-1 == ret)</span>
+<span class="nc" id="L532">            ret = lo;</span>
+
+<span class="fc" id="L534">        return (ret);</span>
+    }
+
+    /**
+     * Binary search for an object
+     * @param array The array of &lt;code&gt;Ordered&lt;/code&gt; objects.
+     * @param ref The name to search for.
+     * @return The index at which reference was found or is to be inserted.
+     */
+    public static int bsearch (Ordered[] array, Ordered ref)
+    {
+<span class="fc" id="L545">        return (bsearch (array, ref, 0, array.length - 1));</span>
+    }
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

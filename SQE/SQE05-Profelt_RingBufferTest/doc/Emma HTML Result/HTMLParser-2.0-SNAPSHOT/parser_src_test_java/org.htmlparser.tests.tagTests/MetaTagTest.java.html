@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>MetaTagTest.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tests.tagTests</a> &gt; <span class="el_source">MetaTagTest.java</span></div><h1>MetaTagTest.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Somik Raha
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/test/java/org/htmlparser/tests/tagTests/MetaTagTest.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tests.tagTests;
+
+import org.htmlparser.PrototypicalNodeFactory;
+import org.htmlparser.Tag;
+import org.htmlparser.tags.HeadTag;
+import org.htmlparser.tags.Html;
+import org.htmlparser.tags.LinkTag;
+import org.htmlparser.tags.MetaTag;
+import org.htmlparser.tags.TitleTag;
+import org.htmlparser.tests.ParserTestCase;
+import org.htmlparser.util.ParserException;
+
+public class MetaTagTest extends ParserTestCase {
+
+    static
+    {
+<span class="fc" id="L42">        System.setProperty (&quot;org.htmlparser.tests.tagTests.MetaTagTest&quot;, &quot;MetaTagTest&quot;);</span>
+<span class="fc" id="L43">    }</span>
+
+    public MetaTagTest(String name) {
+<span class="fc" id="L46">        super(name);</span>
+<span class="fc" id="L47">    }</span>
+
+    public void testToHTML() throws ParserException {
+<span class="fc" id="L50">        String description = &quot;description&quot;;</span>
+<span class="fc" id="L51">        String content = &quot;Protecting the internet community through technology, not legislation.  SpamCop eliminates spam.  Automatically file spam reports with the network administrators who can stop spam at the source.  Subscribe, and filter your email through powerful statistical analysis before it reaches your inbox.&quot;;</span>
+<span class="fc" id="L52">        String tag = &quot;&lt;META name=\&quot;&quot; + description + &quot;\&quot; content=\&quot;&quot; + content + &quot;\&quot;&gt;&quot;;</span>
+<span class="fc" id="L53">        createParser(</span>
+<span class="fc" id="L54">        &quot;&lt;!DOCTYPE HTML PUBLIC \&quot;-//W3C//DTD HTML 4.0//EN\&quot;&gt;\n&quot;+</span>
+        &quot;&lt;html&gt;\n&quot;+
+        &quot;&lt;head&gt;&lt;title&gt;SpamCop - Welcome to SpamCop\n&quot;+
+        &quot;&lt;/title&gt;\n&quot;+
+<span class="fc" id="L58">        tag + &quot;\n&quot;+</span>
+<span class="fc" id="L59">        &quot;&lt;META name=\&quot;keywords\&quot; content=\&quot;SpamCop spam cop email filter abuse header headers parse parser utility script net net-abuse filter mail program system trace traceroute dns\&quot;&gt;\n&quot;+</span>
+<span class="fc" id="L60">        &quot;&lt;META name=\&quot;language\&quot; content=\&quot;en\&quot;&gt;\n&quot;+</span>
+<span class="fc" id="L61">        &quot;&lt;META name=\&quot;owner\&quot; content=\&quot;service@admin.spamcop.net\&quot;&gt;\n&quot;+</span>
+<span class="fc" id="L62">        &quot;&lt;META HTTP-EQUIV=\&quot;content-type\&quot; CONTENT=\&quot;text/html; charset=ISO-8859-1\&quot;&gt;&quot;);</span>
+<span class="fc" id="L63">        parseAndAssertNodeCount(3);</span>
+<span class="fc" id="L64">        assertTrue(&quot;Third node should be an HTML node&quot;,node[2] instanceof Html);</span>
+<span class="fc" id="L65">        Html html = (Html)node[2];</span>
+<span class="pc bpc" id="L66" title="1 of 2 branches missed.">        assertTrue(&quot;HTML node should have two children&quot;,2 == html.getChildCount ());</span>
+<span class="fc" id="L67">        assertTrue(&quot;Second node should be an HEAD node&quot;,html.getChild(1) instanceof HeadTag);</span>
+<span class="fc" id="L68">        HeadTag head = (HeadTag)html.getChild(1);</span>
+<span class="pc bpc" id="L69" title="1 of 2 branches missed.">        assertTrue(&quot;HEAD node should have eleven children&quot;,11 == head.getChildCount ());</span>
+<span class="fc" id="L70">        assertTrue(&quot;Third child should be a title tag&quot;,head.getChild(2) instanceof MetaTag);</span>
+<span class="fc" id="L71">        MetaTag metaTag = (MetaTag)head.getChild(2);</span>
+<span class="fc" id="L72">        assertStringEquals(&quot;Meta Tag Name&quot;,description,metaTag.getMetaTagName());</span>
+<span class="fc" id="L73">        assertStringEquals(&quot;Meta Tag Contents&quot;,content,metaTag.getMetaContent());</span>
+<span class="fc" id="L74">        assertStringEquals(&quot;toHTML()&quot;,tag,metaTag.toHtml());</span>
+<span class="fc" id="L75">    }</span>
+
+    public void testScan() throws ParserException {
+<span class="fc" id="L78">        String description = &quot;description&quot;;</span>
+<span class="fc" id="L79">        String content = &quot;Protecting the internet community through technology, not legislation.  SpamCop eliminates spam.  Automatically file spam reports with the network administrators who can stop spam at the source.  Subscribe, and filter your email through powerful statistical analysis before it reaches your inbox.&quot;;</span>
+<span class="fc" id="L80">        String tag = &quot;&lt;META name=\&quot;&quot; + description + &quot;\&quot; content=\&quot;&quot; + content + &quot;\&quot;&gt;&quot;;</span>
+<span class="fc" id="L81">        createParser(</span>
+<span class="fc" id="L82">        &quot;&lt;!DOCTYPE HTML PUBLIC \&quot;-//W3C//DTD HTML 4.0//EN\&quot;&gt;\n&quot;+</span>
+        &quot;&lt;html&gt;\n&quot;+
+        &quot;&lt;head&gt;&lt;title&gt;SpamCop - Welcome to SpamCop\n&quot;+
+        &quot;&lt;/title&gt;\n&quot;+
+<span class="fc" id="L86">        tag + &quot;\n&quot;+</span>
+<span class="fc" id="L87">        &quot;&lt;META name=\&quot;keywords\&quot; content=\&quot;SpamCop spam cop email filter abuse header headers parse parser utility script net net-abuse filter mail program system trace traceroute dns\&quot;&gt;\n&quot;+</span>
+<span class="fc" id="L88">        &quot;&lt;META name=\&quot;language\&quot; content=\&quot;en\&quot;&gt;\n&quot;+</span>
+<span class="fc" id="L89">        &quot;&lt;META name=\&quot;owner\&quot; content=\&quot;service@admin.spamcop.net\&quot;&gt;\n&quot;+</span>
+<span class="fc" id="L90">        &quot;&lt;META HTTP-EQUIV=\&quot;content-type\&quot; CONTENT=\&quot;text/html; charset=ISO-8859-1\&quot;&gt;&quot;);</span>
+<span class="fc" id="L91">        parser.setNodeFactory (new PrototypicalNodeFactory (new MetaTag ()));</span>
+<span class="fc" id="L92">        parseAndAssertNodeCount(18);</span>
+<span class="pc bpc" id="L93" title="2 of 4 branches missed.">        assertTrue(&quot;Node 8 should be End Tag&quot;,node[7] instanceof Tag &amp;&amp; ((Tag)node[7]).isEndTag ());</span>
+<span class="fc" id="L94">        assertTrue(&quot;Node 10 should be META Tag&quot;,node[9] instanceof MetaTag);</span>
+        MetaTag metaTag;
+<span class="fc" id="L96">        metaTag = (MetaTag) node[9];</span>
+<span class="fc" id="L97">        assertEquals(&quot;Meta Tag 10 Name&quot;,description,metaTag.getMetaTagName());</span>
+<span class="fc" id="L98">        assertEquals(&quot;Meta Tag 10 Contents&quot;,content,metaTag.getMetaContent());</span>
+
+<span class="fc" id="L100">        assertTrue(&quot;Node 12 should be META Tag&quot;,node[11] instanceof MetaTag);</span>
+<span class="fc" id="L101">        assertTrue(&quot;Node 14 should be META Tag&quot;,node[13] instanceof MetaTag);</span>
+<span class="fc" id="L102">        assertTrue(&quot;Node 16 should be META Tag&quot;,node[15] instanceof MetaTag);</span>
+<span class="fc" id="L103">        assertTrue(&quot;Node 18 should be META Tag&quot;,node[17] instanceof MetaTag);</span>
+
+<span class="fc" id="L105">        metaTag = (MetaTag) node[11];</span>
+<span class="fc" id="L106">        assertEquals(&quot;Meta Tag 12 Name&quot;,&quot;keywords&quot;,metaTag.getMetaTagName());</span>
+<span class="fc" id="L107">        assertEquals(&quot;Meta Tag 12 Contents&quot;,&quot;SpamCop spam cop email filter abuse header headers parse parser utility script net net-abuse filter mail program system trace traceroute dns&quot;,metaTag.getMetaContent());</span>
+<span class="fc" id="L108">        assertNull(&quot;Meta Tag 12 Http-Equiv&quot;,metaTag.getHttpEquiv());</span>
+
+<span class="fc" id="L110">        metaTag = (MetaTag) node[13];</span>
+<span class="fc" id="L111">        assertEquals(&quot;Meta Tag 14 Name&quot;,&quot;language&quot;,metaTag.getMetaTagName());</span>
+<span class="fc" id="L112">        assertEquals(&quot;Meta Tag 14 Contents&quot;,&quot;en&quot;,metaTag.getMetaContent());</span>
+<span class="fc" id="L113">        assertNull(&quot;Meta Tag 14 Http-Equiv&quot;,metaTag.getHttpEquiv());</span>
+
+<span class="fc" id="L115">        metaTag = (MetaTag) node[15];</span>
+<span class="fc" id="L116">        assertEquals(&quot;Meta Tag 16 Name&quot;,&quot;owner&quot;,metaTag.getMetaTagName());</span>
+<span class="fc" id="L117">        assertEquals(&quot;Meta Tag 16 Contents&quot;,&quot;service@admin.spamcop.net&quot;,metaTag.getMetaContent());</span>
+<span class="fc" id="L118">        assertNull(&quot;Meta Tag 16 Http-Equiv&quot;,metaTag.getHttpEquiv());</span>
+
+<span class="fc" id="L120">        metaTag = (MetaTag) node[17];</span>
+<span class="fc" id="L121">        assertNull(&quot;Meta Tag 18 Name&quot;,metaTag.getMetaTagName());</span>
+<span class="fc" id="L122">        assertEquals(&quot;Meta Tag 18 Contents&quot;,&quot;text/html; charset=ISO-8859-1&quot;,metaTag.getMetaContent());</span>
+<span class="fc" id="L123">        assertEquals(&quot;Meta Tag 18 Http-Equiv&quot;,&quot;content-type&quot;,metaTag.getHttpEquiv());</span>
+<span class="fc" id="L124">    }</span>
+
+    public void testScanTagsInMeta() throws ParserException {
+<span class="fc" id="L127">        String description = &quot;Description&quot;;</span>
+<span class="fc" id="L128">        String content = &quot;Ethnoburb &lt;/I&gt;versus Chinatown: Two Types of Urban Ethnic Communities in Los Angeles&quot;;</span>
+<span class="fc" id="L129">        createParser(</span>
+<span class="fc" id="L130">        &quot;&lt;META NAME=\&quot;&quot; + description + &quot;\&quot; CONTENT=\&quot;&quot; + content + &quot;\&quot;&gt;&quot;,</span>
+<span class="fc" id="L131">        &quot;http://www.google.com/test/index.html&quot;</span>
+        );
+<span class="fc" id="L133">        parser.setNodeFactory (</span>
+<span class="fc" id="L134">            new PrototypicalNodeFactory (</span>
+<span class="fc" id="L135">                new Tag[] {</span>
+<span class="fc" id="L136">                    new MetaTag (),</span>
+                }));
+<span class="fc" id="L138">        parseAndAssertNodeCount(1);</span>
+<span class="fc" id="L139">        assertTrue(&quot;Node should be meta tag&quot;,node[0] instanceof MetaTag);</span>
+<span class="fc" id="L140">        MetaTag metaTag = (MetaTag)node[0];</span>
+<span class="fc" id="L141">        assertEquals(&quot;Meta Tag Name&quot;,description,metaTag.getMetaTagName());</span>
+<span class="fc" id="L142">        assertEquals(&quot;Content&quot;,content,metaTag.getMetaContent());</span>
+<span class="fc" id="L143">    }</span>
+
+    /**
+     * Tried to reproduce bug 707447 but test passes
+     * @throws ParserException
+     */
+    public void testMetaTagBug() throws ParserException {
+<span class="fc" id="L150">        String equiv = &quot;content-type&quot;;</span>
+<span class="fc" id="L151">        String content = &quot;text/html; charset=windows-1252&quot;;</span>
+<span class="fc" id="L152">        createParser(</span>
+<span class="fc" id="L153">            &quot;&lt;html&gt;&quot; +</span>
+            &quot;&lt;head&gt;&quot; +
+<span class="fc" id="L155">            &quot;&lt;meta http-equiv=\&quot;&quot; + equiv + &quot;\&quot; &quot; +</span>
+<span class="fc" id="L156">            &quot;content=\&quot;&quot; + content + &quot;\&quot;&gt;&quot; +</span>
+<span class="fc" id="L157">            &quot;&lt;/head&gt;&quot; +</span>
+<span class="fc" id="L158">            &quot;&lt;/html&gt;&quot;</span>
+        );
+<span class="fc" id="L160">        parser.setNodeFactory (new PrototypicalNodeFactory (new MetaTag ()));</span>
+<span class="fc" id="L161">        parseAndAssertNodeCount(5);</span>
+<span class="fc" id="L162">        assertType(&quot;Meta Tag expected&quot;, MetaTag.class, node[2]);</span>
+<span class="fc" id="L163">        MetaTag metaTag = (MetaTag)node[2];</span>
+
+<span class="fc" id="L165">        assertStringEquals(&quot;http-equiv&quot;,equiv,metaTag.getHttpEquiv());</span>
+<span class="fc" id="L166">        assertStringEquals(&quot;content&quot;,content,metaTag.getMetaContent());</span>
+<span class="fc" id="L167">    }</span>
+
+    /**
+     * Bug report 702547 by Joe Robbins being reproduced.
+     * @throws ParserException
+     */
+    public void testMetaTagWithOpenTagSymbol() throws ParserException {
+<span class="fc" id="L174">        String content = &quot;a&lt;b&quot;;</span>
+<span class="fc" id="L175">        createParser(</span>
+<span class="fc" id="L176">            &quot;&lt;html&gt;&quot; +</span>
+            &quot;&lt;head&gt;&quot; +
+            &quot;&lt;title&gt;Parser Test 2&lt;/title&gt;&quot; +
+<span class="fc" id="L179">            &quot;&lt;meta name=\&quot;foo\&quot; content=\&quot;&quot; + content + &quot;\&quot;&gt;&quot; +</span>
+<span class="fc" id="L180">            &quot;&lt;/head&gt;&quot; +</span>
+<span class="fc" id="L181">            &quot;&lt;body&gt;&quot; +</span>
+<span class="fc" id="L182">            &quot;&lt;a href=\&quot;http://www.yahoo.com/\&quot;&gt;Yahoo!&lt;/a&gt;&lt;br&gt;&quot; +</span>
+<span class="fc" id="L183">            &quot;&lt;a href=\&quot;http://www.excite.com\&quot;&gt;Excite&lt;/a&gt;&quot; +</span>
+<span class="fc" id="L184">            &quot;&lt;/body&gt;&quot; +</span>
+<span class="fc" id="L185">            &quot;&lt;/html&gt;&quot;</span>
+        );
+<span class="fc" id="L187">        parser.setNodeFactory (new PrototypicalNodeFactory (</span>
+<span class="fc" id="L188">            new Tag[] {</span>
+<span class="fc" id="L189">                new MetaTag (),</span>
+<span class="fc" id="L190">                new TitleTag (),</span>
+<span class="fc" id="L191">                new LinkTag (),</span>
+            }));
+<span class="fc" id="L193">        parseAndAssertNodeCount(11);</span>
+<span class="fc" id="L194">        assertType(&quot;meta tag&quot;,MetaTag.class,node[3]);</span>
+<span class="fc" id="L195">        MetaTag metaTag = (MetaTag)node[3];</span>
+<span class="fc" id="L196">        assertStringEquals(</span>
+<span class="fc" id="L197">            &quot;meta content&quot;,</span>
+<span class="fc" id="L198">            content,</span>
+<span class="fc" id="L199">            metaTag.getMetaContent()</span>
+        );
+<span class="fc" id="L201">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

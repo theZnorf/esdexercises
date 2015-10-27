@@ -1,0 +1,429 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>StreamTests.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tests.lexerTests</a> &gt; <span class="el_source">StreamTests.java</span></div><h1>StreamTests.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/test/java/org/htmlparser/tests/lexerTests/StreamTests.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-23 00:23:10 -0400 (Sat, 23 Sep 2006) $
+// $Revision: 13 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tests.lexerTests;
+
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.ArrayList;
+
+import org.htmlparser.lexer.Stream;
+import org.htmlparser.tests.ParserTestCase;
+
+public class StreamTests extends ParserTestCase
+{
+    static
+    {
+<span class="fc" id="L43">        System.setProperty (&quot;org.htmlparser.tests.lexerTests.StreamTests&quot;, &quot;StreamTests&quot;);</span>
+<span class="fc" id="L44">    }</span>
+
+    /**
+     * Test the first level stream class.
+     */
+    public StreamTests (String name)
+    {
+<span class="fc" id="L51">        super (name);</span>
+<span class="fc" id="L52">    }</span>
+
+    /**
+     * Test initialization with a null value.
+     */
+    public void testNull () throws IOException
+    {
+        Stream stream;
+
+<span class="fc" id="L61">        stream = new Stream (null);</span>
+<span class="pc bpc" id="L62" title="1 of 2 branches missed.">        assertTrue (&quot;erroneous character&quot;, -1 == stream.read ());</span>
+<span class="fc" id="L63">    }</span>
+
+    /**
+     * Test initialization with an empty input stream.
+     */
+    public void testEmpty () throws IOException
+    {
+        Stream stream;
+
+<span class="fc" id="L72">        stream = new Stream (new ByteArrayInputStream (new byte[0]));</span>
+<span class="pc bpc" id="L73" title="1 of 2 branches missed.">        assertTrue (&quot;erroneous character&quot;, -1 == stream.read ());</span>
+<span class="fc" id="L74">    }</span>
+
+    /**
+     * Test initialization with an input stream having only one byte.
+     */
+    public void testOneByte () throws IOException
+    {
+        Stream stream;
+
+<span class="fc" id="L83">        stream = new Stream (new ByteArrayInputStream (new byte[] { (byte)0x42 }));</span>
+<span class="pc bpc" id="L84" title="1 of 2 branches missed.">        assertTrue (&quot;erroneous character&quot;, 0x42 == stream.read ());</span>
+<span class="pc bpc" id="L85" title="1 of 2 branches missed.">        assertTrue (&quot;erroneous character&quot;, -1 == stream.read ());</span>
+<span class="fc" id="L86">    }</span>
+
+    /**
+     * Test that the same bytes are returned as with a naked input stream.
+     */
+    public void testSameBytes () throws IOException
+    {
+        String link;
+        URL url;
+        URLConnection connection1;
+        URLConnection connection2;
+        BufferedInputStream in;
+        int b1;
+        int b2;
+        Stream stream;
+        int index;
+
+<span class="fc" id="L103">        link = &quot;http://htmlparser.sourceforge.net&quot;;</span>
+        try
+        {
+<span class="nc" id="L106">            url = new URL (link);</span>
+<span class="nc" id="L107">            connection1 = url.openConnection ();</span>
+<span class="nc" id="L108">            connection1.connect ();</span>
+<span class="nc" id="L109">            in = new BufferedInputStream (connection1.getInputStream ());</span>
+<span class="nc" id="L110">            connection2 = url.openConnection ();</span>
+<span class="nc" id="L111">            connection2.connect ();</span>
+<span class="nc" id="L112">            stream = new Stream (connection2.getInputStream ());</span>
+<span class="nc" id="L113">            index = 0;</span>
+<span class="nc bnc" id="L114" title="All 2 branches missed.">            while (-1 != (b1 = in.read ()))</span>
+            {
+<span class="nc" id="L116">                b2 = stream.read ();</span>
+<span class="nc bnc" id="L117" title="All 2 branches missed.">                if (b1 != b2)</span>
+<span class="nc" id="L118">                    fail (&quot;bytes differ at position &quot; + index + &quot;, expected &quot; + b1 + &quot;, actual &quot; + b2);</span>
+<span class="nc" id="L119">                index++;</span>
+            }
+<span class="nc" id="L121">            b2 = stream.read ();</span>
+<span class="nc" id="L122">            stream.close ();</span>
+<span class="nc" id="L123">            in.close ();</span>
+<span class="nc bnc" id="L124" title="All 2 branches missed.">            assertTrue (&quot;extra bytes&quot;, b2 == -1);</span>
+<span class="nc" id="L125">        }</span>
+<span class="nc" id="L126">        catch (MalformedURLException murle)</span>
+        {
+<span class="nc" id="L128">            fail (&quot;bad url &quot; + link);</span>
+        }
+<span class="nc" id="L130">    }</span>
+
+    /**
+     * Test that threading works and is faster than a naked input stream.
+     * This, admittedly contrived, test illustrates the following principles:
+     * &lt;li&gt;the underlying network code is already multi-threaded, so there may
+     * not be a need to use application level threading in most cases&lt;/li&gt;
+     * &lt;li&gt;results may vary based on network connection speed, JVM, and
+     * especially application usage pattterns&lt;/li&gt;
+     * &lt;li&gt;issues only show up with large files, in my case greater than
+     * about 72,400 bytes, since the underlying network code reads that far
+     * into the socket before throttling back and waiting&lt;/li&gt;
+     * &lt;li&gt;this is only applicable to TCP/IP usage, disk access would not
+     * have this problem, since the cost of reading disk is much less than
+     * the round-trip cost of a TCP/IP handshake&lt;/li&gt;
+     * So, what does it do? It sets up to read a URL two ways, once with a
+     * naked input stream, and then with the Stream class. In each case, before
+     * reading, it delays about 2 seconds (for me anyway) to allow the java.net
+     * implementation to read ahead and then throttle back. The threaded Stream
+     * though keeps reading while this delay is going on and hence gets a big
+     * chunk of the file in memory. This advantage translates to a faster
+     * spin through the bytes after the delay.
+     */
+    /*public void testThreaded () throws IOException
+    {
+        String link;
+        URL url;
+        URLConnection connection;
+        BufferedInputStream in;
+        int index;
+        long begin;
+        double bytes_per_second;
+        int delay;
+        Stream stream;
+        long time1;
+        long time2;
+        Thread thread;
+        long available1;
+        long available2;
+
+        // pick a big file
+        link = &quot;http://htmlparser.sourceforge.net/javadoc/index-all.html&quot;;
+        try
+        {
+            url = new URL (link);
+
+            // estimate the connection speed
+            System.gc ();
+            index = 0;
+            connection = url.openConnection ();
+            connection.connect ();
+            in = new BufferedInputStream (connection.getInputStream ());
+            begin = System.currentTimeMillis ();
+            while (-1 != in.read ())
+                index++;
+            bytes_per_second = 1000.0 * index / (System.currentTimeMillis () - begin);
+            in.close ();
+
+            delay = (int)(1.5 * 1000 * bytes_per_second / 72400); // 72400 is the throttle limit on my machine
+
+            // try the naked input stream
+            System.gc ();
+            index = 0;
+            available1 = 0;
+            connection = url.openConnection ();
+            connection.connect ();
+            in = new BufferedInputStream (connection.getInputStream ());
+            try
+            {
+                Thread.sleep (delay);
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace ();
+            }
+            begin = System.currentTimeMillis ();
+            do
+            {
+                index++;
+                if (0 == index % 1000)
+                    available1 += in.available ();
+            }
+            while (-1 != in.read ());
+            time1 = System.currentTimeMillis () - begin;
+            in.close ();
+
+            // try a threaded stream
+            System.gc ();
+            index = 0;
+            available2 = 0;
+            connection = url.openConnection ();
+            connection.connect ();
+            int length = connection.getContentLength ();
+            stream = new Stream (connection.getInputStream (), length);
+            thread = new Thread (stream);
+            thread.setPriority (Thread.NORM_PRIORITY - 1);
+            thread.start ();
+            try
+            {
+                Thread.sleep (delay);
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace ();
+            }
+            begin = System.currentTimeMillis ();
+            do
+            {
+                index++;
+                if (0 == index % 1000)
+                    available2 += stream.available ();
+            }
+            while (-1 != stream.read ());
+            time2 = System.currentTimeMillis () - begin;
+
+//            System.out.println (&quot;fills: &quot; + stream.fills);
+//            System.out.println (&quot;reallocations: &quot; + stream.reallocations);
+//            System.out.println (&quot;synchronous: &quot; + stream.synchronous);
+//            System.out.println (&quot;buffer size: &quot; + stream.mBuffer.length);
+//            System.out.println (&quot;bytes: &quot; + stream.mLevel);
+            stream.close ();
+
+//            System.out.println (&quot;time (&quot; + time2 + &quot;) vs. (&quot; + time1 + &quot;) for &quot; + index + &quot; bytes&quot;);
+            double samples = index / 1000;
+//            System.out.println (&quot;average available bytes (&quot; + available2/samples + &quot;) vs. (&quot; + available1/samples + &quot;)&quot;);
+
+            assertTrue (&quot;slower (&quot; + time2 + &quot;) vs. (&quot; + time1 + &quot;)&quot;, time2 &lt; time1);
+            assertTrue (&quot;average available bytes not greater (&quot; + available2/samples + &quot;) vs. (&quot; + available1/samples + &quot;)&quot;, available2 &gt; available1);
+        }
+        catch (MalformedURLException murle)
+        {
+            fail (&quot;bad url &quot; + link);
+        }
+    }*/
+
+    /**
+     * Test that mark and reset work as per the contract.
+     */
+    public void testMarkReset () throws IOException
+    {
+        String link;
+        ArrayList bytes1;
+        ArrayList bytes2;
+        URL url;
+        URLConnection connection;
+        Stream stream;
+        int b;
+        int index;
+
+        // pick a small file &gt; 2000 bytes
+<span class="fc" id="L280">        link = &quot;http://htmlparser.sourceforge.net/javadoc/overview-summary.html&quot;;</span>
+<span class="fc" id="L281">        bytes1 = new ArrayList ();</span>
+<span class="fc" id="L282">        bytes2 = new ArrayList ();</span>
+        try
+        {
+<span class="nc" id="L285">            url = new URL (link);</span>
+<span class="nc" id="L286">            connection = url.openConnection ();</span>
+<span class="nc" id="L287">            connection.connect ();</span>
+<span class="nc" id="L288">            stream = new Stream (connection.getInputStream ());</span>
+<span class="nc" id="L289">            assertTrue (&quot;mark not supported&quot;, stream.markSupported ());</span>
+
+<span class="nc bnc" id="L291" title="All 2 branches missed.">            for (int i = 0; i &lt; 1000; i++)</span>
+            {
+<span class="nc" id="L293">                b = stream.read ();</span>
+<span class="nc" id="L294">                bytes1.add (new Byte ((byte)b));</span>
+            }
+<span class="nc" id="L296">            stream.reset ();</span>
+<span class="nc bnc" id="L297" title="All 2 branches missed.">            for (int i = 0; i &lt; 1000; i++)</span>
+            {
+<span class="nc" id="L299">                b = stream.read ();</span>
+<span class="nc" id="L300">                bytes2.add (new Byte ((byte)b));</span>
+            }
+
+<span class="nc" id="L303">            index = 0;</span>
+<span class="nc bnc" id="L304" title="All 2 branches missed.">            while (index &lt; bytes1.size ())</span>
+            {
+<span class="nc" id="L306">                assertEquals (&quot;bytes differ at position &quot; + index, bytes1.get (index), bytes2.get (index));</span>
+<span class="nc" id="L307">                index++;</span>
+            }
+
+<span class="nc" id="L310">            bytes1.clear ();</span>
+<span class="nc" id="L311">            bytes2.clear ();</span>
+
+<span class="nc" id="L313">            stream.mark (1000); // the 1000 is ignored</span>
+<span class="nc bnc" id="L314" title="All 2 branches missed.">            for (int i = 0; i &lt; 1000; i++)</span>
+            {
+<span class="nc" id="L316">                b = stream.read ();</span>
+<span class="nc" id="L317">                bytes1.add (new Byte ((byte)b));</span>
+            }
+<span class="nc" id="L319">            stream.reset ();</span>
+<span class="nc bnc" id="L320" title="All 2 branches missed.">            for (int i = 0; i &lt; 1000; i++)</span>
+            {
+<span class="nc" id="L322">                b = stream.read ();</span>
+<span class="nc" id="L323">                bytes2.add (new Byte ((byte)b));</span>
+            }
+<span class="nc" id="L325">            stream.close ();</span>
+
+<span class="nc" id="L327">            index = 0;</span>
+<span class="nc bnc" id="L328" title="All 2 branches missed.">            while (index &lt; bytes1.size ())</span>
+            {
+<span class="nc" id="L330">                assertEquals (&quot;bytes differ at position &quot; + (index + 1000), bytes1.get (index), bytes2.get (index));</span>
+<span class="nc" id="L331">                index++;</span>
+            }
+<span class="nc" id="L333">        }</span>
+<span class="nc" id="L334">        catch (MalformedURLException murle)</span>
+        {
+<span class="nc" id="L336">            fail (&quot;bad url &quot; + link);</span>
+        }
+<span class="nc" id="L338">    }</span>
+
+    /**
+     * Test that mark and reset work as per the contract when threaded.
+     */
+    public void testMarkResetThreaded () throws IOException
+    {
+        String link;
+        ArrayList bytes1;
+        ArrayList bytes2;
+        URL url;
+        URLConnection connection;
+        Stream stream;
+        int b;
+        int index;
+
+        // pick a small file &gt; 2000 bytes
+<span class="fc" id="L355">        link = &quot;http://htmlparser.sourceforge.net/javadoc/overview-summary.html&quot;;</span>
+<span class="fc" id="L356">        bytes1 = new ArrayList ();</span>
+<span class="fc" id="L357">        bytes2 = new ArrayList ();</span>
+        try
+        {
+<span class="nc" id="L360">            url = new URL (link);</span>
+<span class="nc" id="L361">            connection = url.openConnection ();</span>
+<span class="nc" id="L362">            connection.connect ();</span>
+<span class="nc" id="L363">            stream = new Stream (connection.getInputStream ());</span>
+<span class="nc" id="L364">            (new Thread (stream)).start ();</span>
+<span class="nc" id="L365">            assertTrue (&quot;mark not supported&quot;, stream.markSupported ());</span>
+
+<span class="nc bnc" id="L367" title="All 2 branches missed.">            for (int i = 0; i &lt; 1000; i++)</span>
+            {
+<span class="nc" id="L369">                b = stream.read ();</span>
+<span class="nc" id="L370">                bytes1.add (new Byte ((byte)b));</span>
+            }
+<span class="nc" id="L372">            stream.reset ();</span>
+<span class="nc bnc" id="L373" title="All 2 branches missed.">            for (int i = 0; i &lt; 1000; i++)</span>
+            {
+<span class="nc" id="L375">                b = stream.read ();</span>
+<span class="nc" id="L376">                bytes2.add (new Byte ((byte)b));</span>
+            }
+
+<span class="nc" id="L379">            index = 0;</span>
+<span class="nc bnc" id="L380" title="All 2 branches missed.">            while (index &lt; bytes1.size ())</span>
+            {
+<span class="nc" id="L382">                assertEquals (&quot;bytes differ at position &quot; + index, bytes1.get (index), bytes2.get (index));</span>
+<span class="nc" id="L383">                index++;</span>
+            }
+
+<span class="nc" id="L386">            bytes1.clear ();</span>
+<span class="nc" id="L387">            bytes2.clear ();</span>
+
+<span class="nc" id="L389">            stream.mark (1000); // the 1000 is ignored</span>
+<span class="nc bnc" id="L390" title="All 2 branches missed.">            for (int i = 0; i &lt; 1000; i++)</span>
+            {
+<span class="nc" id="L392">                b = stream.read ();</span>
+<span class="nc" id="L393">                bytes1.add (new Byte ((byte)b));</span>
+            }
+<span class="nc" id="L395">            stream.reset ();</span>
+<span class="nc bnc" id="L396" title="All 2 branches missed.">            for (int i = 0; i &lt; 1000; i++)</span>
+            {
+<span class="nc" id="L398">                b = stream.read ();</span>
+<span class="nc" id="L399">                bytes2.add (new Byte ((byte)b));</span>
+            }
+<span class="nc" id="L401">            stream.close ();</span>
+
+<span class="nc" id="L403">            index = 0;</span>
+<span class="nc bnc" id="L404" title="All 2 branches missed.">            while (index &lt; bytes1.size ())</span>
+            {
+<span class="nc" id="L406">                assertEquals (&quot;bytes differ at position &quot; + (index + 1000), bytes1.get (index), bytes2.get (index));</span>
+<span class="nc" id="L407">                index++;</span>
+            }
+<span class="nc" id="L409">        }</span>
+<span class="nc" id="L410">        catch (MalformedURLException murle)</span>
+        {
+<span class="nc" id="L412">            fail (&quot;bad url &quot; + link);</span>
+        }
+<span class="nc" id="L414">    }</span>
+
+    /**
+     * Test close.
+     */
+    public void testClose () throws IOException
+    {
+        Stream stream;
+
+<span class="fc" id="L423">        stream = new Stream (new ByteArrayInputStream (new byte[] { (byte)0x42, (byte)0x78 }));</span>
+<span class="pc bpc" id="L424" title="1 of 2 branches missed.">        assertTrue (&quot;erroneous character&quot;, 0x42 == stream.read ());</span>
+<span class="fc" id="L425">        stream.close ();</span>
+<span class="pc bpc" id="L426" title="1 of 2 branches missed.">        assertTrue (&quot;not closed&quot;, -1 == stream.read ());</span>
+<span class="fc" id="L427">   }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

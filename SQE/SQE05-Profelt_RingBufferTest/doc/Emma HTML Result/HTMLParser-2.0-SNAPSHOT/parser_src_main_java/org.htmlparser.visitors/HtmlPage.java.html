@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>HtmlPage.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.visitors</a> &gt; <span class="el_source">HtmlPage.java</span></div><h1>HtmlPage.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Somik Raha
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/main/java/org/htmlparser/visitors/HtmlPage.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.visitors;
+
+import org.htmlparser.Parser;
+import org.htmlparser.tags.BodyTag;
+import org.htmlparser.tags.TableTag;
+import org.htmlparser.Tag;
+import org.htmlparser.tags.TitleTag;
+import org.htmlparser.util.NodeList;
+
+public class HtmlPage extends NodeVisitor {
+    private String title;
+    private NodeList nodesInBody;
+    private NodeList tables;
+
+    public HtmlPage(Parser parser) {
+<span class="fc" id="L41">        super(true);</span>
+<span class="fc" id="L42">        title = &quot;&quot;;</span>
+<span class="fc" id="L43">        nodesInBody = new NodeList();</span>
+<span class="fc" id="L44">        tables = new NodeList();</span>
+<span class="fc" id="L45">    }</span>
+
+    public String getTitle() {
+<span class="fc" id="L48">        return title;</span>
+    }
+
+    public void setTitle(String title) {
+<span class="nc" id="L52">        this.title = title;</span>
+<span class="nc" id="L53">    }</span>
+
+    public void visitTag(Tag tag)
+    {
+<span class="fc bfc" id="L57" title="All 2 branches covered.">        if (isTable(tag))</span>
+<span class="fc" id="L58">            tables.add(tag);</span>
+<span class="fc bfc" id="L59" title="All 2 branches covered.">        else if (isBodyTag(tag))</span>
+<span class="fc" id="L60">            nodesInBody = tag.getChildren ();</span>
+<span class="fc bfc" id="L61" title="All 2 branches covered.">        else if (isTitleTag(tag))</span>
+<span class="fc" id="L62">            title = ((TitleTag)tag).getTitle();</span>
+<span class="fc" id="L63">    }</span>
+
+    private boolean isTable(Tag tag)
+    {
+<span class="fc" id="L67">        return (tag instanceof TableTag);</span>
+    }
+
+    private boolean isBodyTag(Tag tag)
+    {
+<span class="fc" id="L72">        return (tag instanceof BodyTag);</span>
+    }
+
+    private boolean isTitleTag(Tag tag)
+    {
+<span class="fc" id="L77">        return (tag instanceof TitleTag);</span>
+    }
+
+    public NodeList getBody() {
+<span class="fc" id="L81">        return nodesInBody;</span>
+    }
+
+    public TableTag [] getTables()
+    {
+<span class="fc" id="L86">        TableTag [] tableArr = new TableTag[tables.size()];</span>
+<span class="fc" id="L87">        tables.copyToNodeArray (tableArr);</span>
+<span class="fc" id="L88">        return tableArr;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

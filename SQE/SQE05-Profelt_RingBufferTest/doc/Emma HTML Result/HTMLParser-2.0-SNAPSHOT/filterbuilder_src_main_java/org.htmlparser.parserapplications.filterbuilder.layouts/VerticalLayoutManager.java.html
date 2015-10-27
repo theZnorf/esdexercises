@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>VerticalLayoutManager.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">filterbuilder/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.parserapplications.filterbuilder.layouts</a> &gt; <span class="el_source">VerticalLayoutManager.java</span></div><h1>VerticalLayoutManager.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/filterbuilder/src/main/java/org/htmlparser/parserapplications/filterbuilder/layouts/VerticalLayoutManager.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.parserapplications.filterbuilder.layouts;
+
+import java.awt.*;
+import java.io.*;
+
+/**
+ * A layout manager like a vertical FlowLayout.
+ * Stacks components vertically like GridLayout(0,1) but doesn't
+ * resize each component equally. More like a vertical FlowLayout
+ * but doesn't snake columns or align things.
+ */
+public class VerticalLayoutManager
+    implements
+        LayoutManager2,
+        Serializable
+{ 
+    /**
+     * Constructs a VerticalLayoutManager object.
+     */
+<span class="nc" id="L45">    public VerticalLayoutManager ()</span>
+    {
+<span class="nc" id="L47">    }</span>
+  
+    /**
+     * Calculates the minimum size dimensions for the specified
+     * panel given the components in the specified parent container.
+     * @param target The component to be laid out.
+     * @return The minimum size.
+     * @see #preferredLayoutSize
+     */
+    public Dimension minimumLayoutSize (Container target)
+    {
+<span class="nc" id="L58">        return (preferredLayoutSize (target));</span>
+    }
+  
+    /**
+     * Calculates the preferred size dimensions for the specified
+     * panel given the components in the specified parent container.
+     * @param target The component to be laid out.
+     * @return A size deemed suitable for laying out the container.
+     * @see #minimumLayoutSize
+     */
+    public Dimension preferredLayoutSize (Container target)
+    {
+        int count;
+        Component component;
+        Dimension dimension;
+        Insets insets;
+        Dimension ret;
+        
+<span class="nc" id="L76">        synchronized (target.getTreeLock ())</span>
+        {
+            // get the the total height and maximum width component
+<span class="nc" id="L79">            ret = new Dimension (0, 0);</span>
+<span class="nc" id="L80">            count = target.getComponentCount ();</span>
+<span class="nc bnc" id="L81" title="All 2 branches missed.">            for (int i = 0 ; i &lt; count ; i++)</span>
+            {
+<span class="nc" id="L83">                component = target.getComponent (i);</span>
+<span class="nc bnc" id="L84" title="All 2 branches missed.">                if (component.isVisible ())</span>
+                {
+<span class="nc" id="L86">                    dimension = component.getPreferredSize ();</span>
+<span class="nc" id="L87">                    ret.width = Math.max (ret.width, dimension.width);</span>
+<span class="nc" id="L88">                    ret.height += dimension.height;</span>
+                }
+            }
+<span class="nc" id="L91">            insets = target.getInsets ();</span>
+<span class="nc" id="L92">            ret.width += insets.left + insets.right;</span>
+<span class="nc" id="L93">            ret.height += insets.top + insets.bottom;</span>
+        }
+
+<span class="nc" id="L96">        return (ret);</span>
+    }
+  
+    /**
+     * Returns the maximum size of this component.
+     * @param target The component to be laid out.
+     * @return The maximum size for the container.
+     * @see #preferredLayoutSize
+     */
+    public Dimension maximumLayoutSize (Container target)
+    {
+<span class="nc" id="L107">        return (preferredLayoutSize (target));</span>
+    }
+  
+    //
+    // LayoutManager Interface
+    //
+  
+    /**
+     * Adds the specified component with the specified name to
+     * the layout.
+     * @param name the component name
+     * @param comp the component to be added
+     */
+    public void addLayoutComponent (String name, Component comp)
+    {
+<span class="nc" id="L122">    }        </span>
+  
+    /**
+     * Removes the specified component from the layout.
+     * @param comp the component ot be removed
+     */
+    public void removeLayoutComponent (Component comp)
+    {
+<span class="nc" id="L130">    }</span>
+  
+    /**
+     * Lays out the container.
+     * @param target The container which needs to be laid out.
+     */
+    public void layoutContainer (Container target)
+    {
+        Insets insets;
+        int x;
+        int y;
+        int count;
+        int width;
+        Component component;
+        Dimension dimension;
+        
+<span class="nc" id="L146">        synchronized (target.getTreeLock ())</span>
+        {
+<span class="nc" id="L148">            insets = target.getInsets ();</span>
+<span class="nc" id="L149">            x = insets.left;</span>
+<span class="nc" id="L150">            y = insets.top;</span>
+<span class="nc" id="L151">            count = target.getComponentCount ();</span>
+<span class="nc" id="L152">            width = 0;</span>
+<span class="nc bnc" id="L153" title="All 2 branches missed.">            for (int i = 0 ; i &lt; count ; i++)</span>
+            {
+<span class="nc" id="L155">                component = target.getComponent (i);</span>
+<span class="nc bnc" id="L156" title="All 2 branches missed.">                if (component.isVisible ())</span>
+                {
+<span class="nc" id="L158">                    dimension = component.getPreferredSize ();</span>
+<span class="nc" id="L159">                    width = Math.max (width, dimension.width);</span>
+<span class="nc" id="L160">                    component.setSize (dimension.width, dimension.height);</span>
+<span class="nc" id="L161">                    component.setLocation (x, y);</span>
+<span class="nc" id="L162">                    y += dimension.height;</span>
+                }
+            }
+            // now set them all to the same width
+<span class="nc bnc" id="L166" title="All 2 branches missed.">            for (int i = 0 ; i &lt; count ; i++)</span>
+            {
+<span class="nc" id="L168">                component = target.getComponent (i);</span>
+<span class="nc bnc" id="L169" title="All 2 branches missed.">                if (component.isVisible ())</span>
+                {
+<span class="nc" id="L171">                    dimension = component.getSize ();</span>
+<span class="nc" id="L172">                    dimension.width = width;</span>
+<span class="nc" id="L173">                    component.setSize (dimension.width, dimension.height);</span>
+                }
+            }
+        }
+<span class="nc" id="L177">    }</span>
+  
+    //
+    // LayoutManager2 Interface
+    //
+  
+    /**
+     * Adds the specified component to the layout, using the specified
+     * constraint object.
+     * @param comp the component to be added
+     * @param constraints  where/how the component is added to the layout.
+     */
+    public void addLayoutComponent (Component comp, Object constraints)
+    {
+<span class="nc" id="L191">    }</span>
+  
+    /**
+     * Returns the alignment along the x axis.  This specifies how
+     * the component would like to be aligned relative to other
+     * components.  The value should be a number between 0 and 1
+     * where 0 represents alignment along the origin, 1 is aligned
+     * the furthest away from the origin, 0.5 is centered, etc.
+     * @param target The target container.
+     * @return The X-axis alignment.
+     */
+    public float getLayoutAlignmentX (Container target)
+    {
+<span class="nc" id="L204">        return (0.0f);</span>
+    }
+  
+    /**
+     * Returns the alignment along the y axis.  This specifies how
+     * the component would like to be aligned relative to other
+     * components.  The value should be a number between 0 and 1
+     * where 0 represents alignment along the origin, 1 is aligned
+     * the furthest away from the origin, 0.5 is centered, etc.
+     * @param target The target container.
+     * @return The Y-axis alignment.
+     */
+    public float getLayoutAlignmentY (Container target)
+    {
+<span class="nc" id="L218">        return (0.0f);</span>
+    }
+  
+    /**
+     * Invalidates the layout, indicating that if the layout manager
+     * has cached information it should be discarded.
+     * @param target The target container.
+     */
+    public void invalidateLayout (Container target)
+    {
+<span class="nc" id="L228">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

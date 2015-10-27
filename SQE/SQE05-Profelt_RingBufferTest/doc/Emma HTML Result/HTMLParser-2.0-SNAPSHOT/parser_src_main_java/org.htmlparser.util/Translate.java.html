@@ -1,0 +1,1155 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>Translate.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.util</a> &gt; <span class="el_source">Translate.java</span></div><h1>Translate.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/main/java/org/htmlparser/util/Translate.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.util;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.Reader;
+import java.io.UnsupportedEncodingException;
+
+import org.htmlparser.util.sort.Sort;
+
+/**
+ * Extended character entity reference.
+ * Handles kernels within other strings, just for lookup purposes.
+ */
+class CharacterReferenceEx extends CharacterReference
+{
+    /**
+     * The starting point in the string.
+     */
+    protected int mStart;
+
+    /**
+     * The ending point in the string.
+     */
+    protected int mEnd;
+
+    /**
+     * Zero args constructor.
+     * This object is only ever used after setting the kernel, start and end.
+     */
+    public CharacterReferenceEx ()
+    {
+<span class="fc" id="L63">        super (&quot;&quot;, 0);</span>
+<span class="fc" id="L64">    }</span>
+
+    /**
+     * Set the starting point of the kernel.
+     */
+    public void setStart (int start)
+    {
+<span class="fc" id="L71">        mStart = start;</span>
+<span class="fc" id="L72">    }</span>
+
+    /**
+     * Set the supposed ending point.
+     * This only specifies an upper bound on the kernel length.
+     */
+    public void setEnd (int end)
+    {
+<span class="fc" id="L80">        mEnd = end;</span>
+<span class="fc" id="L81">    }</span>
+
+    /**
+     * Get this CharacterReference's kernel.
+     * @return The kernel in the equivalent character entity reference.
+     */
+    public String getKernel ()
+    {
+<span class="fc" id="L89">        return (mKernel.substring (mStart, mEnd));</span>
+    }
+
+    //
+    // Ordered interface
+    //
+
+    /**
+     * Compare one reference to another.
+     * @see org.htmlparser.util.sort.Ordered
+     */
+    public int compare (Object that)
+    {
+        CharacterReference r;
+        String kernel;
+        int length;
+        int ret;
+
+<span class="fc" id="L107">        ret = 0;</span>
+<span class="fc" id="L108">        r = (CharacterReference)that;</span>
+<span class="fc" id="L109">        kernel = r.getKernel ();</span>
+<span class="fc" id="L110">        length = kernel.length ();</span>
+<span class="fc bfc" id="L111" title="All 2 branches covered.">        for (int i = mStart, j = 0; i &lt; mEnd; i++, j++)</span>
+        {
+<span class="pc bpc" id="L113" title="1 of 2 branches missed.">            if (j &gt;= length)</span>
+            {
+<span class="nc" id="L115">                ret = 1;</span>
+<span class="nc" id="L116">                break;</span>
+            }
+<span class="fc" id="L118">            ret = mKernel.charAt (i) - kernel.charAt (j);</span>
+<span class="fc bfc" id="L119" title="All 2 branches covered.">            if (0 != ret)</span>
+<span class="fc" id="L120">                break;</span>
+        }
+
+<span class="fc" id="L123">        return (ret);</span>
+    }
+}
+
+/**
+ * Translate numeric character references and character entity references to unicode characters.
+ * Based on tables found at &lt;a href=&quot;http://www.w3.org/TR/REC-html40/sgml/entities.html&quot;&gt;
+ * http://www.w3.org/TR/REC-html40/sgml/entities.html&lt;/a&gt;
+ * &lt;p&gt;Typical usage:
+ * &lt;pre&gt;
+ *      String s = Translate.decode (getTextFromHtmlPage ());
+ * &lt;/pre&gt;
+ * or
+ * &lt;pre&gt;
+ *      String s = &quot;&amp;lt;HTML&amp;gt;&quot; + Translate.encode (getArbitraryText ()) + &quot;&amp;lt;/HTML&amp;gt;&quot;;
+ * &lt;/pre&gt;
+ */
+public class Translate
+{
+    /**
+     * If this member is set &lt;code&gt;true&lt;/code&gt;, decoding of streams is
+     * done line by line in order to reduce the maximum memory required.
+     */
+<span class="fc" id="L146">    static public boolean DECODE_LINE_BY_LINE = false;</span>
+
+    /**
+     * If this member is set &lt;code&gt;true&lt;/code&gt;, encoding of numeric character
+     * references uses hexadecimal digits, i.e. &amp;amp;#x25CB;, instead of decimal
+     * digits.
+     */
+<span class="fc" id="L153">    static public boolean ENCODE_HEXADECIMAL = false;</span>
+
+    /**
+     * Table mapping entity reference kernel to character.
+     * This is sorted by kernel when the class is loaded.
+     */
+<span class="fc" id="L159">    protected static final CharacterReference[] mCharacterReferences =</span>
+<span class="fc" id="L160">    {</span>
+        // Portions © International Organization for Standardization 1986
+        // Permission to copy in any form is granted for use with
+        // conforming SGML systems and applications as defined in
+        // ISO 8879, provided this notice is included in all copies.
+        // Character entity set. Typical invocation:
+        // &lt;!ENTITY % HTMLlat1 PUBLIC
+        // &quot;-//W3C//ENTITIES Latin 1//EN//HTML&quot;&gt;
+        // %HTMLlat1;
+<span class="fc" id="L169">        new CharacterReference (&quot;nbsp&quot;,     '\u00a0'), // no-break space = non-breaking space, U+00A0 ISOnum</span>
+<span class="fc" id="L170">        new CharacterReference (&quot;iexcl&quot;,    '\u00a1'), // inverted exclamation mark, U+00A1 ISOnum</span>
+<span class="fc" id="L171">        new CharacterReference (&quot;cent&quot;,     '\u00a2'), // cent sign, U+00A2 ISOnum</span>
+<span class="fc" id="L172">        new CharacterReference (&quot;pound&quot;,    '\u00a3'), // pound sign, U+00A3 ISOnum</span>
+<span class="fc" id="L173">        new CharacterReference (&quot;curren&quot;,   '\u00a4'), // currency sign, U+00A4 ISOnum</span>
+<span class="fc" id="L174">        new CharacterReference (&quot;yen&quot;,      '\u00a5'), // yen sign = yuan sign, U+00A5 ISOnum</span>
+<span class="fc" id="L175">        new CharacterReference (&quot;brvbar&quot;,   '\u00a6'), // broken bar = broken vertical bar, U+00A6 ISOnum</span>
+<span class="fc" id="L176">        new CharacterReference (&quot;sect&quot;,     '\u00a7'), // section sign, U+00A7 ISOnum</span>
+<span class="fc" id="L177">        new CharacterReference (&quot;uml&quot;,      '\u00a8'), // diaeresis = spacing diaeresis, U+00A8 ISOdia</span>
+<span class="fc" id="L178">        new CharacterReference (&quot;copy&quot;,     '\u00a9'), // copyright sign, U+00A9 ISOnum</span>
+<span class="fc" id="L179">        new CharacterReference (&quot;ordf&quot;,     '\u00aa'), // feminine ordinal indicator, U+00AA ISOnum</span>
+<span class="fc" id="L180">        new CharacterReference (&quot;laquo&quot;,    '\u00ab'), // left-pointing double angle quotation mark = left pointing guillemet, U+00AB ISOnum</span>
+<span class="fc" id="L181">        new CharacterReference (&quot;not&quot;,      '\u00ac'), // not sign, U+00AC ISOnum</span>
+<span class="fc" id="L182">        new CharacterReference (&quot;shy&quot;,      '\u00ad'), // soft hyphen = discretionary hyphen, U+00AD ISOnum</span>
+<span class="fc" id="L183">        new CharacterReference (&quot;reg&quot;,      '\u00ae'), // registered sign = registered trade mark sign, U+00AE ISOnum</span>
+<span class="fc" id="L184">        new CharacterReference (&quot;macr&quot;,     '\u00af'), // macron = spacing macron = overline = APL overbar, U+00AF ISOdia</span>
+<span class="fc" id="L185">        new CharacterReference (&quot;deg&quot;,      '\u00b0'), // degree sign, U+00B0 ISOnum</span>
+<span class="fc" id="L186">        new CharacterReference (&quot;plusmn&quot;,   '\u00b1'), // plus-minus sign = plus-or-minus sign, U+00B1 ISOnum</span>
+<span class="fc" id="L187">        new CharacterReference (&quot;sup2&quot;,     '\u00b2'), // superscript two = superscript digit two = squared, U+00B2 ISOnum</span>
+<span class="fc" id="L188">        new CharacterReference (&quot;sup3&quot;,     '\u00b3'), // superscript three = superscript digit three = cubed, U+00B3 ISOnum</span>
+<span class="fc" id="L189">        new CharacterReference (&quot;acute&quot;,    '\u00b4'), // acute accent = spacing acute, U+00B4 ISOdia</span>
+<span class="fc" id="L190">        new CharacterReference (&quot;micro&quot;,    '\u00b5'), // micro sign, U+00B5 ISOnum</span>
+<span class="fc" id="L191">        new CharacterReference (&quot;para&quot;,     '\u00b6'), // pilcrow sign = paragraph sign, U+00B6 ISOnum</span>
+<span class="fc" id="L192">        new CharacterReference (&quot;middot&quot;,   '\u00b7'), // middle dot = Georgian comma = Greek middle dot, U+00B7 ISOnum</span>
+<span class="fc" id="L193">        new CharacterReference (&quot;cedil&quot;,    '\u00b8'), // cedilla = spacing cedilla, U+00B8 ISOdia</span>
+<span class="fc" id="L194">        new CharacterReference (&quot;sup1&quot;,     '\u00b9'), // superscript one = superscript digit one, U+00B9 ISOnum</span>
+<span class="fc" id="L195">        new CharacterReference (&quot;ordm&quot;,     '\u00ba'), // masculine ordinal indicator, U+00BA ISOnum</span>
+<span class="fc" id="L196">        new CharacterReference (&quot;raquo&quot;,    '\u00bb'), // right-pointing double angle quotation mark = right pointing guillemet, U+00BB ISOnum</span>
+<span class="fc" id="L197">        new CharacterReference (&quot;frac14&quot;,   '\u00bc'), // vulgar fraction one quarter = fraction one quarter, U+00BC ISOnum</span>
+<span class="fc" id="L198">        new CharacterReference (&quot;frac12&quot;,   '\u00bd'), // vulgar fraction one half = fraction one half, U+00BD ISOnum</span>
+<span class="fc" id="L199">        new CharacterReference (&quot;frac34&quot;,   '\u00be'), // vulgar fraction three quarters = fraction three quarters, U+00BE ISOnum</span>
+<span class="fc" id="L200">        new CharacterReference (&quot;iquest&quot;,   '\u00bf'), // inverted question mark = turned question mark, U+00BF ISOnum</span>
+<span class="fc" id="L201">        new CharacterReference (&quot;Agrave&quot;,   '\u00c0'), // latin capital letter A with grave = latin capital letter A grave, U+00C0 ISOlat1</span>
+<span class="fc" id="L202">        new CharacterReference (&quot;Aacute&quot;,   '\u00c1'), // latin capital letter A with acute, U+00C1 ISOlat1</span>
+<span class="fc" id="L203">        new CharacterReference (&quot;Acirc&quot;,    '\u00c2'), // latin capital letter A with circumflex, U+00C2 ISOlat1</span>
+<span class="fc" id="L204">        new CharacterReference (&quot;Atilde&quot;,   '\u00c3'), // latin capital letter A with tilde, U+00C3 ISOlat1</span>
+<span class="fc" id="L205">        new CharacterReference (&quot;Auml&quot;,     '\u00c4'), // latin capital letter A with diaeresis, U+00C4 ISOlat1</span>
+<span class="fc" id="L206">        new CharacterReference (&quot;Aring&quot;,    '\u00c5'), // latin capital letter A with ring above = latin capital letter A ring, U+00C5 ISOlat1</span>
+<span class="fc" id="L207">        new CharacterReference (&quot;AElig&quot;,    '\u00c6'), // latin capital letter AE = latin capital ligature AE, U+00C6 ISOlat1</span>
+<span class="fc" id="L208">        new CharacterReference (&quot;Ccedil&quot;,   '\u00c7'), // latin capital letter C with cedilla, U+00C7 ISOlat1</span>
+<span class="fc" id="L209">        new CharacterReference (&quot;Egrave&quot;,   '\u00c8'), // latin capital letter E with grave, U+00C8 ISOlat1</span>
+<span class="fc" id="L210">        new CharacterReference (&quot;Eacute&quot;,   '\u00c9'), // latin capital letter E with acute, U+00C9 ISOlat1</span>
+<span class="fc" id="L211">        new CharacterReference (&quot;Ecirc&quot;,    '\u00ca'), // latin capital letter E with circumflex, U+00CA ISOlat1</span>
+<span class="fc" id="L212">        new CharacterReference (&quot;Euml&quot;,     '\u00cb'), // latin capital letter E with diaeresis, U+00CB ISOlat1</span>
+<span class="fc" id="L213">        new CharacterReference (&quot;Igrave&quot;,   '\u00cc'), // latin capital letter I with grave, U+00CC ISOlat1</span>
+<span class="fc" id="L214">        new CharacterReference (&quot;Iacute&quot;,   '\u00cd'), // latin capital letter I with acute, U+00CD ISOlat1</span>
+<span class="fc" id="L215">        new CharacterReference (&quot;Icirc&quot;,    '\u00ce'), // latin capital letter I with circumflex, U+00CE ISOlat1</span>
+<span class="fc" id="L216">        new CharacterReference (&quot;Iuml&quot;,     '\u00cf'), // latin capital letter I with diaeresis, U+00CF ISOlat1</span>
+<span class="fc" id="L217">        new CharacterReference (&quot;ETH&quot;,      '\u00d0'), // latin capital letter ETH, U+00D0 ISOlat1</span>
+<span class="fc" id="L218">        new CharacterReference (&quot;Ntilde&quot;,   '\u00d1'), // latin capital letter N with tilde, U+00D1 ISOlat1</span>
+<span class="fc" id="L219">        new CharacterReference (&quot;Ograve&quot;,   '\u00d2'), // latin capital letter O with grave, U+00D2 ISOlat1</span>
+<span class="fc" id="L220">        new CharacterReference (&quot;Oacute&quot;,   '\u00d3'), // latin capital letter O with acute, U+00D3 ISOlat1</span>
+<span class="fc" id="L221">        new CharacterReference (&quot;Ocirc&quot;,    '\u00d4'), // latin capital letter O with circumflex, U+00D4 ISOlat1</span>
+<span class="fc" id="L222">        new CharacterReference (&quot;Otilde&quot;,   '\u00d5'), // latin capital letter O with tilde, U+00D5 ISOlat1</span>
+<span class="fc" id="L223">        new CharacterReference (&quot;Ouml&quot;,     '\u00d6'), // latin capital letter O with diaeresis, U+00D6 ISOlat1</span>
+<span class="fc" id="L224">        new CharacterReference (&quot;times&quot;,    '\u00d7'), // multiplication sign, U+00D7 ISOnum</span>
+<span class="fc" id="L225">        new CharacterReference (&quot;Oslash&quot;,   '\u00d8'), // latin capital letter O with stroke = latin capital letter O slash, U+00D8 ISOlat1</span>
+<span class="fc" id="L226">        new CharacterReference (&quot;Ugrave&quot;,   '\u00d9'), // latin capital letter U with grave, U+00D9 ISOlat1</span>
+<span class="fc" id="L227">        new CharacterReference (&quot;Uacute&quot;,   '\u00da'), // latin capital letter U with acute, U+00DA ISOlat1</span>
+<span class="fc" id="L228">        new CharacterReference (&quot;Ucirc&quot;,    '\u00db'), // latin capital letter U with circumflex, U+00DB ISOlat1</span>
+<span class="fc" id="L229">        new CharacterReference (&quot;Uuml&quot;,     '\u00dc'), // latin capital letter U with diaeresis, U+00DC ISOlat1</span>
+<span class="fc" id="L230">        new CharacterReference (&quot;Yacute&quot;,   '\u00dd'), // latin capital letter Y with acute, U+00DD ISOlat1</span>
+<span class="fc" id="L231">        new CharacterReference (&quot;THORN&quot;,    '\u00de'), // latin capital letter THORN, U+00DE ISOlat1</span>
+<span class="fc" id="L232">        new CharacterReference (&quot;szlig&quot;,    '\u00df'), // latin small letter sharp s = ess-zed, U+00DF ISOlat1</span>
+<span class="fc" id="L233">        new CharacterReference (&quot;agrave&quot;,   '\u00e0'), // latin small letter a with grave = latin small letter a grave, U+00E0 ISOlat1</span>
+<span class="fc" id="L234">        new CharacterReference (&quot;aacute&quot;,   '\u00e1'), // latin small letter a with acute, U+00E1 ISOlat1</span>
+<span class="fc" id="L235">        new CharacterReference (&quot;acirc&quot;,    '\u00e2'), // latin small letter a with circumflex, U+00E2 ISOlat1</span>
+<span class="fc" id="L236">        new CharacterReference (&quot;atilde&quot;,   '\u00e3'), // latin small letter a with tilde, U+00E3 ISOlat1</span>
+<span class="fc" id="L237">        new CharacterReference (&quot;auml&quot;,     '\u00e4'), // latin small letter a with diaeresis, U+00E4 ISOlat1</span>
+<span class="fc" id="L238">        new CharacterReference (&quot;aring&quot;,    '\u00e5'), // latin small letter a with ring above = latin small letter a ring, U+00E5 ISOlat1</span>
+<span class="fc" id="L239">        new CharacterReference (&quot;aelig&quot;,    '\u00e6'), // latin small letter ae = latin small ligature ae, U+00E6 ISOlat1</span>
+<span class="fc" id="L240">        new CharacterReference (&quot;ccedil&quot;,   '\u00e7'), // latin small letter c with cedilla, U+00E7 ISOlat1</span>
+<span class="fc" id="L241">        new CharacterReference (&quot;egrave&quot;,   '\u00e8'), // latin small letter e with grave, U+00E8 ISOlat1</span>
+<span class="fc" id="L242">        new CharacterReference (&quot;eacute&quot;,   '\u00e9'), // latin small letter e with acute, U+00E9 ISOlat1</span>
+<span class="fc" id="L243">        new CharacterReference (&quot;ecirc&quot;,    '\u00ea'), // latin small letter e with circumflex, U+00EA ISOlat1</span>
+<span class="fc" id="L244">        new CharacterReference (&quot;euml&quot;,     '\u00eb'), // latin small letter e with diaeresis, U+00EB ISOlat1</span>
+<span class="fc" id="L245">        new CharacterReference (&quot;igrave&quot;,   '\u00ec'), // latin small letter i with grave, U+00EC ISOlat1</span>
+<span class="fc" id="L246">        new CharacterReference (&quot;iacute&quot;,   '\u00ed'), // latin small letter i with acute, U+00ED ISOlat1</span>
+<span class="fc" id="L247">        new CharacterReference (&quot;icirc&quot;,    '\u00ee'), // latin small letter i with circumflex, U+00EE ISOlat1</span>
+<span class="fc" id="L248">        new CharacterReference (&quot;iuml&quot;,     '\u00ef'), // latin small letter i with diaeresis, U+00EF ISOlat1</span>
+<span class="fc" id="L249">        new CharacterReference (&quot;eth&quot;,      '\u00f0'), // latin small letter eth, U+00F0 ISOlat1</span>
+<span class="fc" id="L250">        new CharacterReference (&quot;ntilde&quot;,   '\u00f1'), // latin small letter n with tilde, U+00F1 ISOlat1</span>
+<span class="fc" id="L251">        new CharacterReference (&quot;ograve&quot;,   '\u00f2'), // latin small letter o with grave, U+00F2 ISOlat1</span>
+<span class="fc" id="L252">        new CharacterReference (&quot;oacute&quot;,   '\u00f3'), // latin small letter o with acute, U+00F3 ISOlat1</span>
+<span class="fc" id="L253">        new CharacterReference (&quot;ocirc&quot;,    '\u00f4'), // latin small letter o with circumflex, U+00F4 ISOlat1</span>
+<span class="fc" id="L254">        new CharacterReference (&quot;otilde&quot;,   '\u00f5'), // latin small letter o with tilde, U+00F5 ISOlat1</span>
+<span class="fc" id="L255">        new CharacterReference (&quot;ouml&quot;,     '\u00f6'), // latin small letter o with diaeresis, U+00F6 ISOlat1</span>
+<span class="fc" id="L256">        new CharacterReference (&quot;divide&quot;,   '\u00f7'), // division sign, U+00F7 ISOnum</span>
+<span class="fc" id="L257">        new CharacterReference (&quot;oslash&quot;,   '\u00f8'), // latin small letter o with stroke, = latin small letter o slash, U+00F8 ISOlat1</span>
+<span class="fc" id="L258">        new CharacterReference (&quot;ugrave&quot;,   '\u00f9'), // latin small letter u with grave, U+00F9 ISOlat1</span>
+<span class="fc" id="L259">        new CharacterReference (&quot;uacute&quot;,   '\u00fa'), // latin small letter u with acute, U+00FA ISOlat1</span>
+<span class="fc" id="L260">        new CharacterReference (&quot;ucirc&quot;,    '\u00fb'), // latin small letter u with circumflex, U+00FB ISOlat1</span>
+<span class="fc" id="L261">        new CharacterReference (&quot;uuml&quot;,     '\u00fc'), // latin small letter u with diaeresis, U+00FC ISOlat1</span>
+<span class="fc" id="L262">        new CharacterReference (&quot;yacute&quot;,   '\u00fd'), // latin small letter y with acute, U+00FD ISOlat1</span>
+<span class="fc" id="L263">        new CharacterReference (&quot;thorn&quot;,    '\u00fe'), // latin small letter thorn, U+00FE ISOlat1</span>
+<span class="fc" id="L264">        new CharacterReference (&quot;yuml&quot;,     '\u00ff'), // latin small letter y with diaeresis, U+00FF ISOlat1</span>
+        // Mathematical, Greek and Symbolic characters for HTML
+        // Character entity set. Typical invocation:
+        // &lt;!ENTITY % HTMLsymbol PUBLIC
+        // &quot;-//W3C//ENTITIES Symbols//EN//HTML&quot;&gt;
+        // %HTMLsymbol;
+        // Portions © International Organization for Standardization 1986:
+        // Permission to copy in any form is granted for use with
+        // conforming SGML systems and applications as defined in
+        // ISO 8879, provided this notice is included in all copies.
+        // Relevant ISO entity set is given unless names are newly introduced.
+        // New names (i.e., not in ISO 8879 list) do not clash with any
+        // existing ISO 8879 entity names. ISO 10646 character numbers
+        // are given for each character, in hex. CDATA values are decimal
+        // conversions of the ISO 10646 values and refer to the document
+        // character set. Names are ISO 10646 names.
+        // Latin Extended-B
+<span class="fc" id="L281">        new CharacterReference (&quot;fnof&quot;,     '\u0192'), // latin small f with hook = function = florin, U+0192 ISOtech</span>
+        // Greek
+<span class="fc" id="L283">        new CharacterReference (&quot;Alpha&quot;,    '\u0391'), // greek capital letter alpha, U+0391</span>
+<span class="fc" id="L284">        new CharacterReference (&quot;Beta&quot;,     '\u0392'), // greek capital letter beta, U+0392</span>
+<span class="fc" id="L285">        new CharacterReference (&quot;Gamma&quot;,    '\u0393'), // greek capital letter gamma, U+0393 ISOgrk3</span>
+<span class="fc" id="L286">        new CharacterReference (&quot;Delta&quot;,    '\u0394'), // greek capital letter delta, U+0394 ISOgrk3</span>
+<span class="fc" id="L287">        new CharacterReference (&quot;Epsilon&quot;,  '\u0395'), // greek capital letter epsilon, U+0395</span>
+<span class="fc" id="L288">        new CharacterReference (&quot;Zeta&quot;,     '\u0396'), // greek capital letter zeta, U+0396</span>
+<span class="fc" id="L289">        new CharacterReference (&quot;Eta&quot;,      '\u0397'), // greek capital letter eta, U+0397</span>
+<span class="fc" id="L290">        new CharacterReference (&quot;Theta&quot;,    '\u0398'), // greek capital letter theta, U+0398 ISOgrk3</span>
+<span class="fc" id="L291">        new CharacterReference (&quot;Iota&quot;,     '\u0399'), // greek capital letter iota, U+0399</span>
+<span class="fc" id="L292">        new CharacterReference (&quot;Kappa&quot;,    '\u039a'), // greek capital letter kappa, U+039A</span>
+<span class="fc" id="L293">        new CharacterReference (&quot;Lambda&quot;,   '\u039b'), // greek capital letter lambda, U+039B ISOgrk3</span>
+<span class="fc" id="L294">        new CharacterReference (&quot;Mu&quot;,       '\u039c'), // greek capital letter mu, U+039C</span>
+<span class="fc" id="L295">        new CharacterReference (&quot;Nu&quot;,       '\u039d'), // greek capital letter nu, U+039D</span>
+<span class="fc" id="L296">        new CharacterReference (&quot;Xi&quot;,       '\u039e'), // greek capital letter xi, U+039E ISOgrk3</span>
+<span class="fc" id="L297">        new CharacterReference (&quot;Omicron&quot;,  '\u039f'), // greek capital letter omicron, U+039F</span>
+<span class="fc" id="L298">        new CharacterReference (&quot;Pi&quot;,       '\u03a0'), // greek capital letter pi, U+03A0 ISOgrk3</span>
+<span class="fc" id="L299">        new CharacterReference (&quot;Rho&quot;,      '\u03a1'), // greek capital letter rho, U+03A1</span>
+        // there is no Sigmaf, and no U+03A2 character either
+<span class="fc" id="L301">        new CharacterReference (&quot;Sigma&quot;,    '\u03a3'), // greek capital letter sigma, U+03A3 ISOgrk3</span>
+<span class="fc" id="L302">        new CharacterReference (&quot;Tau&quot;,      '\u03a4'), // greek capital letter tau, U+03A4</span>
+<span class="fc" id="L303">        new CharacterReference (&quot;Upsilon&quot;,  '\u03a5'), // greek capital letter upsilon, U+03A5 ISOgrk3</span>
+<span class="fc" id="L304">        new CharacterReference (&quot;Phi&quot;,      '\u03a6'), // greek capital letter phi, U+03A6 ISOgrk3</span>
+<span class="fc" id="L305">        new CharacterReference (&quot;Chi&quot;,      '\u03a7'), // greek capital letter chi, U+03A7</span>
+<span class="fc" id="L306">        new CharacterReference (&quot;Psi&quot;,      '\u03a8'), // greek capital letter psi, U+03A8 ISOgrk3</span>
+<span class="fc" id="L307">        new CharacterReference (&quot;Omega&quot;,    '\u03a9'), // greek capital letter omega, U+03A9 ISOgrk3</span>
+<span class="fc" id="L308">        new CharacterReference (&quot;alpha&quot;,    '\u03b1'), // greek small letter alpha, U+03B1 ISOgrk3</span>
+<span class="fc" id="L309">        new CharacterReference (&quot;beta&quot;,     '\u03b2'), // greek small letter beta, U+03B2 ISOgrk3</span>
+<span class="fc" id="L310">        new CharacterReference (&quot;gamma&quot;,    '\u03b3'), // greek small letter gamma, U+03B3 ISOgrk3</span>
+<span class="fc" id="L311">        new CharacterReference (&quot;delta&quot;,    '\u03b4'), // greek small letter delta, U+03B4 ISOgrk3</span>
+<span class="fc" id="L312">        new CharacterReference (&quot;epsilon&quot;,  '\u03b5'), // greek small letter epsilon, U+03B5 ISOgrk3</span>
+<span class="fc" id="L313">        new CharacterReference (&quot;zeta&quot;,     '\u03b6'), // greek small letter zeta, U+03B6 ISOgrk3</span>
+<span class="fc" id="L314">        new CharacterReference (&quot;eta&quot;,      '\u03b7'), // greek small letter eta, U+03B7 ISOgrk3</span>
+<span class="fc" id="L315">        new CharacterReference (&quot;theta&quot;,    '\u03b8'), // greek small letter theta, U+03B8 ISOgrk3</span>
+<span class="fc" id="L316">        new CharacterReference (&quot;iota&quot;,     '\u03b9'), // greek small letter iota, U+03B9 ISOgrk3</span>
+<span class="fc" id="L317">        new CharacterReference (&quot;kappa&quot;,    '\u03ba'), // greek small letter kappa, U+03BA ISOgrk3</span>
+<span class="fc" id="L318">        new CharacterReference (&quot;lambda&quot;,   '\u03bb'), // greek small letter lambda, U+03BB ISOgrk3</span>
+<span class="fc" id="L319">        new CharacterReference (&quot;mu&quot;,       '\u03bc'), // greek small letter mu, U+03BC ISOgrk3</span>
+<span class="fc" id="L320">        new CharacterReference (&quot;nu&quot;,       '\u03bd'), // greek small letter nu, U+03BD ISOgrk3</span>
+<span class="fc" id="L321">        new CharacterReference (&quot;xi&quot;,       '\u03be'), // greek small letter xi, U+03BE ISOgrk3</span>
+<span class="fc" id="L322">        new CharacterReference (&quot;omicron&quot;,  '\u03bf'), // greek small letter omicron, U+03BF NEW</span>
+<span class="fc" id="L323">        new CharacterReference (&quot;pi&quot;,       '\u03c0'), // greek small letter pi, U+03C0 ISOgrk3</span>
+<span class="fc" id="L324">        new CharacterReference (&quot;rho&quot;,      '\u03c1'), // greek small letter rho, U+03C1 ISOgrk3</span>
+<span class="fc" id="L325">        new CharacterReference (&quot;sigmaf&quot;,   '\u03c2'), // greek small letter final sigma, U+03C2 ISOgrk3</span>
+<span class="fc" id="L326">        new CharacterReference (&quot;sigma&quot;,    '\u03c3'), // greek small letter sigma, U+03C3 ISOgrk3</span>
+<span class="fc" id="L327">        new CharacterReference (&quot;tau&quot;,      '\u03c4'), // greek small letter tau, U+03C4 ISOgrk3</span>
+<span class="fc" id="L328">        new CharacterReference (&quot;upsilon&quot;,  '\u03c5'), // greek small letter upsilon, U+03C5 ISOgrk3</span>
+<span class="fc" id="L329">        new CharacterReference (&quot;phi&quot;,      '\u03c6'), // greek small letter phi, U+03C6 ISOgrk3</span>
+<span class="fc" id="L330">        new CharacterReference (&quot;chi&quot;,      '\u03c7'), // greek small letter chi, U+03C7 ISOgrk3</span>
+<span class="fc" id="L331">        new CharacterReference (&quot;psi&quot;,      '\u03c8'), // greek small letter psi, U+03C8 ISOgrk3</span>
+<span class="fc" id="L332">        new CharacterReference (&quot;omega&quot;,    '\u03c9'), // greek small letter omega, U+03C9 ISOgrk3</span>
+<span class="fc" id="L333">        new CharacterReference (&quot;thetasym&quot;, '\u03d1'), // greek small letter theta symbol, U+03D1 NEW</span>
+<span class="fc" id="L334">        new CharacterReference (&quot;upsih&quot;,    '\u03d2'), // greek upsilon with hook symbol, U+03D2 NEW</span>
+<span class="fc" id="L335">        new CharacterReference (&quot;piv&quot;,      '\u03d6'), // greek pi symbol, U+03D6 ISOgrk3</span>
+        // General Punctuation
+<span class="fc" id="L337">        new CharacterReference (&quot;bull&quot;,     '\u2022'), // bullet = black small circle, U+2022 ISOpub</span>
+        // bullet is NOT the same as bullet operator, U+2219
+<span class="fc" id="L339">        new CharacterReference (&quot;hellip&quot;,   '\u2026'), // horizontal ellipsis = three dot leader, U+2026 ISOpub</span>
+<span class="fc" id="L340">        new CharacterReference (&quot;prime&quot;,    '\u2032'), // prime = minutes = feet, U+2032 ISOtech</span>
+<span class="fc" id="L341">        new CharacterReference (&quot;Prime&quot;,    '\u2033'), // double prime = seconds = inches, U+2033 ISOtech</span>
+<span class="fc" id="L342">        new CharacterReference (&quot;oline&quot;,    '\u203e'), // overline = spacing overscore, U+203E NEW</span>
+<span class="fc" id="L343">        new CharacterReference (&quot;frasl&quot;,    '\u2044'), // fraction slash, U+2044 NEW</span>
+        // Letterlike Symbols
+<span class="fc" id="L345">        new CharacterReference (&quot;weierp&quot;,   '\u2118'), // script capital P = power set = Weierstrass p, U+2118 ISOamso</span>
+<span class="fc" id="L346">        new CharacterReference (&quot;image&quot;,    '\u2111'), // blackletter capital I = imaginary part, U+2111 ISOamso</span>
+<span class="fc" id="L347">        new CharacterReference (&quot;real&quot;,     '\u211c'), // blackletter capital R = real part symbol, U+211C ISOamso</span>
+<span class="fc" id="L348">        new CharacterReference (&quot;trade&quot;,    '\u2122'), // trade mark sign, U+2122 ISOnum</span>
+<span class="fc" id="L349">        new CharacterReference (&quot;alefsym&quot;,  '\u2135'), // alef symbol = first transfinite cardinal, U+2135 NEW</span>
+        // alef symbol is NOT the same as hebrew letter alef,
+        // U+05D0 although the same glyph could be used to depict both characters
+        // Arrows
+<span class="fc" id="L353">        new CharacterReference (&quot;larr&quot;,     '\u2190'), // leftwards arrow, U+2190 ISOnum</span>
+<span class="fc" id="L354">        new CharacterReference (&quot;uarr&quot;,     '\u2191'), // upwards arrow, U+2191 ISOnum</span>
+<span class="fc" id="L355">        new CharacterReference (&quot;rarr&quot;,     '\u2192'), // rightwards arrow, U+2192 ISOnum</span>
+<span class="fc" id="L356">        new CharacterReference (&quot;darr&quot;,     '\u2193'), // downwards arrow, U+2193 ISOnum</span>
+<span class="fc" id="L357">        new CharacterReference (&quot;harr&quot;,     '\u2194'), // left right arrow, U+2194 ISOamsa</span>
+<span class="fc" id="L358">        new CharacterReference (&quot;crarr&quot;,    '\u21b5'), // downwards arrow with corner leftwards = carriage return, U+21B5 NEW</span>
+<span class="fc" id="L359">        new CharacterReference (&quot;lArr&quot;,     '\u21d0'), // leftwards double arrow, U+21D0 ISOtech</span>
+        // ISO 10646 does not say that lArr is the same as the 'is implied by' arrow
+        // but also does not have any other character for that function. So ? lArr can
+        // be used for 'is implied by' as ISOtech suggests
+<span class="fc" id="L363">        new CharacterReference (&quot;uArr&quot;,     '\u21d1'), // upwards double arrow, U+21D1 ISOamsa</span>
+<span class="fc" id="L364">        new CharacterReference (&quot;rArr&quot;,     '\u21d2'), // rightwards double arrow, U+21D2 ISOtech</span>
+        // ISO 10646 does not say this is the 'implies' character but does not have 
+        // another character with this function so ?
+        // rArr can be used for 'implies' as ISOtech suggests
+<span class="fc" id="L368">        new CharacterReference (&quot;dArr&quot;,     '\u21d3'), // downwards double arrow, U+21D3 ISOamsa</span>
+<span class="fc" id="L369">        new CharacterReference (&quot;hArr&quot;,     '\u21d4'), // left right double arrow, U+21D4 ISOamsa</span>
+        // Mathematical Operators
+<span class="fc" id="L371">        new CharacterReference (&quot;forall&quot;,   '\u2200'), // for all, U+2200 ISOtech</span>
+<span class="fc" id="L372">        new CharacterReference (&quot;part&quot;,     '\u2202'), // partial differential, U+2202 ISOtech</span>
+<span class="fc" id="L373">        new CharacterReference (&quot;exist&quot;,    '\u2203'), // there exists, U+2203 ISOtech</span>
+<span class="fc" id="L374">        new CharacterReference (&quot;empty&quot;,    '\u2205'), // empty set = null set = diameter, U+2205 ISOamso</span>
+<span class="fc" id="L375">        new CharacterReference (&quot;nabla&quot;,    '\u2207'), // nabla = backward difference, U+2207 ISOtech</span>
+<span class="fc" id="L376">        new CharacterReference (&quot;isin&quot;,     '\u2208'), // element of, U+2208 ISOtech</span>
+<span class="fc" id="L377">        new CharacterReference (&quot;notin&quot;,    '\u2209'), // not an element of, U+2209 ISOtech</span>
+<span class="fc" id="L378">        new CharacterReference (&quot;ni&quot;,       '\u220b'), // contains as member, U+220B ISOtech</span>
+        // should there be a more memorable name than 'ni'?
+<span class="fc" id="L380">        new CharacterReference (&quot;prod&quot;,     '\u220f'), // n-ary product = product sign, U+220F ISOamsb</span>
+        // prod is NOT the same character as U+03A0 'greek capital letter pi' though
+        // the same glyph might be used for both
+<span class="fc" id="L383">        new CharacterReference (&quot;sum&quot;,      '\u2211'), // n-ary sumation, U+2211 ISOamsb</span>
+        // sum is NOT the same character as U+03A3 'greek capital letter sigma'
+        // though the same glyph might be used for both
+<span class="fc" id="L386">        new CharacterReference (&quot;minus&quot;,    '\u2212'), // minus sign, U+2212 ISOtech</span>
+<span class="fc" id="L387">        new CharacterReference (&quot;lowast&quot;,   '\u2217'), // asterisk operator, U+2217 ISOtech</span>
+<span class="fc" id="L388">        new CharacterReference (&quot;radic&quot;,    '\u221a'), // square root = radical sign, U+221A ISOtech</span>
+<span class="fc" id="L389">        new CharacterReference (&quot;prop&quot;,     '\u221d'), // proportional to, U+221D ISOtech</span>
+<span class="fc" id="L390">        new CharacterReference (&quot;infin&quot;,    '\u221e'), // infinity, U+221E ISOtech</span>
+<span class="fc" id="L391">        new CharacterReference (&quot;ang&quot;,      '\u2220'), // angle, U+2220 ISOamso</span>
+<span class="fc" id="L392">        new CharacterReference (&quot;and&quot;,      '\u2227'), // logical and = wedge, U+2227 ISOtech</span>
+<span class="fc" id="L393">        new CharacterReference (&quot;or&quot;,       '\u2228'), // logical or = vee, U+2228 ISOtech</span>
+<span class="fc" id="L394">        new CharacterReference (&quot;cap&quot;,      '\u2229'), // intersection = cap, U+2229 ISOtech</span>
+<span class="fc" id="L395">        new CharacterReference (&quot;cup&quot;,      '\u222a'), // union = cup, U+222A ISOtech</span>
+<span class="fc" id="L396">        new CharacterReference (&quot;int&quot;,      '\u222b'), // integral, U+222B ISOtech</span>
+<span class="fc" id="L397">        new CharacterReference (&quot;there4&quot;,   '\u2234'), // therefore, U+2234 ISOtech</span>
+<span class="fc" id="L398">        new CharacterReference (&quot;sim&quot;,      '\u223c'), // tilde operator = varies with = similar to, U+223C ISOtech</span>
+        // tilde operator is NOT the same character as the tilde, U+007E,
+        // although the same glyph might be used to represent both
+<span class="fc" id="L401">        new CharacterReference (&quot;cong&quot;,     '\u2245'), // approximately equal to, U+2245 ISOtech</span>
+<span class="fc" id="L402">        new CharacterReference (&quot;asymp&quot;,    '\u2248'), // almost equal to = asymptotic to, U+2248 ISOamsr</span>
+<span class="fc" id="L403">        new CharacterReference (&quot;ne&quot;,       '\u2260'), // not equal to, U+2260 ISOtech</span>
+<span class="fc" id="L404">        new CharacterReference (&quot;equiv&quot;,    '\u2261'), // identical to, U+2261 ISOtech</span>
+<span class="fc" id="L405">        new CharacterReference (&quot;le&quot;,       '\u2264'), // less-than or equal to, U+2264 ISOtech</span>
+<span class="fc" id="L406">        new CharacterReference (&quot;ge&quot;,       '\u2265'), // greater-than or equal to, U+2265 ISOtech</span>
+<span class="fc" id="L407">        new CharacterReference (&quot;sub&quot;,      '\u2282'), // subset of, U+2282 ISOtech</span>
+<span class="fc" id="L408">        new CharacterReference (&quot;sup&quot;,      '\u2283'), // superset of, U+2283 ISOtech</span>
+        // note that nsup, 'not a superset of, U+2283' is not covered by the Symbol 
+        // font encoding and is not included. Should it be, for symmetry?
+        // It is in ISOamsn
+<span class="fc" id="L412">        new CharacterReference (&quot;nsub&quot;,     '\u2284'), // not a subset of, U+2284 ISOamsn</span>
+<span class="fc" id="L413">        new CharacterReference (&quot;sube&quot;,     '\u2286'), // subset of or equal to, U+2286 ISOtech</span>
+<span class="fc" id="L414">        new CharacterReference (&quot;supe&quot;,     '\u2287'), // superset of or equal to, U+2287 ISOtech</span>
+<span class="fc" id="L415">        new CharacterReference (&quot;oplus&quot;,    '\u2295'), // circled plus = direct sum, U+2295 ISOamsb</span>
+<span class="fc" id="L416">        new CharacterReference (&quot;otimes&quot;,   '\u2297'), // circled times = vector product, U+2297 ISOamsb</span>
+<span class="fc" id="L417">        new CharacterReference (&quot;perp&quot;,     '\u22a5'), // up tack = orthogonal to = perpendicular, U+22A5 ISOtech</span>
+<span class="fc" id="L418">        new CharacterReference (&quot;sdot&quot;,     '\u22c5'), // dot operator, U+22C5 ISOamsb</span>
+        // dot operator is NOT the same character as U+00B7 middle dot
+        // Miscellaneous Technical
+<span class="fc" id="L421">        new CharacterReference (&quot;lceil&quot;,    '\u2308'), // left ceiling = apl upstile, U+2308 ISOamsc</span>
+<span class="fc" id="L422">        new CharacterReference (&quot;rceil&quot;,    '\u2309'), // right ceiling, U+2309 ISOamsc</span>
+<span class="fc" id="L423">        new CharacterReference (&quot;lfloor&quot;,   '\u230a'), // left floor = apl downstile, U+230A ISOamsc</span>
+<span class="fc" id="L424">        new CharacterReference (&quot;rfloor&quot;,   '\u230b'), // right floor, U+230B ISOamsc</span>
+<span class="fc" id="L425">        new CharacterReference (&quot;lang&quot;,     '\u2329'), // left-pointing angle bracket = bra, U+2329 ISOtech</span>
+        // lang is NOT the same character as U+003C 'less than' 
+        // or U+2039 'single left-pointing angle quotation mark'
+<span class="fc" id="L428">        new CharacterReference (&quot;rang&quot;,     '\u232a'), // right-pointing angle bracket = ket, U+232A ISOtech</span>
+        // rang is NOT the same character as U+003E 'greater than' 
+        // or U+203A 'single right-pointing angle quotation mark'
+        // Geometric Shapes
+<span class="fc" id="L432">        new CharacterReference (&quot;loz&quot;,      '\u25ca'), // lozenge, U+25CA ISOpub</span>
+        // Miscellaneous Symbols
+<span class="fc" id="L434">        new CharacterReference (&quot;spades&quot;,   '\u2660'), // black spade suit, U+2660 ISOpub</span>
+        // black here seems to mean filled as opposed to hollow
+<span class="fc" id="L436">        new CharacterReference (&quot;clubs&quot;,    '\u2663'), // black club suit = shamrock, U+2663 ISOpub</span>
+<span class="fc" id="L437">        new CharacterReference (&quot;hearts&quot;,   '\u2665'), // black heart suit = valentine, U+2665 ISOpub</span>
+<span class="fc" id="L438">        new CharacterReference (&quot;diams&quot;,    '\u2666'), // black diamond suit, U+2666 ISOpub</span>
+        // Special characters for HTML
+        // Character entity set. Typical invocation:
+        // &lt;!ENTITY % HTMLspecial PUBLIC
+        // &quot;-//W3C//ENTITIES Special//EN//HTML&quot;&gt;
+        // %HTMLspecial;
+        // Portions © International Organization for Standardization 1986:
+        // Permission to copy in any form is granted for use with
+        // conforming SGML systems and applications as defined in
+        // ISO 8879, provided this notice is included in all copies.
+        // Relevant ISO entity set is given unless names are newly introduced.
+        // New names (i.e., not in ISO 8879 list) do not clash with any
+        // existing ISO 8879 entity names. ISO 10646 character numbers
+        // are given for each character, in hex. CDATA values are decimal
+        // conversions of the ISO 10646 values and refer to the document
+        // character set. Names are ISO 10646 names.
+        // C0 Controls and Basic Latin
+<span class="fc" id="L455">        new CharacterReference (&quot;quot&quot;,     '\u0022'), // quotation mark = APL quote, U+0022 ISOnum</span>
+<span class="fc" id="L456">        new CharacterReference (&quot;amp&quot;,      '\u0026'), // ampersand, U+0026 ISOnum</span>
+<span class="fc" id="L457">        new CharacterReference (&quot;lt&quot;,       '\u003c'), // less-than sign, U+003C ISOnum</span>
+<span class="fc" id="L458">        new CharacterReference (&quot;gt&quot;,       '\u003e'), // greater-than sign, U+003E ISOnum</span>
+        // Latin Extended-A
+<span class="fc" id="L460">        new CharacterReference (&quot;OElig&quot;,    '\u0152'), // latin capital ligature OE, U+0152 ISOlat2</span>
+<span class="fc" id="L461">        new CharacterReference (&quot;oelig&quot;,    '\u0153'), // latin small ligature oe, U+0153 ISOlat2</span>
+        // ligature is a misnomer, this is a separate character in some languages
+<span class="fc" id="L463">        new CharacterReference (&quot;Scaron&quot;,   '\u0160'), // latin capital letter S with caron, U+0160 ISOlat2</span>
+<span class="fc" id="L464">        new CharacterReference (&quot;scaron&quot;,   '\u0161'), // latin small letter s with caron, U+0161 ISOlat2</span>
+<span class="fc" id="L465">        new CharacterReference (&quot;Yuml&quot;,     '\u0178'), // latin capital letter Y with diaeresis, U+0178 ISOlat2</span>
+        // Spacing Modifier Letters
+<span class="fc" id="L467">        new CharacterReference (&quot;circ&quot;,     '\u02c6'), // modifier letter circumflex accent, U+02C6 ISOpub</span>
+<span class="fc" id="L468">        new CharacterReference (&quot;tilde&quot;,    '\u02dc'), // small tilde, U+02DC ISOdia</span>
+        // General Punctuation
+<span class="fc" id="L470">        new CharacterReference (&quot;ensp&quot;,     '\u2002'), // en space, U+2002 ISOpub</span>
+<span class="fc" id="L471">        new CharacterReference (&quot;emsp&quot;,     '\u2003'), // em space, U+2003 ISOpub</span>
+<span class="fc" id="L472">        new CharacterReference (&quot;thinsp&quot;,   '\u2009'), // thin space, U+2009 ISOpub</span>
+<span class="fc" id="L473">        new CharacterReference (&quot;zwnj&quot;,     '\u200c'), // zero width non-joiner, U+200C NEW RFC 2070</span>
+<span class="fc" id="L474">        new CharacterReference (&quot;zwj&quot;,      '\u200d'), // zero width joiner, U+200D NEW RFC 2070</span>
+<span class="fc" id="L475">        new CharacterReference (&quot;lrm&quot;,      '\u200e'), // left-to-right mark, U+200E NEW RFC 2070</span>
+<span class="fc" id="L476">        new CharacterReference (&quot;rlm&quot;,      '\u200f'), // right-to-left mark, U+200F NEW RFC 2070</span>
+<span class="fc" id="L477">        new CharacterReference (&quot;ndash&quot;,    '\u2013'), // en dash, U+2013 ISOpub</span>
+<span class="fc" id="L478">        new CharacterReference (&quot;mdash&quot;,    '\u2014'), // em dash, U+2014 ISOpub</span>
+<span class="fc" id="L479">        new CharacterReference (&quot;lsquo&quot;,    '\u2018'), // left single quotation mark, U+2018 ISOnum</span>
+<span class="fc" id="L480">        new CharacterReference (&quot;rsquo&quot;,    '\u2019'), // right single quotation mark, U+2019 ISOnum</span>
+<span class="fc" id="L481">        new CharacterReference (&quot;sbquo&quot;,    '\u201a'), // single low-9 quotation mark, U+201A NEW</span>
+<span class="fc" id="L482">        new CharacterReference (&quot;ldquo&quot;,    '\u201c'), // left double quotation mark, U+201C ISOnum</span>
+<span class="fc" id="L483">        new CharacterReference (&quot;rdquo&quot;,    '\u201d'), // right double quotation mark, U+201D ISOnum</span>
+<span class="fc" id="L484">        new CharacterReference (&quot;bdquo&quot;,    '\u201e'), // double low-9 quotation mark, U+201E NEW</span>
+<span class="fc" id="L485">        new CharacterReference (&quot;dagger&quot;,   '\u2020'), // dagger, U+2020 ISOpub</span>
+<span class="fc" id="L486">        new CharacterReference (&quot;Dagger&quot;,   '\u2021'), // double dagger, U+2021 ISOpub</span>
+<span class="fc" id="L487">        new CharacterReference (&quot;permil&quot;,   '\u2030'), // per mille sign, U+2030 ISOtech</span>
+<span class="fc" id="L488">        new CharacterReference (&quot;lsaquo&quot;,   '\u2039'), // single left-pointing angle quotation mark, U+2039 ISO proposed</span>
+        // lsaquo is proposed but not yet ISO standardized
+<span class="fc" id="L490">        new CharacterReference (&quot;rsaquo&quot;,   '\u203a'), // single right-pointing angle quotation mark, U+203A ISO proposed</span>
+        // rsaquo is proposed but not yet ISO standardized
+<span class="fc" id="L492">        new CharacterReference (&quot;euro&quot;,     '\u20ac'), // euro sign, U+20AC NEW</span>
+    };
+
+    /**
+     * The dividing point between a simple table lookup and a binary search.
+     * Characters below the break point are stored in a sparse array allowing
+     * direct index lookup.
+     */
+    protected static final int BREAKPOINT = 0x100;
+
+    /**
+     * List of references sorted by character.
+     * The first part of this array, up to &lt;code&gt;BREAKPOINT&lt;/code&gt; is stored
+     * in a direct translational table, indexing into the table with a character
+     * yields the reference. The second part is dense and sorted by character,
+     * suitable for binary lookup.
+     */
+    protected static final CharacterReference[] mCharacterList;
+
+    static
+    {
+        int index;
+        CharacterReference item;
+        int character;
+
+        // count below the break point
+<span class="fc" id="L518">        index = 0;</span>
+<span class="fc bfc" id="L519" title="All 2 branches covered.">        for (int i = 0; i &lt; mCharacterReferences.length; i++)</span>
+<span class="fc bfc" id="L520" title="All 2 branches covered.">            if (mCharacterReferences[i].getCharacter () &lt; BREAKPOINT)</span>
+<span class="fc" id="L521">                index++;</span>
+        // allocate enough for the linear table and remainder
+<span class="fc" id="L523">        mCharacterList = new CharacterReference[BREAKPOINT + mCharacterReferences.length - index];</span>
+<span class="fc" id="L524">        index = BREAKPOINT;</span>
+<span class="fc bfc" id="L525" title="All 2 branches covered.">        for (int i = 0; i &lt; mCharacterReferences.length; i++)</span>
+        {
+<span class="fc" id="L527">            item = mCharacterReferences[i];</span>
+<span class="fc" id="L528">            character = mCharacterReferences[i].getCharacter ();</span>
+<span class="fc bfc" id="L529" title="All 2 branches covered.">            if (character &lt; BREAKPOINT)</span>
+<span class="fc" id="L530">                mCharacterList[character] = item;</span>
+            else
+            {
+                // use a linear search and insertion sort, done only once
+<span class="fc" id="L534">                int x = BREAKPOINT;</span>
+<span class="fc bfc" id="L535" title="All 2 branches covered.">                while (x &lt; index)</span>
+<span class="fc bfc" id="L536" title="All 2 branches covered.">                    if (mCharacterList[x].getCharacter () &gt; character)</span>
+<span class="fc" id="L537">                        break;</span>
+                    else
+<span class="fc" id="L539">                        x++;</span>
+<span class="fc" id="L540">                int y = index - 1;</span>
+<span class="fc bfc" id="L541" title="All 2 branches covered.">                while (y &gt;= x)</span>
+                {
+<span class="fc" id="L543">                    mCharacterList[y + 1] = mCharacterList[y];</span>
+<span class="fc" id="L544">                    y--;</span>
+                }
+<span class="fc" id="L546">                mCharacterList[x] = item;</span>
+<span class="fc" id="L547">                index++;</span>
+            }
+        }
+        // reorder the original array into kernel order
+<span class="fc" id="L551">        Sort.QuickSort (mCharacterReferences);</span>
+<span class="fc" id="L552">    }</span>
+
+    /**
+     * Private constructor.
+     * This class is fully static and thread safe.
+     */
+<span class="nc" id="L558">    private Translate ()</span>
+    {
+<span class="nc" id="L560">    }</span>
+
+    /**
+     * Binary search for a reference.
+     * @param array The array of &lt;code&gt;CharacterReference&lt;/code&gt; objects.
+     * @param ref The character to search for.
+     * @param lo The lower index within which to look.
+     * @param hi The upper index within which to look.
+     * @return The index at which reference was found or is to be inserted.
+     */
+    protected static int lookup (CharacterReference[] array, char ref, int lo, int hi)
+    {   int num;
+        int mid;
+        int half;
+        int result;
+        int ret;
+
+<span class="nc" id="L577">        ret = -1;</span>
+
+<span class="nc" id="L579">        num = (hi - lo) + 1;</span>
+<span class="nc bnc" id="L580" title="All 4 branches missed.">        while ((-1 == ret) &amp;&amp; (lo &lt;= hi))</span>
+        {
+<span class="nc" id="L582">            half = num / 2;</span>
+<span class="nc bnc" id="L583" title="All 2 branches missed.">            mid = lo + ((0 != (num &amp; 1)) ? half : half - 1);</span>
+<span class="nc" id="L584">            result = ref - array[mid].getCharacter ();</span>
+<span class="nc bnc" id="L585" title="All 2 branches missed.">            if (0 == result)</span>
+<span class="nc" id="L586">                ret = mid;</span>
+<span class="nc bnc" id="L587" title="All 2 branches missed.">            else if (0 &gt; result)</span>
+            {
+<span class="nc" id="L589">                hi = mid - 1;</span>
+<span class="nc bnc" id="L590" title="All 2 branches missed.">                num = ((0 != (num &amp; 1)) ? half : half - 1);</span>
+<span class="nc" id="L591">            }</span>
+            else
+            {
+<span class="nc" id="L594">                lo = mid + 1;</span>
+<span class="nc" id="L595">                num = half;</span>
+            }
+        }
+<span class="nc bnc" id="L598" title="All 2 branches missed.">        if (-1 == ret)</span>
+<span class="nc" id="L599">            ret = lo;</span>
+
+<span class="nc" id="L601">        return (ret);</span>
+    }
+
+    /**
+     * Look up a reference by character.
+     * Use a combination of direct table lookup and binary search to find
+     * the reference corresponding to the character.
+     * @param character The character to be looked up.
+     * @return The entity reference for that character or &lt;code&gt;null&lt;/code&gt;.
+     */
+    public static CharacterReference lookup (char character)
+    {
+        int index;
+        CharacterReference ret;
+
+<span class="nc bnc" id="L616" title="All 2 branches missed.">        if (character &lt; BREAKPOINT)</span>
+<span class="nc" id="L617">            ret = mCharacterList[character];</span>
+        else
+        {
+<span class="nc" id="L620">            index = lookup (mCharacterList, character, BREAKPOINT, mCharacterList.length - 1);</span>
+<span class="nc bnc" id="L621" title="All 2 branches missed.">            if (index &lt; mCharacterList.length)</span>
+            {
+<span class="nc" id="L623">                ret = mCharacterList[index];</span>
+<span class="nc bnc" id="L624" title="All 2 branches missed.">                if (character != ret.getCharacter ())</span>
+<span class="nc" id="L625">                    ret = null;</span>
+<span class="nc" id="L626">            }</span>
+            else
+<span class="nc" id="L628">                ret = null;</span>
+        }
+        
+<span class="nc" id="L631">        return (ret);</span>
+    }
+
+    /**
+     * Look up a reference by kernel.
+     * Use a binary search on the ordered list of known references.
+     * Since the binary search returns the position at which a new item should
+     * be inserted, we check the references earlier in the list if there is
+     * a failure.
+     * @param key A character reference with the kernel set to the string
+     * to be found. It need not be truncated at the exact end of the reference.
+     */
+    protected static CharacterReference lookup (CharacterReference key)
+    {
+        String string;
+        int index;
+        String kernel;
+        char character;
+        CharacterReference test;
+        CharacterReference ret;
+
+        // Care should be taken here because some entity references are
+        // prefixes of others, i.e.:
+        // \u2209[notin] \u00ac[not]
+        // \u00ba[ordm] \u2228[or]
+        // \u03d6[piv] \u03c0[pi]
+        // \u00b3[sup3] \u2283[sup]
+<span class="fc" id="L658">        ret = null;</span>
+<span class="fc" id="L659">        index = Sort.bsearch (mCharacterReferences, key);</span>
+<span class="fc" id="L660">        string = key.getKernel ();</span>
+<span class="pc bpc" id="L661" title="1 of 2 branches missed.">        if (index &lt; mCharacterReferences.length)</span>
+        {
+<span class="fc" id="L663">            ret = mCharacterReferences[index];</span>
+<span class="fc" id="L664">            kernel = ret.getKernel ();</span>
+<span class="fc" id="L665">            if (!string.regionMatches (</span>
+<span class="fc" id="L666">                0,</span>
+<span class="fc" id="L667">                kernel,</span>
+<span class="fc" id="L668">                0,</span>
+<span class="pc bpc" id="L669" title="1 of 2 branches missed.">                kernel.length ()))</span>
+            {   // not exact, check references starting with same character
+                // to see if a subset matches
+<span class="nc" id="L672">                ret = null;</span>
+            }
+        }
+<span class="pc bpc" id="L675" title="1 of 2 branches missed.">        if (null == ret)</span>
+        {
+<span class="nc" id="L677">            character = string.charAt (0);</span>
+<span class="nc bnc" id="L678" title="All 2 branches missed.">            while (--index &gt;= 0)</span>
+            {
+<span class="nc" id="L680">                test = mCharacterReferences[index];</span>
+<span class="nc" id="L681">                kernel = test.getKernel ();</span>
+<span class="nc bnc" id="L682" title="All 2 branches missed.">                if (character == kernel.charAt (0))</span>
+                {
+<span class="nc" id="L684">                    if (string.regionMatches (</span>
+<span class="nc" id="L685">                        0,</span>
+<span class="nc" id="L686">                        kernel,</span>
+<span class="nc" id="L687">                        0,</span>
+<span class="nc bnc" id="L688" title="All 2 branches missed.">                        kernel.length ()))</span>
+                    {
+<span class="nc" id="L690">                        ret = test;</span>
+<span class="nc" id="L691">                        break;</span>
+                    }
+                }
+                else
+                    break;
+            }
+        }
+        
+<span class="fc" id="L699">        return (ret);</span>
+    }
+
+    /**
+     * Look up a reference by kernel.
+     * Use a binary search on the ordered list of known references.
+     * &lt;em&gt;This is not very efficient, use {@link org.htmlparser.util.Translate#lookup(org.htmlparser.util.CharacterReference) lookup(CharacterReference)}
+     * instead.&lt;/em&gt;
+     * @param kernel The string to lookup, i.e. &quot;amp&quot;.
+     * @param start The starting point in the string of the kernel.
+     * @param end The ending point in the string of the kernel.
+     * This should be the index of the semicolon if it exists, or failing that,
+     * at least an index past the last character of the kernel.
+     * @return The reference that matches the given string, or &lt;code&gt;null&lt;/code&gt;
+     * if it wasn't found.
+     */
+    public static CharacterReference lookup (String kernel, int start, int end)
+    {
+        CharacterReferenceEx probe;
+        
+<span class="nc" id="L719">        probe = new CharacterReferenceEx ();</span>
+<span class="nc" id="L720">        probe.setKernel (kernel);</span>
+<span class="nc" id="L721">        probe.setStart (start);</span>
+<span class="nc" id="L722">        probe.setEnd (end);</span>
+
+<span class="nc" id="L724">        return (lookup (probe));</span>
+    }
+
+    /**
+     * Decode a string containing references.
+     * Change all numeric character reference and character entity references
+     * to unicode characters.
+     * @param string The string to translate.
+     */
+    public static String decode (String string)
+    {
+        CharacterReferenceEx key;
+        int amp;
+        int index;
+        int length;
+        StringBuffer buffer;
+        char character;
+        int number;
+        int radix;
+        int i;
+        int semi;
+        boolean done;
+        CharacterReference item;
+        String ret;
+
+<span class="fc bfc" id="L749" title="All 2 branches covered.">        if (-1 == (amp = string.indexOf ('&amp;')))</span>
+<span class="fc" id="L750">            ret = string;</span>
+        else
+        {
+<span class="fc" id="L753">            key = null;</span>
+<span class="fc" id="L754">            index = 0;</span>
+<span class="fc" id="L755">            length = string.length ();</span>
+<span class="fc" id="L756">            buffer = new StringBuffer (length);</span>
+            do
+            {
+                // equivalent to buffer.append (string.substring (index, amp));
+                // but without the allocation of a new String
+<span class="fc bfc" id="L761" title="All 2 branches covered.">                while (index &lt; amp)</span>
+<span class="fc" id="L762">                    buffer.append (string.charAt (index++));</span>
+                
+<span class="fc" id="L764">                index++;</span>
+<span class="pc bpc" id="L765" title="1 of 2 branches missed.">                if (index &lt; length)</span>
+                {
+<span class="fc" id="L767">                    character = string.charAt (index);</span>
+<span class="pc bpc" id="L768" title="1 of 2 branches missed.">                    if ('#' == character)</span>
+                    {
+                        // numeric character reference
+<span class="nc" id="L771">                        index++;</span>
+<span class="nc" id="L772">                        number = 0;</span>
+<span class="nc" id="L773">                        radix = 0;</span>
+<span class="nc" id="L774">                        i = index;</span>
+<span class="nc" id="L775">                        done = false;</span>
+<span class="nc bnc" id="L776" title="All 4 branches missed.">                        while ((i &lt; length) &amp;&amp; !done)</span>
+                        {
+<span class="nc" id="L778">                            character = string.charAt (i);</span>
+<span class="nc bnc" id="L779" title="All 6 branches missed.">                            switch (character)</span>
+                            {
+                                case '0':
+                                case '1':
+                                case '2':
+                                case '3':
+                                case '4':
+                                case '5':
+                                case '6':
+                                case '7':
+                                case '8':
+                                case '9':
+<span class="nc bnc" id="L791" title="All 2 branches missed.">                                    if (0 == radix)</span>
+<span class="nc" id="L792">                                        radix = 10;</span>
+<span class="nc" id="L793">                                    number = number * radix + (character - '0');</span>
+<span class="nc" id="L794">                                    break;</span>
+                                case 'A':
+                                case 'B':
+                                case 'C':
+                                case 'D':
+                                case 'E':
+                                case 'F':
+<span class="nc bnc" id="L801" title="All 2 branches missed.">                                    if (16 == radix)</span>
+<span class="nc" id="L802">                                        number = number * radix + (character - 'A' + 10);</span>
+                                    else
+<span class="nc" id="L804">                                        done = true;</span>
+<span class="nc" id="L805">                                    break;</span>
+                                case 'a':
+                                case 'b':
+                                case 'c':
+                                case 'd':
+                                case 'e':
+                                case 'f':
+<span class="nc bnc" id="L812" title="All 2 branches missed.">                                    if (16 == radix)</span>
+<span class="nc" id="L813">                                        number = number * radix + (character - 'a' + 10);</span>
+                                    else
+<span class="nc" id="L815">                                        done = true;</span>
+<span class="nc" id="L816">                                    break;</span>
+                                case 'x':
+                                case 'X':
+<span class="nc bnc" id="L819" title="All 2 branches missed.">                                    if (0 == radix)</span>
+<span class="nc" id="L820">                                        radix = 16;</span>
+                                    else
+<span class="nc" id="L822">                                        done = true;</span>
+<span class="nc" id="L823">                                    break;</span>
+                                case ';':
+<span class="nc" id="L825">                                    done = true;</span>
+<span class="nc" id="L826">                                    i++;</span>
+<span class="nc" id="L827">                                    break;</span>
+                                default:
+<span class="nc" id="L829">                                    done = true;</span>
+                                    break;
+                            }
+<span class="nc bnc" id="L832" title="All 2 branches missed.">                            if (!done)</span>
+<span class="nc" id="L833">                                i++;</span>
+                        }
+<span class="nc bnc" id="L835" title="All 2 branches missed.">                        if (0 != number)</span>
+                        {
+<span class="nc" id="L837">                            buffer.append ((char)number);</span>
+<span class="nc" id="L838">                            index = i;</span>
+<span class="nc" id="L839">                            amp = index;</span>
+                        }
+                        
+<span class="nc" id="L842">                    }</span>
+<span class="pc bpc" id="L843" title="1 of 2 branches missed.">                    else if (Character.isLetter (character)) // really can't start with a digit eh...</span>
+                    {
+                        // character entity reference
+<span class="fc" id="L846">                        i = index + 1;</span>
+<span class="fc" id="L847">                        done = false;</span>
+<span class="fc" id="L848">                        semi = length;</span>
+<span class="fc bfc" id="L849" title="All 4 branches covered.">                        while ((i &lt; length) &amp;&amp; !done)</span>
+                        {
+<span class="fc" id="L851">                            character = string.charAt (i);</span>
+<span class="fc bfc" id="L852" title="All 2 branches covered.">                            if (';' == character)</span>
+                            {
+<span class="fc" id="L854">                                done = true;</span>
+<span class="fc" id="L855">                                semi = i;</span>
+<span class="fc" id="L856">                                i++;</span>
+<span class="fc" id="L857">                            }</span>
+<span class="pc bpc" id="L858" title="1 of 2 branches missed.">                            else if (Character.isLetterOrDigit (character))</span>
+<span class="fc" id="L859">                                i++;</span>
+                            else
+                            {
+<span class="nc" id="L862">                                done = true;</span>
+<span class="nc" id="L863">                                semi = i;</span>
+                            }
+                        }
+                        // new CharacterReference (string.substring (index, semi), 0);
+<span class="fc bfc" id="L867" title="All 2 branches covered.">                        if (null == key)</span>
+<span class="fc" id="L868">                            key = new CharacterReferenceEx ();</span>
+<span class="fc" id="L869">                        key.setKernel (string);</span>
+<span class="fc" id="L870">                        key.setStart (index);</span>
+<span class="fc" id="L871">                        key.setEnd (semi);</span>
+<span class="fc" id="L872">                        item = lookup (key);</span>
+<span class="pc bpc" id="L873" title="1 of 2 branches missed.">                        if (null != item)</span>
+                        {
+<span class="fc" id="L875">                            buffer.append ((char)item.getCharacter ());</span>
+<span class="fc" id="L876">                            index += item.getKernel ().length ();</span>
+<span class="pc bpc" id="L877" title="2 of 4 branches missed.">                            if ((index &lt; length) &amp;&amp; (';' == string.charAt (index)))</span>
+<span class="fc" id="L878">                                index++;</span>
+<span class="fc" id="L879">                            amp = index;</span>
+                        }
+                    }
+                    else
+                    {
+                        // need do nothing here, the ampersand will be consumed below
+                    }
+                }
+                // gather up unconsumed characters
+<span class="pc bpc" id="L888" title="1 of 2 branches missed.">                while (amp &lt; index)</span>
+<span class="nc" id="L889">                    buffer.append (string.charAt (amp++));</span>
+            }
+<span class="pc bpc" id="L891" title="1 of 4 branches missed.">            while ((index &lt; length) &amp;&amp; (-1 != (amp = string.indexOf ('&amp;', index))));</span>
+            // equivalent to buffer.append (string.substring (index));
+            // but without the allocation of a new String
+<span class="pc bpc" id="L894" title="1 of 2 branches missed.">            while (index &lt; length)</span>
+<span class="nc" id="L895">                buffer.append (string.charAt (index++));</span>
+<span class="fc" id="L896">            ret = buffer.toString ();</span>
+        }
+
+<span class="fc" id="L899">        return (ret);</span>
+    }
+
+    /**
+     * Decode the characters in a string buffer containing references.
+     * Change all numeric character reference and character entity references
+     * to unicode characters.
+     * @param buffer The StringBuffer containing references.
+     * @return The decoded string.
+     */
+    public static String decode (StringBuffer buffer)
+    {
+<span class="nc" id="L911">        return decode (buffer.toString());</span>
+    }
+
+    /**
+     * Decode a stream containing references.
+     * Change all numeric character reference and character entity references
+     * to unicode characters. If &lt;code&gt;DECODE_LINE_BY_LINE&lt;/code&gt; is true,
+     * the input stream is broken up into lines, terminated by either
+     * carriage return or newline, in order to reduce the latency and maximum
+     * buffering memory size required.
+     * @param in The stream to translate. It is assumed that the input
+     * stream is encoded with ISO-8859-1 since the table of character
+     * entity references in this class applies only to ISO-8859-1.
+     * @param out The stream to write the decoded stream to.
+     */
+    public static void decode (InputStream in, PrintStream out)
+    {
+        Reader reader;
+        StringBuffer buffer;
+        int character;
+        String string;
+        boolean newlines;
+
+        try
+        {
+            try
+            {
+<span class="nc" id="L938">                reader = new BufferedReader (new InputStreamReader (in, &quot;ISO-8859-1&quot;));</span>
+<span class="nc" id="L939">            }</span>
+<span class="nc" id="L940">            catch (UnsupportedEncodingException use)</span>
+            {
+                // yeah, like this will happen; OK, assume the default is ISO-8859-1
+<span class="nc" id="L943">                reader = new BufferedReader (new InputStreamReader (in));</span>
+            }
+<span class="nc" id="L945">            buffer = new StringBuffer (1024);</span>
+<span class="nc" id="L946">            newlines = false;</span>
+<span class="nc bnc" id="L947" title="All 2 branches missed.">            if (DECODE_LINE_BY_LINE)</span>
+<span class="nc bnc" id="L948" title="All 2 branches missed.">                while (-1 != (character = reader.read ()))</span>
+                {
+<span class="nc bnc" id="L950" title="All 4 branches missed.">                    if (('\r' == character) || ('\n' == character))</span>
+                    {
+<span class="nc bnc" id="L952" title="All 2 branches missed.">                        if (!newlines)</span>
+                        {
+<span class="nc" id="L954">                            string = decode (buffer.toString ());</span>
+<span class="nc" id="L955">                            out.print (string);</span>
+<span class="nc" id="L956">                            buffer.setLength (0);</span>
+<span class="nc" id="L957">                            newlines = true;</span>
+                        }
+<span class="nc" id="L959">                        buffer.append ((char)character);</span>
+<span class="nc" id="L960">                    }</span>
+                    else
+                    {
+<span class="nc bnc" id="L963" title="All 2 branches missed.">                        if (newlines)</span>
+                        {
+<span class="nc" id="L965">                            out.print (buffer.toString ());</span>
+<span class="nc" id="L966">                            buffer.setLength (0);</span>
+<span class="nc" id="L967">                            newlines = false;</span>
+                        }
+<span class="nc" id="L969">                        buffer.append ((char)character);</span>
+                    }
+<span class="nc" id="L971">                }</span>
+            else
+<span class="nc bnc" id="L973" title="All 2 branches missed.">                while (-1 != (character = reader.read ()))</span>
+<span class="nc" id="L974">                    buffer.append ((char)character);</span>
+<span class="nc bnc" id="L975" title="All 2 branches missed.">            if (0 != buffer.length ())</span>
+            {
+<span class="nc bnc" id="L977" title="All 2 branches missed.">                if (newlines)</span>
+<span class="nc" id="L978">                    out.print (buffer.toString ());</span>
+                else
+                {
+<span class="nc" id="L981">                    string = decode (buffer.toString ());</span>
+<span class="nc" id="L982">                    out.print (string);</span>
+                }
+            }
+<span class="nc" id="L985">        }</span>
+<span class="nc" id="L986">        catch (IOException ioe)</span>
+        {
+<span class="nc" id="L988">            out.println ();</span>
+<span class="nc" id="L989">            out.println (ioe.getMessage ());</span>
+        }
+        finally
+<span class="nc" id="L992">        {</span>
+<span class="nc" id="L993">            out.flush ();</span>
+<span class="nc" id="L994">        }</span>
+<span class="nc" id="L995">    }</span>
+
+    /**
+     * Convert a character to a numeric character reference.
+     * Convert a unicode character to a numeric character reference of
+     * the form &amp;amp;#xxxx;.
+     * @param character The character to convert.
+     * @return The converted character.
+     */
+    public static String encode (int character)
+    {
+        StringBuffer ret;
+
+<span class="nc" id="L1008">        ret = new StringBuffer (13); /* &amp;#2147483647; */</span>
+<span class="nc" id="L1009">        ret.append (&quot;&amp;#&quot;);</span>
+<span class="nc bnc" id="L1010" title="All 2 branches missed.">        if (ENCODE_HEXADECIMAL)</span>
+        {
+<span class="nc" id="L1012">            ret.append (&quot;x&quot;);</span>
+<span class="nc" id="L1013">            ret.append (Integer.toHexString (character));</span>
+<span class="nc" id="L1014">        }</span>
+        else
+<span class="nc" id="L1016">            ret.append (character);</span>
+<span class="nc" id="L1017">        ret.append (';');</span>
+
+<span class="nc" id="L1019">        return (ret.toString ());</span>
+    }
+    
+    /**
+     * Encode a string to use references.
+     * Change all characters that are not ISO-8859-1 to their numeric character
+     * reference or character entity reference.
+     * @param string The string to translate.
+     * @return The encoded string.
+     */
+    public static String encode (String string)
+    {
+        int length;
+        char c;
+        CharacterReference candidate;
+        StringBuffer ret;
+
+<span class="nc" id="L1036">        ret = new StringBuffer (string.length () * 6);</span>
+<span class="nc" id="L1037">        length  = string.length ();</span>
+<span class="nc bnc" id="L1038" title="All 2 branches missed.">        for (int i = 0; i &lt; length; i++)</span>
+        {
+<span class="nc" id="L1040">            c = string.charAt (i);</span>
+<span class="nc" id="L1041">            candidate = lookup (c);</span>
+<span class="nc bnc" id="L1042" title="All 2 branches missed.">            if (null != candidate)</span>
+            {
+<span class="nc" id="L1044">                ret.append ('&amp;');</span>
+<span class="nc" id="L1045">                ret.append (candidate.getKernel ());</span>
+<span class="nc" id="L1046">                ret.append (';');</span>
+<span class="nc" id="L1047">            }</span>
+<span class="nc bnc" id="L1048" title="All 2 branches missed.">            else if (!(c &lt; 0x007F))</span>
+            {
+<span class="nc" id="L1050">                ret.append (&quot;&amp;#&quot;);</span>
+<span class="nc bnc" id="L1051" title="All 2 branches missed.">                if (ENCODE_HEXADECIMAL)</span>
+                {
+<span class="nc" id="L1053">                    ret.append (&quot;x&quot;);</span>
+<span class="nc" id="L1054">                    ret.append (Integer.toHexString (c));</span>
+<span class="nc" id="L1055">                }</span>
+                else
+<span class="nc" id="L1057">                    ret.append ((int)c);</span>
+<span class="nc" id="L1058">                ret.append (';');</span>
+<span class="nc" id="L1059">            }</span>
+            else
+<span class="nc" id="L1061">                ret.append (c);</span>
+        }
+
+<span class="nc" id="L1064">        return (ret.toString ());</span>
+    }
+
+    /**
+     * Encode a stream to use references.
+     * Change all characters that are not ISO-8859-1 to their numeric character
+     * reference or character entity reference.
+     * @param in The stream to translate. It is assumed that the input
+     * stream is encoded with ISO-8859-1 since the table of character
+     * entity references in this class applies only to ISO-8859-1.
+     * @param out The stream to write the decoded stream to.
+     */
+    public static void encode (InputStream in, PrintStream out)
+    {
+        Reader reader;
+        char c;
+        int index;
+        CharacterReference candidate;
+        PrintWriter output;
+
+        try
+        {
+<span class="nc" id="L1086">            reader = new BufferedReader (new InputStreamReader (in, &quot;ISO-8859-1&quot;));</span>
+<span class="nc" id="L1087">            output = new PrintWriter (new BufferedWriter (new OutputStreamWriter (out, &quot;ISO-8859-1&quot;)));</span>
+<span class="nc" id="L1088">        }</span>
+<span class="nc" id="L1089">        catch (UnsupportedEncodingException use)</span>
+        {
+            // yeah, like this will happen; OK, assume default is ISO-8859-1
+<span class="nc" id="L1092">            reader = new BufferedReader (new InputStreamReader (in));</span>
+<span class="nc" id="L1093">            output = new PrintWriter (new BufferedWriter (new OutputStreamWriter (out)));</span>
+        }
+        try
+        {
+<span class="nc bnc" id="L1097" title="All 2 branches missed.">            while (-1 != (index = reader.read ()))</span>
+            {
+<span class="nc" id="L1099">                c = (char)index;</span>
+<span class="nc" id="L1100">                candidate = lookup (c);</span>
+<span class="nc bnc" id="L1101" title="All 2 branches missed.">                if (null != candidate)</span>
+                {
+<span class="nc" id="L1103">                    output.print ('&amp;');</span>
+<span class="nc" id="L1104">                    output.print (candidate.getKernel ());</span>
+<span class="nc" id="L1105">                    output.print (';');</span>
+<span class="nc" id="L1106">                }</span>
+<span class="nc bnc" id="L1107" title="All 2 branches missed.">                else if (!(c &lt; 0x007F))</span>
+                {
+<span class="nc" id="L1109">                    output.print (&quot;&amp;#&quot;);</span>
+<span class="nc bnc" id="L1110" title="All 2 branches missed.">                    if (ENCODE_HEXADECIMAL)</span>
+                    {
+<span class="nc" id="L1112">                        output.print (&quot;x&quot;);</span>
+<span class="nc" id="L1113">                        output.print (Integer.toHexString (c));</span>
+<span class="nc" id="L1114">                    }</span>
+                    else
+<span class="nc" id="L1116">                        output.print ((int)c);</span>
+<span class="nc" id="L1117">                    output.print (';');</span>
+<span class="nc" id="L1118">                }</span>
+                else
+<span class="nc" id="L1120">                    output.print (c);</span>
+            }
+<span class="nc" id="L1122">        }</span>
+<span class="nc" id="L1123">        catch (IOException ioe)</span>
+        {
+<span class="nc" id="L1125">            output.println ();</span>
+<span class="nc" id="L1126">            output.println (ioe.getMessage ());</span>
+        }
+        finally
+<span class="nc" id="L1129">        {</span>
+<span class="nc" id="L1130">            output.flush ();</span>
+<span class="nc" id="L1131">        }</span>
+<span class="nc" id="L1132">    }</span>
+
+    /**
+     * Numeric character reference and character entity reference to unicode codec.
+     * Translate the &lt;code&gt;System.in&lt;/code&gt; input into an encoded or decoded
+     * stream and send the results to &lt;code&gt;System.out&lt;/code&gt;.
+     * @param args If arg[0] is &lt;code&gt;-encode&lt;/code&gt; perform an encoding on
+     * &lt;code&gt;System.in&lt;/code&gt;, otherwise perform a decoding.
+     */
+    public static void main (String[] args)
+    {
+        boolean encode;
+
+<span class="nc bnc" id="L1145" title="All 4 branches missed.">        if (0 &lt; args.length &amp;&amp; args[0].equalsIgnoreCase (&quot;-encode&quot;))</span>
+<span class="nc" id="L1146">            encode = true;</span>
+        else
+<span class="nc" id="L1148">            encode = false;</span>
+<span class="nc bnc" id="L1149" title="All 2 branches missed.">        if (encode)</span>
+<span class="nc" id="L1150">            encode (System.in, System.out);</span>
+        else
+<span class="nc" id="L1152">            decode (System.in, System.out);</span>
+<span class="nc" id="L1153">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

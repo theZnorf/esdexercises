@@ -1,0 +1,515 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>Filter.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">filterbuilder/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.parserapplications.filterbuilder</a> &gt; <span class="el_source">Filter.java</span></div><h1>Filter.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/filterbuilder/src/main/java/org/htmlparser/parserapplications/filterbuilder/Filter.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-17 21:02:25 -0400 (Sun, 17 Sep 2006) $
+// $Revision: 8 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.parserapplications.filterbuilder;
+
+import java.awt.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.Hashtable;
+import java.util.Vector;
+
+import javax.swing.*;
+import javax.swing.border.*;
+
+import org.htmlparser.NodeFilter;
+import org.htmlparser.Parser;
+import org.htmlparser.parserapplications.filterbuilder.layouts.VerticalLayoutManager;
+
+/**
+ * Base class for all filters.
+ * Provides common functionality applicable to all filters.
+ */
+public abstract class Filter
+    extends
+        JComponent
+    implements
+        NodeFilter
+{
+    /**
+     * Create a new filter from the class name.
+     * @param class_name The class to instatiate.
+     * @return The constructed filter object.
+     */
+    public static Filter instantiate (String class_name)
+    {
+        Filter ret;
+        
+<span class="nc" id="L63">        ret = null;</span>
+        try
+        {
+<span class="nc" id="L66">            Class cls = Class.forName (class_name);</span>
+<span class="nc" id="L67">            ret = (Filter)cls.newInstance ();</span>
+<span class="nc" id="L68">            mWrappers.put (ret.getNodeFilter ().getClass ().getName (), class_name);</span>
+<span class="nc" id="L69">        }</span>
+<span class="nc" id="L70">        catch (ClassNotFoundException cnfe)</span>
+        {
+<span class="nc" id="L72">            System.out.println (&quot;can't find class &quot; + class_name);</span>
+        }
+<span class="nc" id="L74">        catch (InstantiationException ie)</span>
+        {
+<span class="nc" id="L76">            System.out.println (&quot;can't instantiate class &quot; + class_name);</span>
+        }
+<span class="nc" id="L78">        catch (IllegalAccessException ie)</span>
+        {
+<span class="nc" id="L80">            System.out.println (&quot;class &quot; + class_name + &quot; has no public constructor&quot;);</span>
+        }
+<span class="nc" id="L82">        catch (ClassCastException cce)</span>
+        {
+<span class="nc" id="L84">            System.out.println (&quot;class &quot; + class_name + &quot; is not a Filter&quot;);</span>
+        }
+        
+<span class="nc" id="L87">        return (ret);</span>
+    }
+
+    /**
+     * Map from cilter class to wrapper.
+     * Populated as part of each wrapper being loaded.
+     */
+<span class="nc" id="L94">    protected static Hashtable mWrappers = new Hashtable ();</span>
+
+    /**
+     * Line separator string.
+     */
+<span class="nc" id="L99">    protected static String mNewLine = System.getProperty (&quot;line.separator&quot;);</span>
+
+    /**
+     * Create a filter.
+     * Set up the default display.
+     * Only a border with the label of the filter name,
+     * returned by &lt;code&gt;getDescription()&lt;/code&gt;,
+     * and an icon, returned by &lt;code&gt;getIcon()&lt;/code&gt;.
+     */
+<span class="nc" id="L108">    public Filter ()</span>
+    {
+        JLabel label;
+        Dimension dimension;
+        Insets insets;
+
+<span class="nc" id="L114">        setToolTipText (getDescription ());</span>
+        // none of these quite does it:
+        // new BoxLayout (this, BoxLayout.Y_AXIS));
+        // new GridLayout (0, 1));
+<span class="nc" id="L118">        setLayout (new VerticalLayoutManager ());</span>
+<span class="nc" id="L119">        setSelected (false);</span>
+<span class="nc" id="L120">        label = new JLabel (getDescription (), getIcon (), SwingConstants.LEFT);</span>
+<span class="nc" id="L121">        label.setBackground (Color.green);</span>
+<span class="nc" id="L122">        label.setAlignmentX (Component.LEFT_ALIGNMENT);</span>
+<span class="nc" id="L123">        label.setHorizontalAlignment (SwingConstants.LEFT);</span>
+<span class="nc" id="L124">        add (label);</span>
+<span class="nc" id="L125">        dimension = label.getMaximumSize ();</span>
+<span class="nc" id="L126">        insets = getInsets ();</span>
+<span class="nc" id="L127">        dimension.setSize (dimension.width + insets.left + insets.right, dimension.height + insets.top + insets.bottom);</span>
+<span class="nc" id="L128">        setSize (dimension);</span>
+<span class="nc" id="L129">    }</span>
+
+    /**
+     * Get the name of the filter.
+     * @return A descriptive name for the filter.
+     */
+    public abstract String getDescription ();
+
+    /**
+     * Get the underlying node filter object.
+     * @return The node filter object suitable for serialization.
+     */
+    public abstract NodeFilter getNodeFilter ();
+
+    /**
+     * Assign the underlying node filter for this wrapper.
+     * @param filter The filter to wrap.
+     * @param context The parser to use for conditioning this filter.
+     * Some filters need contextual information to provide to the user,
+     * i.e. for tag names or attribute names or values,
+     * so the Parser context is provided. 
+     */
+    public abstract void setNodeFilter (NodeFilter filter, Parser context);
+
+    /**
+     * Get the underlying node filter's subordinate filters.
+     * @return The node filter object's contained filters.
+     */
+    public abstract NodeFilter[] getSubNodeFilters ();
+
+    /**
+     * Assign the underlying node filter's subordinate filters.
+     * @param filters The filters to insert into the underlying node filter.
+     */
+    public abstract void setSubNodeFilters (NodeFilter[] filters);
+
+    /**
+     * Convert this filter into Java code.
+     * Output whatever text necessary and return the variable name.
+     * @param out The output buffer.
+     * @param context Three integers as follows:
+     * &lt;li&gt;indent level - the number of spaces to insert at the beginning of each line&lt;/li&gt;
+     * &lt;li&gt;filter number - the next available filter number&lt;/li&gt;
+     * &lt;li&gt;filter array number - the next available array of filters number&lt;/li&gt;
+     * @return The variable name to use when referencing this filter (usually &quot;filter&quot; + context[1]++) 
+     */
+    public abstract String toJavaCode (StringBuffer out, int[] context);
+
+    /**
+     * Get the icon for the filter.
+     * Loads the resource specified by 
+     * &lt;code&gt;getIconSpec()&lt;/code&gt; as an icon.
+     * @return The icon or null if it was not found.
+     */
+    public Icon getIcon ()
+    {
+        ImageIcon ret;
+        
+<span class="nc" id="L187">        ret = null;</span>
+        try
+        {
+<span class="nc" id="L190">            ret = new ImageIcon (getClass ().getResource (getIconSpec ()));</span>
+<span class="nc" id="L191">        }</span>
+<span class="nc" id="L192">        catch (NullPointerException npe)</span>
+        {
+<span class="nc" id="L194">            System.err.println (&quot;can't find icon &quot; + getIconSpec ());</span>
+        }
+        
+<span class="nc" id="L197">        return (ret);</span>
+    }
+    
+    /**
+     * Get the resource name for the icon.
+     * @return The icon resource specification.
+     */
+    public abstract String getIconSpec ();
+
+    //
+    // Component overrides
+    //
+
+    /**
+     * Returns a string representation of this component and its values.
+     * @return A string representation of this component.
+     */
+    public String toString ()
+    {
+<span class="nc" id="L216">        return (getDescription () + &quot; [&quot; + this.getClass ().getName () + &quot;]&quot;);</span>
+    }
+
+    //
+    // utilities
+    //
+
+    /**
+     * Serialize an object to a byte array.
+     * @param object The object to be pickled.
+     * @return The serialized object.
+     * @exception IOException If the output stream complains (unlikely).
+     */
+    public static byte[] pickle (Object object)
+        throws
+            IOException
+    {
+        ByteArrayOutputStream bos;
+        ObjectOutputStream oos;
+        byte[] ret;
+
+<span class="nc" id="L237">        bos = new ByteArrayOutputStream ();</span>
+<span class="nc" id="L238">        oos = new ObjectOutputStream (bos);</span>
+<span class="nc" id="L239">        oos.writeObject (object);</span>
+<span class="nc" id="L240">        oos.close ();</span>
+<span class="nc" id="L241">        ret = bos.toByteArray ();</span>
+
+<span class="nc" id="L243">        return (ret);</span>
+    }
+
+    /**
+     * Reconstitute a serialized object.
+     * @param data The pickled object.
+     * @return The reconstituted object.
+     * @exception IOException If the input stream complains. 
+     * @exception ClassNotFoundException If the serialized object class cannot
+     * be located.
+     */
+    public static Object unpickle (byte[] data)
+        throws
+            IOException,
+            ClassNotFoundException
+    {
+        ByteArrayInputStream bis;
+        ObjectInputStream ois;
+        Object ret;
+
+<span class="nc" id="L263">        bis = new ByteArrayInputStream (data);</span>
+<span class="nc" id="L264">        ois = new ObjectInputStream (bis);</span>
+<span class="nc" id="L265">        ret = ois.readObject ();</span>
+<span class="nc" id="L266">        ois.close ();</span>
+
+<span class="nc" id="L268">        return (ret);</span>
+    }
+
+    /**
+     * Serialize a byte array to a String.
+     * Convert each byte from the serialized object into a couple of hexadecimal
+     * characters.
+     * @param data The serialized object as a byte array.
+     * @return The string representing the serialized object.
+     */
+    public static String serialize (byte[] data)
+    {
+        String string;
+        StringBuffer ret;
+        
+<span class="nc" id="L283">        ret = new StringBuffer (data.length * 2);</span>
+
+<span class="nc bnc" id="L285" title="All 2 branches missed.">        for (int i = 0; i &lt; data.length; i++)</span>
+        {
+<span class="nc" id="L287">            string = Integer.toString (0xff &amp; data[i], 16);</span>
+<span class="nc bnc" id="L288" title="All 2 branches missed.">            if (string.length () &lt; 2)</span>
+<span class="nc" id="L289">                ret.append (&quot;0&quot;);</span>
+<span class="nc" id="L290">            ret.append (string);</span>
+        }
+        
+<span class="nc" id="L293">        return (ret.toString ());</span>
+    }
+
+    /**
+     * Convert a sequence of hexadecimal characters back into a byte array.
+     * @param string The string to convert (must be correct hex characters).
+     * @return The bytes as an array.
+     */
+    public static byte[] deserialize (String string)
+    {
+        byte[] ret;
+        
+<span class="nc" id="L305">        ret = new byte[string.length () / 2];</span>
+        
+<span class="nc bnc" id="L307" title="All 2 branches missed.">        for (int i = 0; i &lt; string.length (); i += 2)</span>
+<span class="nc" id="L308">            ret[i/2] = (byte)Integer.parseInt (string.substring (i, i + 2), 16); // todo: hopelessly inefficient</span>
+        
+<span class="nc" id="L310">        return (ret);</span>
+    }
+
+    /**
+     * Returns a string serialization of the filters.
+     * @param filters The list of filters to serialize.
+     * @return A string representation of the filters.
+     * @exception IOException If serialization fails.
+     */
+    public static String deconstitute (Filter[] filters) throws IOException
+    {
+        StringBuffer ret;
+
+<span class="nc" id="L323">        ret = new StringBuffer (1024);</span>
+<span class="nc bnc" id="L324" title="All 2 branches missed.">        for (int i = 0; i &lt; filters.length; i++)</span>
+        {
+<span class="nc" id="L326">            ret.append (&quot;[&quot;);</span>
+<span class="nc" id="L327">            ret.append (serialize (pickle (filters[i].getNodeFilter ())));</span>
+<span class="nc" id="L328">            ret.append (&quot;]&quot;);</span>
+        }
+
+<span class="nc" id="L331">        return (ret.toString ());</span>
+    }
+
+    /**
+     * Returns the filters represented by the string.
+     * @param string The string with serialized node filters.
+     * @param context The context from which to extract meaningful values
+     * for GUI choices (which aren't serialized).
+     * @return The filters gleaned from the string.
+     * @see #wrap
+     */
+    public static Filter[] reconstitute (String string, Parser context)
+    {
+        Filter[] ret;
+        Vector vector;
+        int index;
+        String code;
+        Object object;
+        Filter filter;
+        
+<span class="nc" id="L351">        vector = new Vector ();</span>
+        try
+        {
+<span class="nc bnc" id="L354" title="All 2 branches missed.">            while (string.startsWith (&quot;[&quot;))</span>
+            {
+<span class="nc" id="L356">                index = string.indexOf (']');</span>
+<span class="nc bnc" id="L357" title="All 2 branches missed.">                if (-1 != index)</span>
+                {
+<span class="nc" id="L359">                    code = string.substring (1, index);</span>
+<span class="nc" id="L360">                    string = string.substring (index + 1);</span>
+<span class="nc" id="L361">                    object = unpickle (deserialize (code));</span>
+<span class="nc bnc" id="L362" title="All 2 branches missed.">                    if (object instanceof NodeFilter)</span>
+                    {
+<span class="nc" id="L364">                        filter = wrap ((NodeFilter)object, context);</span>
+<span class="nc bnc" id="L365" title="All 2 branches missed.">                        if (null != filter)</span>
+<span class="nc" id="L366">                            vector.addElement (filter);</span>
+                    }
+                    else
+                        break;
+                }
+                else
+                    break;
+            }
+<span class="nc" id="L374">        }</span>
+<span class="nc" id="L375">        catch (Exception e)</span>
+        {
+<span class="nc" id="L377">            e.printStackTrace ();</span>
+        }
+
+<span class="nc" id="L380">        ret = new Filter[vector.size ()];</span>
+<span class="nc" id="L381">        vector.copyInto (ret);</span>
+
+<span class="nc" id="L383">        return (ret);</span>
+    }
+
+    /**
+     * Get the enclosed sub filter list if any.
+     * Todo: rationalize with FilterBuilder's method(s) of the same name.
+     * @param component The component that's supposedly enclosing the list.
+     * @return The enclosed component or &lt;code&gt;null&lt;/code&gt; otherwise.
+     */
+    protected static SubFilterList getEnclosed (Component component)
+    {
+        Component[] list;
+
+<span class="nc bnc" id="L396" title="All 2 branches missed.">        if (component instanceof Container)</span>
+        {
+<span class="nc" id="L398">            list = ((Container)component).getComponents  ();</span>
+<span class="nc bnc" id="L399" title="All 2 branches missed.">            for (int i = 0; i &lt; list.length; i++)</span>
+<span class="nc bnc" id="L400" title="All 2 branches missed.">                if (list[i] instanceof SubFilterList)</span>
+<span class="nc" id="L401">                    return ((SubFilterList)list[i]);</span>
+        }
+
+<span class="nc" id="L404">        return (null);</span>
+    }
+
+    /**
+     * Returns a wrapped filter.
+     * @param filter A filter to be wrapped by GUI components.
+     * @param context The context within which to wrap the object.
+     * Some wrappers need context to set up useful choices for the user.
+     * @return The filter to wrap.
+     */
+    public static Filter wrap (NodeFilter filter, Parser context)
+    {
+        String class_name;
+        NodeFilter[] filters;
+        SubFilterList list;
+        Filter ret;
+
+<span class="nc" id="L421">        ret = null;</span>
+        
+<span class="nc" id="L423">        class_name = filter.getClass ().getName ();</span>
+<span class="nc" id="L424">        class_name = (String)mWrappers.get (class_name);</span>
+<span class="nc bnc" id="L425" title="All 2 branches missed.">        if (null != class_name)</span>
+        {
+            try
+            {
+<span class="nc" id="L429">                ret = Filter.instantiate (class_name);</span>
+<span class="nc" id="L430">                ret.setNodeFilter (filter, context);</span>
+                // recurse into subfilters
+<span class="nc" id="L432">                filters = ret.getSubNodeFilters ();</span>
+<span class="nc bnc" id="L433" title="All 2 branches missed.">                if (0 != filters.length)</span>
+                {
+<span class="nc" id="L435">                    list = getEnclosed (ret);</span>
+<span class="nc bnc" id="L436" title="All 2 branches missed.">                    if (null != list)</span>
+                    {
+<span class="nc" id="L438">                        ret.setSubNodeFilters (new NodeFilter[0]); // clean out the unwrapped filters</span>
+<span class="nc bnc" id="L439" title="All 2 branches missed.">                        for (int i = 0; i &lt; filters.length; i++)</span>
+<span class="nc" id="L440">                            list.addFilter (wrap (filters[i], context));</span>
+<span class="nc" id="L441">                    }</span>
+                    else
+<span class="nc" id="L443">                        throw new IllegalStateException (&quot;filter can't have subnodes without a SubFilterList on the wrapper&quot;);</span>
+                }
+            }
+<span class="nc" id="L446">            catch (Exception e)</span>
+            {
+<span class="nc" id="L448">                e.printStackTrace ();</span>
+            }
+<span class="nc" id="L450">        }</span>
+        else
+<span class="nc" id="L452">            System.out.println (class_name + &quot; is not registered for wrapping.&quot;);</span>
+        
+<span class="nc" id="L454">        return (ret);</span>
+    }
+
+    /**
+     * Set the 'selected look' for the component.
+     * @param selected If &lt;code&gt;true&lt;/code&gt;, 'select' this component,
+     * otherwise 'deselect' it.
+     */
+    public void setSelected (boolean selected)
+    {
+<span class="nc bnc" id="L464" title="All 2 branches missed.">        if (selected)</span>
+<span class="nc" id="L465">            setBorder (</span>
+<span class="nc" id="L466">                new CompoundBorder (</span>
+<span class="nc" id="L467">                    new EtchedBorder (),</span>
+<span class="nc" id="L468">                    new CompoundBorder (</span>
+<span class="nc" id="L469">                        new LineBorder(Color.blue, 2),</span>
+<span class="nc" id="L470">                        new EmptyBorder (1, 1, 1, 1))));</span>
+        else
+<span class="nc" id="L472">            setBorder (</span>
+<span class="nc" id="L473">                new CompoundBorder (</span>
+<span class="nc" id="L474">                    new EtchedBorder (),</span>
+<span class="nc" id="L475">                    new EmptyBorder (3,3,3,3)));</span>
+<span class="nc" id="L476">    }</span>
+    
+    /**
+     * Set the expanded state for the component.
+     * This sets invisible all but the JLabel component in the
+     * comand component.
+     * @param expanded If &lt;code&gt;true&lt;/code&gt;, 'expand' this component,
+     * otherwise 'collapse' it.
+     */
+    public void setExpanded (boolean expanded)
+    {
+        Component[] components;
+        
+<span class="nc" id="L489">        components = getComponents ();</span>
+<span class="nc bnc" id="L490" title="All 2 branches missed.">        for (int i = 0; i &lt; components.length; i++)</span>
+<span class="nc bnc" id="L491" title="All 2 branches missed.">            if (!(components[i] instanceof JLabel))</span>
+<span class="nc" id="L492">                components[i].setVisible (expanded);</span>
+<span class="nc" id="L493">    }</span>
+    
+    /**
+     * Append count spaces to the buffer.
+     * @param out The buffer to append to.
+     * @param count The number of spaces to append.
+     */
+    public static void spaces (StringBuffer out, int count)
+    {
+<span class="nc bnc" id="L502" title="All 2 branches missed.">        for (int i = 0; i &lt; count; i++)</span>
+<span class="nc" id="L503">            out.append (' ');</span>
+<span class="nc" id="L504">    }</span>
+    
+    /**
+     * Append a newline to the buffer.
+     * @param out The buffer to append to.
+     */
+    public static void newline (StringBuffer out)
+    {
+<span class="nc" id="L512">        out.append (mNewLine);</span>
+<span class="nc" id="L513">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

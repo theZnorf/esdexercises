@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>SortTest.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tests.utilTests</a> &gt; <span class="el_source">SortTest.java</span></div><h1>SortTest.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/test/java/org/htmlparser/tests/utilTests/SortTest.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tests.utilTests;
+
+import java.io.File;
+import java.util.StringTokenizer;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.Vector;
+
+import org.htmlparser.tests.ParserTestCase;
+import org.htmlparser.util.sort.Ordered;
+import org.htmlparser.util.sort.Sort;
+import org.htmlparser.util.sort.Sortable;
+
+/**
+ * Sort testing.
+ */
+public class SortTest extends ParserTestCase
+{
+    static
+    {
+<span class="fc" id="L46">        System.setProperty (&quot;org.htmlparser.tests.utilTests.SortTest&quot;, &quot;SortTest&quot;);</span>
+<span class="fc" id="L47">    }</span>
+
+    /**
+     * Creates a new instance of SortTest
+     */
+    public SortTest (String name)
+    {
+<span class="fc" id="L54">        super (name);</span>
+<span class="fc" id="L55">    }</span>
+
+    /**
+     * A class implementing the Ordered interface.
+     */
+    class Item implements Ordered
+    {
+        String mData;
+
+<span class="fc" id="L64">        public Item (String data)</span>
+<span class="fc" id="L65">        {</span>
+<span class="fc" id="L66">            mData = data;</span>
+<span class="fc" id="L67">        }</span>
+
+        public int compare (Object o)
+        {
+<span class="fc" id="L71">            return (mData.compareTo (((Item)o).mData));</span>
+        }
+
+        public String toString ()
+        {
+<span class="fc" id="L76">            return (mData);</span>
+        }
+    }
+
+    /**
+     * A class implementing the Sortable interface.
+     */
+    class List extends Vector implements Sortable
+    {
+<span class="fc" id="L85">        List (String words)</span>
+<span class="fc" id="L86">        {</span>
+            StringTokenizer toks;
+
+<span class="fc" id="L89">            toks = new StringTokenizer (words);</span>
+            outer:
+<span class="fc bfc" id="L91" title="All 2 branches covered.">            while (toks.hasMoreTokens ())</span>
+<span class="fc" id="L92">               addElement (new Item (toks.nextToken ()));</span>
+<span class="fc" id="L93">            Sort.QuickSort ((Sortable)this);</span>
+<span class="fc" id="L94">        }</span>
+
+        //
+        // Sortable interface
+        //
+
+        public int first ()
+        {
+<span class="fc" id="L102">            return (0);</span>
+        }
+        public int last ()
+        {
+<span class="fc" id="L106">            return (size () - 1);</span>
+        }
+        public Ordered fetch (int index, Ordered reuse)
+        {
+<span class="fc" id="L110">            return ((Ordered)elementAt (index));</span>
+        }
+        public void swap (int i, int j)
+        {
+<span class="fc" id="L114">            Object o = elementAt (i);</span>
+<span class="fc" id="L115">            setElementAt (elementAt (j), i);</span>
+<span class="fc" id="L116">            setElementAt (o, j);</span>
+<span class="fc" id="L117">        }</span>
+    }
+
+    /**
+     * A subclass implementing the Ordered interface.
+     */
+    class SortableFile extends File implements Ordered
+    {
+        public SortableFile (String name)
+<span class="nc" id="L126">        {</span>
+<span class="nc" id="L127">            super (name);</span>
+<span class="nc" id="L128">        }</span>
+
+        public SortableFile (File dir, String name)
+<span class="fc" id="L131">        {</span>
+<span class="fc" id="L132">            super (dir, name);</span>
+<span class="fc" id="L133">        }</span>
+
+        public int compare (Object o)
+        {
+            long ret;
+
+<span class="fc" id="L139">            File f = (File)o;</span>
+
+<span class="fc" id="L141">            ret = lastModified () - f.lastModified ();</span>
+<span class="pc bpc" id="L142" title="1 of 2 branches missed.">            if (ret &lt; Integer.MIN_VALUE)</span>
+<span class="nc" id="L143">                ret = Integer.MIN_VALUE;</span>
+<span class="pc bpc" id="L144" title="1 of 2 branches missed.">            if (ret &gt; Integer.MAX_VALUE)</span>
+<span class="nc" id="L145">                ret = Integer.MAX_VALUE;</span>
+<span class="fc bfc" id="L146" title="All 2 branches covered.">            if (0 == ret)</span>
+<span class="fc" id="L147">                ret = getAbsolutePath ().hashCode ()</span>
+<span class="fc" id="L148">                    - f.getAbsolutePath ().hashCode ();</span>
+
+<span class="fc" id="L150">            return ((int)ret);</span>
+        }
+        
+        public String toString ()
+        {
+            StringBuffer ret;
+
+<span class="nc" id="L157">            ret = new StringBuffer (128);</span>
+<span class="nc" id="L158">            ret.append (this.getAbsolutePath ());</span>
+<span class="nc" id="L159">            ret.append ('@');</span>
+<span class="nc" id="L160">            ret.append (this.lastModified ());</span>
+
+<span class="nc" id="L162">            return (ret.toString ());</span>
+        }
+    }
+
+    /**
+     * Test the operation of the static quicksort algorithm.
+     */
+    public void testQuickSort ()
+    {
+<span class="fc" id="L171">        Item[] words =</span>
+<span class="fc" id="L172">        {</span>
+<span class="fc" id="L173">            new Item (&quot;gazelle&quot;),</span>
+<span class="fc" id="L174">            new Item (&quot;infant&quot;),</span>
+<span class="fc" id="L175">            new Item (&quot;toenail&quot;),</span>
+<span class="fc" id="L176">            new Item (&quot;breast&quot;),</span>
+<span class="fc" id="L177">            new Item (&quot;Derrick&quot;),</span>
+<span class="fc" id="L178">            new Item (&quot;toast&quot;),</span>
+<span class="fc" id="L179">            new Item (&quot;caretaker&quot;),</span>
+        };
+
+<span class="fc" id="L182">        Sort.QuickSort (words);</span>
+
+
+<span class="fc" id="L185">        assertEquals (&quot;element 0 wrong &quot;, &quot;Derrick&quot;, words[0].mData);</span>
+<span class="fc" id="L186">        assertEquals (&quot;element 1 wrong &quot;, &quot;breast&quot;, words[1].mData);</span>
+<span class="fc" id="L187">        assertEquals (&quot;element 2 wrong &quot;, &quot;caretaker&quot;, words[2].mData);</span>
+<span class="fc" id="L188">        assertEquals (&quot;element 3 wrong &quot;, &quot;gazelle&quot;, words[3].mData);</span>
+<span class="fc" id="L189">        assertEquals (&quot;element 4 wrong &quot;, &quot;infant&quot;, words[4].mData);</span>
+<span class="fc" id="L190">        assertEquals (&quot;element 5 wrong &quot;, &quot;toast&quot;, words[5].mData);</span>
+<span class="fc" id="L191">        assertEquals (&quot;element 6 wrong &quot;, &quot;toenail&quot;, words[6].mData);</span>
+
+<span class="fc" id="L193">    }</span>
+
+    /**
+     * Test the operation of quicksort on a sortable list.
+     */
+    public void testSortList ()
+    {
+<span class="fc" id="L200">        List list = new List (</span>
+<span class="fc" id="L201">            &quot;'Twas brillig and the slithy toves &quot; +</span>
+            &quot;Did gyre and gimble in the wabe &quot; +
+            &quot;All mimsy were the borogroves &quot; +
+            &quot;And the mome raths outgrabe.&quot;);
+<span class="fc" id="L205">        StringBuffer b = new StringBuffer ();</span>
+<span class="fc bfc" id="L206" title="All 2 branches covered.">        for (Enumeration e = list.elements (); e.hasMoreElements ();)</span>
+        {
+<span class="fc bfc" id="L208" title="All 2 branches covered.">            if (0 != b.length ())</span>
+<span class="fc" id="L209">                b.append (' ');</span>
+<span class="fc" id="L210">            b.append (e.nextElement ());</span>
+        }
+<span class="fc" id="L212">        assertEquals (&quot;wrong ordering&quot;,</span>
+<span class="fc" id="L213">              &quot;'Twas All And Did and and borogroves &quot;</span>
+            + &quot;brillig gimble gyre in mimsy mome outgrabe. &quot;
+            + &quot;raths slithy the the the the toves wabe were&quot;,
+<span class="fc" id="L216">            b.toString ());</span>
+
+<span class="fc" id="L218">    }</span>
+
+    /**
+     * Test the operation of quicksort on a vector of ordered items.
+     */
+    public void testSortVector ()
+    {
+        // sort a directory by date (oldest first)
+<span class="fc" id="L226">        Vector directory = new Vector ();</span>
+<span class="fc" id="L227">        File dir = new File (&quot;.&quot;);</span>
+<span class="fc" id="L228">        String[] listing = dir.list ();</span>
+<span class="fc bfc" id="L229" title="All 2 branches covered.">        for (int i = 0; i &lt; listing.length; i++)</span>
+        {
+<span class="fc" id="L231">            File f = new SortableFile (dir, listing[i]);</span>
+<span class="fc bfc" id="L232" title="All 2 branches covered.">            if (f.isFile ())</span>
+<span class="fc" id="L233">                directory.addElement (f);</span>
+        }
+
+<span class="fc" id="L236">        Sort.QuickSort (directory);</span>
+
+        // pull one out and test it's insertion ordinal
+<span class="fc" id="L239">        int index = directory.size () * 2 / 3;</span>
+<span class="fc" id="L240">        SortableFile test =</span>
+<span class="fc" id="L241">            (SortableFile)directory.elementAt (index);</span>
+<span class="fc" id="L242">        directory.removeElementAt (index);</span>
+<span class="fc" id="L243">        int ordinal = Sort.bsearch (directory, test);</span>
+<span class="pc bpc" id="L244" title="1 of 2 branches missed.">        if (index != ordinal)</span>
+        {
+<span class="nc bnc" id="L246" title="All 2 branches missed.">            for (int i = 0; i &lt; directory.size (); i++)</span>
+            {
+<span class="nc bnc" id="L248" title="All 2 branches missed.">                if (index == i)</span>
+<span class="nc" id="L249">                    System.out.print ('-');</span>
+<span class="nc bnc" id="L250" title="All 2 branches missed.">                else if (ordinal == i)</span>
+<span class="nc" id="L251">                    System.out.print ('+');</span>
+                else
+<span class="nc" id="L253">                    System.out.print (' ');</span>
+<span class="nc" id="L254">                System.out.println (directory.elementAt (i));</span>
+            }
+<span class="nc" id="L256">            fail (&quot;ordinal not correct value, expected &quot; + index + &quot;, was &quot; + ordinal);</span>
+        }
+
+        // test the ordering of the objects
+<span class="fc" id="L260">        directory.insertElementAt (test, ordinal);</span>
+<span class="fc" id="L261">        Date last = null;</span>
+<span class="fc bfc" id="L262" title="All 2 branches covered.">        for (int i = 0; i &lt; directory.size (); i++)</span>
+        {
+<span class="fc" id="L264">            File f = (File)directory.elementAt (i);</span>
+<span class="fc" id="L265">            String name = f.getName ();</span>
+<span class="fc" id="L266">            Date date = new Date (f.lastModified ());</span>
+<span class="fc bfc" id="L267" title="All 2 branches covered.">            if (null != last)</span>
+<span class="pc bpc" id="L268" title="1 of 2 branches missed.">                assertTrue (&quot;file &quot; + name + &quot; has a date before&quot;, !date.before (last));</span>
+<span class="fc" id="L269">            last = date;</span>
+        }
+<span class="fc" id="L271">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

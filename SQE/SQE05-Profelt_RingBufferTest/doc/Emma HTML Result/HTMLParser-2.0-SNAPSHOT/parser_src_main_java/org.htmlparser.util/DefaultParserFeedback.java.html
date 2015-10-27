@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>DefaultParserFeedback.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.util</a> &gt; <span class="el_source">DefaultParserFeedback.java</span></div><h1>DefaultParserFeedback.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Claude Duguay
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/main/java/org/htmlparser/util/DefaultParserFeedback.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.util;
+
+import java.io.Serializable;
+
+/**
+ * Default implementation of the HTMLParserFeedback interface.
+ * This implementation prints output to the console but users
+ * can implement their own classes to support alternate behavior.
+ *
+ * @see ParserFeedback
+ * @see FeedbackManager
+ */
+public class DefaultParserFeedback
+    implements
+        ParserFeedback,
+        Serializable
+{
+    /**
+     * Constructor argument for a quiet feedback.
+     */
+    public static final int QUIET = 0;
+
+    /**
+     * Constructor argument for a normal feedback.
+     */
+    public static final int NORMAL = 1;
+
+    /**
+     * Constructor argument for a debugging feedback.
+     */
+    public static final int DEBUG = 2;
+
+    /**
+     * Verbosity level.
+     * Corresponds to constructor arguments:
+     * &lt;pre&gt;
+     *   DEBUG = 2;
+     *   NORMAL = 1;
+     *   QUIET = 0;
+     * &lt;/pre&gt;
+     */
+    protected int mMode;
+
+    /**
+     * Construct a feedback object of the given type.
+     * @param mode The type of feedback:
+     * &lt;pre&gt;
+     *   DEBUG - verbose debugging with stack traces
+     *   NORMAL - normal messages
+     *   QUIET - no messages
+     * &lt;/pre&gt;
+     * @exception IllegalArgumentException if mode is not
+     * QUIET, NORMAL or DEBUG.
+     */
+<span class="fc" id="L80">    public DefaultParserFeedback (int mode)</span>
+    {
+<span class="pc bpc" id="L82" title="2 of 4 branches missed.">        if (mode&lt;QUIET||mode&gt;DEBUG)</span>
+<span class="nc" id="L83">            throw new IllegalArgumentException (</span>
+<span class="nc" id="L84">                &quot;illegal mode (&quot;</span>
+<span class="nc" id="L85">                + mode</span>
+<span class="nc" id="L86">                + &quot;), must be one of: QUIET, NORMAL, DEBUG&quot;);</span>
+<span class="fc" id="L87">        mMode = mode;</span>
+<span class="fc" id="L88">    }</span>
+
+    /**
+     * Construct a NORMAL feedback object.
+     */
+    public DefaultParserFeedback ()
+    {
+<span class="fc" id="L95">        this (NORMAL);</span>
+<span class="fc" id="L96">    }</span>
+
+    /**
+     * Print an info message.
+     * @param message The message to print.
+     */
+    public void info (String message)
+    {
+<span class="nc bnc" id="L104" title="All 2 branches missed.">        if (QUIET != mMode)</span>
+<span class="nc" id="L105">            System.out.println (&quot;INFO: &quot; + message);</span>
+<span class="nc" id="L106">    }</span>
+
+    /**
+     * Print an warning message.
+     * @param message The message to print.
+     */
+    public void warning (String message)
+    {
+<span class="nc bnc" id="L114" title="All 2 branches missed.">        if (QUIET != mMode)</span>
+<span class="nc" id="L115">            System.out.println (&quot;WARNING: &quot; + message);</span>
+<span class="nc" id="L116">    }</span>
+
+    /**
+     * Print an error message.
+     * @param message The message to print.
+     * @param exception The exception for stack tracing.
+     */
+    public void error (String message, ParserException exception)
+    {
+<span class="nc bnc" id="L125" title="All 2 branches missed.">        if (QUIET != mMode)</span>
+        {
+<span class="nc" id="L127">            System.out.println (&quot;ERROR: &quot; + message);</span>
+<span class="nc bnc" id="L128" title="All 4 branches missed.">            if (DEBUG == mMode &amp;&amp; (null != exception))</span>
+<span class="nc" id="L129">                exception.printStackTrace ();</span>
+        }
+<span class="nc" id="L131">    }</span>
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

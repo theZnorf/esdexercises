@@ -1,0 +1,699 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>InputStreamSource.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">lexer/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.lexer</a> &gt; <span class="el_source">InputStreamSource.java</span></div><h1>InputStreamSource.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/lexer/src/main/java/org/htmlparser/lexer/InputStreamSource.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.lexer;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.UnsupportedEncodingException;
+
+import org.htmlparser.util.EncodingChangeException;
+import org.htmlparser.util.ParserException;
+
+/**
+ * A source of characters based on an InputStream such as from a URLConnection.
+ */
+public class InputStreamSource
+    extends
+        Source
+{
+    /**
+     * An initial buffer size.
+     * Has a default value of {16384}.
+     */
+<span class="fc" id="L50">    public static int BUFFER_SIZE = 16384;</span>
+
+    /**
+     * The stream of bytes.
+     * Set to &lt;code&gt;null&lt;/code&gt; when the source is closed.
+     */
+    protected transient InputStream mStream;
+
+    /**
+     * The character set in use.
+     */
+    protected String mEncoding;
+
+    /**
+     * The converter from bytes to characters.
+     */
+    protected transient InputStreamReader mReader;
+
+    /**
+     * The characters read so far.
+     */
+    protected char[] mBuffer;
+
+    /**
+     * The number of valid bytes in the buffer.
+     */
+    protected int mLevel;
+
+    /**
+     * The offset of the next byte returned by read().
+     */
+    protected int mOffset;
+
+    /**
+     * The bookmark.
+     */
+    protected int mMark;
+
+    /**
+     * Create a source of characters using the default character set.
+     * @param stream The stream of bytes to use.
+     * @exception UnsupportedEncodingException If the default character set
+     * is unsupported.
+     */
+    public InputStreamSource (InputStream stream)
+        throws
+            UnsupportedEncodingException
+    {
+<span class="fc" id="L98">        this (stream, null, BUFFER_SIZE);</span>
+<span class="fc" id="L99">    }</span>
+
+    /**
+     * Create a source of characters.
+     * @param stream The stream of bytes to use.
+     * @param charset The character set used in encoding the stream.
+     * @exception UnsupportedEncodingException If the character set
+     * is unsupported.
+     */
+    public InputStreamSource (InputStream stream, String charset)
+        throws
+            UnsupportedEncodingException
+    {
+<span class="fc" id="L112">        this (stream, charset, BUFFER_SIZE);</span>
+<span class="fc" id="L113">    }</span>
+
+    /**
+     * Create a source of characters.
+     * @param stream The stream of bytes to use.
+     * @param charset The character set used in encoding the stream.
+     * @param size The initial character buffer size.
+     * @exception UnsupportedEncodingException If the character set
+     * is unsupported.
+     */
+<span class="fc" id="L123">    public InputStreamSource (InputStream stream, String charset, int size)</span>
+        throws
+            UnsupportedEncodingException
+    {
+<span class="fc bfc" id="L127" title="All 2 branches covered.">        if (null == stream)</span>
+<span class="fc" id="L128">            stream = new Stream (null);</span>
+        else
+            // bug #1044707 mark()/reset() issues
+<span class="pc bpc" id="L131" title="1 of 2 branches missed.">            if (!stream.markSupported ())</span>
+                // wrap the stream so we can reset
+<span class="nc" id="L133">                stream = new Stream (stream);</span>
+            // else
+                // just because mark is supported doesn't guarantee
+                // proper reset operation; there is no call to mark
+                // in this code, so if reset misbehaves there is an
+                // appropriate message in setEncoding() to suggest
+                // wraping it in a Stream.
+                // This was deemed better than an attempt to call
+                // reset at this point just to check if we would
+                // succeed later, or to call mark with an arbitrary
+                // lookahead size
+<span class="fc" id="L144">        mStream = stream;</span>
+<span class="fc bfc" id="L145" title="All 2 branches covered.">        if (null == charset)</span>
+        {
+<span class="fc" id="L147">            mReader = new InputStreamReader (stream);</span>
+<span class="fc" id="L148">            mEncoding = mReader.getEncoding ();</span>
+<span class="fc" id="L149">        }</span>
+        else
+        {
+<span class="fc" id="L152">            mEncoding = charset;</span>
+<span class="fc" id="L153">            mReader = new InputStreamReader (stream, charset);</span>
+        }
+<span class="fc" id="L155">        mBuffer = new char[size];</span>
+<span class="fc" id="L156">        mLevel = 0;</span>
+<span class="fc" id="L157">        mOffset = 0;</span>
+<span class="fc" id="L158">        mMark = -1;</span>
+<span class="fc" id="L159">    }</span>
+
+    //
+    // Serialization support
+    //
+
+    /**
+     * Serialization support.
+     * @param out Where to write this object.
+     * @exception IOException If serialization has a problem.
+     */
+    private void writeObject (ObjectOutputStream out)
+        throws
+            IOException
+    {
+        int offset;
+        char[] buffer;
+
+<span class="nc bnc" id="L177" title="All 2 branches missed.">        if (null != mStream)</span>
+        {
+            // remember the offset, drain the input stream, restore the offset
+<span class="nc" id="L180">            offset = mOffset;</span>
+<span class="nc" id="L181">            buffer = new char[4096];</span>
+<span class="nc bnc" id="L182" title="All 2 branches missed.">            while (EOF != read (buffer))</span>
+                ;
+<span class="nc" id="L184">            mOffset = offset;</span>
+        }
+
+<span class="nc" id="L187">        out.defaultWriteObject ();</span>
+<span class="nc" id="L188">    }</span>
+
+    /**
+     * Deserialization support.
+     * @param in Where to read this object from.
+     * @exception IOException If deserialization has a problem.
+     */
+    private void readObject (ObjectInputStream in)
+        throws
+            IOException,
+            ClassNotFoundException
+    {
+<span class="nc" id="L200">        in.defaultReadObject ();</span>
+<span class="nc bnc" id="L201" title="All 2 branches missed.">        if (null != mBuffer) // buffer is null when destroy's been called</span>
+            // pretend we're open, mStream goes null when exhausted
+<span class="nc" id="L203">            mStream = new ByteArrayInputStream (new byte[0]);</span>
+<span class="nc" id="L204">    }</span>
+
+    /**
+     * Get the input stream being used.
+     * @return The current input stream.
+     */
+    public InputStream getStream ()
+    {
+<span class="nc" id="L212">        return (mStream);</span>
+    }
+
+    /**
+     * Get the encoding being used to convert characters.
+     * @return The current encoding.
+     */
+    public String getEncoding ()
+    {
+<span class="nc" id="L221">        return (mEncoding);</span>
+    }
+
+    /**
+     * Begins reading from the source with the given character set.
+     * If the current encoding is the same as the requested encoding,
+     * this method is a no-op. Otherwise any subsequent characters read from
+     * this page will have been decoded using the given character set.&lt;p&gt;
+     * Some magic happens here to obtain this result if characters have already
+     * been consumed from this source.
+     * Since a Reader cannot be dynamically altered to use a different character
+     * set, the underlying stream is reset, a new Source is constructed
+     * and a comparison made of the characters read so far with the newly
+     * read characters up to the current position.
+     * If a difference is encountered, or some other problem occurs,
+     * an exception is thrown.
+     * @param character_set The character set to use to convert bytes into
+     * characters.
+     * @exception ParserException If a character mismatch occurs between
+     * characters already provided and those that would have been returned
+     * had the new character set been in effect from the beginning. An
+     * exception is also thrown if the underlying stream won't put up with
+     * these shenanigans.
+     */
+    public void setEncoding (String character_set)
+        throws
+            ParserException
+    {
+        String encoding;
+        InputStream stream;
+        char[] buffer;
+        int offset;
+        char[] new_chars;
+
+<span class="nc" id="L255">        encoding = getEncoding ();</span>
+<span class="nc bnc" id="L256" title="All 2 branches missed.">        if (!encoding.equalsIgnoreCase (character_set))</span>
+        {
+<span class="nc" id="L258">            stream = getStream ();</span>
+            try
+            {
+<span class="nc" id="L261">                buffer = mBuffer;</span>
+<span class="nc" id="L262">                offset = mOffset;</span>
+<span class="nc" id="L263">                stream.reset ();</span>
+                try
+                {
+<span class="nc" id="L266">                    mEncoding = character_set;</span>
+<span class="nc" id="L267">                    mReader = new InputStreamReader (stream, character_set);</span>
+<span class="nc" id="L268">                    mBuffer = new char[mBuffer.length];</span>
+<span class="nc" id="L269">                    mLevel = 0;</span>
+<span class="nc" id="L270">                    mOffset = 0;</span>
+<span class="nc" id="L271">                    mMark = -1;</span>
+<span class="nc bnc" id="L272" title="All 2 branches missed.">                    if (0 != offset)</span>
+                    {
+<span class="nc" id="L274">                        new_chars = new char[offset];</span>
+<span class="nc bnc" id="L275" title="All 2 branches missed.">                        if (offset != read (new_chars))</span>
+<span class="nc" id="L276">                            throw new ParserException (&quot;reset stream failed&quot;);</span>
+<span class="nc bnc" id="L277" title="All 2 branches missed.">                        for (int i = 0; i &lt; offset; i++)</span>
+<span class="nc bnc" id="L278" title="All 2 branches missed.">                            if (new_chars[i] != buffer[i])</span>
+<span class="nc" id="L279">                                throw new EncodingChangeException (&quot;character mismatch (new: &quot;</span>
+<span class="nc" id="L280">                                + new_chars[i]</span>
+<span class="nc" id="L281">                                + &quot; [0x&quot;</span>
+<span class="nc" id="L282">                                + Integer.toString (new_chars[i], 16)</span>
+<span class="nc" id="L283">                                + &quot;] != old: &quot;</span>
+<span class="nc" id="L284">                                + &quot; [0x&quot;</span>
+<span class="nc" id="L285">                                + Integer.toString (buffer[i], 16)</span>
+<span class="nc" id="L286">                                + buffer[i]</span>
+<span class="nc" id="L287">                                + &quot;]) for encoding change from &quot;</span>
+<span class="nc" id="L288">                                + encoding</span>
+<span class="nc" id="L289">                                + &quot; to &quot;</span>
+<span class="nc" id="L290">                                + character_set</span>
+<span class="nc" id="L291">                                + &quot; at character offset &quot;</span>
+<span class="nc" id="L292">                                + i);</span>
+                    }
+<span class="nc" id="L294">                }</span>
+<span class="nc" id="L295">                catch (IOException ioe)</span>
+                {
+<span class="nc" id="L297">                    throw new ParserException (ioe.getMessage (), ioe);</span>
+                }
+            }
+<span class="nc" id="L300">            catch (IOException ioe)</span>
+            {   // bug #1044707 mark()/reset() issues
+<span class="nc" id="L302">                throw new ParserException (&quot;Stream reset failed (&quot;</span>
+<span class="nc" id="L303">                    + ioe.getMessage ()</span>
+<span class="nc" id="L304">                    + &quot;), try wrapping it with a org.htmlparser.lexer.Stream&quot;,</span>
+<span class="nc" id="L305">                    ioe);</span>
+            }
+        }
+<span class="nc" id="L308">    }</span>
+
+    /**
+     * Fetch more characters from the underlying reader.
+     * Has no effect if the underlying reader has been drained.
+     * @param min The minimum to read.
+     * @exception IOException If the underlying reader read() throws one.
+     */
+    protected void fill (int min)
+        throws
+            IOException
+    {
+        char[] buffer;
+        int size;
+        int read;
+
+<span class="fc bfc" id="L324" title="All 2 branches covered.">        if (null != mReader) // mReader goes null when it's been sucked dry</span>
+        {
+<span class="fc" id="L326">            size = mBuffer.length - mLevel; // available space</span>
+<span class="pc bpc" id="L327" title="1 of 2 branches missed.">            if (size &lt; min) // oops, better get some buffer space</span>
+            {
+                // unknown length... keep doubling
+<span class="nc" id="L330">                size = mBuffer.length * 2;</span>
+<span class="nc" id="L331">                read = mLevel + min;</span>
+<span class="nc bnc" id="L332" title="All 2 branches missed.">                if (size &lt; read) // or satisfy min, whichever is greater</span>
+<span class="nc" id="L333">                    size = read;</span>
+                else
+<span class="nc" id="L335">                    min = size - mLevel; // read the max</span>
+<span class="nc" id="L336">                buffer = new char[size];</span>
+<span class="nc" id="L337">            }</span>
+            else
+            {
+<span class="fc" id="L340">                buffer = mBuffer;</span>
+<span class="fc" id="L341">                min = size;</span>
+            }
+
+            // read into the end of the 'new' buffer
+<span class="fc" id="L345">            read = mReader.read (buffer, mLevel, min);</span>
+<span class="fc bfc" id="L346" title="All 2 branches covered.">            if (EOF == read)</span>
+            {
+<span class="fc" id="L348">                mReader.close ();</span>
+<span class="fc" id="L349">                mReader = null;</span>
+<span class="fc" id="L350">            }</span>
+            else
+            {
+<span class="pc bpc" id="L353" title="1 of 2 branches missed.">                if (mBuffer != buffer)</span>
+                {   // copy the bytes previously read
+<span class="nc" id="L355">                    System.arraycopy (mBuffer, 0, buffer, 0, mLevel);</span>
+<span class="nc" id="L356">                    mBuffer = buffer;</span>
+                }
+<span class="fc" id="L358">                mLevel += read;</span>
+            }
+            // todo, should repeat on read shorter than original min
+        }
+<span class="fc" id="L362">    }</span>
+
+    //
+    // Reader overrides
+    //
+
+    /**
+     * Does nothing.
+     * It's supposed to close the source, but use destroy() instead.
+     * @exception IOException &lt;em&gt;not used&lt;/em&gt;
+     * @see #destroy
+     */
+    public void close () throws IOException
+    {
+<span class="fc" id="L376">    }</span>
+
+    /**
+     * Read a single character.
+     * This method will block until a character is available,
+     * an I/O error occurs, or the end of the stream is reached.
+     * @return The character read, as an integer in the range 0 to 65535
+     * (&lt;tt&gt;0x00-0xffff&lt;/tt&gt;), or {@link #EOF EOF} if the end of the stream has
+     * been reached
+     * @exception IOException If an I/O error occurs.
+     */
+    public int read () throws IOException
+    {
+        int ret;
+
+<span class="fc bfc" id="L391" title="All 2 branches covered.">        if (mLevel - mOffset &lt; 1)</span>
+        {
+<span class="fc bfc" id="L393" title="All 2 branches covered.">            if (null == mStream)</span>
+<span class="fc" id="L394">                throw new IOException (&quot;source is closed&quot;);</span>
+<span class="fc" id="L395">            fill (1);</span>
+<span class="fc bfc" id="L396" title="All 2 branches covered.">            if (mOffset &gt;= mLevel)</span>
+<span class="fc" id="L397">                ret = EOF;</span>
+            else
+<span class="fc" id="L399">                ret = mBuffer[mOffset++];</span>
+<span class="fc" id="L400">        }</span>
+        else
+<span class="fc" id="L402">            ret = mBuffer[mOffset++];</span>
+
+<span class="fc" id="L404">        return (ret);</span>
+    }
+
+    /**
+     * Read characters into a portion of an array.  This method will block
+     * until some input is available, an I/O error occurs, or the end of the
+     * stream is reached.
+     * @param cbuf Destination buffer
+     * @param off Offset at which to start storing characters
+     * @param len Maximum number of characters to read
+     * @return The number of characters read, or {@link #EOF EOF} if the end of
+     * the stream has been reached
+     * @exception IOException If an I/O error occurs.
+     */
+    public int read (char[] cbuf, int off, int len) throws IOException
+    {
+        int ret;
+
+<span class="pc bpc" id="L422" title="1 of 2 branches missed.">        if (null == mStream)</span>
+<span class="nc" id="L423">            throw new IOException (&quot;source is closed&quot;);</span>
+<span class="pc bpc" id="L424" title="3 of 6 branches missed.">        if ((null == cbuf) || (0 &gt; off) || (0 &gt; len))</span>
+<span class="nc" id="L425">            throw new IOException (&quot;illegal argument read (&quot;</span>
+<span class="nc bnc" id="L426" title="All 2 branches missed.">                + ((null == cbuf) ? &quot;null&quot; : &quot;cbuf&quot;)</span>
+<span class="nc" id="L427">                + &quot;, &quot; + off + &quot;, &quot; + len + &quot;)&quot;);</span>
+<span class="fc bfc" id="L428" title="All 2 branches covered.">        if (mLevel - mOffset &lt; len)</span>
+<span class="fc" id="L429">            fill (len - (mLevel - mOffset)); // minimum to satisfy this request</span>
+<span class="pc bpc" id="L430" title="1 of 2 branches missed.">        if (mOffset &gt;= mLevel)</span>
+<span class="nc" id="L431">            ret = EOF;</span>
+        else
+        {
+<span class="fc" id="L434">            ret = Math.min (mLevel - mOffset, len);</span>
+<span class="fc" id="L435">            System.arraycopy (mBuffer, mOffset, cbuf, off, ret);</span>
+<span class="fc" id="L436">            mOffset += ret;</span>
+        }
+
+<span class="fc" id="L439">        return (ret);</span>
+    }
+
+    /**
+     * Read characters into an array.
+     * This method will block until some input is available, an I/O error occurs,
+     * or the end of the stream is reached.
+     * @param cbuf Destination buffer.
+     * @return The number of characters read, or {@link #EOF EOF} if the end of
+     * the stream has been reached.
+     * @exception IOException If an I/O error occurs.
+     */
+    public int read (char[] cbuf) throws IOException
+    {
+<span class="nc" id="L453">        return (read (cbuf, 0, cbuf.length));</span>
+    }
+
+    /**
+     * Reset the source.
+     * Repositions the read point to begin at zero.
+     * @exception IllegalStateException If the source has been closed.
+     */
+    public void reset ()
+        throws
+            IllegalStateException
+    {
+<span class="pc bpc" id="L465" title="1 of 2 branches missed.">        if (null == mStream)</span>
+<span class="nc" id="L466">            throw new IllegalStateException (&quot;source is closed&quot;);</span>
+<span class="fc bfc" id="L467" title="All 2 branches covered.">        if (-1 != mMark)</span>
+<span class="fc" id="L468">            mOffset = mMark;</span>
+        else
+<span class="fc" id="L470">            mOffset = 0;</span>
+<span class="fc" id="L471">    }</span>
+
+    /**
+     * Tell whether this source supports the mark() operation.
+     * @return &lt;code&gt;true&lt;/code&gt;.
+     */
+    public boolean markSupported ()
+    {
+<span class="fc" id="L479">        return (true);</span>
+    }
+
+    /**
+     * Mark the present position in the source.
+     * Subsequent calls to {@link #reset()}
+     * will attempt to reposition the source to this point.
+     * @param  readAheadLimit &lt;em&gt;Not used.&lt;/em&gt;
+     * @exception IOException If the source is closed.
+     *
+     */
+    public void mark (int readAheadLimit) throws IOException
+    {
+<span class="pc bpc" id="L492" title="1 of 2 branches missed.">        if (null == mStream)</span>
+<span class="nc" id="L493">            throw new IOException (&quot;source is closed&quot;);</span>
+<span class="fc" id="L494">        mMark = mOffset;</span>
+<span class="fc" id="L495">    }</span>
+
+    /**
+     * Tell whether this source is ready to be read.
+     * @return &lt;code&gt;true&lt;/code&gt; if the next read() is guaranteed not to block
+     * for input, &lt;code&gt;false&lt;/code&gt; otherwise.
+     * Note that returning false does not guarantee that the next read will block.
+     * @exception IOException If the source is closed.
+     */
+    public boolean ready () throws IOException
+    {
+<span class="pc bpc" id="L506" title="1 of 2 branches missed.">        if (null == mStream)</span>
+<span class="nc" id="L507">            throw new IOException (&quot;source is closed&quot;);</span>
+<span class="fc bfc" id="L508" title="All 2 branches covered.">        return (mOffset &lt; mLevel);</span>
+    }
+
+    /**
+     * Skip characters.
+     * This method will block until some characters are available,
+     * an I/O error occurs, or the end of the stream is reached.
+     * &lt;em&gt;Note: n is treated as an int&lt;/em&gt;
+     * @param n The number of characters to skip.
+     * @return The number of characters actually skipped
+     * @exception IllegalArgumentException If &lt;code&gt;n&lt;/code&gt; is negative.
+     * @exception IOException If an I/O error occurs.
+     */
+    public long skip (long n)
+        throws
+            IOException,
+            IllegalArgumentException
+    {
+        long ret;
+
+<span class="pc bpc" id="L528" title="1 of 2 branches missed.">        if (null == mStream)</span>
+<span class="nc" id="L529">            throw new IOException (&quot;source is closed&quot;);</span>
+<span class="pc bpc" id="L530" title="1 of 2 branches missed.">        if (0 &gt; n)</span>
+<span class="nc" id="L531">            throw new IllegalArgumentException (&quot;cannot skip backwards&quot;);</span>
+        else
+        {
+<span class="pc bpc" id="L534" title="1 of 2 branches missed.">            if (mLevel - mOffset &lt; n)</span>
+<span class="nc" id="L535">                fill ((int)(n - (mLevel - mOffset))); // minimum to satisfy this request</span>
+<span class="pc bpc" id="L536" title="1 of 2 branches missed.">            if (mOffset &gt;= mLevel)</span>
+<span class="nc" id="L537">                ret = EOF;</span>
+            else
+            {
+<span class="fc" id="L540">                ret = Math.min (mLevel - mOffset, n);</span>
+<span class="fc" id="L541">                mOffset += ret;</span>
+            }
+        }
+
+<span class="fc" id="L545">        return (ret);</span>
+    }
+
+    //
+    // Methods not in your Daddy's Reader
+    //
+
+    /**
+     * Undo the read of a single character.
+     * @exception IOException If the source is closed or no characters have
+     * been read.
+     */
+    public void unread () throws IOException
+    {
+<span class="nc bnc" id="L559" title="All 2 branches missed.">        if (null == mStream)</span>
+<span class="nc" id="L560">            throw new IOException (&quot;source is closed&quot;);</span>
+<span class="nc bnc" id="L561" title="All 2 branches missed.">        if (0 &lt; mOffset)</span>
+<span class="nc" id="L562">            mOffset--;</span>
+        else
+<span class="nc" id="L564">            throw new IOException (&quot;can't unread no characters&quot;);</span>
+<span class="nc" id="L565">    }</span>
+
+    /**
+     * Retrieve a character again.
+     * @param offset The offset of the character.
+     * @return The character at &lt;code&gt;offset&lt;/code&gt;.
+     * @exception IOException If the offset is beyond {@link #offset()} or the
+     * source is closed.
+     */
+    public char getCharacter (int offset) throws IOException
+    {
+        char ret;
+
+<span class="pc bpc" id="L578" title="1 of 2 branches missed.">        if (null == mStream)</span>
+<span class="nc" id="L579">            throw new IOException (&quot;source is closed&quot;);</span>
+<span class="pc bpc" id="L580" title="1 of 2 branches missed.">        if (offset &gt;= mBuffer.length)</span>
+<span class="nc" id="L581">            throw new IOException (&quot;illegal read ahead&quot;);</span>
+        else
+<span class="fc" id="L583">            ret = mBuffer[offset];</span>
+        
+<span class="fc" id="L585">        return (ret);</span>
+    }
+
+    /**
+     * Retrieve characters again.
+     * @param array The array of characters.
+     * @param offset The starting position in the array where characters are to be placed.
+     * @param start The starting position, zero based.
+     * @param end The ending position
+     * (exclusive, i.e. the character at the ending position is not included),
+     * zero based.
+     * @exception IOException If the start or end is beyond {@link #offset()}
+     * or the source is closed.
+     */
+    public void getCharacters (char[] array, int offset, int start, int end) throws IOException
+    {
+<span class="nc bnc" id="L601" title="All 2 branches missed.">        if (null == mStream)</span>
+<span class="nc" id="L602">            throw new IOException (&quot;source is closed&quot;);</span>
+<span class="nc" id="L603">        System.arraycopy (mBuffer, start, array, offset, end - start);</span>
+<span class="nc" id="L604">    }</span>
+    
+    /**
+     * Retrieve a string.
+     * @param offset The offset of the first character.
+     * @param length The number of characters to retrieve.
+     * @return A string containing the &lt;code&gt;length&lt;/code&gt; characters at &lt;code&gt;offset&lt;/code&gt;.
+     * @exception IOException If the offset or (offset + length) is beyond
+     * {@link #offset()} or the source is closed.
+     */
+    public String getString (int offset, int length) throws IOException
+    {
+        String ret;
+
+<span class="pc bpc" id="L618" title="1 of 2 branches missed.">        if (null == mStream)</span>
+<span class="nc" id="L619">            throw new IOException (&quot;source is closed&quot;);</span>
+<span class="pc bpc" id="L620" title="1 of 2 branches missed.">        if (offset + length &gt; mBuffer.length)</span>
+<span class="nc" id="L621">            throw new IOException (&quot;illegal read ahead&quot;);</span>
+        else
+<span class="fc" id="L623">            ret = new String (mBuffer, offset, length);</span>
+        
+<span class="fc" id="L625">        return (ret);</span>
+    }
+
+    /**
+     * Append characters already read into a &lt;code&gt;StringBuffer&lt;/code&gt;.
+     * @param buffer The buffer to append to.
+     * @param offset The offset of the first character.
+     * @param length The number of characters to retrieve.
+     * @exception IOException If the offset or (offset + length) is beyond
+     * {@link #offset()} or the source is closed.
+     */
+    public void getCharacters (StringBuffer buffer, int offset, int length) throws IOException
+    {
+<span class="nc bnc" id="L638" title="All 2 branches missed.">        if (null == mStream)</span>
+<span class="nc" id="L639">            throw new IOException (&quot;source is closed&quot;);</span>
+<span class="nc" id="L640">        buffer.append (mBuffer, offset, length);</span>
+<span class="nc" id="L641">    }</span>
+
+    /**
+     * Close the source.
+     * Once a source has been closed, further {@link #read() read},
+     * {@link #ready ready}, {@link #mark mark}, {@link #reset reset},
+     * {@link #skip skip}, {@link #unread unread},
+     * {@link #getCharacter getCharacter} or {@link #getString getString}
+     * invocations will throw an IOException.
+     * Closing a previously-closed source, however, has no effect.
+     * @exception IOException If an I/O error occurs
+     */
+    public void destroy () throws IOException
+    {
+<span class="fc" id="L655">        mStream = null;</span>
+<span class="fc bfc" id="L656" title="All 2 branches covered.">        if (null != mReader)</span>
+<span class="fc" id="L657">            mReader.close ();</span>
+<span class="fc" id="L658">        mReader = null;</span>
+<span class="fc" id="L659">        mBuffer = null;</span>
+<span class="fc" id="L660">        mLevel = 0;</span>
+<span class="fc" id="L661">        mOffset = 0;</span>
+<span class="fc" id="L662">        mMark = -1;</span>
+<span class="fc" id="L663">    }</span>
+
+    /**
+     * Get the position (in characters).
+     * @return The number of characters that have already been read, or
+     * {@link #EOF EOF} if the source is closed.
+     */
+    public int offset ()
+    {
+        int ret;
+
+<span class="pc bpc" id="L674" title="1 of 2 branches missed.">        if (null == mStream)</span>
+<span class="nc" id="L675">            ret = EOF;</span>
+        else
+<span class="fc" id="L677">            ret = mOffset;</span>
+
+<span class="fc" id="L679">        return (ret);</span>
+    }
+
+    /**
+     * Get the number of available characters.
+     * @return The number of characters that can be read without blocking or
+     * zero if the source is closed.
+     */
+    public int available ()
+    {
+        int ret;
+
+<span class="nc bnc" id="L691" title="All 2 branches missed.">        if (null == mStream)</span>
+<span class="nc" id="L692">            ret = 0;</span>
+        else
+<span class="nc" id="L694">            ret = mLevel - mOffset;</span>
+
+<span class="nc" id="L696">        return (ret);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

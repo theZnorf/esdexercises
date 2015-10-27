@@ -1,0 +1,1087 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>ThumbelinaFrame.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">thumbelina/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.lexerapplications.thumbelina</a> &gt; <span class="el_source">ThumbelinaFrame.java</span></div><h1>ThumbelinaFrame.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/thumbelina/src/main/java/org/htmlparser/lexerapplications/thumbelina/ThumbelinaFrame.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.lexerapplications.thumbelina;
+
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.prefs.BackingStoreException;
+import java.util.prefs.Preferences;
+import javax.swing.ImageIcon;
+import javax.swing.JCheckBoxMenuItem;
+
+import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JSeparator;
+import org.htmlparser.lexer.Lexer;
+
+/**
+ * Encapsulate a Thumbelina bean and add menu and preferences support.
+ * Provides a JFrame base in which to place a Thumbelina bean, and
+ * adds a menu system with MRU (Most Recently Used) list.
+ * Also provides a Google search capability.
+ * Will eventually provide Javahelp too.
+ */
+public class ThumbelinaFrame
+    extends
+        JFrame
+    implements
+        WindowListener,
+        ActionListener,
+        ItemListener,
+        PropertyChangeListener
+{
+    /**
+     * Window title.
+     */
+    private static final String TITLE = &quot;Thumbelina&quot;;
+
+    /**
+     * Preference name for frame location and size.
+     */
+    private static final String FRAMESIZE = &quot;FrameSize&quot;;
+
+    /**
+     * Percent of screen to leave as border when no preferences available.
+     */
+    private static final int BORDERPERCENT = 5;
+
+    /**
+     * Preference name for most recently used count.
+     */
+    private static final String MRULENGTH = &quot;MRULength&quot;;
+
+    /**
+     * Preference name for most recently used maximum count.
+     */
+    private static final String MRUMAX = &quot;MRUMax&quot;;
+
+    /**
+     * Preference prefix for most recently used list items.
+     */
+    private static final String MRUPREFIX = &quot;MRUListItem&quot;;
+
+    /**
+     * Preference name for google query.
+     */
+    private static final String GOOGLEQUERY = &quot;GoogleQuery&quot;;
+
+    /**
+     * Default google query when no preferences are available.
+     */
+    private static final String DEFAULTGOOGLEQUERY = &quot;thumbs&quot;;
+
+    /**
+     * List of URLs to prime the MRU list with.
+     */
+<span class="nc" id="L117">    private static final String[] DEFAULTMRULIST =</span>
+<span class="nc" id="L118">    {</span>
+<span class="nc" id="L119">        &quot;www.a2zcds.com&quot;,</span>
+<span class="nc" id="L120">        &quot;www.stoneschool.com/Japan/&quot;,</span>
+<span class="nc" id="L121">        &quot;www.tommys-bookmarks.com&quot;,</span>
+<span class="nc" id="L122">        &quot;www.unitedmedia.com/comics/dilbert/archive&quot;,</span>
+<span class="nc" id="L123">        &quot;www.pastelartists.com&quot;,</span>
+    };
+
+    /**
+     * Send Mozilla headers in request if &lt;code&gt;true&lt;/code&gt;.
+     */
+    private static final boolean USE_MOZILLA_HEADERS = false;
+
+    /**
+     * Preference name for status bar visibility state.
+     */
+    private static final String STATUSBARSTATE = &quot;StatusBarVisible&quot;;
+
+    /**
+     * Preference name for history list visibility state.
+     */
+    private static final String HISTORYLISTSTATE = &quot;HistoryListVisible&quot;;
+
+    /**
+     * Preference name for sequencer active state.
+     */
+    private static final String SEQUENCERACTIVE = &quot;SequencerActive&quot;;
+
+    /**
+     * Preference name for background thread active state.
+     */
+    private static final String BACKGROUNDTHREADACTIVE =
+        &quot;BackgroundThreadActive&quot;;
+
+    /**
+     * Preference name for sequencer display speed.
+     */
+<span class="nc" id="L155">    private static final String DISPLAYSPEED = &quot;DisplaySpeed&quot;;</span>
+
+    /**
+     * Main menu.
+     */
+    protected JMenuBar mMenu;
+
+    /**
+     * URL submenu.
+     */
+    protected JMenu mURL;
+
+    /**
+     * Open menu item.
+     */
+    protected JMenuItem mOpen;
+
+    /**
+     * Google menu item.
+     */
+    protected JMenuItem mGoogle;
+
+    /**
+     * MRU list separator #1.
+     */
+    protected JSeparator mSeparator1;
+
+    /**
+     * MRU list separator #2.
+     */
+    protected JSeparator mSeparator2;
+
+    /**
+     * Exit menu item.
+     */
+    protected JMenuItem mExit;
+
+    /**
+     * View submenu.
+     */
+    protected JMenu mView;
+
+    /**
+     * Status bar visible menu item.
+     */
+    protected JCheckBoxMenuItem mStatusVisible;
+
+    /**
+     * History list visible menu item.
+     */
+    protected JCheckBoxMenuItem mHistoryVisible;
+
+    /**
+     * Vommand menu.
+     */
+    protected JMenu mCommand;
+
+    /**
+     * Reset menu item.
+     */
+    protected JMenuItem mReset;
+
+    /**
+     * Clear menu item
+     */
+    protected JMenuItem mClear;
+
+    /**
+     * Help submenu.
+     */
+    protected JMenu mHelp;
+
+    /**
+     * About menu item.
+     */
+    protected JMenuItem mAbout;
+
+    /**
+     * Construct a new Thumbelina frame with an idle Thumbelina.
+     */
+    public ThumbelinaFrame ()
+    {
+<span class="nc" id="L237">        this (new Thumbelina ());</span>
+<span class="nc" id="L238">    }</span>
+
+    /**
+     * Construct a new Thumbelina frame with a Thumbelina primed with one URL.
+     * @param url The URL to prime the Thumbelina with.
+     * @exception MalformedURLException If the given string doesn't represent
+     * a valid url.
+     */
+    public ThumbelinaFrame (final String url)
+        throws
+            MalformedURLException
+    {
+<span class="nc" id="L250">        this (new Thumbelina (url));</span>
+<span class="nc" id="L251">    }</span>
+
+    /**
+     * Construct a new Thumbelina frame with a Thumbelina primed with one URL.
+     * @param url The URL to prime the Thumbelina with.
+     */
+    public ThumbelinaFrame (final URL url)
+    {
+<span class="nc" id="L259">        this (new Thumbelina (url));</span>
+<span class="nc" id="L260">    }</span>
+
+    /**
+     * Construct a new Thumbelina frame with a given Thumbelina.
+     * @param thumbelina The Thumbelina to encapsulate.
+     */
+<span class="nc" id="L266">    public ThumbelinaFrame (final Thumbelina thumbelina)</span>
+    {
+<span class="nc" id="L268">        setTitle (TITLE);</span>
+<span class="nc" id="L269">        thumbelina.addPropertyChangeListener (this);</span>
+<span class="nc" id="L270">        getContentPane ().add (thumbelina, BorderLayout.CENTER);</span>
+<span class="nc" id="L271">        addWindowListener (this);</span>
+<span class="nc" id="L272">        makeMenu ();</span>
+<span class="nc" id="L273">        setJMenuBar (mMenu);</span>
+<span class="nc" id="L274">        restoreSize ();</span>
+<span class="nc" id="L275">        initState ();</span>
+<span class="nc" id="L276">        updateMenu ();</span>
+<span class="nc" id="L277">    }</span>
+
+    /**
+     * Access the Thumbelina object contained in the frame.
+     * @return The Thumbelina bean.
+     */
+    public Thumbelina getThumbelina ()
+    {
+<span class="nc" id="L285">        return ((Thumbelina)getContentPane ().getComponent (0));</span>
+    }
+
+    /**
+     * Initialize the user preferences.
+     * Reads from the existing user preferences,
+     * or initializes values from the bean directly if they don't exist.
+     * Sets the state of the view checkboxes to match.
+     */
+    public void initState ()
+    {
+        Preferences prefs;
+
+<span class="nc" id="L298">        prefs = Preferences.userNodeForPackage (getClass ());</span>
+<span class="nc bnc" id="L299" title="All 2 branches missed.">        if (-1 == prefs.getInt (MRULENGTH, -1))</span>
+<span class="nc bnc" id="L300" title="All 2 branches missed.">            for (int i = 0; i &lt; DEFAULTMRULIST.length; i++)</span>
+<span class="nc" id="L301">                updateMRU (DEFAULTMRULIST[i]);</span>
+<span class="nc" id="L302">        getThumbelina ().setStatusBarVisible (</span>
+<span class="nc" id="L303">            prefs.getBoolean (STATUSBARSTATE,</span>
+<span class="nc" id="L304">                getThumbelina ().getStatusBarVisible ()));</span>
+<span class="nc" id="L305">        mStatusVisible.setSelected (getThumbelina ().getStatusBarVisible ());</span>
+<span class="nc" id="L306">        getThumbelina ().setHistoryListVisible (</span>
+<span class="nc" id="L307">            prefs.getBoolean (HISTORYLISTSTATE,</span>
+<span class="nc" id="L308">                getThumbelina ().getHistoryListVisible ()));</span>
+<span class="nc" id="L309">        mHistoryVisible.setSelected (getThumbelina ().getHistoryListVisible ());</span>
+<span class="nc" id="L310">        getThumbelina ().setSequencerActive (</span>
+<span class="nc" id="L311">            prefs.getBoolean (SEQUENCERACTIVE,</span>
+<span class="nc" id="L312">                getThumbelina ().getSequencerActive ()));</span>
+<span class="nc" id="L313">        getThumbelina ().setBackgroundThreadActive (</span>
+<span class="nc" id="L314">            prefs.getBoolean (BACKGROUNDTHREADACTIVE,</span>
+<span class="nc" id="L315">                getThumbelina ().getBackgroundThreadActive ()));</span>
+<span class="nc" id="L316">        getThumbelina ().setSpeed (</span>
+<span class="nc" id="L317">            prefs.getInt (DISPLAYSPEED, getThumbelina ().getSpeed ()));</span>
+<span class="nc" id="L318">    }</span>
+
+    /**
+     * Saves the current settings in the user preferences.
+     * By default this writes to the thumbelina subdirectory under
+     * .java in the users home directory.
+     */
+    public void saveState ()
+    {
+        Preferences prefs;
+
+<span class="nc" id="L329">        prefs = Preferences.userNodeForPackage (getClass ());</span>
+        // don't save size unless we're in normal state
+<span class="nc bnc" id="L331" title="All 2 branches missed.">        if (NORMAL == getExtendedState ())</span>
+<span class="nc" id="L332">            prefs.put (FRAMESIZE, toString (getBounds ()));</span>
+<span class="nc" id="L333">        prefs.putBoolean (STATUSBARSTATE,</span>
+<span class="nc" id="L334">            getThumbelina ().getStatusBarVisible ());</span>
+<span class="nc" id="L335">        prefs.putBoolean (HISTORYLISTSTATE,</span>
+<span class="nc" id="L336">            getThumbelina ().getHistoryListVisible ());</span>
+<span class="nc" id="L337">        prefs.putBoolean (SEQUENCERACTIVE,</span>
+<span class="nc" id="L338">            getThumbelina ().getSequencerActive ());</span>
+<span class="nc" id="L339">        prefs.putBoolean (BACKGROUNDTHREADACTIVE,</span>
+<span class="nc" id="L340">            getThumbelina ().getBackgroundThreadActive ());</span>
+<span class="nc" id="L341">        prefs.putInt (DISPLAYSPEED,</span>
+<span class="nc" id="L342">            getThumbelina ().getSpeed ());</span>
+        try
+        {
+<span class="nc" id="L345">            prefs.flush ();</span>
+<span class="nc" id="L346">        }</span>
+<span class="nc" id="L347">        catch (BackingStoreException bse)</span>
+        {
+<span class="nc" id="L349">            bse.printStackTrace ();</span>
+        }
+<span class="nc" id="L351">    }</span>
+
+    /**
+     * Sets the frame size if no previous preference has been stored.
+     * It creates a window covering all but &lt;code&gt;BORDERPERCENT&lt;/code&gt;
+     * margins.
+     */
+    public void initSize ()
+    {
+        Toolkit tk;
+        Dimension dim;
+        int borderx;
+        int bordery;
+
+<span class="nc" id="L365">        tk = getToolkit ();</span>
+<span class="nc" id="L366">        dim = tk.getScreenSize ();</span>
+<span class="nc" id="L367">        borderx = dim.width * BORDERPERCENT / 100;</span>
+<span class="nc" id="L368">        bordery = dim.height * BORDERPERCENT / 100;</span>
+<span class="nc" id="L369">        setBounds (</span>
+<span class="nc" id="L370">            borderx,</span>
+<span class="nc" id="L371">            bordery,</span>
+<span class="nc" id="L372">            dim.width - (2 * borderx),</span>
+<span class="nc" id="L373">            dim.height - (2 * bordery));</span>
+<span class="nc" id="L374">    }</span>
+
+    /**
+     * Restores the window size based on stored preferences.
+     * If no preferences exist, it calls &lt;code&gt;initSize()&lt;/code&gt;.
+     */
+    public void restoreSize ()
+    {
+        Preferences prefs;
+        String size;
+        Rectangle rectangle;
+
+<span class="nc" id="L386">        prefs = Preferences.userNodeForPackage (getClass ());</span>
+<span class="nc" id="L387">        size = prefs.get (FRAMESIZE, &quot;&quot;);</span>
+<span class="nc bnc" id="L388" title="All 2 branches missed.">        if (&quot;&quot;.equals (size))</span>
+<span class="nc" id="L389">            initSize ();</span>
+        else
+            try
+            {
+<span class="nc" id="L393">                rectangle = fromString (size);</span>
+<span class="nc bnc" id="L394" title="All 2 branches missed.">                if (rational (rectangle))</span>
+<span class="nc" id="L395">                    setBounds (</span>
+<span class="nc" id="L396">                        rectangle.x,</span>
+<span class="nc" id="L397">                        rectangle.y,</span>
+<span class="nc" id="L398">                        rectangle.width,</span>
+<span class="nc" id="L399">                        rectangle.height);</span>
+                else
+<span class="nc" id="L401">                    initSize ();</span>
+<span class="nc" id="L402">            }</span>
+<span class="nc" id="L403">            catch (IllegalArgumentException iae)</span>
+            {
+<span class="nc" id="L405">                initSize ();</span>
+            }
+<span class="nc" id="L407">    }</span>
+
+    /**
+     * Converts the rectangle to a string.
+     * The rectangle is converted into a string that is of the form
+     * &lt;pre&gt;
+     * [x,y,width,height].
+     * &lt;/pre&gt;
+     * @return The string equivalent of the rectangle.
+     * @param r The rectangle containing the window position and size,
+     * as returned by &lt;code&gt;getBounds()&lt;/code&gt;.
+     */
+    protected String toString (final Rectangle r)
+    {
+<span class="nc" id="L421">        return (&quot;[&quot; + r.x + &quot;,&quot; + r.y + &quot;,&quot; + r.width + &quot;,&quot; + r.height + &quot;]&quot;);</span>
+    }
+
+    /**
+     * Convert the given string to a valid rectangle.
+     * The string is converted to a Rectangle.
+     * @param value The value to parse.
+     * @exception IllegalArgumentException if the format does not match the
+     * form &quot;[x,y,width,height]&quot; with all values integers.
+     * @return Returns the rectangle extracted from the string.
+     */
+    protected Rectangle fromString (final String value)
+        throws
+            IllegalArgumentException
+    {
+        String guts;
+        int current;
+        int[] values;
+        int index;
+        Rectangle ret;
+
+        try
+        {
+            // parse &quot;[x,y,width,height]&quot;
+<span class="nc bnc" id="L445" title="All 4 branches missed.">            if (value.startsWith (&quot;[&quot;) &amp;&amp; value.endsWith (&quot;]&quot;))</span>
+            {
+<span class="nc" id="L447">                guts = value.substring (1, value.length () - 1) + &quot;,&quot;;</span>
+<span class="nc" id="L448">                current = 0;</span>
+<span class="nc" id="L449">                values = new int[4];</span>
+<span class="nc bnc" id="L450" title="All 2 branches missed.">                for (int i = 0; i &lt; 4; i++)</span>
+                {
+<span class="nc" id="L452">                    index = guts.indexOf (&quot;,&quot;, current);</span>
+<span class="nc bnc" id="L453" title="All 2 branches missed.">                    if (-1 == index)</span>
+<span class="nc" id="L454">                        throw new IllegalArgumentException (</span>
+<span class="nc" id="L455">                            &quot;invalid format \&quot;&quot; + value + &quot;\&quot;&quot;);</span>
+                    else
+                    {
+<span class="nc" id="L458">                        values[i] = Integer.parseInt (</span>
+<span class="nc" id="L459">                            guts.substring (current, index));</span>
+<span class="nc" id="L460">                        current = index + 1;</span>
+                    }
+                }
+<span class="nc" id="L463">                ret = new Rectangle (</span>
+<span class="nc" id="L464">                    values[0], values[1], values[2], values[3]);</span>
+<span class="nc" id="L465">            }</span>
+            else
+<span class="nc" id="L467">                throw new IllegalArgumentException (</span>
+<span class="nc" id="L468">                    &quot;invalid format \&quot;&quot; + value + &quot;\&quot;&quot;);</span>
+        }
+<span class="nc" id="L470">        catch (NumberFormatException nfe)</span>
+        {
+<span class="nc" id="L472">            throw new IllegalArgumentException (nfe.getMessage ());</span>
+        }
+
+<span class="nc" id="L475">        return (ret);</span>
+    }
+
+    /**
+     * Check if the rectangle represents a valid screen position and size.
+     * @param r The rectangle to check.
+     * @return &lt;code&gt;true&lt;/code&gt; if this could be a valid frame bounds.
+     */
+    private boolean rational (final Rectangle r)
+    {
+        Toolkit tk;
+        Dimension winsize;
+
+<span class="nc" id="L488">        tk = getToolkit ();</span>
+<span class="nc" id="L489">        winsize = tk.getScreenSize();</span>
+        // all elements must be not stupid w.r.t. the screen size
+        // we assume here that that means no more than 10% off screen
+        // on the left, right and bottom sides
+<span class="nc bnc" id="L493" title="All 4 branches missed.">        return (   (r.x &gt;= r.width / -10)</span>
+<span class="nc bnc" id="L494" title="All 2 branches missed.">                &amp;&amp; (r.y &gt;= 0)</span>
+<span class="nc bnc" id="L495" title="All 2 branches missed.">                &amp;&amp; (r.width &gt; 0)</span>
+<span class="nc bnc" id="L496" title="All 2 branches missed.">                &amp;&amp; (r.height &gt; 0)</span>
+<span class="nc bnc" id="L497" title="All 2 branches missed.">                &amp;&amp; (r.x + r.width &lt;= winsize.width + r.width / 10)</span>
+<span class="nc" id="L498">                &amp;&amp; (r.y + r.height &lt;= winsize.height + r.height / 10));</span>
+    }
+
+    /**
+     * Create the menu.
+     * Initializes the menu and adds it to the frame.
+     */
+    public void makeMenu ()
+    {
+<span class="nc" id="L507">        mMenu = new JMenuBar ();</span>
+<span class="nc" id="L508">        mURL = new JMenu ();</span>
+<span class="nc" id="L509">        mOpen = new JMenuItem ();</span>
+<span class="nc" id="L510">        mGoogle = new JMenuItem ();</span>
+<span class="nc" id="L511">        mSeparator1 = new JSeparator ();</span>
+<span class="nc" id="L512">        mSeparator2 = new JSeparator ();</span>
+<span class="nc" id="L513">        mExit = new JMenuItem ();</span>
+
+<span class="nc" id="L515">        mView = new JMenu ();</span>
+<span class="nc" id="L516">        mStatusVisible = new JCheckBoxMenuItem ();</span>
+<span class="nc" id="L517">        mHistoryVisible = new JCheckBoxMenuItem ();</span>
+
+<span class="nc" id="L519">        mHelp = new JMenu ();</span>
+<span class="nc" id="L520">        mAbout = new JMenuItem ();</span>
+
+<span class="nc" id="L522">        mCommand = new JMenu ();</span>
+<span class="nc" id="L523">        mReset = new JMenuItem ();</span>
+<span class="nc" id="L524">        mClear = new JMenuItem ();</span>
+
+<span class="nc" id="L526">        mURL.setMnemonic ('U');</span>
+<span class="nc" id="L527">        mURL.setText (&quot;URL&quot;);</span>
+<span class="nc" id="L528">        mOpen.setMnemonic ('O');</span>
+<span class="nc" id="L529">        mOpen.setText (&quot;Open&quot;);</span>
+<span class="nc" id="L530">        mOpen.setToolTipText (&quot;Open a URL.&quot;);</span>
+<span class="nc" id="L531">        mURL.add (mOpen);</span>
+
+<span class="nc" id="L533">        mGoogle.setMnemonic ('G');</span>
+<span class="nc" id="L534">        mGoogle.setText (&quot;Google&quot;);</span>
+<span class="nc" id="L535">        mGoogle.setToolTipText (&quot;Search Google.&quot;);</span>
+<span class="nc" id="L536">        mURL.add (mGoogle);</span>
+
+<span class="nc" id="L538">        mURL.add (mSeparator1);</span>
+<span class="nc" id="L539">        mURL.add (mSeparator2);</span>
+
+<span class="nc" id="L541">        mExit.setMnemonic ('E');</span>
+<span class="nc" id="L542">        mExit.setText (&quot;Exit&quot;);</span>
+<span class="nc" id="L543">        mExit.setToolTipText (&quot;Quit Thumbelina.&quot;);</span>
+<span class="nc" id="L544">        mURL.add (mExit);</span>
+
+<span class="nc" id="L546">        mMenu.add (mURL);</span>
+
+<span class="nc" id="L548">        mView.setMnemonic ('V');</span>
+<span class="nc" id="L549">        mView.setText (&quot;View&quot;);</span>
+<span class="nc" id="L550">        mStatusVisible.setMnemonic ('S');</span>
+<span class="nc" id="L551">        mStatusVisible.setSelected (getThumbelina ().getStatusBarVisible ());</span>
+<span class="nc" id="L552">        mStatusVisible.setText (&quot;Status Bar&quot;);</span>
+<span class="nc" id="L553">        mStatusVisible.setToolTipText (&quot;Show/Hide the status bar.&quot;);</span>
+<span class="nc" id="L554">        mView.add (mStatusVisible);</span>
+<span class="nc" id="L555">        mHistoryVisible.setMnemonic ('H');</span>
+<span class="nc" id="L556">        mHistoryVisible.setSelected (getThumbelina ().getHistoryListVisible ());</span>
+<span class="nc" id="L557">        mHistoryVisible.setText (&quot;History List&quot;);</span>
+<span class="nc" id="L558">        mHistoryVisible.setToolTipText (&quot;Show/Hide the history list.&quot;);</span>
+<span class="nc" id="L559">        mView.add (mHistoryVisible);</span>
+<span class="nc" id="L560">        mMenu.add (mView);</span>
+
+<span class="nc" id="L562">        mCommand.setMnemonic ('C');</span>
+<span class="nc" id="L563">        mCommand.setText (&quot;Command&quot;);</span>
+<span class="nc" id="L564">        mReset.setMnemonic ('R');</span>
+<span class="nc" id="L565">        mReset.setText (&quot;Reset&quot;);</span>
+<span class="nc" id="L566">        mReset.setToolTipText (&quot;Reset Thumbelina.&quot;);</span>
+<span class="nc" id="L567">        mClear.setMnemonic ('L');</span>
+<span class="nc" id="L568">        mClear.setText (&quot;Clear&quot;);</span>
+<span class="nc" id="L569">        mClear.setToolTipText (&quot;Clear display.&quot;);</span>
+<span class="nc" id="L570">        mCommand.add (mReset);</span>
+<span class="nc" id="L571">        mCommand.add (mClear);</span>
+<span class="nc" id="L572">        mCommand.add (mHelp);</span>
+<span class="nc" id="L573">        mMenu.add (mCommand);</span>
+
+<span class="nc" id="L575">        mHelp.setMnemonic ('H');</span>
+<span class="nc" id="L576">        mHelp.setText (&quot;Help&quot;);</span>
+<span class="nc" id="L577">        mAbout.setMnemonic ('A');</span>
+<span class="nc" id="L578">        mAbout.setText (&quot;About&quot;);</span>
+<span class="nc" id="L579">        mAbout.setToolTipText (&quot;Information about Thumbelina.&quot;);</span>
+<span class="nc" id="L580">        mHelp.add (mAbout);</span>
+<span class="nc" id="L581">        mMenu.add (mHelp);</span>
+
+<span class="nc" id="L583">        mOpen.addActionListener (this);</span>
+<span class="nc" id="L584">        mGoogle.addActionListener (this);</span>
+<span class="nc" id="L585">        mExit.addActionListener (this);</span>
+<span class="nc" id="L586">        mStatusVisible.addItemListener (this);</span>
+<span class="nc" id="L587">        mHistoryVisible.addItemListener (this);</span>
+<span class="nc" id="L588">        mReset.addActionListener (this);</span>
+<span class="nc" id="L589">        mClear.addActionListener (this);</span>
+<span class="nc" id="L590">        mAbout.addActionListener (this);</span>
+<span class="nc" id="L591">    }</span>
+
+    /**
+     * Adjusts the menu, by inserting the current MRU list.
+     * Removes the old MRU (Most Recently Used) items and inserts new
+     * ones betweeen the two separators.
+     */
+    public void updateMenu ()
+    {
+        Preferences prefs;
+        int start;
+        int end;
+        Component component;
+        JMenuItem item;
+        int count;
+        String string;
+
+<span class="nc" id="L608">        prefs = Preferences.userNodeForPackage (getClass ());</span>
+<span class="nc" id="L609">        start = -1;</span>
+<span class="nc" id="L610">        end = -1;</span>
+<span class="nc bnc" id="L611" title="All 2 branches missed.">        for (int i = 0; i &lt; mURL.getItemCount (); i++)</span>
+        {
+<span class="nc" id="L613">            component = mURL.getMenuComponent (i);</span>
+<span class="nc bnc" id="L614" title="All 2 branches missed.">            if (component == mSeparator1)</span>
+<span class="nc" id="L615">                start = i + 1;</span>
+<span class="nc bnc" id="L616" title="All 2 branches missed.">            else if (component == mSeparator2)</span>
+<span class="nc" id="L617">                end = i;</span>
+        }
+
+<span class="nc bnc" id="L620" title="All 4 branches missed.">        if ((-1 != start) &amp;&amp; (-1 != end))</span>
+        {
+<span class="nc bnc" id="L622" title="All 2 branches missed.">            for (int i = start; i &lt; end; i++)</span>
+<span class="nc" id="L623">                mURL.remove (start);</span>
+
+<span class="nc" id="L625">            count = prefs.getInt (MRULENGTH, 0);</span>
+<span class="nc bnc" id="L626" title="All 2 branches missed.">            for (int i = 0; i &lt; count; i++)</span>
+            {
+<span class="nc" id="L628">                string = prefs.get (MRUPREFIX + i, &quot;&quot;);</span>
+<span class="nc bnc" id="L629" title="All 2 branches missed.">                if (!&quot;&quot;.equals (string))</span>
+                {
+<span class="nc" id="L631">                    item = new JMenuItem ();</span>
+<span class="nc" id="L632">                    item.setActionCommand (string);</span>
+<span class="nc bnc" id="L633" title="All 2 branches missed.">                    if (string.length () &gt; 40)</span>
+<span class="nc" id="L634">                        string = string.substring (0, 38) + &quot;...&quot;;</span>
+<span class="nc" id="L635">                    item.setText (string);</span>
+<span class="nc" id="L636">                    item.addActionListener (this);</span>
+<span class="nc" id="L637">                    mURL.add (item, start++);</span>
+                }
+            }
+        }
+<span class="nc" id="L641">    }</span>
+
+    //
+    // WindowListener interface
+    //
+
+    /**
+     * Invoked the first time a window is made visible.
+     * &lt;i&gt;Not used.&lt;/i&gt;
+     * @param event The window event.
+     */
+    public void windowOpened (final WindowEvent event)
+    {
+<span class="nc" id="L654">    }</span>
+
+    /**
+     * Handles window closing event.
+     * Performs function &lt;code&gt;exitApplication()&lt;/code&gt;.
+     * @param event The window event.
+     */
+    public void windowClosing (final WindowEvent event)
+    {
+<span class="nc" id="L663">        exit ();</span>
+<span class="nc" id="L664">    }</span>
+
+    /**
+     * Invoked when a window has been closed as the result
+     * of calling dispose on the window.
+     * &lt;i&gt;Not used.&lt;/i&gt;
+     * @param event The window event.
+     */
+    public void windowClosed (final WindowEvent event)
+    {
+<span class="nc" id="L674">    }</span>
+
+    /**
+     * Invoked when a window is changed from a normal to a
+     * minimized state. For many platforms, a minimized window
+     * is displayed as the icon specified in the window's
+     * iconImage property.
+     * &lt;i&gt;Not used.&lt;/i&gt;
+     * @param event The window event.
+     */
+    public void windowIconified (final WindowEvent event)
+    {
+<span class="nc" id="L686">    }</span>
+
+    /**
+     * Invoked when a window is changed from a minimized
+     * to a normal state.
+     * &lt;i&gt;Not used.&lt;/i&gt;
+     * @param event The window event.
+     */
+    public void windowDeiconified (final WindowEvent event)
+    {
+<span class="nc" id="L696">    }</span>
+
+    /**
+     * Invoked when the window is set to be the user's
+     * active window, which means the window (or one of its
+     * subcomponents) will receive keyboard events.
+     * &lt;i&gt;Not used.&lt;/i&gt;
+     * @param event The window event.
+     */
+    public void windowActivated (final WindowEvent event)
+    {
+<span class="nc" id="L707">    }</span>
+
+    /**
+     * Invoked when a window is no longer the user's active
+     * window, which means that keyboard events will no longer
+     * be delivered to the window or its subcomponents.
+     * &lt;i&gt;Not used.&lt;/i&gt;
+     * @param event The window event.
+     */
+    public void windowDeactivated (final WindowEvent event)
+    {
+<span class="nc" id="L718">    }</span>
+
+    //
+    // ActionListener interface
+    //
+
+    /**
+     * Handles events from the menu.
+     * Based on the action of the event, executes the necessary subroutine.
+     * @param actionEvent The event describing the user action.
+     */
+    public void actionPerformed (final ActionEvent actionEvent)
+    {
+        String action;
+
+<span class="nc" id="L733">        action = actionEvent.getActionCommand ();</span>
+<span class="nc bnc" id="L734" title="All 2 branches missed.">        if (action.equals (&quot;Open&quot;))</span>
+<span class="nc" id="L735">            open ();</span>
+<span class="nc bnc" id="L736" title="All 2 branches missed.">        else if (action.equals (&quot;Google&quot;))</span>
+<span class="nc" id="L737">            googlesearch ();</span>
+<span class="nc bnc" id="L738" title="All 2 branches missed.">        else if (action.equals (&quot;Reset&quot;))</span>
+<span class="nc" id="L739">            getThumbelina ().reset ();</span>
+<span class="nc bnc" id="L740" title="All 2 branches missed.">        else if (action.equals (&quot;Clear&quot;))</span>
+<span class="nc" id="L741">            getThumbelina ().getPicturePanel ().reset ();</span>
+<span class="nc bnc" id="L742" title="All 2 branches missed.">        else if (action.equals (&quot;About&quot;))</span>
+<span class="nc" id="L743">            about ();</span>
+<span class="nc bnc" id="L744" title="All 2 branches missed.">        else if (action.equals (&quot;Exit&quot;))</span>
+<span class="nc" id="L745">            exit ();</span>
+        else
+        {
+            // must be a URL from the most recently used list
+<span class="nc" id="L749">            getThumbelina ().open (action);</span>
+// monitor contention with Timer0            updateMRU (action);
+<span class="nc" id="L751">            updateMenu ();</span>
+        }
+<span class="nc" id="L753">    }</span>
+
+    //
+    // ItemListener interface
+    //
+
+    /**
+     * Handles selections on the view state checkboxes.
+     * @param event The event describing the checkbox affected.
+     */
+    public void itemStateChanged (final ItemEvent event)
+    {
+        Object source;
+        boolean visible;
+
+<span class="nc" id="L768">        source = event.getItemSelectable ();</span>
+<span class="nc bnc" id="L769" title="All 2 branches missed.">        visible = ItemEvent.SELECTED == event.getStateChange ();</span>
+<span class="nc bnc" id="L770" title="All 2 branches missed.">        if (source == mStatusVisible)</span>
+<span class="nc" id="L771">            getThumbelina ().setStatusBarVisible (visible);</span>
+<span class="nc bnc" id="L772" title="All 2 branches missed.">        else if (source == mHistoryVisible)</span>
+<span class="nc" id="L773">            getThumbelina ().setHistoryListVisible (visible);</span>
+<span class="nc" id="L774">    }</span>
+
+    //
+    // PropertyChangeListener
+    //
+
+    /**
+     * Handle a property change.
+     * @param event The property old and new values.
+     */
+    public void propertyChange (final PropertyChangeEvent event)
+    {
+        String url;
+
+<span class="nc" id="L788">        if (event.getPropertyName ().equals (</span>
+<span class="nc bnc" id="L789" title="All 2 branches missed.">            Thumbelina.PROP_CURRENT_URL_PROPERTY))</span>
+        {
+<span class="nc" id="L791">            url = (String)event.getNewValue ();</span>
+<span class="nc bnc" id="L792" title="All 2 branches missed.">            if (null == url)</span>
+<span class="nc" id="L793">                setTitle (&quot;Thumbelina&quot;);</span>
+            else
+<span class="nc" id="L795">                setTitle (&quot;Thumbelina - &quot; + url);</span>
+        }
+<span class="nc" id="L797">    }</span>
+
+    /**
+     * Updates the user preferences based on the most recently used list.
+     * @param url The URL that is to be placed at the top of the MRU list.
+     */
+    public void updateMRU (String url)
+    {
+        Preferences prefs;
+        int count;
+        ArrayList&lt;String&gt; list;
+        String string;
+        int max;
+
+<span class="nc bnc" id="L811" title="All 2 branches missed.">        if (url.startsWith (&quot;http://&quot;))</span>
+<span class="nc" id="L812">            url = url.substring (7);</span>
+<span class="nc" id="L813">        prefs = Preferences.userNodeForPackage (getClass ());</span>
+<span class="nc" id="L814">        count = prefs.getInt (MRULENGTH, -1);</span>
+<span class="nc" id="L815">        list = new ArrayList&lt;String&gt; ();</span>
+<span class="nc bnc" id="L816" title="All 2 branches missed.">        for (int i = 0; i &lt; count; i++)</span>
+        {
+<span class="nc" id="L818">            string = prefs.get (MRUPREFIX + i, &quot;&quot;);</span>
+<span class="nc bnc" id="L819" title="All 4 branches missed.">            if (!&quot;&quot;.equals (string) &amp;&amp; !url.equalsIgnoreCase (string))</span>
+<span class="nc" id="L820">                list.add (string);</span>
+        }
+<span class="nc" id="L822">        list.add (0, url);</span>
+<span class="nc" id="L823">        max = prefs.getInt (MRUMAX, -1);</span>
+<span class="nc bnc" id="L824" title="All 2 branches missed.">        if (-1 == max)</span>
+<span class="nc" id="L825">            max = 8;</span>
+<span class="nc bnc" id="L826" title="All 2 branches missed.">        while (list.size () &gt; max)</span>
+<span class="nc" id="L827">            list.remove (max);</span>
+<span class="nc" id="L828">        prefs.putInt (MRULENGTH, list.size ());</span>
+<span class="nc" id="L829">        prefs.putInt (MRUMAX, max);</span>
+<span class="nc bnc" id="L830" title="All 2 branches missed.">        for (int i = 0; i &lt; list.size (); i++)</span>
+<span class="nc" id="L831">            prefs.put (MRUPREFIX + i, list.get (i));</span>
+        try
+        {
+<span class="nc" id="L834">            prefs.flush ();</span>
+<span class="nc" id="L835">        }</span>
+<span class="nc" id="L836">        catch (BackingStoreException bse)</span>
+        {
+<span class="nc" id="L838">            bse.printStackTrace ();</span>
+        }
+<span class="nc" id="L840">    }</span>
+
+    /**
+     * Opens a user specified URL.
+     */
+    public void open ()
+    {
+        String result;
+
+<span class="nc" id="L849">        result = JOptionPane.showInputDialog (</span>
+<span class="nc" id="L850">            this,</span>
+<span class="nc" id="L851">            &quot;Enter the URL:&quot;,</span>
+<span class="nc" id="L852">            &quot;Open URL&quot;,</span>
+<span class="nc" id="L853">            JOptionPane.PLAIN_MESSAGE);</span>
+<span class="nc bnc" id="L854" title="All 2 branches missed.">        if (null != result)</span>
+        {
+<span class="nc" id="L856">            getThumbelina ().open (result);</span>
+<span class="nc" id="L857">            updateMRU (result);</span>
+<span class="nc" id="L858">            updateMenu ();</span>
+        }
+<span class="nc" id="L860">    }</span>
+
+    /**
+     * Query google via user specified keywords and queue results.
+     * Asks the user for keywords, and then submits them as input to the
+     * usual google form:
+     * &lt;pre&gt;
+     * &lt;form action=&quot;/search&quot; name=f&gt;
+     * &lt;span id=hf&gt;&lt;/span&gt;
+     * &lt;table cellspacing=0 cellpadding=0&gt;
+     * &lt;tr valign=middle&gt;
+     * &lt;td width=75&gt;&amp;nbsp;&lt;/td&gt;
+     * &lt;td align=center&gt;
+     * &lt;input maxLength=256 size=55 name=q value=&quot;&quot;&gt;
+     * &lt;input type=hidden name=ie value=&quot;UTF-8&quot;&gt;
+     * &lt;input type=hidden name=oe value=&quot;UTF-8&quot;&gt;
+     * &lt;input name=hl type=hidden value=en&gt;&lt;br&gt;
+     * &lt;input type=submit value=&quot;Google Search&quot; name=btnG&gt;
+     * &lt;input type=submit value=&quot;I'm Feeling Lucky&quot; name=btnI&gt;
+     * &lt;/td&gt;
+     * &lt;td valign=top nowrap&gt;&lt;font size=-2&gt;
+     *   &amp;nbsp;&amp;#8226; &lt;a href=/advanced_search?hl=en&gt;Advanced Search&lt;/a&gt;
+     *   &lt;br&gt;&amp;nbsp;&amp;#8226; &lt;a href=/preferences?hl=en&gt;Preferences&lt;/a&gt;
+     *   &lt;br&gt;&amp;nbsp;&amp;#8226; &lt;a href=/language_tools?hl=en&gt;Language Tools&lt;/a&gt;
+     * &lt;/font&gt;
+     * &lt;/td&gt;
+     * &lt;/tr&gt;
+     * &lt;tr&gt;
+     * &lt;td colspan=3 align=center&gt;&lt;font size=-1&gt;
+     * Search: &lt;input id=all type=radio name=meta value=&quot;&quot; checked&gt;
+     * &lt;label for=all&gt; the web&lt;/label&gt;
+     * &lt;input id=cty type=radio name=meta value=&quot;cr=countryCA&quot; &gt;
+     * &lt;label for=cty&gt;pages from Canada&lt;/label&gt;
+     * &lt;/font&gt;
+     * &lt;/td&gt;
+     * &lt;/tr&gt;
+     * &lt;/table&gt;
+     * &lt;/form&gt;
+     * &lt;/pre&gt;
+     * Creates a query of the form:
+     * &lt;pre&gt;
+     * http://www.google.ca/search?hl=en&amp;ie=UTF-8&amp;oe=UTF-8&amp;q=thumbs&amp;btnG=Google+Search&amp;meta=
+     * &lt;/pre&gt;
+     */
+    public void googlesearch ()
+    {
+
+        Preferences prefs;
+        String query;
+        String terms;
+        StringBuffer buffer;
+        HttpURLConnection connection;
+        URL url;
+        Lexer lexer;
+        URL[][] results;
+
+<span class="nc" id="L916">        prefs = Preferences.userNodeForPackage (getClass ());</span>
+<span class="nc" id="L917">        query = prefs.get (GOOGLEQUERY, DEFAULTGOOGLEQUERY);</span>
+        try
+        {
+<span class="nc" id="L920">            query = (String)JOptionPane.showInputDialog (</span>
+<span class="nc" id="L921">                this,</span>
+<span class="nc" id="L922">                &quot;Enter the search term:&quot;,</span>
+<span class="nc" id="L923">                &quot;Search Google&quot;,</span>
+<span class="nc" id="L924">                JOptionPane.PLAIN_MESSAGE,</span>
+<span class="nc" id="L925">                null,</span>
+<span class="nc" id="L926">                null,</span>
+<span class="nc" id="L927">                query);</span>
+<span class="nc bnc" id="L928" title="All 2 branches missed.">            if (null != query)</span>
+            {
+                // replace spaces with +
+<span class="nc" id="L931">                terms = query.replace (' ', '+');</span>
+<span class="nc" id="L932">                buffer = new StringBuffer (1024);</span>
+<span class="nc" id="L933">                buffer.append (&quot;http://www.google.ca/search?&quot;);</span>
+<span class="nc" id="L934">                buffer.append (&quot;q=&quot;);</span>
+<span class="nc" id="L935">                buffer.append (terms);</span>
+<span class="nc" id="L936">                buffer.append (&quot;&amp;ie=UTF-8&quot;);</span>
+<span class="nc" id="L937">                buffer.append (&quot;&amp;oe=UTF-8&quot;);</span>
+<span class="nc" id="L938">                buffer.append (&quot;&amp;hl=en&quot;);</span>
+<span class="nc" id="L939">                buffer.append (&quot;&amp;btnG=Google+Search&quot;);</span>
+<span class="nc" id="L940">                buffer.append (&quot;&amp;meta=&quot;);</span>
+<span class="nc" id="L941">                url = new URL (buffer.toString ());</span>
+<span class="nc" id="L942">                connection = (HttpURLConnection)url.openConnection ();</span>
+                if (USE_MOZILLA_HEADERS)
+                {
+                    // These are the Mozilla header fields:
+                    //Accept: text/xml,application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,video/x-mng,image/png,image/jpeg,image/gif;q=0.2,text/css,*/*;q=0.1
+                    //Accept-Language: en-us, en;q=0.50
+                    //Connection: keep-alive
+                    //Host: grc.com
+                    //Referer: https://grc.com/x/ne.dll?bh0bkyd2
+                    //User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.2.1) Gecko/20030225
+                    //Content-Length: 27
+                    //Content-Type: application/x-www-form-urlencoded
+                    //Accept-Encoding: gzip, deflate, compress;q=0.9
+                    //Accept-Charset: ISO-8859-1, utf-8;q=0.66, *;q=0.66
+                    //Keep-Alive: 300
+
+                    connection.setRequestProperty (&quot;Referer&quot;, &quot;http://www.google.ca&quot;);
+                    connection.setRequestProperty (&quot;Accept&quot;, &quot;text/xml,application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,video/x-mng,image/png,image/jpeg,image/gif;q=0.2,text/css,*/*;q=0.1&quot;);
+                    connection.setRequestProperty (&quot;Accept-Language&quot;, &quot;en-us, en;q=0.50&quot;);
+                    connection.setRequestProperty (&quot;User-Agent&quot;, &quot;Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.2.1) Gecko/20030225&quot;);
+                    connection.setRequestProperty (&quot;Accept-Charset&quot;, &quot;ISO-8859-1, utf-8;q=0.66, *;q=0.66&quot;);
+                }
+                else
+                {
+                    // These are the IE header fields:
+                    //Accept: image/gif, image/x-xbitmap, image/jpeg, image/pjpeg, application/vnd.ms-excel, application/vnd.ms-powerpoint, application/msword, */*
+                    //Accept-Language: en-ca
+                    //Connection: Keep-Alive
+                    //Host: grc.com
+                    //User-Agent: Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; trieste; .NET CLR 1.1.4322; .NET CLR 1.0.3705)
+                    //Content-Length: 32
+                    //Content-Type: application/x-www-form-urlencoded
+                    //Accept-Encoding: gzip, deflate
+                    //Cache-Control: no-cache
+
+<span class="nc" id="L977">                    connection.setRequestProperty (&quot;Accept&quot;, &quot;image/gif, image/x-xbitmap, image/jpeg, image/pjpeg, application/vnd.ms-excel, application/vnd.ms-powerpoint, application/msword, */*&quot;);</span>
+<span class="nc" id="L978">                    connection.setRequestProperty (&quot;Accept-Language&quot;, &quot;en-ca&quot;);</span>
+<span class="nc" id="L979">                    connection.setRequestProperty (&quot;User-Agent&quot;, &quot;Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; trieste; .NET CLR 1.1.4322; .NET CLR 1.0.3705)&quot;);</span>
+                }
+<span class="nc" id="L981">                connection.setDoOutput (true);</span>
+<span class="nc" id="L982">                connection.setDoInput (true);</span>
+<span class="nc" id="L983">                connection.setUseCaches (false);</span>
+<span class="nc" id="L984">                lexer = new Lexer (connection);</span>
+<span class="nc" id="L985">                results = getThumbelina ().extractImageLinks (lexer, url);</span>
+                // add 'em
+<span class="nc" id="L987">                getThumbelina ().reset ();</span>
+                // remove google links, not just append (results[1]);
+<span class="nc bnc" id="L989" title="All 2 branches missed.">                for (int i = 0; i &lt; results[1].length; i++)</span>
+                {
+<span class="nc" id="L991">                    String found = results[1][i].toString ();</span>
+<span class="nc bnc" id="L992" title="All 2 branches missed.">                    if (-1 == found.indexOf (&quot;google&quot;))</span>
+<span class="nc" id="L993">                        getThumbelina ().append (results[1][i]);</span>
+                }
+<span class="nc" id="L995">                prefs.put (GOOGLEQUERY, query);</span>
+                try
+                {
+<span class="nc" id="L998">                    prefs.flush ();</span>
+<span class="nc" id="L999">                }</span>
+<span class="nc" id="L1000">                catch (BackingStoreException bse)</span>
+                {
+<span class="nc" id="L1002">                    bse.printStackTrace ();</span>
+                }
+            }
+<span class="nc" id="L1005">        }</span>
+<span class="nc" id="L1006">        catch (Exception e)</span>
+        {
+<span class="nc" id="L1008">            System.out.println (e.getMessage ());</span>
+        }
+<span class="nc" id="L1010">    }</span>
+
+    /**
+     * Display information about Thumbelina.
+     */
+    public void about ()
+    {
+        URL url;
+
+        try
+        {
+<span class="nc" id="L1021">            url = new URL (&quot;http://sourceforge.net/sflogo.php?group_id=24399&quot;);</span>
+<span class="nc" id="L1022">        }</span>
+<span class="nc" id="L1023">        catch (MalformedURLException murle)</span>
+        {
+<span class="nc" id="L1025">            url = null;</span>
+        }
+<span class="nc" id="L1027">        JOptionPane.showMessageDialog (</span>
+<span class="nc" id="L1028">            this,</span>
+<span class="nc" id="L1029">            &quot;Scan and display the images behind thumbnails.\n&quot;</span>
+            + &quot;\n&quot;
+            + &quot;An example application using the HTML Parser project.\n&quot;
+            + &quot;Visit http://htmlparser.sourceforge.org for the latest\n&quot;
+            + &quot;version and source code.\n&quot;,
+<span class="nc" id="L1034">            &quot;Thumbelina - About&quot;,</span>
+<span class="nc" id="L1035">            JOptionPane.PLAIN_MESSAGE,</span>
+<span class="nc" id="L1036">            new ImageIcon (url));</span>
+<span class="nc" id="L1037">    }</span>
+
+    /**
+     * Exits the application.
+     * Saves user preferences before exiting.
+     */
+    public void exit ()
+    {
+<span class="nc" id="L1045">        saveState ();</span>
+<span class="nc" id="L1046">        System.exit (0);</span>
+<span class="nc" id="L1047">    }</span>
+
+    /**
+     * Alternate mainline for Thumbelina.
+     * Similar code exists in the Thumbelina class, but this version doesn't
+     * worry about java version.
+     * @param args The command line arguments.
+     * Optionally, arg[0] can be the URL to preload the Thumeblina bean with.
+     */
+    public static void main (final String[] args)
+    {
+        String url;
+        ThumbelinaFrame thumbelina;
+
+<span class="nc" id="L1061">        System.setProperty (&quot;sun.net.client.defaultReadTimeout&quot;, &quot;7000&quot;);</span>
+<span class="nc" id="L1062">        System.setProperty (&quot;sun.net.client.defaultConnectTimeout&quot;, &quot;7000&quot;);</span>
+
+<span class="nc" id="L1064">        url = null;</span>
+<span class="nc bnc" id="L1065" title="All 2 branches missed.">        if (0 != args.length)</span>
+<span class="nc bnc" id="L1066" title="All 2 branches missed.">            if (args[0].equalsIgnoreCase (&quot;help&quot;)</span>
+<span class="nc bnc" id="L1067" title="All 2 branches missed.">                || args[0].equalsIgnoreCase (&quot;-help&quot;)</span>
+<span class="nc bnc" id="L1068" title="All 2 branches missed.">                || args[0].equalsIgnoreCase (&quot;-h&quot;)</span>
+<span class="nc bnc" id="L1069" title="All 2 branches missed.">                || args[0].equalsIgnoreCase (&quot;?&quot;)</span>
+<span class="nc bnc" id="L1070" title="All 2 branches missed.">                || args[0].equalsIgnoreCase (&quot;-?&quot;))</span>
+<span class="nc" id="L1071">                Thumbelina.help ();</span>
+            else
+<span class="nc" id="L1073">                url = args[0];</span>
+
+        try
+        {
+<span class="nc" id="L1077">            thumbelina = new ThumbelinaFrame (url);</span>
+<span class="nc" id="L1078">            thumbelina.setVisible (true);</span>
+<span class="nc" id="L1079">        }</span>
+<span class="nc" id="L1080">        catch (MalformedURLException murle)</span>
+        {
+<span class="nc" id="L1082">            System.err.println (murle.getMessage ());</span>
+<span class="nc" id="L1083">            Thumbelina.help ();</span>
+        }
+<span class="nc" id="L1085">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

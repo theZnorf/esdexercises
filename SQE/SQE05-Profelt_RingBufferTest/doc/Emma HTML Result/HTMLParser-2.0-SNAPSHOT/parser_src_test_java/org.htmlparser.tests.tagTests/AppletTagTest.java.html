@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>AppletTagTest.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tests.tagTests</a> &gt; <span class="el_source">AppletTagTest.java</span></div><h1>AppletTagTest.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Somik Raha
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/test/java/org/htmlparser/tests/tagTests/AppletTagTest.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tests.tagTests;
+
+import java.util.Enumeration;
+import java.util.Hashtable;
+
+import org.htmlparser.tags.AppletTag;
+import org.htmlparser.tests.ParserTestCase;
+import org.htmlparser.util.ParserException;
+
+public class AppletTagTest extends ParserTestCase {
+
+    static
+    {
+<span class="fc" id="L39">        System.setProperty (&quot;org.htmlparser.tests.tagTests.AppletTagTest&quot;, &quot;AppletTagTest&quot;);</span>
+<span class="fc" id="L40">    }</span>
+
+    public AppletTagTest(String name) {
+<span class="fc" id="L43">        super(name);</span>
+<span class="fc" id="L44">    }</span>
+
+    public void testToHTML() throws ParserException {
+<span class="fc" id="L47">        String [][]paramsData = {{&quot;Param1&quot;,&quot;Value1&quot;},{&quot;Name&quot;,&quot;Somik&quot;},{&quot;Age&quot;,&quot;23&quot;}};</span>
+<span class="fc" id="L48">        Hashtable paramsMap = new Hashtable();</span>
+<span class="fc" id="L49">        String testHTML = new String(&quot;&lt;APPLET CODE=Myclass.class ARCHIVE=test.jar CODEBASE=www.kizna.com&gt;\n&quot;);</span>
+<span class="fc bfc" id="L50" title="All 2 branches covered.">        for (int i = 0;i&lt;paramsData.length;i++)</span>
+        {
+<span class="fc" id="L52">            testHTML+=&quot;&lt;PARAM NAME=\&quot;&quot;+paramsData[i][0]+&quot;\&quot; VALUE=\&quot;&quot;+paramsData[i][1]+&quot;\&quot;&gt;\n&quot;;</span>
+<span class="fc" id="L53">            paramsMap.put(paramsData[i][0],paramsData[i][1]);</span>
+        }
+<span class="fc" id="L55">        testHTML+=</span>
+<span class="fc" id="L56">            &quot;&lt;/APPLET&gt;\n&quot;+</span>
+            &quot;&lt;/HTML&gt;&quot;;
+<span class="fc" id="L58">        createParser(testHTML);</span>
+<span class="fc" id="L59">        parseAndAssertNodeCount(3);</span>
+<span class="fc" id="L60">        assertTrue(&quot;Node should be an applet tag&quot;,node[0] instanceof AppletTag);</span>
+        // Check the data in the applet tag
+<span class="fc" id="L62">        AppletTag appletTag = (AppletTag)node[0];</span>
+<span class="fc" id="L63">        String expectedRawString =</span>
+<span class="fc" id="L64">        &quot;&lt;APPLET CODE=Myclass.class ARCHIVE=test.jar CODEBASE=www.kizna.com&gt;\n&quot;+</span>
+        &quot;&lt;PARAM NAME=\&quot;Param1\&quot; VALUE=\&quot;Value1\&quot;&gt;\n&quot;+
+        &quot;&lt;PARAM NAME=\&quot;Name\&quot; VALUE=\&quot;Somik\&quot;&gt;\n&quot;+
+        &quot;&lt;PARAM NAME=\&quot;Age\&quot; VALUE=\&quot;23\&quot;&gt;\n&quot;+
+        &quot;&lt;/APPLET&gt;&quot;;
+<span class="fc" id="L69">        assertStringEquals(&quot;toHTML()&quot;,expectedRawString,appletTag.toHtml());</span>
+<span class="fc" id="L70">    }</span>
+
+    public void testScan() throws ParserException
+    {
+<span class="fc" id="L74">        String [][]paramsData = {{&quot;Param1&quot;,&quot;Value1&quot;},{&quot;Name&quot;,&quot;Somik&quot;},{&quot;Age&quot;,&quot;23&quot;}};</span>
+<span class="fc" id="L75">        Hashtable paramsMap = new Hashtable();</span>
+<span class="fc" id="L76">        String testHTML = new String(&quot;&lt;APPLET CODE=Myclass.class ARCHIVE=test.jar CODEBASE=www.kizna.com&gt;\n&quot;);</span>
+<span class="fc bfc" id="L77" title="All 2 branches covered.">        for (int i = 0;i&lt;paramsData.length;i++)</span>
+        {
+<span class="fc" id="L79">            testHTML+=&quot;&lt;PARAM NAME=\&quot;&quot;+paramsData[i][0]+&quot;\&quot; VALUE=\&quot;&quot;+paramsData[i][1]+&quot;\&quot;&gt;\n&quot;;</span>
+<span class="fc" id="L80">            paramsMap.put(paramsData[i][0],paramsData[i][1]);</span>
+        }
+<span class="fc" id="L82">        testHTML+=</span>
+<span class="fc" id="L83">            &quot;&lt;/APPLET&gt;&lt;/HTML&gt;&quot;;</span>
+<span class="fc" id="L84">        createParser(testHTML);</span>
+<span class="fc" id="L85">        parseAndAssertNodeCount(2);</span>
+<span class="fc" id="L86">        assertTrue(&quot;Node should be an applet tag&quot;,node[0] instanceof AppletTag);</span>
+        // Check the data in the applet tag
+<span class="fc" id="L88">        AppletTag appletTag = (AppletTag)node[0];</span>
+<span class="fc" id="L89">        assertEquals(&quot;Class Name&quot;,&quot;Myclass.class&quot;,appletTag.getAppletClass());</span>
+<span class="fc" id="L90">        assertEquals(&quot;Archive&quot;,&quot;test.jar&quot;,appletTag.getArchive());</span>
+<span class="fc" id="L91">        assertEquals(&quot;Codebase&quot;,&quot;www.kizna.com&quot;,appletTag.getCodeBase());</span>
+        // Check the params data
+<span class="fc" id="L93">        int cnt = 0;</span>
+<span class="fc bfc" id="L94" title="All 2 branches covered.">        for (Enumeration e = appletTag.getParameterNames();e.hasMoreElements();)</span>
+        {
+<span class="fc" id="L96">            String paramName = (String)e.nextElement();</span>
+<span class="fc" id="L97">            String paramValue = appletTag.getParameter(paramName);</span>
+<span class="fc" id="L98">            assertEquals(&quot;Param &quot;+cnt+&quot; value&quot;,paramsMap.get(paramName),paramValue);</span>
+<span class="fc" id="L99">            cnt++;</span>
+        }
+<span class="fc" id="L101">        assertEquals(&quot;Number of params&quot;,new Integer(paramsData.length),new Integer(cnt));</span>
+<span class="fc" id="L102">    }</span>
+    
+    public void testChangeCodebase() throws ParserException {
+<span class="fc" id="L105">        String [][]paramsData = {{&quot;Param1&quot;,&quot;Value1&quot;},{&quot;Name&quot;,&quot;Somik&quot;},{&quot;Age&quot;,&quot;23&quot;}};</span>
+<span class="fc" id="L106">        Hashtable paramsMap = new Hashtable();</span>
+<span class="fc" id="L107">        String testHTML = new String(&quot;&lt;APPLET CODE=Myclass.class ARCHIVE=test.jar CODEBASE=www.kizna.com&gt;\n&quot;);</span>
+<span class="fc bfc" id="L108" title="All 2 branches covered.">        for (int i = 0;i&lt;paramsData.length;i++)</span>
+        {
+<span class="fc" id="L110">            testHTML+=&quot;&lt;PARAM NAME=\&quot;&quot;+paramsData[i][0]+&quot;\&quot; VALUE=\&quot;&quot;+paramsData[i][1]+&quot;\&quot;&gt;\n&quot;;</span>
+<span class="fc" id="L111">            paramsMap.put(paramsData[i][0],paramsData[i][1]);</span>
+        }
+<span class="fc" id="L113">        testHTML+=</span>
+<span class="fc" id="L114">            &quot;&lt;/APPLET&gt;\n&quot;+</span>
+            &quot;&lt;/HTML&gt;&quot;;
+<span class="fc" id="L116">        createParser(testHTML);</span>
+<span class="fc" id="L117">        parseAndAssertNodeCount(3);</span>
+<span class="fc" id="L118">        assertTrue(&quot;Node should be an applet tag&quot;,node[0] instanceof AppletTag);</span>
+<span class="fc" id="L119">        AppletTag appletTag = (AppletTag)node[0];</span>
+<span class="fc" id="L120">        appletTag.setCodeBase (&quot;htmlparser.sourceforge.net&quot;);</span>
+        // Check the data in the applet tag
+<span class="fc" id="L122">        String expectedRawString =</span>
+<span class="fc" id="L123">        &quot;&lt;APPLET CODE=Myclass.class ARCHIVE=test.jar CODEBASE=htmlparser.sourceforge.net&gt;\n&quot;+</span>
+        &quot;&lt;PARAM NAME=\&quot;Param1\&quot; VALUE=\&quot;Value1\&quot;&gt;\n&quot;+
+        &quot;&lt;PARAM NAME=\&quot;Name\&quot; VALUE=\&quot;Somik\&quot;&gt;\n&quot;+
+        &quot;&lt;PARAM NAME=\&quot;Age\&quot; VALUE=\&quot;23\&quot;&gt;\n&quot;+
+        &quot;&lt;/APPLET&gt;&quot;;
+<span class="fc" id="L128">        assertStringEquals(&quot;toHTML()&quot;,expectedRawString,appletTag.toHtml());</span>
+<span class="fc" id="L129">    }</span>
+
+    public void testChangeArchive() throws ParserException {
+<span class="fc" id="L132">        String [][]paramsData = {{&quot;Param1&quot;,&quot;Value1&quot;},{&quot;Name&quot;,&quot;Somik&quot;},{&quot;Age&quot;,&quot;23&quot;}};</span>
+<span class="fc" id="L133">        Hashtable paramsMap = new Hashtable();</span>
+<span class="fc" id="L134">        String testHTML = &quot;&lt;APPLET CODE=Myclass.class ARCHIVE=test.jar CODEBASE=www.kizna.com&gt;\n&quot;;</span>
+<span class="fc bfc" id="L135" title="All 2 branches covered.">        for (int i = 0;i&lt;paramsData.length;i++)</span>
+        {
+<span class="fc" id="L137">            testHTML+=&quot;&lt;PARAM NAME=\&quot;&quot;+paramsData[i][0]+&quot;\&quot; VALUE=\&quot;&quot;+paramsData[i][1]+&quot;\&quot;&gt;\n&quot;;</span>
+<span class="fc" id="L138">            paramsMap.put(paramsData[i][0],paramsData[i][1]);</span>
+        }
+<span class="fc" id="L140">        testHTML +=</span>
+<span class="fc" id="L141">            &quot;&lt;/APPLET&gt;&quot;;</span>
+<span class="fc" id="L142">        createParser(testHTML + &quot;\n&lt;/HTML&gt;&quot;);</span>
+<span class="fc" id="L143">        parseAndAssertNodeCount(3);</span>
+<span class="fc" id="L144">        assertTrue(&quot;Node should be an applet tag&quot;,node[0] instanceof AppletTag);</span>
+<span class="fc" id="L145">        AppletTag appletTag = (AppletTag)node[0];</span>
+<span class="fc" id="L146">        appletTag.setArchive (&quot;htmlparser.jar&quot;);</span>
+        // Check the data in the applet tag
+<span class="fc" id="L148">        testHTML = testHTML.substring (0, testHTML.indexOf (&quot;test.jar&quot;))</span>
+<span class="fc" id="L149">            + &quot;htmlparser.jar&quot;</span>
+<span class="fc" id="L150">            + testHTML.substring (testHTML.indexOf (&quot;test.jar&quot;) + 8);</span>
+<span class="fc" id="L151">        assertStringEquals(&quot;toHTML()&quot;,testHTML,appletTag.toHtml());</span>
+<span class="fc" id="L152">    }</span>
+
+    public void testChangeAppletClass() throws ParserException {
+<span class="fc" id="L155">        String [][]paramsData = {{&quot;Param1&quot;,&quot;Value1&quot;},{&quot;Name&quot;,&quot;Somik&quot;},{&quot;Age&quot;,&quot;23&quot;}};</span>
+<span class="fc" id="L156">        Hashtable paramsMap = new Hashtable();</span>
+<span class="fc" id="L157">        String testHTML = new String(&quot;&lt;APPLET CODE=Myclass.class ARCHIVE=test.jar CODEBASE=www.kizna.com&gt;\n&quot;);</span>
+<span class="fc bfc" id="L158" title="All 2 branches covered.">        for (int i = 0;i&lt;paramsData.length;i++)</span>
+        {
+<span class="fc" id="L160">            testHTML+=&quot;&lt;PARAM NAME=\&quot;&quot;+paramsData[i][0]+&quot;\&quot; VALUE=\&quot;&quot;+paramsData[i][1]+&quot;\&quot;&gt;\n&quot;;</span>
+<span class="fc" id="L161">            paramsMap.put(paramsData[i][0],paramsData[i][1]);</span>
+        }
+<span class="fc" id="L163">        testHTML+=</span>
+<span class="fc" id="L164">            &quot;&lt;/APPLET&gt;&quot;;</span>
+<span class="fc" id="L165">        createParser(testHTML + &quot;\n&lt;/HTML&gt;&quot;);</span>
+<span class="fc" id="L166">        parseAndAssertNodeCount(3);</span>
+<span class="fc" id="L167">        assertTrue(&quot;Node should be an applet tag&quot;,node[0] instanceof AppletTag);</span>
+<span class="fc" id="L168">        AppletTag appletTag = (AppletTag)node[0];</span>
+<span class="fc" id="L169">        appletTag.setAppletClass (&quot;MyOtherClass.class&quot;);</span>
+        // Check the data in the applet tag
+<span class="fc" id="L171">        testHTML = testHTML.substring (0, testHTML.indexOf (&quot;Myclass.class&quot;))</span>
+<span class="fc" id="L172">            + &quot;MyOtherClass.class&quot;</span>
+<span class="fc" id="L173">            + testHTML.substring (testHTML.indexOf (&quot;Myclass.class&quot;) + 13);</span>
+<span class="fc" id="L174">        assertStringEquals(&quot;toHTML()&quot;,testHTML,appletTag.toHtml());</span>
+<span class="fc" id="L175">    }</span>
+
+    public void testChangeAppletParams() throws ParserException {
+<span class="fc" id="L178">        String [][]paramsData = {{&quot;Param1&quot;,&quot;Value1&quot;},{&quot;Name&quot;,&quot;Somik&quot;},{&quot;Age&quot;,&quot;23&quot;}};</span>
+<span class="fc" id="L179">        Hashtable paramsMap = new Hashtable();</span>
+<span class="fc" id="L180">        String testHTML = new String(&quot;&lt;APPLET CODE=Myclass.class ARCHIVE=test.jar CODEBASE=www.kizna.com&gt;\n&quot;);</span>
+<span class="fc bfc" id="L181" title="All 2 branches covered.">        for (int i = 0;i&lt;paramsData.length;i++)</span>
+        {
+<span class="fc" id="L183">            testHTML+=&quot;&lt;PARAM NAME=\&quot;&quot;+paramsData[i][0]+&quot;\&quot; VALUE=\&quot;&quot;+paramsData[i][1]+&quot;\&quot;&gt;\n&quot;;</span>
+<span class="fc" id="L184">            paramsMap.put(paramsData[i][0],paramsData[i][1]);</span>
+        }
+<span class="fc" id="L186">        testHTML+=</span>
+<span class="fc" id="L187">            &quot;&lt;/APPLET&gt;\n&quot;+</span>
+            &quot;&lt;/HTML&gt;&quot;;
+<span class="fc" id="L189">        createParser(testHTML);</span>
+<span class="fc" id="L190">        parseAndAssertNodeCount(3);</span>
+<span class="fc" id="L191">        assertTrue(&quot;Node should be an applet tag&quot;,node[0] instanceof AppletTag);</span>
+<span class="fc" id="L192">        AppletTag appletTag = (AppletTag)node[0];</span>
+<span class="fc" id="L193">        paramsMap = new Hashtable();</span>
+<span class="fc" id="L194">        String [][] newparamsData = {{&quot;First&quot;,&quot;One&quot;},{&quot;Second&quot;,&quot;Two&quot;},{&quot;Third&quot;,&quot;3&quot;}};</span>
+<span class="fc bfc" id="L195" title="All 2 branches covered.">        for (int i = 0;i&lt;paramsData.length;i++)</span>
+        {
+<span class="fc" id="L197">            paramsMap.put(newparamsData[i][0],newparamsData[i][1]);</span>
+        }
+<span class="fc" id="L199">        appletTag.setAppletParams (paramsMap);</span>
+        // Check the data in the applet tag
+<span class="fc" id="L201">        String expectedRawString =</span>
+<span class="fc" id="L202">        &quot;&lt;APPLET CODE=Myclass.class ARCHIVE=test.jar CODEBASE=www.kizna.com&gt;\n&quot;+</span>
+        &quot;&lt;PARAM VALUE=\&quot;Two\&quot; NAME=\&quot;Second\&quot;&gt;&quot;+ // note these are out of orer because of the hashtable
+        &quot;&lt;PARAM VALUE=\&quot;One\&quot; NAME=\&quot;First\&quot;&gt;&quot;+
+        &quot;&lt;PARAM VALUE=\&quot;3\&quot; NAME=\&quot;Third\&quot;&gt;&quot;+
+        &quot;&lt;/APPLET&gt;&quot;;
+<span class="fc" id="L207">        String actual = appletTag.toHtml();</span>
+<span class="fc" id="L208">        assertStringEquals(&quot;toHTML()&quot;,expectedRawString,actual);</span>
+<span class="fc" id="L209">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

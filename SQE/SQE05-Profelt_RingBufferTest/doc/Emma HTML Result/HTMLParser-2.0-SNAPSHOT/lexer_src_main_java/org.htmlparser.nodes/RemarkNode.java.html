@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>RemarkNode.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">lexer/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.nodes</a> &gt; <span class="el_source">RemarkNode.java</span></div><h1>RemarkNode.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/lexer/src/main/java/org/htmlparser/nodes/RemarkNode.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.nodes;
+
+import org.htmlparser.Remark;
+import org.htmlparser.lexer.Cursor;
+import org.htmlparser.lexer.Page;
+import org.htmlparser.util.ParserException;
+import org.htmlparser.visitors.NodeVisitor;
+
+/**
+ * The remark tag is identified and represented by this class.
+ */
+public class RemarkNode
+    extends
+        AbstractNode
+    implements
+        Remark
+{
+    /**
+     * The contents of the remark node, or override text.
+     */
+    protected String mText;
+
+    /**
+     * Constructor takes in the text string.
+     * @param text The string node text. For correct generation of HTML, this
+     * should not contain representations of tags (unless they are balanced).
+     */
+    public RemarkNode (String text)
+    {
+<span class="nc" id="L55">        super (null, 0, 0);</span>
+<span class="nc" id="L56">        setText (text);</span>
+<span class="nc" id="L57">    }</span>
+
+    /**
+     * Constructor takes in the page and beginning and ending posns.
+     * @param page The page this remark is on.
+     * @param start The beginning position of the remark.
+     * @param end The ending positiong of the remark.
+     */
+    public RemarkNode (Page page, int start, int end)
+    {
+<span class="fc" id="L67">        super (page, start, end);</span>
+<span class="fc" id="L68">        mText = null;</span>
+<span class="fc" id="L69">    }</span>
+
+    /**
+     * Returns the text contents of the comment tag.
+     * @return The contents of the text inside the comment delimiters.
+     */
+    public String getText ()
+    {
+        int start;
+        int end;
+        String ret;
+
+<span class="fc bfc" id="L81" title="All 2 branches covered.">        if (null == mText)</span>
+        {
+<span class="fc" id="L83">            start = getStartPosition () + 4; // &lt;!--</span>
+<span class="fc" id="L84">            end = getEndPosition () - 3; // --&gt;</span>
+<span class="fc bfc" id="L85" title="All 2 branches covered.">            if (start &gt;= end)</span>
+<span class="fc" id="L86">                ret = &quot;&quot;;</span>
+            else
+<span class="fc" id="L88">                ret = mPage.getText (start, end);</span>
+<span class="fc" id="L89">        }</span>
+        else
+<span class="fc" id="L91">            ret = mText;</span>
+
+<span class="fc" id="L93">        return (ret);</span>
+    }
+
+    /**
+     * Sets the string contents of the node.
+     * If the text has the remark delimiters (&amp;lt;!-- --&amp;gt;), these are stripped off.
+     * @param text The new text for the node.
+     */
+    public void setText (String text)
+    {
+<span class="fc" id="L103">        mText = text;</span>
+<span class="pc bpc" id="L104" title="1 of 4 branches missed.">        if (text.startsWith (&quot;&lt;!--&quot;) &amp;&amp; text.endsWith (&quot;--&gt;&quot;))</span>
+<span class="fc" id="L105">            mText = text.substring (4, text.length () - 3);</span>
+<span class="fc" id="L106">        nodeBegin = 0;</span>
+<span class="fc" id="L107">        nodeEnd = mText.length ();</span>
+<span class="fc" id="L108">    }</span>
+
+    /**
+     * Return the remark text.
+     * @return The HTML comment.
+     */
+    public String toPlainTextString ()
+    {
+<span class="nc" id="L116">        return (&quot;&quot;);</span>
+    }
+
+    /**
+     * Return The full HTML remark.
+     * @param verbatim If &lt;code&gt;true&lt;/code&gt; return as close to the original
+     * page text as possible.
+     * @return The comment, i.e. {@.html &lt;!-- this is a comment --&gt;}.
+     */
+    public String toHtml (boolean verbatim)
+    {
+        StringBuffer buffer;
+        String ret;
+        
+<span class="fc bfc" id="L130" title="All 2 branches covered.">        if (null == mText)</span>
+<span class="fc" id="L131">            ret = mPage.getText (getStartPosition (), getEndPosition ());</span>
+        else
+        {
+<span class="fc" id="L134">            buffer = new StringBuffer (mText.length () + 7);</span>
+<span class="fc" id="L135">            buffer.append (&quot;&lt;!--&quot;);</span>
+<span class="fc" id="L136">            buffer.append (mText);</span>
+<span class="fc" id="L137">            buffer.append (&quot;--&gt;&quot;);</span>
+<span class="fc" id="L138">            ret = buffer.toString ();</span>
+        }
+
+<span class="fc" id="L141">        return (ret);</span>
+    }
+
+    /**
+     * Print the contents of the remark tag.
+     * This is suitable for display in a debugger or output to a printout.
+     * Control characters are replaced by their equivalent escape
+     * sequence and contents is truncated to 80 characters.
+     * @return A string representation of the remark node.
+     */
+    public String toString()
+    {
+        int startpos;
+        int endpos;
+        Cursor start;
+        Cursor end;
+        char c;
+        StringBuffer ret;
+
+<span class="fc" id="L160">        startpos = getStartPosition ();</span>
+<span class="fc" id="L161">        endpos = getEndPosition ();</span>
+<span class="fc" id="L162">        ret = new StringBuffer (endpos - startpos + 20);</span>
+<span class="fc bfc" id="L163" title="All 2 branches covered.">        if (null == mText)</span>
+        {
+<span class="fc" id="L165">            start = new Cursor (getPage (), startpos);</span>
+<span class="fc" id="L166">            end = new Cursor (getPage (), endpos);</span>
+<span class="fc" id="L167">            ret.append (&quot;Rem (&quot;);</span>
+<span class="fc" id="L168">            ret.append (start);</span>
+<span class="fc" id="L169">            ret.append (&quot;,&quot;);</span>
+<span class="fc" id="L170">            ret.append (end);</span>
+<span class="fc" id="L171">            ret.append (&quot;): &quot;);</span>
+<span class="fc" id="L172">            start.setPosition (startpos + 4); // &lt;!--</span>
+<span class="fc" id="L173">            endpos -= 3; // --&gt;</span>
+<span class="fc bfc" id="L174" title="All 2 branches covered.">            while (start.getPosition () &lt; endpos)</span>
+            {
+                try
+                {
+<span class="fc" id="L178">                    c = mPage.getCharacter (start);</span>
+<span class="pc bpc" id="L179" title="3 of 4 branches missed.">                    switch (c)</span>
+                    {
+                        case '\t':
+<span class="nc" id="L182">                            ret.append (&quot;\\t&quot;);</span>
+<span class="nc" id="L183">                            break;</span>
+                        case '\n':
+<span class="nc" id="L185">                            ret.append (&quot;\\n&quot;);</span>
+<span class="nc" id="L186">                            break;</span>
+                        case '\r':
+<span class="nc" id="L188">                            ret.append (&quot;\\r&quot;);</span>
+<span class="nc" id="L189">                            break;</span>
+                        default:
+<span class="fc" id="L191">                            ret.append (c);</span>
+                    }
+<span class="fc" id="L193">                }</span>
+<span class="nc" id="L194">                catch (ParserException pe)</span>
+                {
+                    // not really expected, but we're only doing toString, so ignore
+                }
+<span class="fc bfc" id="L198" title="All 2 branches covered.">                if (77 &lt;= ret.length ())</span>
+                {
+<span class="fc" id="L200">                    ret.append (&quot;...&quot;);</span>
+<span class="fc" id="L201">                    break;</span>
+                }
+            }
+<span class="fc" id="L204">        }</span>
+        else
+        {
+<span class="fc" id="L207">            ret.append (&quot;Rem (&quot;);</span>
+<span class="fc" id="L208">            ret.append (startpos);</span>
+<span class="fc" id="L209">            ret.append (&quot;,&quot;);</span>
+<span class="fc" id="L210">            ret.append (endpos);</span>
+<span class="fc" id="L211">            ret.append (&quot;): &quot;);</span>
+<span class="fc bfc" id="L212" title="All 2 branches covered.">            for (int i = 0; i &lt; mText.length (); i++)</span>
+            {
+<span class="fc" id="L214">                c = mText.charAt (i);</span>
+<span class="pc bpc" id="L215" title="3 of 4 branches missed.">                switch (c)</span>
+                {
+                    case '\t':
+<span class="nc" id="L218">                        ret.append (&quot;\\t&quot;);</span>
+<span class="nc" id="L219">                        break;</span>
+                    case '\n':
+<span class="nc" id="L221">                        ret.append (&quot;\\n&quot;);</span>
+<span class="nc" id="L222">                        break;</span>
+                    case '\r':
+<span class="nc" id="L224">                        ret.append (&quot;\\r&quot;);</span>
+<span class="nc" id="L225">                        break;</span>
+                    default:
+<span class="fc" id="L227">                        ret.append (c);</span>
+                }
+<span class="pc bpc" id="L229" title="1 of 2 branches missed.">                if (77 &lt;= ret.length ())</span>
+                {
+<span class="nc" id="L231">                    ret.append (&quot;...&quot;);</span>
+<span class="nc" id="L232">                    break;</span>
+                }
+            }
+        }
+
+<span class="fc" id="L237">        return (ret.toString ());</span>
+    }
+
+    /**
+     * Remark visiting code.
+     * @param visitor The &lt;code&gt;NodeVisitor&lt;/code&gt; object to invoke 
+     * &lt;code&gt;visitRemarkNode()&lt;/code&gt; on.
+     */
+    public void accept (NodeVisitor visitor)
+    {
+<span class="nc" id="L247">        visitor.visitRemarkNode (this);</span>
+<span class="nc" id="L248">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

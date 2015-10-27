@@ -1,0 +1,34 @@
+1.
+    branches:
+        project:            42.8 %
+        tests:              59.7 %
+        application code:   40   %
+    instructions:
+        project:            61.7 %
+        tests:              90.7 %
+        application code:   41   %
+    
+    the coverage of the application code excluding the tests is lower than the
+    projects coverage because the tests does show a greater coverage for
+    branches and instructions
+
+2.
+    connected:
+        branches:       59.7 %
+        instructions:   90.7 %
+    disconnected:
+        branches:       50.3 %
+        instructions:   85.9 %
+
+    yes the results differ, due to different execution paths with or without
+    active connection, potential problems would be if only one of the cases
+    is tested and the application code crashes in some situation of the other
+    case
+
+3.
+    type coverage: 100 %
+    
+    including multiple classes in a testcase of a specific class can be
+    problematic due to possible misinterpreted testresults e.g. when the failure
+    is caused by additional classes and not by the tested class.
+    this could lead to an overseen broken code within the tested class.

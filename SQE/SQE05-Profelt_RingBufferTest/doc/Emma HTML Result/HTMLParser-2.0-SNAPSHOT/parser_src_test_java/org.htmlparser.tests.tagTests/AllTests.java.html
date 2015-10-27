@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>AllTests.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tests.tagTests</a> &gt; <span class="el_source">AllTests.java</span></div><h1>AllTests.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Somik Raha
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/test/java/org/htmlparser/tests/tagTests/AllTests.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tests.tagTests;
+
+import junit.framework.TestSuite;
+
+import org.htmlparser.tests.ParserTestCase;
+
+public class AllTests extends ParserTestCase
+{
+    static
+    {
+<span class="fc" id="L36">        System.setProperty (&quot;org.htmlparser.tests.tagTests.AllTests&quot;, &quot;AllTests&quot;);</span>
+<span class="fc" id="L37">    }</span>
+
+    public AllTests(String name) {
+<span class="nc" id="L40">        super(name);</span>
+<span class="nc" id="L41">    }</span>
+
+    public static TestSuite suite() {
+<span class="fc" id="L44">        TestSuite suite = new TestSuite(&quot;Tag Tests&quot;);</span>
+<span class="fc" id="L45">        suite.addTestSuite(AppletTagTest.class);</span>
+<span class="fc" id="L46">        suite.addTestSuite(BaseHrefTagTest.class);</span>
+<span class="fc" id="L47">        suite.addTestSuite(BodyTagTest.class);</span>
+<span class="fc" id="L48">        suite.addTestSuite(BulletListTagTest.class);</span>
+<span class="fc" id="L49">        suite.addTestSuite(BulletTagTest.class);</span>
+<span class="fc" id="L50">        suite.addTestSuite(CompositeTagTest.class);</span>
+<span class="fc" id="L51">        suite.addTestSuite(DivTagTest.class);</span>
+<span class="fc" id="L52">        suite.addTestSuite(DoctypeTagTest.class);</span>
+<span class="fc" id="L53">        suite.addTestSuite(EndTagTest.class);</span>
+<span class="fc" id="L54">        suite.addTestSuite(FormTagTest.class);</span>
+<span class="fc" id="L55">        suite.addTestSuite(FrameSetTagTest.class);</span>
+<span class="fc" id="L56">        suite.addTestSuite(FrameTagTest.class);</span>
+<span class="fc" id="L57">        suite.addTestSuite(HeadTagTest.class);</span>
+<span class="fc" id="L58">        suite.addTestSuite(HtmlTagTest.class);</span>
+<span class="fc" id="L59">        suite.addTestSuite(ImageTagTest.class);</span>
+<span class="fc" id="L60">        suite.addTestSuite(InputTagTest.class);</span>
+<span class="fc" id="L61">        suite.addTestSuite(JspTagTest.class);</span>
+<span class="fc" id="L62">        suite.addTestSuite(LabelTagTest.class);</span>
+<span class="fc" id="L63">        suite.addTestSuite(LinkTagTest.class);</span>
+<span class="fc" id="L64">        suite.addTestSuite(MetaTagTest.class);</span>
+<span class="fc" id="L65">        suite.addTestSuite(ObjectCollectionTest.class);</span>
+<span class="fc" id="L66">        suite.addTestSuite(OptionTagTest.class);</span>
+<span class="fc" id="L67">        suite.addTestSuite(ScriptTagTest.class);</span>
+<span class="fc" id="L68">        suite.addTestSuite(SelectTagTest.class);</span>
+<span class="fc" id="L69">        suite.addTestSuite(SpanTagTest.class);</span>
+<span class="fc" id="L70">        suite.addTestSuite(StyleTagTest.class);</span>
+<span class="fc" id="L71">        suite.addTestSuite(TableTagTest.class);</span>
+<span class="fc" id="L72">        suite.addTestSuite(TagTest.class);</span>
+<span class="fc" id="L73">        suite.addTestSuite(TextareaTagTest.class);</span>
+<span class="fc" id="L74">        suite.addTestSuite(TitleTagTest.class);</span>
+<span class="fc" id="L75">        return suite;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

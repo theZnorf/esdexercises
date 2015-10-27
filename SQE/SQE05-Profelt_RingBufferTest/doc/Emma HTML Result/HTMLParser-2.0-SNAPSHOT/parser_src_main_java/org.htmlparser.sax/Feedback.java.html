@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>Feedback.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.sax</a> &gt; <span class="el_source">Feedback.java</span></div><h1>Feedback.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/main/java/org/htmlparser/sax/Feedback.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.sax;
+
+import org.xml.sax.ErrorHandler;
+import org.xml.sax.Locator;
+import org.xml.sax.SAXParseException;
+
+import org.htmlparser.util.ParserException;
+import org.htmlparser.util.ParserFeedback;
+import org.xml.sax.SAXException;
+
+/**
+ * Mediates between the feedback mechanism of the htmlparser and an error handler.
+ */
+public class Feedback
+    implements
+        ParserFeedback
+{
+    /**
+     * The error handler to call back on.
+     */
+    protected ErrorHandler mErrorHandler;
+
+    /**
+     * The locator for tag positions.
+     */
+    protected Locator mLocator;
+
+    /**
+     * Create a feedback/error handler mediator.
+     * @param handler The callback object.
+     * @param locator A locator for error locations.
+     */
+<span class="nc" id="L58">    public Feedback (ErrorHandler handler, Locator locator)</span>
+    {
+<span class="nc" id="L60">        mErrorHandler = handler;</span>
+<span class="nc" id="L61">        mLocator = locator;</span>
+<span class="nc" id="L62">    }</span>
+
+    /**
+     * Information message.
+     * &lt;em&gt;Just eats the info message.&lt;/em&gt;
+     * @param message {@inheritDoc} 
+     */
+    public void info (String message)
+    {
+        // swallow
+<span class="nc" id="L72">    }</span>
+
+    /**
+     * Warning message.
+     * Calls {@link ErrorHandler#warning(SAXParseException) ErrorHandler.warning}.
+     * @param message {@inheritDoc} 
+     */
+    public void warning (String message)
+    {
+        try
+        {
+<span class="nc" id="L83">            mErrorHandler.warning (</span>
+<span class="nc" id="L84">                new SAXParseException (message, mLocator));</span>
+<span class="nc" id="L85">        }</span>
+<span class="nc" id="L86">        catch (SAXException se)</span>
+        {
+<span class="nc" id="L88">            se.printStackTrace ();</span>
+        }
+<span class="nc" id="L90">    }</span>
+
+    /**
+     * Error message.
+     * Calls {@link ErrorHandler#error(SAXParseException) ErrorHandler.error}.
+     * @param message {@inheritDoc} 
+     * @param e {@inheritDoc} 
+     */
+    public void error (String message, ParserException e)
+    {
+        try
+        {
+<span class="nc" id="L102">            mErrorHandler.error (</span>
+<span class="nc" id="L103">                new SAXParseException (message, mLocator, e));</span>
+<span class="nc" id="L104">        }</span>
+<span class="nc" id="L105">        catch (SAXException se)</span>
+        {
+<span class="nc" id="L107">            se.printStackTrace ();</span>
+        }
+<span class="nc" id="L109">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

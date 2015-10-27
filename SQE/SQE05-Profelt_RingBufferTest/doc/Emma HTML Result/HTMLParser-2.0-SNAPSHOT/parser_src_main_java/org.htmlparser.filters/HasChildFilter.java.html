@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>HasChildFilter.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.filters</a> &gt; <span class="el_source">HasChildFilter.java</span></div><h1>HasChildFilter.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/main/java/org/htmlparser/filters/HasChildFilter.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.filters;
+
+import org.htmlparser.Node;
+import org.htmlparser.NodeFilter;
+import org.htmlparser.tags.CompositeTag;
+import org.htmlparser.util.NodeList;
+
+/**
+ * This class accepts all tags that have a child acceptable to the filter.
+ * It can be set to operate recursively, that is perform a scan down
+ * through the node heirarchy in a breadth first traversal looking for any
+ * descendant that matches the predicate filter (which stops the search).
+ */
+public class HasChildFilter
+    implements
+        NodeFilter
+{
+    /**
+     * The filter to apply to children.
+     */
+    protected NodeFilter mChildFilter;
+
+    /**
+     * Performs a recursive search down the node heirarchy if &lt;code&gt;true&lt;/code&gt;.
+     */
+    protected boolean mRecursive;
+
+    /**
+     * Creates a new instance of a HasChildFilter.
+     * With no child filter, this would always return &lt;code&gt;false&lt;/code&gt;
+     * from {@link #accept}.
+     */
+    public HasChildFilter ()
+    {
+<span class="nc" id="L60">        this (null);</span>
+<span class="nc" id="L61">    }</span>
+
+    /**
+     * Creates a new instance of HasChildFilter that accepts nodes
+     * with a direct child acceptable to the filter.
+     * @param filter The filter to apply to the children.
+     */
+    public HasChildFilter (NodeFilter filter)
+    {
+<span class="fc" id="L70">        this (filter, false);</span>
+<span class="fc" id="L71">    }</span>
+
+    /**
+     * Creates a new instance of HasChildFilter that accepts nodes
+     * with a child acceptable to the filter.
+     * Of necessity, this applies only to composite tags, i.e. those that can
+     * contain other nodes, for example &amp;lt;HTML&amp;gt;&amp;lt;/HTML&amp;gt;.
+     * @param filter The filter to apply to children.
+     * @param recursive If &lt;code&gt;true&lt;/code&gt;, any enclosed node acceptable
+     * to the given filter causes the node being tested to be accepted
+     * (i.e. a recursive scan through the child nodes down the node
+     * heirarchy is performed).
+     */
+<span class="fc" id="L84">    public HasChildFilter (NodeFilter filter, boolean recursive)</span>
+    {
+<span class="fc" id="L86">        setChildFilter (filter);</span>
+<span class="fc" id="L87">        setRecursive (recursive);    }</span>
+
+    /**
+     * Get the filter used by this HasParentFilter.
+     * @return The filter to apply to parents.
+     */
+    public NodeFilter getChildFilter ()
+    {
+<span class="fc" id="L95">        return (mChildFilter);</span>
+    }
+
+    /**
+     * Set the filter for this HasParentFilter.
+     * @param filter The filter to apply to parents in {@link #accept}.
+     */
+    public void setChildFilter (NodeFilter filter)
+    {
+<span class="fc" id="L104">        mChildFilter = filter;</span>
+<span class="fc" id="L105">    }</span>
+
+    /**
+     * Get the recusion setting for the filter.
+     * @return Returns &lt;code&gt;true&lt;/code&gt; if the filter is recursive
+     * up the node heirarchy.
+     */
+    public boolean getRecursive ()
+    {
+<span class="fc" id="L114">        return (mRecursive);</span>
+    }
+
+    /**
+     * Sets whether the filter is recursive or not.
+     * @param recursive The recursion setting for the filter.
+     */
+    public void setRecursive (boolean recursive)
+    {
+<span class="fc" id="L123">        mRecursive = recursive;</span>
+<span class="fc" id="L124">    }</span>
+
+    /**
+     * Accept tags with children acceptable to the filter.
+     * @param node The node to check.
+     * @return &lt;code&gt;true&lt;/code&gt; if the node has an acceptable child,
+     * &lt;code&gt;false&lt;/code&gt; otherwise.
+     */
+    public boolean accept (Node node)
+    {
+        CompositeTag tag;
+        NodeList children;
+        boolean ret;
+
+<span class="fc" id="L138">        ret = false;</span>
+<span class="fc bfc" id="L139" title="All 2 branches covered.">        if (node instanceof CompositeTag)</span>
+        {
+<span class="fc" id="L141">            tag = (CompositeTag)node;</span>
+<span class="fc" id="L142">            children = tag.getChildren ();</span>
+<span class="pc bpc" id="L143" title="1 of 2 branches missed.">            if (null != children)</span>
+            {
+<span class="fc bfc" id="L145" title="All 4 branches covered.">                for (int i = 0; !ret &amp;&amp; i &lt; children.size (); i++)</span>
+<span class="fc bfc" id="L146" title="All 2 branches covered.">                    if (getChildFilter ().accept (children.elementAt (i)))</span>
+<span class="fc" id="L147">                        ret = true;</span>
+                // do recursion after all children are checked
+                // to get breadth first traversal
+<span class="pc bpc" id="L150" title="1 of 4 branches missed.">                if (!ret &amp;&amp; getRecursive ())</span>
+<span class="nc bnc" id="L151" title="All 4 branches missed.">                    for (int i = 0; !ret &amp;&amp; i &lt; children.size (); i++)</span>
+<span class="nc bnc" id="L152" title="All 2 branches missed.">                        if (accept (children.elementAt (i)))</span>
+<span class="nc" id="L153">                            ret = true;</span>
+            }
+        }
+
+<span class="fc" id="L157">        return (ret);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

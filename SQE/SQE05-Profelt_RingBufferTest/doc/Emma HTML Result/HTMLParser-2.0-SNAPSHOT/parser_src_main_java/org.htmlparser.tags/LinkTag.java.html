@@ -1,0 +1,320 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>LinkTag.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">parser/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.tags</a> &gt; <span class="el_source">LinkTag.java</span></div><h1>LinkTag.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Somik Raha
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/parser/src/main/java/org/htmlparser/tags/LinkTag.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.tags;
+
+import org.htmlparser.Node;
+import org.htmlparser.util.ParserUtils;
+import org.htmlparser.util.SimpleNodeIterator;
+
+/**
+ * Identifies a link tag.
+ */
+public class LinkTag extends CompositeTag
+{
+    /**
+     * The set of names handled by this tag.
+     */
+<span class="fc" id="L40">    private static final String[] mIds = new String[] {&quot;A&quot;};</span>
+
+    /**
+     * The set of tag names that indicate the end of this tag.
+     */
+<span class="fc" id="L45">    private static final String[] mEnders = new String[] {&quot;A&quot;, &quot;P&quot;, &quot;DIV&quot;, &quot;TD&quot;, &quot;TR&quot;, &quot;FORM&quot;, &quot;LI&quot;};</span>
+
+    /**
+     * The set of end tag names that indicate the end of this tag.
+     */
+<span class="fc" id="L50">    private static final String[] mEndTagEnders = new String[] {&quot;P&quot;, &quot;DIV&quot;, &quot;TD&quot;, &quot;TR&quot;, &quot;FORM&quot;, &quot;LI&quot;, &quot;BODY&quot;, &quot;HTML&quot;};</span>
+
+    /**
+     * The URL where the link points to
+     */
+    protected String mLink;
+
+    /**
+     * Set to true when the link was a mailto: URL.
+     */
+    private boolean mailLink;
+
+    /**
+     * Set to true when the link was a javascript: URL.
+     */
+    private boolean javascriptLink;
+
+    /**
+     * Constructor creates an LinkTag object, which basically stores the location
+     * where the link points to, and the text it contains.
+     * &lt;p&gt;
+     * In order to get the contents of the link tag, use the method children(),
+     * which returns an enumeration of nodes encapsulated within the link.
+     * &lt;p&gt;
+     * The following code will get all the images inside a link tag.
+     * &lt;pre&gt;
+     * Node node ;
+     * ImageTag imageTag;
+     * for (Enumeration e=linkTag.children();e.hasMoreElements();) {
+     *      node = (Node)e.nextElement();
+     *      if (node instanceof ImageTag) {
+     *          imageTag = (ImageTag)node;
+     *          // Process imageTag
+     *      }
+     * }
+     * &lt;/pre&gt;
+     */
+<span class="fc" id="L87">    public LinkTag ()</span>
+    {
+<span class="fc" id="L89">    }</span>
+
+    /**
+     * Return the set of names handled by this tag.
+     * @return The names to be matched that create tags of this type.
+     */
+    public String[] getIds ()
+    {
+<span class="fc" id="L97">        return (mIds);</span>
+    }
+
+    /**
+     * Return the set of tag names that cause this tag to finish.
+     * @return The names of following tags that stop further scanning.
+     */
+    public String[] getEnders ()
+    {
+<span class="fc" id="L106">        return (mEnders);</span>
+    }
+
+    /**
+     * Return the set of end tag names that cause this tag to finish.
+     * @return The names of following end tags that stop further scanning.
+     */
+    public String[] getEndTagEnders ()
+    {
+<span class="fc" id="L115">        return (mEndTagEnders);</span>
+    }
+
+    /**
+     * Get the &lt;code&gt;ACCESSKEY&lt;/code&gt; attribute, if any.
+     * @return The value of the &lt;code&gt;ACCESSKEY&lt;/code&gt; attribute,
+     * or &lt;code&gt;null&lt;/code&gt; if the attribute doesn't exist.
+     */
+    public String getAccessKey()
+    {
+<span class="fc" id="L125">        return (getAttribute(&quot;ACCESSKEY&quot;));</span>
+    }
+
+    /**
+     * Returns the url as a string, to which this link points.
+     * This string has had the &quot;mailto:&quot; and &quot;javascript:&quot; protocol stripped
+     * off the front (if those predicates return &lt;code&gt;true&lt;/code&gt;) but not
+     * for other protocols. Don't ask me why, it's a legacy thing.
+     * @return The URL for this &lt;code&gt;A&lt;/code&gt; tag.
+     */
+    public String getLink()
+    {
+<span class="fc bfc" id="L137" title="All 2 branches covered.">        if (null == mLink)</span>
+        {
+<span class="fc" id="L139">            mailLink=false;</span>
+<span class="fc" id="L140">            javascriptLink = false;</span>
+<span class="fc" id="L141">            mLink = extractLink ();</span>
+
+<span class="fc" id="L143">            int mailto = mLink.indexOf(&quot;mailto&quot;);</span>
+<span class="fc bfc" id="L144" title="All 2 branches covered.">            if (mailto==0)</span>
+            {
+                // yes it is
+<span class="fc" id="L147">                mailto = mLink.indexOf(&quot;:&quot;);</span>
+<span class="fc" id="L148">                mLink = mLink.substring(mailto+1);</span>
+<span class="fc" id="L149">                mailLink = true;</span>
+            }
+<span class="fc" id="L151">            int javascript = mLink.indexOf(&quot;javascript:&quot;);</span>
+<span class="fc bfc" id="L152" title="All 2 branches covered.">            if (javascript == 0)</span>
+            {
+<span class="fc" id="L154">                mLink = mLink.substring(11); // this magic number is &quot;javascript:&quot;.length()</span>
+<span class="fc" id="L155">                javascriptLink = true;</span>
+            }
+        }
+<span class="fc" id="L158">        return (mLink);</span>
+    }
+
+    /**
+     * Returns the text contained inside this link tag.
+     * @return The textual contents between the {@.html &lt;A&gt;&lt;/A&gt;} pair.
+     */
+    public String getLinkText()
+    {
+        String ret;
+
+<span class="pc bpc" id="L169" title="1 of 2 branches missed.">        if (null != getChildren ())</span>
+<span class="fc" id="L170">            ret = getChildren ().asString ();</span>
+        else
+<span class="nc" id="L172">            ret = &quot;&quot;;</span>
+
+<span class="fc" id="L174">        return (ret);</span>
+    }
+
+    /**
+     * Is this a mail address
+     * @return boolean true/false
+     */
+    public boolean isMailLink()
+    {
+<span class="fc" id="L183">        getLink (); // force an evaluation of the booleans</span>
+<span class="fc" id="L184">        return (mailLink);</span>
+    }
+
+    /**
+     * Tests if the link is javascript
+     * @return flag indicating if the link is a javascript code
+     */
+    public boolean isJavascriptLink()
+    {
+<span class="fc" id="L193">        getLink (); // force an evaluation of the booleans</span>
+<span class="fc" id="L194">        return (javascriptLink);</span>
+    }
+
+    /**
+     * Tests if the link is an FTP link.
+     *
+     * @return flag indicating if this link is an FTP link
+     */
+    public boolean isFTPLink() {
+<span class="fc bfc" id="L203" title="All 2 branches covered.">        return getLink ().indexOf(&quot;ftp://&quot;)==0;</span>
+    }
+
+    /**
+     * Tests if the link is an IRC link.
+     * @return flag indicating if this link is an IRC link
+     */
+    public boolean isIRCLink() {
+<span class="fc bfc" id="L211" title="All 2 branches covered.">        return getLink ().indexOf(&quot;irc://&quot;)==0;</span>
+    }
+
+    /**
+     * Tests if the link is an HTTP link.
+     *
+     * @return flag indicating if this link is an HTTP link
+     */
+    public boolean isHTTPLink()
+    {
+<span class="pc bpc" id="L221" title="1 of 10 branches missed.">        return (!isFTPLink() &amp;&amp; !isHTTPSLink() &amp;&amp; !isJavascriptLink() &amp;&amp; !isMailLink() &amp;&amp; !isIRCLink());</span>
+    }
+
+    /**
+     * Tests if the link is an HTTPS link.
+     *
+     * @return flag indicating if this link is an HTTPS link
+     */
+    public boolean isHTTPSLink() {
+<span class="fc bfc" id="L230" title="All 2 branches covered.">            return getLink ().indexOf(&quot;https://&quot;)==0;</span>
+    }
+
+        /**
+     * Tests if the link is an HTTP link or one of its variations (HTTPS, etc.).
+     *
+     * @return flag indicating if this link is an HTTP link or one of its variations (HTTPS, etc.)
+     */
+    public boolean isHTTPLikeLink() {
+<span class="fc bfc" id="L239" title="All 4 branches covered.">            return isHTTPLink() || isHTTPSLink();</span>
+    }
+
+
+    /**
+     * Insert the method's description here.
+     * Creation date: (8/3/2001 1:49:31 AM)
+     * @param newMailLink boolean
+     */
+    public void setMailLink(boolean newMailLink)
+    {
+<span class="nc" id="L250">        mailLink = newMailLink;</span>
+<span class="nc" id="L251">    }</span>
+
+    /**
+     * Set the link as a javascript link.
+     *
+     * @param newJavascriptLink flag indicating if the link is a javascript code
+     */
+    public void setJavascriptLink(boolean newJavascriptLink)
+    {
+<span class="nc" id="L260">        javascriptLink = newJavascriptLink;</span>
+<span class="nc" id="L261">    }</span>
+
+    /**
+     * Return the contents of this link node as a string suitable for debugging.
+     * @return A string representation of this node.
+     */
+    public String toString()
+    {
+<span class="fc" id="L269">        StringBuffer sb = new StringBuffer();</span>
+<span class="fc" id="L270">        sb.append(&quot;Link to : &quot;+ getLink() + &quot;; titled : &quot;+getLinkText ()+&quot;; begins at : &quot;+getStartPosition ()+&quot;; ends at : &quot;+getEndPosition ()+ &quot;, AccessKey=&quot;);</span>
+<span class="pc bpc" id="L271" title="1 of 2 branches missed.">        if (getAccessKey ()==null)</span>
+<span class="fc" id="L272">            sb.append(&quot;null\n&quot;);</span>
+        else
+<span class="nc" id="L274">            sb.append(getAccessKey ()+&quot;\n&quot;);</span>
+<span class="pc bpc" id="L275" title="1 of 2 branches missed.">        if (null != getChildren ())</span>
+        {
+            Node node;
+<span class="fc" id="L278">            int i = 0;</span>
+<span class="fc bfc" id="L279" title="All 2 branches covered.">            for (SimpleNodeIterator e=children();e.hasMoreNodes();)</span>
+            {
+<span class="fc" id="L281">                node = e.nextNode();</span>
+<span class="fc" id="L282">                sb.append(&quot;   &quot;+(i++)+ &quot; &quot;);</span>
+<span class="fc" id="L283">                sb.append(node.toString()+&quot;\n&quot;);</span>
+            }
+        }
+<span class="fc" id="L286">        return sb.toString();</span>
+    }
+
+    /**
+     * Set the &lt;code&gt;HREF&lt;/code&gt; attribute.
+     * @param link The new value of the &lt;code&gt;HREF&lt;/code&gt; attribute.
+     */
+    public void setLink(String link)
+    {
+<span class="fc" id="L295">        mLink = link;</span>
+<span class="fc" id="L296">        setAttribute (&quot;HREF&quot;, link);</span>
+<span class="fc" id="L297">    }</span>
+
+    /**
+     * Extract the link from the HREF attribute.
+     * @return The URL from the HREF attibute. This is absolute if the tag has
+     * a valid page.
+     */
+    public String extractLink ()
+    {
+        String ret;
+
+<span class="fc" id="L308">        ret =  getAttribute (&quot;HREF&quot;);</span>
+<span class="fc bfc" id="L309" title="All 2 branches covered.">        if (null != ret)</span>
+        {
+<span class="fc" id="L311">            ret = ParserUtils.removeChars (ret,'\n');</span>
+<span class="fc" id="L312">            ret = ParserUtils.removeChars (ret,'\r');</span>
+        }
+<span class="pc bpc" id="L314" title="1 of 2 branches missed.">        if (null != getPage ())</span>
+<span class="fc" id="L315">            ret = getPage ().getAbsoluteURL (ret);</span>
+
+<span class="fc" id="L317">        return (ret);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>

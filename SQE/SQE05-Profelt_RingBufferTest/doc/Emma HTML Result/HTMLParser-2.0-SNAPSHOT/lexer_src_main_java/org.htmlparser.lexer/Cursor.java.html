@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../.resources/report.gif" type="image/gif"/><title>Cursor.java</title><link rel="stylesheet" href="../../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../.sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">AllTests (4) (Oct 27, 2015 3:17:09 PM)</a> &gt; <a href="../../index.html" class="el_group">HTMLParser-2.0-SNAPSHOT</a> &gt; <a href="../index.html" class="el_bundle">lexer/src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.htmlparser.lexer</a> &gt; <span class="el_source">Cursor.java</span></div><h1>Cursor.java</h1><pre class="source lang-java linenums">// HTMLParser Library - A java-based parser for HTML
+// http://htmlparser.org
+// Copyright (C) 2006 Derrick Oswald
+//
+// Revision Control Information
+//
+// $URL: https://svn.sourceforge.net/svnroot/htmlparser/trunk/lexer/src/main/java/org/htmlparser/lexer/Cursor.java $
+// $Author: derrickoswald $
+// $Date: 2006-09-16 10:44:17 -0400 (Sat, 16 Sep 2006) $
+// $Revision: 4 $
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the Common Public License; either
+// version 1.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// Common Public License for more details.
+//
+// You should have received a copy of the Common Public License
+// along with this library; if not, the license is available from
+// the Open Source Initiative (OSI) website:
+//   http://opensource.org/licenses/cpl1.0.php
+
+package org.htmlparser.lexer;
+
+import java.io.Serializable;
+import org.htmlparser.util.sort.Ordered;
+
+/**
+ * A bookmark in a page.
+ * This class remembers the page it came from and its position within the page.
+ */
+public class Cursor
+    implements
+        Serializable,
+        Ordered,
+        Cloneable
+{
+    /**
+     * This cursor's position.
+     */
+    protected int mPosition;
+
+    /**
+     * This cursor's page.
+     */
+    protected Page mPage;
+
+    /**
+     * Construct a &lt;code&gt;Cursor&lt;/code&gt; from the page and position given.
+     * @param page The page this cursor is on.
+     * @param offset The character offset within the page.
+     */
+<span class="fc" id="L56">    public Cursor (Page page, int offset)</span>
+    {
+<span class="fc" id="L58">        mPage = page;</span>
+<span class="fc" id="L59">        mPosition = offset;</span>
+<span class="fc" id="L60">    }</span>
+
+    /**
+     * Get this cursor's page.
+     * @return The page associated with this cursor.
+     */
+    public Page getPage ()
+    {
+<span class="nc" id="L68">        return (mPage);</span>
+    }
+
+    /**
+     * Get the position of this cursor.
+     * @return The cursor position.
+     */
+    public int getPosition ()
+    {
+<span class="fc" id="L77">        return (mPosition);</span>
+    }
+
+    /**
+     * Set the position of this cursor.
+     * @param position The new cursor position.
+     */
+    public void setPosition (int position)
+    {
+<span class="fc" id="L86">        mPosition = position;</span>
+<span class="fc" id="L87">    }</span>
+
+    /**
+     * Move the cursor position ahead one character.
+     */
+    public void advance ()
+    {
+<span class="fc" id="L94">        mPosition++;</span>
+<span class="fc" id="L95">    }</span>
+
+    /**
+     * Move the cursor position back one character.
+     */
+    public void retreat ()
+    {
+<span class="fc" id="L102">        mPosition--;</span>
+<span class="pc bpc" id="L103" title="1 of 2 branches missed.">        if (0 &gt; mPosition)</span>
+<span class="nc" id="L104">            mPosition = 0;</span>
+<span class="fc" id="L105">    }</span>
+
+    /**
+     * Make a new cursor just like this one.
+     * @return The new cursor positioned where &lt;code&gt;this&lt;/code&gt; one is,
+     * and referring to the same page.
+     */
+    public Cursor dup ()
+    {
+        try
+        {
+<span class="nc" id="L116">            return ((Cursor)clone ());</span>
+        }
+<span class="nc" id="L118">        catch (CloneNotSupportedException cnse)</span>
+        {
+<span class="nc" id="L120">            return (new Cursor (getPage (), getPosition ()));</span>
+        }
+    }
+
+    /**
+     * Return a string representation of this cursor
+     * @return A string of the form &quot;n[r,c]&quot;, where n is the character position,
+     * r is the row (zero based) and c is the column (zero based) on the page.
+     */
+    public String toString ()
+    {
+        StringBuffer ret;
+
+<span class="fc" id="L133">        ret = new StringBuffer (9 * 3 + 3); // three ints and delimiters</span>
+<span class="fc" id="L134">        ret.append (getPosition ());</span>
+<span class="fc" id="L135">        ret.append (&quot;[&quot;);</span>
+<span class="pc bpc" id="L136" title="1 of 2 branches missed.">        if (null != mPage)</span>
+<span class="fc" id="L137">            ret.append (mPage.row (this));</span>
+        else
+<span class="nc" id="L139">            ret.append (&quot;?&quot;);</span>
+<span class="fc" id="L140">        ret.append (&quot;,&quot;);</span>
+<span class="pc bpc" id="L141" title="1 of 2 branches missed.">        if (null != mPage)</span>
+<span class="fc" id="L142">            ret.append (mPage.column (this));</span>
+        else
+<span class="nc" id="L144">            ret.append (&quot;?&quot;);</span>
+<span class="fc" id="L145">        ret.append (&quot;]&quot;);</span>
+
+<span class="fc" id="L147">        return (ret.toString ());</span>
+    }
+
+    //
+    // Ordered interface
+    //
+
+    /**
+     * Compare one reference to another.
+     * @param that The object to compare this to.
+     * @return A negative integer, zero, or a positive
+     * integer as this object is less than, equal to,
+     * or greater than that object.
+     * @see org.htmlparser.util.sort.Ordered
+     */
+    public int compare (Object that)
+    {
+<span class="fc" id="L164">        Cursor r = (Cursor)that;</span>
+<span class="fc" id="L165">        return (getPosition () - r.getPosition ());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span>AllTests (4) (Oct 27, 2015 3:17:09 PM)</div></body></html>
