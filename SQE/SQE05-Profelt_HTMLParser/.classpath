@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="filterbuilder/src/main/java"/>
+	<classpathentry excluding="org/htmlparser/util/SimpleNodeIterator.java" kind="src" path="lexer/src/main/java"/>
+	<classpathentry kind="src" path="parser/src/main/java"/>
+	<classpathentry kind="src" path="parser/src/test/java"/>
+	<classpathentry kind="src" path="sitecapturer/src/main/java"/>
+	<classpathentry excluding="HtmlTaglet.java" kind="src" path="src/main/java"/>
+	<classpathentry kind="src" path="thumbelina/src/main/java"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
