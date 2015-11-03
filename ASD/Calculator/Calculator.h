@@ -2,6 +2,7 @@
 #define CALCULATOR_H
 
 #include <string>
+#include <memory>
 #include "scanner.h"
 #include "Expression.h"
 
@@ -22,10 +23,10 @@ private:
   void AddKeywords(scanner &scan);
   void EvalExpr(scanner &scan) const;
 
-  static Expression *ParseExpression(scanner &scan);
-  static Expression *ParseMultExpr(scanner &scan);
-  static Expression *ParsePowExpr(scanner &scan);
-  static Expression *ParseFactor(scanner &scan);
+  static std::unique_ptr<Expression> ParseExpression(scanner &scan);
+  static std::unique_ptr<Expression> ParseMultExpr(scanner &scan);
+  static std::unique_ptr<Expression> ParsePowExpr(scanner &scan);
+  static std::unique_ptr<Expression> ParseFactor(scanner &scan);
 };
 
 #endif
