@@ -20,9 +20,9 @@ typedef struct {
   unsigned char *data;
   unsigned int width, height;
   unsigned int maxcol;
-}PPM;
+}RGB;
 
-int PPM_load(PPM* ppm, char* filename);
-int PPM_save(PPM* ppm, char* filename);
+int PPM_load(RGB* ppm, char* filename);
+int PPM_save(RGB* ppm, char* filename);
 
 #endif

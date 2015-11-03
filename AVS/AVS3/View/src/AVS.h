@@ -16,18 +16,18 @@ typedef struct
 
 typedef struct
 {
-    unsigned char Y;
-    unsigned char Cb;
-    unsigned char Cr;
+    double Y;
+    double Cb;
+    double Cr;
 } YCbCrPixel;
 
-void CreateBnWMeanRGB(PPM * image);
+void CreateBnWMeanRGB(RGB * image);
 
-void CreateBnWGreen(PPM * image);
+void CreateBnWGreen(RGB * image);
 
-void RgbToYCbCrImage(PPM * image);
+void RgbToYCbCrImage(RGB const * rgbImage, YCbCr * ycbcrImage);
 
-void YCbCrToRgbImage(PPM * image);
+void YCbCrToRgbImage(YCbCr const * ycbcrImage, RGB * rgbImage);
 
 YCbCrPixel RgbToYCrCb(RgbPixel const * const pixel);
 RgbPixel YCbCrToRgb(YCbCrPixel const * const pixel);

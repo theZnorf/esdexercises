@@ -11,25 +11,20 @@ static void render(SDL_Surface * sf)
 }
 
 int main(int argc, char *argv[]) {
-  PPM input;
+  RGB input;
   int  stop = 0;
   SDL_Event event;
   SDL_Surface* surface;
 
   PPM_load(&input, argv[1]);
 
-  unsigned char arr[3] = {23, 145, 240};
-  PPM test;
-  test.data = arr;
-  test.height = 1;
-  test.width = 1;
-  RgbToYCbCrImage(&test);
+  YCbCr ycbcrImg;
+  ycbcrImg.height = input.height;
+  ycbcrImg.width = input.width;
+  ycbcrImg.data = new double[ycbcrImg.height * ycbcrImg.width * 3];
 
-  for (auto val : arr)
-	  std::cout << "val: " << (int)val << std::endl;
-
-  RgbToYCbCrImage(&input);
-  YCbCrToRgbImage(&input);
+  RgbToYCbCrImage(&input, &ycbcrImg);
+  YCbCrToRgbImage(&ycbcrImg, &input);
   
   SDL_Init(SDL_INIT_EVERYTHING);
   SDL_WM_SetCaption(argv[1], NULL);

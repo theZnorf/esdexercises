@@ -1,6 +1,6 @@
 #include "AVS.h"
 
-void CreateBnWMeanRGB(PPM * image)
+void CreateBnWMeanRGB(RGB * image)
 {
     int count = image->height * image->width * 3;
     unsigned char bnw = 0;
@@ -14,7 +14,7 @@ void CreateBnWMeanRGB(PPM * image)
     }
 }
 
-void CreateBnWGreen(PPM * image)
+void CreateBnWGreen(RGB * image)
 {
     int count = image->height * image->width * 3;
 
@@ -26,26 +26,40 @@ void CreateBnWGreen(PPM * image)
 }
 
 
-void RgbToYCbCrImage(PPM * image)
+void RgbToYCbCrImage(RGB const * rgbImage, YCbCr * ycbcrImage)
 {
-    int count = image->height * image->width * 3;
+    int count = rgbImage->height * rgbImage->width * 3;
 
     for (auto i = 0; i < count; i += 3)
     {
-    	// convert pixel
-    	*((YCbCrPixel*)(&image->data[i])) = RgbToYCrCb((RgbPixel*)(&image->data[i]));
+    	auto ycbcrPixel = ((YCbCrPixel*)(&ycbcrImage->data[i]));
+
+    	// calculate pixel
+    	auto result = RgbToYCrCb((RgbPixel*)(&rgbImage->data[i]));
+
+    	// set result
+    	ycbcrPixel->Y = result.Y;
+    	ycbcrPixel->Cb = result.Cb;
+    	ycbcrPixel->Cr = result.Cr;
     }
 }
 
 
-void YCbCrToRgbImage(PPM * image)
+void YCbCrToRgbImage(YCbCr const * ycbcrImage, RGB * rgbImage)
 {
-    int count = image->height * image->width * 3;
+    int count = ycbcrImage->height * ycbcrImage->width * 3;
 
     for (auto i = 0; i < count; i += 3)
     {
-    	// convert pixel
-    	*((RgbPixel*)(&image->data[i])) = YCbCrToRgb((YCbCrPixel*)(&image->data[i]));
+    	auto rgbPixel = ((RgbPixel*)(&rgbImage->data[i]));
+
+    	// calculate pixel
+    	auto result = YCbCrToRgb((YCbCrPixel*)(&ycbcrImage->data[i]));
+
+    	// set result
+    	rgbPixel->R = result.R;
+    	rgbPixel->G = result.G;
+    	rgbPixel->B = result.B;
     }
 }
 

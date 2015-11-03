@@ -40,7 +40,7 @@ int get_token(char* str, int* val, int* pos){
 }
 
 
-int PPM_load(PPM* ppm, char* filename){
+int PPM_load(RGB* ppm, char* filename){
   FILE* file;
   char str[1024];
   int bpp;
@@ -113,7 +113,7 @@ int PPM_load(PPM* ppm, char* filename){
   return 0;
 }
 
-int PPM_save(PPM* ppm, char* filename){
+int PPM_save(RGB* ppm, char* filename){
   
   FILE* file;
   size_t bytes_written;

@@ -9,7 +9,7 @@ static void render(SDL_Surface * sf)
 
 
 int main(int argc, char *argv[]) {
-  PPM* input;
+  RGB* input;
   int  stop = 0;
   SDL_Event event;
   SDL_Surface* surface;
@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
   frames=atoi(argv[2]);
   duration=atoi(argv[3]);
 
-  input=malloc(frames*sizeof(PPM));
+  input=malloc(frames*sizeof(RGB));
 
   for (int i=0; i<frames; i++){
     sprintf(filename,"%s_%05d.ppm",argv[1],i+1);
