@@ -1,0 +1,10 @@
+Testcases for RingBuffer:
+
+create(2) -empty- delete() -final
+create(2) -empty- enqueue(A) -filled- dequeue() -empty
+create(3) -empty- enqueue(A) -filled- enqueue(B) -filled
+create(3) -empty- enqueue(A) -filled- enqueue(B) -filled- dequeue() -filled
+create(2) -empty- enqueue(A) -filled- enqueue(B) -full dequeue() -filled
+
+create(2) -empty- dequeue() -ERROR
+create(1) -empty- enqueue(A) -full- enqueue(B) -ERROR

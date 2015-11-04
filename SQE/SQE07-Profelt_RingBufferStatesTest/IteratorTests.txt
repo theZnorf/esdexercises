@@ -1,0 +1,11 @@
+TestCases for RingBuffer.RingBufferIterator:
+
+create() -AtLastElement- destroy() -final
+create() -BeforeElement- destroy() -final
+create() -BeforeElement- next() -BeforeElement- next() -AtLastElement
+create() -AtLastElement- RingBuffer.enqueue() -BeforeElement
+create() -BeforeElement- RingBuffer.dequeue() -AtLastElement
+
+create() -BeforeElement- remove() -ERROR
+create() -AtLastElement- remove() -ERROR
+create() -AtLastElement- next() -ERROR

@@ -1,0 +1,7 @@
+a	b 	c	isValid()
+1	1	0.5	true
+1	0.25	0.5	false
+1	1	0.5	true
+0.25	1	0.5	false
+0.5	1	1	true
+0.5	0.25	1	false	
