@@ -1,0 +1,9 @@
+JCalc v0.04a Change Log
+=======================
+
+
+Cleaned up Code:
+	
+	--No longer imports javax.swing.event.* package unnecessarily
+	--Took out unnecessary On/Off button (useless feature added for learning purposes)
+	--Took out all code regarding the On/Off function (including unecessary boolean that was taking up space in CalulatorFrame inner class)

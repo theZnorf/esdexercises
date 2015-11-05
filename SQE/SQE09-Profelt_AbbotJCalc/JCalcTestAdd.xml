@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- @author Franz Profelt -->
+<!-- @id s1410567019 -->
+
+<AWTTestScript awt="true" forked="true">
+  <component class="javax.swing.JButton" id="+" index="18" parent="JPanel Instance" text="+" window="JCalculator" />
+  <component class="javax.swing.JButton" id="1" index="10" parent="JPanel Instance" text="1" window="JCalculator" />
+  <component class="javax.swing.JButton" id="2" index="11" parent="JPanel Instance" text="2" window="JCalculator" />
+  <component class="javax.swing.JButton" id="=" index="17" parent="JPanel Instance" text="=" window="JCalculator" />
+  <component class="CalculatorFrame" id="JCalculator" root="true" title="JCalculator" />
+  <component class="javax.swing.JLayeredPane" id="JLayeredPane Instance" index="1" parent="JRootPane Instance" window="JCalculator" />
+  <component class="javax.swing.JPanel" id="JPanel Instance" index="1" parent="JPanel Instance 2" window="JCalculator" />
+  <component class="javax.swing.JPanel" hOrder="0" id="JPanel Instance 2" index="0" parent="JLayeredPane Instance" window="JCalculator" />
+  <component class="javax.swing.JPanel" id="JPanel Instance 3" index="0" parent="JPanel Instance 2" window="JCalculator" />
+  <component class="javax.swing.JRootPane" id="JRootPane Instance" index="0" parent="JCalculator" />
+  <component class="javax.swing.JTextField" id="JTextField Instance" index="0" parent="JPanel Instance 3" window="JCalculator" />
+  <launch args="[]" class="JCalc" classpath="../JCalc" method="main" />
+  <sequence>
+    <action args="1" class="javax.swing.AbstractButton" method="actionClick" />
+    <action args="+" class="javax.swing.AbstractButton" method="actionClick" />
+    <action args="2" class="javax.swing.AbstractButton" method="actionClick" />
+    <action args="=" class="javax.swing.AbstractButton" method="actionClick" />
+    <assert component="JTextField Instance" method="getText" value="3" />
+  </sequence>
+  <terminate />
+</AWTTestScript>
+
