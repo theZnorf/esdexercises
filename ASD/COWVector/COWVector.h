@@ -1,5 +1,6 @@
 //
-// Created by franz on 30.10.15.
+// Franz Profelt
+// S1410567019
 //
 
 #ifndef COWVECTOR_COWVECTOR_H

@@ -1,9 +1,13 @@
+//
+// Franz Profelt
+// S1410567019
+//
+
 #include <iostream>
 #include <string>
 #include <assert.h>
 #include <functional>
 #include "COWVector.h"
-
 
 using namespace std;
 
@@ -13,7 +17,7 @@ void assertEquals(T const & expected, T const & result)
     assert(expected == result);
 }
 
-int main()
+int main(int argc, char **argv)
 {
     cout << "started" << endl;
 
@@ -75,15 +79,40 @@ int main()
             vect.push_back(i);
 
         cout << "copy vector" << endl;
-        ASD::COWVector<int> vect1 = vect;
+        ASD::COWVector<int> vect1(vect);
 
+        cout << "check ref count" << endl;
+        assertEquals(2, (int)vect.refCount());
+        assertEquals(2, (int)vect1.refCount());
+
+        cout << "check elements in copied vector" << endl;
+        for (auto i = 0; i < testData.size(); i++)
+            assertEquals(testData[i], vect1.get(i));
+
+        cout << "change element in orignal vector" << endl;
+        for (auto i = 0; i < testData1.size(); i++)
+            vect.set(i, testData1[i]);
+
+        cout << "check ref count" << endl;
+        assertEquals(1, (int)vect.refCount());
+        assertEquals(1, (int)vect1.refCount());
+
+        cout << "check data in original vector" << endl;
+
+        for (auto i = 0; i < testData1.size(); i++)
+            assertEquals(testData1[i], vect.get(i));
+        for (auto i = testData1.size(); i < testData.size(); i++)
+            assertEquals(testData[i], vect.get(i));
+
+        cout << "check data in copied vector" << endl;
+        for (auto i = 0; i < testData.size(); i++)
+            assertEquals(testData[i], vect1.get(i));
     }
     catch (exception & e)
     {
         cerr << "unexpected exception occured: " << e.what() << endl;
         return -1;
     }
-
 
     cout << "finished" << endl;
     return 0;
