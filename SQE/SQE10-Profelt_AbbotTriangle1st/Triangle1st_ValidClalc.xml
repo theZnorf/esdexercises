@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<AWTTestScript awt="true" forked="true">
+<AWTTestScript forked="true">
   <component class="javax.swing.JButton" id="Calc" index="6" parent="JPanel Instance" text="Calc" window="Triangle1st" />
   <component class="javax.swing.JLayeredPane" id="JLayeredPane Instance" index="1" parent="JRootPane Instance" window="Triangle1st" />
   <component class="javax.swing.JPanel" id="JPanel Instance" index="0" parent="JPanel Instance 2" window="Triangle1st" />
