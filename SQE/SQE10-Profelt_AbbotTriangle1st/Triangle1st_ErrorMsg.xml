@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AWTTestScript awt="true" forked="true">
+  <component class="javax.swing.JButton" id="Calc" index="6" parent="JPanel Instance" text="Calc" window="Triangle1st" />
+  <component class="javax.swing.JDialog" id="Invalid Value" parent="Triangle1st" title="Invalid Value" />
+  <component class="javax.swing.JLayeredPane" id="JLayeredPane Instance" index="1" parent="JRootPane Instance" window="Triangle1st" />
+  <component class="javax.swing.JLayeredPane" id="JLayeredPane Instance 2" index="1" parent="JRootPane Instance 2" window="Invalid Value" />
+  <component class="javax.swing.JOptionPane" id="JOptionPane Instance" index="0" parent="JPanel Instance 6" window="Invalid Value" />
+  <component class="javax.swing.JPanel" id="JPanel Instance" index="0" parent="JPanel Instance 2" window="Triangle1st" />
+  <component class="javax.swing.JPanel" id="JPanel Instance 2" index="0" parent="JLayeredPane Instance" window="Triangle1st" />
+  <component class="javax.swing.JPanel" id="JPanel Instance 3" index="0" parent="JPanel Instance 4" window="Triangle1st" />
+  <component class="javax.swing.JPanel" id="JPanel Instance 4" index="1" parent="JPanel Instance 2" window="Triangle1st" />
+  <component class="javax.swing.JPanel" id="JPanel Instance 5" index="1" parent="JPanel Instance 4" window="Triangle1st" />
+  <component class="javax.swing.JPanel" id="JPanel Instance 6" index="0" parent="JLayeredPane Instance 2" window="Invalid Value" />
+  <component class="javax.swing.JRootPane" id="JRootPane Instance" index="0" parent="Triangle1st" />
+  <component class="javax.swing.JRootPane" id="JRootPane Instance 2" index="0" parent="Invalid Value" />
+  <component class="javax.swing.JTextField" id="JTextField Instance" index="1" parent="JPanel Instance" window="Triangle1st" />
+  <component class="javax.swing.JTextField" id="JTextField Instance 2" index="3" parent="JPanel Instance" window="Triangle1st" />
+  <component class="javax.swing.JTextField" id="JTextField Instance 3" index="5" parent="JPanel Instance" window="Triangle1st" />
+  <component class="javax.swing.JTextField" id="JTextField Instance 4" index="1" parent="JPanel Instance 3" window="Triangle1st" />
+  <component class="javax.swing.JTextField" id="JTextField Instance 5" index="1" parent="JPanel Instance 5" window="Triangle1st" />
+  <component class="javax.swing.JButton" id="OptionPane.button" index="0" name="OptionPane.button" parent="OptionPane.buttonArea" text="OK" window="Invalid Value" />
+  <component class="javax.swing.JPanel" id="OptionPane.buttonArea" index="1" name="OptionPane.buttonArea" parent="JOptionPane Instance" window="Invalid Value" />
+  <component class="at.fhhagenberg.sqe.exercise10.ui.Triangle1st" id="Triangle1st" root="true" title="Triangle1st" />
+  <launch args="[]" class="at.fhhagenberg.sqe.exercise10.ui.Triangle1st" classpath="../SQE10-Profelt_AbbotTriangle1st/bin" method="main" />
+  <!--Franz Profelt-->
+  <!--S1410567019-->
+  <sequence>
+    <wait args="Triangle1st" class="abbot.tester.ComponentTester" method="assertComponentShowing" />
+    <action args="Triangle1st,541,153" class="java.awt.Frame" method="actionResize" />
+    <action args="JTextField Instance,3" method="actionKeyString" />
+    <action args="JTextField Instance 2,0" class="javax.swing.text.JTextComponent" method="actionClick" />
+    <action args="JTextField Instance 2,4" method="actionKeyString" />
+    <action args="JTextField Instance 3,0" class="javax.swing.text.JTextComponent" method="actionClick" />
+    <action args="JTextField Instance 3,a" method="actionKeyString" />
+    <action args="Calc" class="javax.swing.AbstractButton" method="actionClick" />
+    <wait args="Invalid Value" class="abbot.tester.ComponentTester" method="assertComponentShowing" />
+    <action args="OptionPane.button,VK_F1,SHIFT_MASK" method="actionKeyStroke" />
+    <action args="OptionPane.button" class="javax.swing.AbstractButton" method="actionClick" />
+    <wait args="Invalid Value" class="abbot.tester.ComponentTester" invert="true" method="assertComponentShowing" />
+  </sequence>
+  <assert component="JTextField Instance 4" method="getText" value="Invalid Value" />
+  <assert component="JTextField Instance 5" method="getText" value="Invalid Value" />
+  <terminate />
+</AWTTestScript>
+

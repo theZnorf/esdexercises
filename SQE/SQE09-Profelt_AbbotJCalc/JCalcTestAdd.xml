@@ -12,6 +12,8 @@
   <component class="javax.swing.JRootPane" id="JRootPane Instance" index="0" parent="JCalculator" />
   <component class="javax.swing.JTextField" id="JTextField Instance" index="0" parent="JPanel Instance 3" window="JCalculator" />
   <launch args="[]" class="JCalc" classpath="../SQE09-Profelt_AbbotJCalc/JCalc" method="main" />
+  <!--Franz Profelt-->
+  <!--S1410567019-->
   <sequence>
     <action args="1" class="javax.swing.AbstractButton" method="actionClick" />
     <action args="+" class="javax.swing.AbstractButton" method="actionClick" />

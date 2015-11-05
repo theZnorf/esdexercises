@@ -26,15 +26,8 @@ namespace ASD
                 container(new containerType())
         { }
 
-        COWVector(COWVector & other)
-        {
-            // check self asignment
-            if (&other == this)
-                throw std::logic_error("COWVector: self asignment in copy constructor");
-        }
-
         // Methods
-    public:                                                                         s
+    public:
         size_t size() const
         {
             return container->size();
