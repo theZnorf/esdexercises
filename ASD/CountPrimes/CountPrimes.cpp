@@ -10,6 +10,7 @@
 #include <random>
 #include <thread>
 #include <chrono>
+#include <mutex>
 
 using namespace std;
 using namespace std::chrono;
@@ -54,29 +55,37 @@ size_t CountPrimes(NumberVec const &vec)
 size_t ParallelCountPrimes(NumberVec const &vec, unsigned int const nrThreads)
 {
     size_t nr = vec.size() / nrThreads;
-
-
     size_t result = 0;
     auto begin = vec.cbegin();
     auto end = begin + nr;
     vector<thread> threads;
     vector<size_t> results(nrThreads -1);
+    mutex resultMutex;
 
     for (auto i = 0; i < nrThreads - 1; i++)
     {
-        threads.emplace_back([begin, end, &results, i]
+        threads.emplace_back([begin, end, &result, &resultMutex]
                              {
-                                 results[i] = (unsigned long) count_if(begin, end, IsPrime);
+                                 auto res = (unsigned long) count_if(begin, end, IsPrime);
+                                 {
+                                     lock_guard<mutex> l(resultMutex);
+                                     result += res;
+                                 }
                              });
         begin += nr;
         end += nr;
     }
 
-    result = (size_t) count_if(begin, vec.cend(), IsPrime);
+    auto res = (size_t) count_if(begin, vec.cend(), IsPrime);
+    {
+        lock_guard<mutex> l(resultMutex);
+        result += res;
+    }
+
 
     for_each(threads.begin(), threads.end(), [] (auto & t){ t.join(); });
 
-    return result + accumulate(results.begin(), results.end(), 0);
+    return result;// + accumulate(results.begin(), results.end(), 0);
 }
 
 void InitRandom(NumberVec &vec, size_t const nr)
