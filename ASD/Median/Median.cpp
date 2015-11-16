@@ -22,13 +22,13 @@ double Median(Objects const &objects) {
   assert(!objects.empty());
   vector<double> values;
   // Alternative 1: Explizite Schleife
-  for (auto &obj : objects) {
-    values.push_back(obj->GetValue());
-  }
+//  for (auto &obj : objects) {
+//    values.push_back(obj->GetValue());
+//  }
   // Alternative 2: transform + mem_fn/bind
-  // ???
+  //transform(objects.begin(), objects.end(), back_inserter(values), mem_fn(&Object::GetValue));
   // Alternative 3: transform + Lambda
-  // ???
+  transform(objects.begin(), objects.end(), back_inserter(values), [](unique_ptr<Object> const& obj) {return obj->GetValue();});
   size_t nr = objects.size();
   size_t m = nr / 2;
   partial_sort(values.begin(), values.begin() + m + 1, values.end());

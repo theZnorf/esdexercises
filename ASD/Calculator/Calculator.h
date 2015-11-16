@@ -3,8 +3,10 @@
 
 #include <string>
 #include <memory>
+#include <functional>
 #include "scanner.h"
-#include "Expression.h"
+
+using Expression = std::function<double()>;
 
 class Calculator {
 public:
@@ -23,10 +25,10 @@ private:
   void AddKeywords(scanner &scan);
   void EvalExpr(scanner &scan) const;
 
-  static std::unique_ptr<Expression> ParseExpression(scanner &scan);
-  static std::unique_ptr<Expression> ParseMultExpr(scanner &scan);
-  static std::unique_ptr<Expression> ParsePowExpr(scanner &scan);
-  static std::unique_ptr<Expression> ParseFactor(scanner &scan);
+  static Expression ParseExpression(scanner &scan);
+  static Expression ParseMultExpr(scanner &scan);
+  static Expression ParsePowExpr(scanner &scan);
+  static Expression ParseFactor(scanner &scan);
 };
 
 #endif

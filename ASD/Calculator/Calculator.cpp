@@ -2,10 +2,8 @@
 #include <sstream>
 #include <cassert>
 #include <stdexcept>
+#include <complex>
 #include "Calculator.h"
-#include "UnaryExpr.h"
-#include "BinaryExpr.h"
-#include "Number.h"
 
 using namespace std;
 
@@ -46,7 +44,7 @@ void Calculator::EvalExpr(scanner &scan) const {
   try {
     auto expr = ParseExpression(scan);
     if (scan.symbol_is_eof()) {
-      cout << expr->Evaluate() << endl;
+      cout << expr() << endl;
     }
     else {
       cout << "Invalid command\n";
@@ -58,7 +56,7 @@ void Calculator::EvalExpr(scanner &scan) const {
 }
 
 // Expression = ["+" | "-"] MultExpr {("+" | "-") MultExpr}.
-unique_ptr<Expression> Calculator::ParseExpression(scanner &scan) {
+Expression Calculator::ParseExpression(scanner &scan) {
   char sign = '+';
   if (scan.symbol_is_plus()) {
     scan.next_symbol();
@@ -69,61 +67,61 @@ unique_ptr<Expression> Calculator::ParseExpression(scanner &scan) {
   }
   auto expr = ParseMultExpr(scan);
   if (sign == '-') {
-    expr = make_unique<NegativeExpr>(move(expr));
+      expr = [expr] { return -expr(); };
   }
   while (scan.symbol_is_plus() || scan.symbol_is_minus()) {
     bool add = scan.symbol_is_plus();
     scan.next_symbol();
     auto expr2 = ParseMultExpr(scan);
     if (add) {
-      expr = make_unique<AddExpr>(move(expr), move(expr2));
+        expr = [expr, expr2] { return expr() + expr2(); };
     }
     else {
-      expr = make_unique<SubExpr>(move(expr), move(expr2));
+        expr = [expr, expr2] { return expr() - expr2(); };
     }
   }
   return expr;
 }
 
 // MultExpr = PowExpr {("*" | "/") PowExpr}.
-unique_ptr<Expression> Calculator::ParseMultExpr(scanner &scan) {
+Expression Calculator::ParseMultExpr(scanner &scan) {
   auto expr = ParsePowExpr(scan);
   while (scan.symbol_is_multiply() || scan.symbol_is_division()) {
     bool mult = scan.symbol_is_multiply();
     scan.next_symbol();
     auto expr2 = ParsePowExpr(scan);
     if (mult) {
-      expr = make_unique<MultExpr>(move(expr), move(expr2));
+      expr = [expr, expr2] { return expr() * expr2(); };
     }
     else {
-      expr = make_unique<DivExpr>(move(expr), move(expr2));
+      expr = [expr, expr2] { return expr() / expr2(); };
     }
   }
   return expr;
 }
 
 // PowExpr = Factor ["^" Factor]
-unique_ptr<Expression> Calculator::ParsePowExpr(scanner &scan) {
+Expression Calculator::ParsePowExpr(scanner &scan) {
   auto expr = ParseFactor(scan);
   if (scan.symbol_is_power()) {
     scan.next_symbol();
     auto expr2 = ParseFactor(scan);
-    expr = make_unique<PowExpr>(move(expr), move(expr2));
+    expr = [expr, expr2] { return pow(expr(), expr2()); };
   }
   return expr;
 }
 
 // Factor = Number | "(" Expression ")".
-unique_ptr<Expression> Calculator::ParseFactor(scanner &scan) {
+Expression Calculator::ParseFactor(scanner &scan) {
   if (scan.symbol_is_integer()) {
     int x = scan.get_integer();
     scan.next_symbol();
-    return make_unique<Number>(x);
+    return [x] { return x; };
   }
   if (scan.symbol_is_real()) {
     double x = scan.get_real();
     scan.next_symbol();
-    return make_unique<Number>(x);
+      return [x] { return x; };
   }
   if (!scan.symbol_is_lpar()) {
     throw runtime_error("invalid factor");
