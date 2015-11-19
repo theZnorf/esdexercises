@@ -1,3 +1,7 @@
+/**
+ * @author Franz Profelt
+ * @id s1410567019
+ */
 package at.fhhagenberg.sqe.exercise10.test;
 
 import static org.junit.Assert.*;
@@ -76,18 +80,24 @@ public class Triange1stAbbotTest extends ComponentTestFixture {
                 .find(new MyTextFieldMatcher("SideB"));
         fieldSideC = (JTextField) getFinder()
                 .find(new MyTextFieldMatcher("SideC"));
-        fieldArea = (JTextField) getFinder()
-                .find(new MyTextFieldMatcher("Perimeter"));
         fieldPerimeter = (JTextField) getFinder()
+                .find(new MyTextFieldMatcher("Perimeter"));
+        fieldArea = (JTextField) getFinder()
                 .find(new MyTextFieldMatcher("Area"));
     }
 
     @Test
     public void testValid() {
         ButtonTester bt = new ButtonTester();
+
+        fieldSideA.setText("3");
+        fieldSideB.setText("4");
+        fieldSideC.setText("5");
         
-        
-        
+        bt.actionClick(buttonCalc);
+
+        assertEquals("12", fieldPerimeter.getText());
+        assertEquals("6", fieldArea.getText());
     }
 
 }

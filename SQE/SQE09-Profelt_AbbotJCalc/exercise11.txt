@@ -1,0 +1,31 @@
+1.)
+    In general manual tests. Manual test are made with a lot of knowlegde about
+    the system and the specific function, or problematic sequence which is
+    tested. The tester knows different weaknesses of the system and knows how to
+    stress theese.
+    
+    Automated test are also developed with knowlegde but are targeting recurring
+    defects, or reintroduced defects. But automated test are most of the time
+    not able to detect new defects.
+
+2.)
+    The point of ROI of automated test depends on the number of execution.
+    Test which are executed rarely the effort for developing an automated test
+    is to high for being efficient. But the expected number of executions is
+    mostly underestimated and so the benefit of automated tests are
+    underestimated.
+
+3.)
+    + Documentation of Testarchitecture:
+        The used architectures and strategies within the testware should be
+        considered well then also documented well, both increases the
+        reuseability of the produced testware.
+    + Structured testware:
+        All components of used testware as testdata, expected output, etc.
+        should be designed carefully for preventing a large number of
+        unstructured and ununderstandable data.
+    + Tested Testware:
+        Developing testware does have a lot of simillarities to developing the
+        "real" software, therefore the testware should also be tested sufficient
+        e.g. causing each testware to fail. This method should prevent missing
+        real defects because the testware didn't fail. 
