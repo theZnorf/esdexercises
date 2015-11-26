@@ -59,7 +59,7 @@ public class Triangle1st extends JFrame implements ActionListener {
     private void initFrame() {
         setTitle(Messages.getString("Triangle1st.title")); //$NON-NLS-1$
         // setBounds(100, 100, 800, 600);
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        //setDefaultCloseOperation(EXIT_ON_CLOSE);
         setContentPane(initContent());
 
         setVisible(true);
