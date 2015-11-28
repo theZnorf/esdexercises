@@ -40,7 +40,7 @@ public class RingBuffer<Item> implements Iterable<Item> {
         if (isEmpty()) { throw new RuntimeException("Ring buffer underflow"); }
         Item item = a[first];
         a[first] = null;                  // to help with garbage collection
-        N--;
+        //N--; //DEFECT
         first = (first + 1) % a.length;   // wrap-around
         return item;
     }
