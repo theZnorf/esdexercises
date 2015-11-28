@@ -1,0 +1,32 @@
+1.)
+    - Automated Regression Tests Are Static:
+        Test monkeys randomly select the input operations from a given script
+        this results in a different procedure for every execution.
+    
+    - Automated Regression Tests Are Simple:
+        Test monkeys create random sequences of available inputs. The only part
+        to maintain is a list of available inputs.
+    
+    - Reinitialization of Automated Tests:
+        Test monkeys does not initialize the SUT for each run in the same way
+        and also an application crash of freeze is included in monkey test.
+        
+    - Vulnerable to Changes:
+        Because there is no strategy behind the generated test sequences,
+        changes in the application does not influence the test as much as
+        normal tests. The system for monitoring the application must be acurate.
+
+2.)
+    This is a metric which can be compared with the MTBF. This metric gives the
+    average number of random operations between two failures.
+    There can be set limits for this metric defining the borders for system
+    testing and releasing the software. Software with lower metric than the
+    system testing border shows a too bad quality for system testing. And
+    reaching the release border can signal that the software is ready to be
+    released.
+
+3.)
+    The implementation of a well working test monkey can be very complicated,
+    caused by different stateflows how the tested software is intended to work.
+    Therefore defects which only occur within an advanced state can be easily
+    missed by a test monkey.
