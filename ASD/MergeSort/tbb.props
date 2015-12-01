@@ -1,0 +1,23 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="TBB">
+    <TbbVersion Condition="'$(TbbVersion)'==''">44_20151115oss</TbbVersion>
+    <TbbVersionOld Condition="'$(TbbVersion)'==''">44_20150728oss</TbbVersionOld>
+    <TbbPath Condition="Exists('C:\Lib\tbb$(TbbVersion)')">C:\Lib\tbb$(TbbVersion)</TbbPath>
+    <TbbPath Condition="Exists('D:\Lib\tbb$(TbbVersion)')">D:\Lib\tbb$(TbbVersion)</TbbPath>
+    <TbbPath Condition="Exists('C:\public\tbb$(TbbVersionOld)')">C:\public\tbb$(TbbVersionOld)</TbbPath>
+    <TbbPath Condition="Exists('C:\public\tbb$(TbbVersion)')">C:\public\tbb$(TbbVersion)</TbbPath>
+    <TbbIncludePath Condition="'$(TbbPath)'!=''">$(TbbPath)\include</TbbIncludePath>
+    <TbbPlatform Condition="'$(Platform)'=='Win32'">ia32</TbbPlatform>
+    <TbbPlatform Condition="'$(Platform)'=='x64'">intel64</TbbPlatform>
+    <TbbToolset Condition="'$(PlatformToolset)'=='v100'">vc10</TbbToolset>
+    <TbbToolset Condition="'$(PlatformToolset)'=='v110'">vc11</TbbToolset>
+    <TbbToolset Condition="'$(PlatformToolset)'=='v120'">vc12</TbbToolset>
+	<TbbToolset Condition="'$(PlatformToolset)'=='v140'">vc14</TbbToolset>
+    <TbbLibPath Condition="'$(TbbPath)'!=''">$(TbbPath)\lib\$(TbbPlatform)\$(TbbToolset)</TbbLibPath>
+    <TbbBinPath Condition="'$(TbbPath)'!=''">$(TbbPath)\bin\$(TbbPlatform)\$(TbbToolset)</TbbBinPath>
+  </PropertyGroup>
+  <PropertyGroup>
+    <IncludePath>$(TbbIncludePath);$(IncludePath)</IncludePath>
+    <LibraryPath>$(TbbLibPath);$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+</Project>
