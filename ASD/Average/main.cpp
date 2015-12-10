@@ -33,7 +33,9 @@ void PrintAverages(Averages const &avg)
     cout << "Arithmetic mean: " << avg.arithmeticMean << endl
     << "Geometric mean: " << avg.geometricMean << endl
     << "Harmonic mean: " << avg.harmonicMean << endl
-    << "Quadratic mean: " << avg.quadraticMean << endl;
+    << "Quadratic mean: " << avg.quadraticMean << endl
+    << "Mode: " << avg.mode << endl
+    << "Median: " << avg.median << endl;
 }
 
 void TestFunctional()

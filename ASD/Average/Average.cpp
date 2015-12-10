@@ -2,6 +2,11 @@
 #include <cmath>
 #include <cassert>
 #include <functional>
+#include <tbb/parallel_reduce.h>
+#include <tbb/parallel_sort.h>
+#include <mutex>
+#include <iostream>
+#include <thread>
 #include "Average.h"
 
 using namespace std;
@@ -82,12 +87,55 @@ bool ComputeAverages(Numbers const &numbers, Averages &averages)
 
 bool ParallelComputeAverages(Numbers const &numbers, Averages &averages)
 {
+    using TIter = Numbers::const_iterator;
+    using Range = tbb::blocked_range<TIter>;
+
+    mutex m;
+
+    auto grainSize = 0;
+
     if (numbers.empty())
     {
         return false;
     }
 
-    // TODO
+    Averages avg{0, 0, 0, 0, 0, 0};
+
+    // sort numbers for mode and median
+    Numbers sorted = numbers;
+    tbb::parallel_sort(sorted);
+
+    Averages result = tbb::parallel_reduce(
+            Range(numbers.begin(), numbers.end(), grainSize), avg,
+            [](Range const &range, Averages avg)
+            {
+                for (auto nr : range)
+                {
+                    avg.arithmeticMean += nr;
+                    avg.geometricMean += log(nr);
+                    avg.harmonicMean += 1.0 / nr;
+                    avg.quadraticMean += nr * nr;
+                }
+                return avg;
+            }, [](Averages const &arg0, Averages const &arg1)
+            {
+                Averages avg;
+                avg.arithmeticMean = arg0.arithmeticMean + arg1.arithmeticMean;
+                avg.geometricMean = arg0.geometricMean + arg1.geometricMean;
+                avg.harmonicMean = arg0.harmonicMean + arg1.harmonicMean;
+                avg.quadraticMean = arg0.quadraticMean + arg1.quadraticMean;
+                return avg;
+            });
+
+    // set result
+    double size = (double) numbers.size();
+    averages.arithmeticMean = result.arithmeticMean / size;
+    averages.geometricMean = exp(result.geometricMean / size);
+    averages.harmonicMean = size / result.harmonicMean;
+    averages.quadraticMean = sqrt(result.quadraticMean / size);
+
+    averages.median = (int)ComputeMedian(sorted);
+
     return true;
 }
 
