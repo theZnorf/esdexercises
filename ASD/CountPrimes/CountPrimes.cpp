@@ -11,6 +11,7 @@
 #include <thread>
 #include <chrono>
 #include <mutex>
+#include <future>
 
 using namespace std;
 using namespace std::chrono;
@@ -52,40 +53,63 @@ size_t CountPrimes(NumberVec const &vec)
     return (size_t) count_if(vec.begin(), vec.end(), IsPrime);
 }
 
+//size_t ParallelCountPrimes(NumberVec const &vec, unsigned int const nrThreads)
+//{
+//    size_t nr = vec.size() / nrThreads;
+//    size_t result = 0;
+//    auto begin = vec.cbegin();
+//    auto end = begin + nr;
+//    vector<thread> threads;
+//    vector<size_t> results(nrThreads -1);
+//    mutex resultMutex;
+//
+//    for (auto i = 0; i < nrThreads - 1; i++)
+//    {
+//        threads.emplace_back([begin, end, &result, &resultMutex]
+//                             {
+//                                 auto res = (unsigned long) count_if(begin, end, IsPrime);
+//                                 {
+//                                     lock_guard<mutex> l(resultMutex);
+//                                     result += res;
+//                                 }
+//                             });
+//        begin += nr;
+//        end += nr;
+//    }
+//
+//    auto res = (size_t) count_if(begin, vec.cend(), IsPrime);
+//    {
+//        lock_guard<mutex> l(resultMutex);
+//        result += res;
+//    }
+//
+//
+//    for_each(threads.begin(), threads.end(), [] (auto & t){ t.join(); });
+//
+//    return result;// + accumulate(results.begin(), results.end(), 0);
+//}
+
 size_t ParallelCountPrimes(NumberVec const &vec, unsigned int const nrThreads)
 {
     size_t nr = vec.size() / nrThreads;
     size_t result = 0;
     auto begin = vec.cbegin();
     auto end = begin + nr;
-    vector<thread> threads;
-    vector<size_t> results(nrThreads -1);
-    mutex resultMutex;
+    vector<future<size_t >> results;
 
     for (auto i = 0; i < nrThreads - 1; i++)
     {
-        threads.emplace_back([begin, end, &result, &resultMutex]
-                             {
-                                 auto res = (unsigned long) count_if(begin, end, IsPrime);
-                                 {
-                                     lock_guard<mutex> l(resultMutex);
-                                     result += res;
-                                 }
-                             });
+        results.push_back(async(launch::async, [begin, end]
+        {
+            return (size_t)count_if(begin, end, IsPrime);
+        }));
         begin += nr;
         end += nr;
     }
 
-    auto res = (size_t) count_if(begin, vec.cend(), IsPrime);
-    {
-        lock_guard<mutex> l(resultMutex);
-        result += res;
-    }
+    result = (size_t)count_if(begin, end, IsPrime);
 
-
-    for_each(threads.begin(), threads.end(), [] (auto & t){ t.join(); });
-
-    return result;// + accumulate(results.begin(), results.end(), 0);
+    return accumulate(results.begin(), results.end(), result, [](auto val, auto & f) { return val + f.get(); });
 }
 
 void InitRandom(NumberVec &vec, size_t const nr)

@@ -41,7 +41,16 @@ void MergeSort(TIter begin, TIter end)
 template<typename TIter>
 void ParallelMergeSort(TIter begin, TIter end)
 {
-    // TODO
+    const size_t MinNrElements = 100;
+    if (end - begin > MinNrElements)
+    {
+        TIter middle = begin + (end - begin) / 2;
+        parallel_invoke([=] { ParallelMergeSort(begin, middle); },
+                        [=] { ParallelMergeSort(middle, end); });
+        inplace_merge(begin, middle, end);
+    }
+    else
+        MergeSort(begin, end);
 }
 
 bool IsCorrectlySorted(Numbers numbers, Numbers const &sorted)
