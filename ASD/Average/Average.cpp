@@ -1,18 +1,22 @@
 #include <algorithm>
-#include <cmath>
 #include <cassert>
 #include <functional>
 #include <tbb/parallel_reduce.h>
 #include <tbb/parallel_sort.h>
 #include <mutex>
-#include <iostream>
 #include <thread>
+#include <map>
 #include "Average.h"
+
+Averages AddIntermediateAverages(const Averages &arg0, const Averages &arg1);
 
 using namespace std;
 
 namespace
 {
+    using TIter = Numbers::const_iterator;
+    using Range = tbb::blocked_range<TIter>;
+    using CountingMap = map<Numbers::value_type, size_t>;
 
     int ComputeMode(Numbers const &sortedNumbers)
     {
@@ -68,6 +72,30 @@ namespace
         averages.quadraticMean = sqrt(quadSum / size);
     }
 
+    Averages CalcIntermediateAverages(Range const &range, Averages avg)
+    {
+        for (auto nr : range)
+        {
+            avg.arithmeticMean += nr;
+            avg.geometricMean += log(nr);
+            avg.harmonicMean += 1.0 / nr;
+            avg.quadraticMean += nr * nr;
+        }
+        return avg;
+    }
+
+    CountingMap CalcIntermediateMode(Range const &range, CountingMap count)
+    {
+        for (auto nr : range)
+        {
+            if (count.find(nr) == count.end())
+                count[nr] = 1;
+            else
+                count[nr] += 1;
+        }
+        return count;
+    }
+
 } // namespace
 
 bool ComputeAverages(Numbers const &numbers, Averages &averages)
@@ -85,14 +113,39 @@ bool ComputeAverages(Numbers const &numbers, Averages &averages)
     return true;
 }
 
+
+Averages AddIntermediateAverages(Averages const & arg0, Averages const & arg1)
+{
+    Averages avg;
+    avg.arithmeticMean = arg0.arithmeticMean + arg1.arithmeticMean;
+    avg.geometricMean = arg0.geometricMean + arg1.geometricMean;
+    avg.harmonicMean = arg0.harmonicMean + arg1.harmonicMean;
+    avg.quadraticMean = arg0.quadraticMean + arg1.quadraticMean;
+    return avg;
+}
+
+
+CountingMap AddIntermediateModes(CountingMap const & arg0, CountingMap const & arg1)
+{
+    CountingMap count;
+    for (auto kv : arg0)
+    {
+        count.insert(kv);
+    }
+    for (auto kv : arg1)
+    {
+        if (count.find(kv.first) == count.end())
+            count.insert(kv);
+        else
+            count[kv.first] += kv.second;
+    }
+
+    return count;
+}
+
 bool ParallelComputeAverages(Numbers const &numbers, Averages &averages)
 {
-    using TIter = Numbers::const_iterator;
-    using Range = tbb::blocked_range<TIter>;
-
-    mutex m;
-
-    auto grainSize = 0;
+    auto grainSize = numbers.size() / thread::hardware_concurrency();
 
     if (numbers.empty())
     {
@@ -100,43 +153,38 @@ bool ParallelComputeAverages(Numbers const &numbers, Averages &averages)
     }
 
     Averages avg{0, 0, 0, 0, 0, 0};
+    CountingMap countingMap;
 
     // sort numbers for mode and median
     Numbers sorted = numbers;
     tbb::parallel_sort(sorted);
 
-    Averages result = tbb::parallel_reduce(
+    Averages avgResult = tbb::parallel_reduce(
             Range(numbers.begin(), numbers.end(), grainSize), avg,
-            [](Range const &range, Averages avg)
-            {
-                for (auto nr : range)
-                {
-                    avg.arithmeticMean += nr;
-                    avg.geometricMean += log(nr);
-                    avg.harmonicMean += 1.0 / nr;
-                    avg.quadraticMean += nr * nr;
-                }
-                return avg;
-            }, [](Averages const &arg0, Averages const &arg1)
-            {
-                Averages avg;
-                avg.arithmeticMean = arg0.arithmeticMean + arg1.arithmeticMean;
-                avg.geometricMean = arg0.geometricMean + arg1.geometricMean;
-                avg.harmonicMean = arg0.harmonicMean + arg1.harmonicMean;
-                avg.quadraticMean = arg0.quadraticMean + arg1.quadraticMean;
-                return avg;
-            });
+            CalcIntermediateAverages,
+            AddIntermediateAverages);
+
+    /*CountingMap modeResult = tbb::parallel_reduce(
+            Range(sorted.begin(), sorted.end(), grainSize), countingMap,
+            CalcIntermediateMode,
+            AddIntermediateModes);
+
+
+    auto iterMode = max_element(modeResult.begin(), modeResult.end(),
+                                [](auto arg0, auto arg1) { return arg0.second < arg1.second;});
+    */
 
     // set result
     double size = (double) numbers.size();
-    averages.arithmeticMean = result.arithmeticMean / size;
-    averages.geometricMean = exp(result.geometricMean / size);
-    averages.harmonicMean = size / result.harmonicMean;
-    averages.quadraticMean = sqrt(result.quadraticMean / size);
-
-    averages.median = (int)ComputeMedian(sorted);
+    averages.arithmeticMean = avgResult.arithmeticMean / size;
+    averages.geometricMean = exp(avgResult.geometricMean / size);
+    averages.harmonicMean = size / avgResult.harmonicMean;
+    averages.quadraticMean = sqrt(avgResult.quadraticMean / size);
+    averages.mode = 0;
+    averages.median = ComputeMedian(sorted);
 
     return true;
 }
+
 
 
