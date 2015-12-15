@@ -110,9 +110,18 @@ string ReadLine(ifstream &in, MyFlowControl &myFlowControl,
 string SortLine(const string &line)
 {
     Numbers numbers;
-    ExtractNumbers(line, numbers);
-    sort(numbers.begin(), numbers.end());
-    return ConvertToString(numbers);
+    string result;
+    if (ExtractNumbers(line, numbers))
+    {
+        sort(numbers.begin(), numbers.end());
+        result = ConvertToString(numbers);
+    }
+    else
+    {
+        result = "*** error ***";
+    }
+
+    return result;
 }
 
 void RunTBB(string const &inputName, string const &outputName)
