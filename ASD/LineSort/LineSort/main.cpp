@@ -150,10 +150,7 @@ void RunTBB(string const &inputName, string const &outputName)
                            ) &
                            tbb::make_filter<string, void>(
                                    tbb::filter::mode::serial_in_order,
-                                   [&writeFilter](string line)
-                                   {
-                                       writeFilter(line);
-                                   }
+                                   ref(writeFilter)
                            ));
 }
 
