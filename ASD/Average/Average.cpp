@@ -1,11 +1,9 @@
 #include <algorithm>
 #include <cassert>
-#include <functional>
 #include <tbb/parallel_reduce.h>
 #include <tbb/parallel_sort.h>
-#include <mutex>
+#include <tbb/parallel_invoke.h>
 #include <thread>
-#include <map>
 #include "Average.h"
 
 Averages AddIntermediateAverages(const Averages &arg0, const Averages &arg1);
@@ -16,7 +14,6 @@ namespace
 {
     using TIter = Numbers::const_iterator;
     using Range = tbb::blocked_range<TIter>;
-    using CountingMap = map<Numbers::value_type, size_t>;
 
     int ComputeMode(Numbers const &sortedNumbers)
     {
@@ -84,18 +81,6 @@ namespace
         return avg;
     }
 
-    CountingMap CalcIntermediateMode(Range const &range, CountingMap count)
-    {
-        for (auto nr : range)
-        {
-            if (count.find(nr) == count.end())
-                count[nr] = 1;
-            else
-                count[nr] += 1;
-        }
-        return count;
-    }
-
 } // namespace
 
 bool ComputeAverages(Numbers const &numbers, Averages &averages)
@@ -114,7 +99,7 @@ bool ComputeAverages(Numbers const &numbers, Averages &averages)
 }
 
 
-Averages AddIntermediateAverages(Averages const & arg0, Averages const & arg1)
+Averages AddIntermediateAverages(Averages const &arg0, Averages const &arg1)
 {
     Averages avg;
     avg.arithmeticMean = arg0.arithmeticMean + arg1.arithmeticMean;
@@ -124,55 +109,45 @@ Averages AddIntermediateAverages(Averages const & arg0, Averages const & arg1)
     return avg;
 }
 
-
-CountingMap AddIntermediateModes(CountingMap const & arg0, CountingMap const & arg1)
-{
-    CountingMap count;
-    for (auto kv : arg0)
-    {
-        count.insert(kv);
-    }
-    for (auto kv : arg1)
-    {
-        if (count.find(kv.first) == count.end())
-            count.insert(kv);
-        else
-            count[kv.first] += kv.second;
-    }
-
-    return count;
-}
-
 bool ParallelComputeAverages(Numbers const &numbers, Averages &averages)
 {
-    auto grainSize = numbers.size() / thread::hardware_concurrency();
-
     if (numbers.empty())
     {
         return false;
     }
 
-    Averages avg{0, 0, 0, 0, 0, 0};
-    CountingMap countingMap;
 
     // sort numbers for mode and median
     Numbers sorted = numbers;
+    Averages avgResult;
+    int modeResult;
+    double medianResult;
+
+    // sort numbers for median / mode
     tbb::parallel_sort(sorted);
 
-    Averages avgResult = tbb::parallel_reduce(
-            Range(numbers.begin(), numbers.end(), grainSize), avg,
-            CalcIntermediateAverages,
-            AddIntermediateAverages);
+    auto medianFunc = [&medianResult, &sorted]()
+    {
+        medianResult = ComputeMedian(sorted);
+    };
 
-    /*CountingMap modeResult = tbb::parallel_reduce(
-            Range(sorted.begin(), sorted.end(), grainSize), countingMap,
-            CalcIntermediateMode,
-            AddIntermediateModes);
+    auto avgFunc = [&avgResult, &numbers]()
+    {
+        auto grainSize = numbers.size() / thread::hardware_concurrency();
+        Averages avg{0, 0, 0, 0, 0, 0};
+        avgResult = tbb::parallel_reduce(
+                Range(numbers.begin(), numbers.end(), grainSize), avg,
+                CalcIntermediateAverages,
+                AddIntermediateAverages);
+    };
 
+    auto modeFunc = [&modeResult, &sorted]()
+    {
+        modeResult = ComputeMode(sorted);
+    };
 
-    auto iterMode = max_element(modeResult.begin(), modeResult.end(),
-                                [](auto arg0, auto arg1) { return arg0.second < arg1.second;});
-    */
+    // invoke parallel execution of calculations
+    tbb::parallel_invoke(avgFunc, modeFunc, medianFunc);
 
     // set result
     double size = (double) numbers.size();
@@ -180,8 +155,8 @@ bool ParallelComputeAverages(Numbers const &numbers, Averages &averages)
     averages.geometricMean = exp(avgResult.geometricMean / size);
     averages.harmonicMean = size / avgResult.harmonicMean;
     averages.quadraticMean = sqrt(avgResult.quadraticMean / size);
-    averages.mode = 0;
-    averages.median = ComputeMedian(sorted);
+    averages.mode = modeResult;
+    averages.median = medianResult;
 
     return true;
 }
