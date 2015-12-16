@@ -98,24 +98,9 @@
 
 % *** GRAPHICS RELATED PACKAGES ***
 %
-\ifCLASSINFOpdf
-  % \usepackage[pdftex]{graphicx}
-  % declare the path(s) where your graphic files are
-  % \graphicspath{{../pdf/}{../jpeg/}}
-  % and their extensions so you won't have to specify these with
-  % every instance of \includegraphics
-  % \DeclareGraphicsExtensions{.pdf,.jpeg,.png}
-\else
-  % or other class option (dvipsone, dvipdf, if not using dvips). graphicx
-  % will default to the driver specified in the system graphics.cfg if no
-  % driver is specified.
-  % \usepackage[dvips]{graphicx}
-  % declare the path(s) where your graphic files are
-  % \graphicspath{{../eps/}}
-  % and their extensions so you won't have to specify these with
-  % every instance of \includegraphics
-  % \DeclareGraphicsExtensions{.eps}
-\fi
+ \usepackage[pdftex]{graphicx}
+ \graphicspath{{images/}}
+  
 % graphicx was written by David Carlisle and Sebastian Rahtz. It is
 % required if you want graphics, photos, etc. graphicx.sty is already
 % installed on most LaTeX systems. The latest version and documentation can
@@ -335,7 +320,7 @@
 
 
 \usepackage{biblatex}
-\usepackage{hyperref}
+\usepackage[pdfborder={0 0 0}]{hyperref}
 \bibliography{literature}
 
 % correct bad hyphenation here
@@ -385,8 +370,8 @@
 
 
 % The paper headers
-\markboth{Simulation with OMNeT++ in real time, December~2015}%
-{Shell \MakeLowercase{\textit{et al.}}: Bare Demo of IEEEtran.cls for Journals}
+\markboth{Real simulation with OMNeT++, December~2015}%
+{Shell \MakeLowercase{\textit{et al.}}: Real simulation with OMNeT++}
 % The only time the second header will appear is for the odd numbered pages
 % after the title page when using the twoside option.
 % 
@@ -421,8 +406,9 @@
 OMNeT++ embodies a framework for simulations. This includes different functionalities for communication in between modules and components written in C++.
 The normal simulation using OMNeT++ is event based and is achieved independent of the real time.
 
-OMNeT++ provides the possibility for running a simulation in real time i.e. every simulated second is processed within a real second. Such a real time simulation attempts to process the simulation with the timings and delays.
-Such a possibility to run simulated software with real timings allows the field of emulation and the connection of simulated components with real hardware or software.
+OMNeT++ provides the possibility for running a simulation in real time i.e. every simulated second is processed within a real second.
+Such a real time simulation attempts to process the simulation with real world timings and delays.
+The possibility to run simulated software with real timings allows the field of emulation and the connection of simulated components with real hardware or software.
 Such a real time simulation and its limits regarding possible timings depends on the used host system.
 Implementing the simulation for a given software system using OMNeT++ can be achieved with different designs and various numbers of modules and transmitted messages.
 These factors will impact the efficiency of the real time simulation and achieved timings.
@@ -474,11 +460,27 @@ OMNeT++, real time simulation, emulation, hardware in the loop
 % 
 % Here we have the typical use of a "T" for an initial drop letter
 % and "HIS" in caps to complete the first word.
-\IEEEPARstart{T}{his} paper is intended to analyze the real time simulation capabilities of OMNeT++.
-In the section \ref{sec:OMNeT} the OMNeT++ framework is observed and the simulation techniques are analyzed.
+\IEEEPARstart{T}{his} paper is intended to analyze simulation capabilities of OMNeT++.
+This analyze includes the simulation core and scheduling mechanisms, considering the structure and hierarchy of the provided framework.
+The further investigation focuses on the real time simulation techniques and built in methods for achieving correct real time simulation.
+For this paper various studies and existing literature was used for summarizing the capabilities of OMNeT++.
+
+\subsection{Motivation}
+The motivation of this paper is to explain the general functionalities of OMNeT++.
+Furthermore the possibilities for real time simulation and custom scheduling or timing.
+Real time simulation is essential for the field of emulation, i.e. the field of connecting real systems with simulated systems.
+Is such a real system represented by real hardware applications it is called \emph{hardware in the loop} (HiL).
+
+The field of \emph{HiL} is becoming more important as the complexity of embedded software is increasing.
+Using \emph{HiL} with an emulated network allows the execution of test scenarios covering the most critical situations.
+These extended possibilities results in easier testing and developing of faster and more complex embedded systems.
+
+
+\subsection{Structure}
+In section \ref{sec:OMNeT} the OMNeT++ framework is observed and the simulation techniques are analyzed.
 The following section \ref{sec:Simulation} discusses different types of simulation and the capability of OMNeT++ for performing these types.
 The section \ref{sec:ModuleDesign} analyses existing simulation regarding real time simulation, especially the design and the complexity of the simulated modules are analyzed.
-The dependency of achieved timings within real time simulations using OMNeT++ is analyzed in section \ref{sec:SystemDependencies}.
+The dependencies of achieved timings within real time simulations using OMNeT++ is analyzed in section \ref{sec:SystemDependencies}.
 
 % You must have at least 2 lines in the paragraph with the drop letter
 % (should never be an issue)
@@ -487,57 +489,194 @@ The dependency of achieved timings within real time simulations using OMNeT++ is
 
 \section{OMNeT++}
 \label{sec:OMNeT}
-OMNeT++ represents a simulation framework written in C++ and is a open source project. The commercial supported version is OMNEST and provides licensing models, whereas OMNeT++ is only available for academic or non-profit use.
-The intention of OMNeT++ is providing infrastructure for writing simulations for various fields. This includes an architecture for simulating different modules.
+OMNeT++ represents a simulation framework written in C++ and is a open source project.
+The commercial supported version is OMNEST and provides licensing models, whereas OMNeT++ is only available for academic or non-profit use.
+The intention of OMNeT++ is providing infrastructure for writing simulations for various fields.
+This includes an architecture for simulating different modules.
+The architecture and topology of simulations is built with the different OMNeT++ components.
 
-Multiple modules are connected via channels and send messages to other modules.
+\subsection{Components}
+Within an OMNeT++ simulation different components are used.
+Each component is described with a \emph{network description} (NED) file.
+
+The outermost component is a network.
+A Network consists of other components like modules and channels.
+The simulated topology and the connections (channels) between modules are defined within the network.
+
 A simple module is the smallest part within a simulated OMNeT++ hierarchy and represent a functional unit.
+For this functional unit the behavior for handling messages, the possible connections and additional parameters can be defined.
+
+The possible connections of modules are represented by gates, which can be connected to a channel.
 Multiple simple modules can be connected via channels and condensed to a compound module.
 Such compound modules can be used in the same way as simple modules, but represent bigger functional groups.
-A network, consisting of modules and channels, is described in the special \emph{NED} syntax.
-Each custom module and channel is also described in de \emph{NED} language.
-Specific functionality for custom components is then implemented in the according C++ code.
-This assignment is usually done with identical names of the \emph{NED} file and the C++ code. Examples and the combination of \emph{NED} files and C++ code is shown in \cite[chapter 3, 4]{OMNETMANUAL}
-In the implemented functionality the developer can embed any code and functionality, which is possibly in normal C++ applications.
 
-Modules transmit messages via channels, these messages can be existing default types or custom implemented messages carrying data.
+The connections in between modules are represented by channels, which also allow custom behavior and additional parameters (e.g. delay, latency, jitter).
+An example network including simple modules connected to a compound module is shown in figure \ref{fig:OMNeTComponents}.
+Each module shown in figure \ref{fig:OMNeTComponents} defines two gates which can ether be an input, output or bidirectional gate.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\columnwidth]{OMNeTComponents.eps}
+    \caption{OMNeT++ components in an example network}
+    \label{fig:OMNeTComponents}
+\end{figure}
+
+Each custom module and channel is defined in the \emph{NED} language.
+Specific functionality for custom components is implemented in the according C++ code.
+This assignment is usually done with identical names of the \emph{NED} file and the C++ code.
+Examples and the combination of \emph{NED} files and C++ code is shown in \cite[chapter 3, chapter 4]{OMNETMANUAL}
+The components can embed any functionality implemented in C/C++.
+The usage of external libraries or language features is not limited, but must be used with care due to the effect on simulation performance.
+
+
+\subsection{Messages}
+Transmitted data are encapsulated in another component called messages.
+Messages are a fundamental component of a OMNeT++ simulation as they does not only transport data they can also represent functional messages like jobs, events or tasks.
+The meaning behind a message is depending on the written simulation and the simulated system.
+
+These messages can also be customized for holding a specific set of data like a protocol header, checksum, etc. or other specific data.
+The existing Message class \emph{cMessage} and its derived specialization \emph{cPacket} provide different Members and functions which can be used for simulations.
+These include control information, type information, time stamp, etc. and are included for making developing a simulation easier.
+Adding a few simple datafields to a Message can be ether done by subclassing \emph{cMessage} or \emph{cPacket} or using the \emph{NED} syntax.
+By defining a custom Message using \emph{NED} a customized subclass will be generated by the simulation and can be normally used as Message.
+
+Any module can send a message via a connected channel for this sent message a time is defined.
+This time describes the moment when the message should be sent to the channel.
 The mechanism of messages is also used for implementing timeouts, timers, etc. by sending a specific message to the current module, this is a so called \emph{self-message}.
+These \emph{self-message} is handled by the same function as any other message coming from other modules.
+For the identification of \emph{self-messages} there is a built in function available.
+More information about messages and the possibilities of customized messages are given in \cite[chapter 5]{OMNETMANUAL}
 
 Each message sent ether by another module or by the current module itself represents an event for the simulation with an according time, at which this event should happen, or the message should be delivered/received.
-The execution and the handling of such created events is done by the simulation core and defines the execution order and the performance of the simulation, depending on the type of simulation.
-Two different types of simulations with the example of OMNeT++ are shown in the next section.
+The execution and the handling of such created events is done by the simulation core and defines the execution order and the performance of the simulation.
+Handling these events can be done in various ways and define the type of implemented simulation.
+These simulations based on events are event based discrete simulations, the definitions of this type and the explanation of different simulation types are shown in the next section.
 
 \section{Simulation}
 \label{sec:Simulation}
 Simulation can be done in different ways. The general categories are \emph{discrete} and \emph{continuous} simulations.
 The difference is shown in the processing of the simulated systems and the handling of simulation time.
 
-For continuous simulations the state of the simulated system can change at any time, therefore the complete simulated timerange has to be executed.
-This requirement is not necessary for discrete simulations, because these simulations are event based. For each event is a specific time defined at which the event has to be executed or handled.
-This time is given within the simulation time.
+For continuous simulations the state of the simulated system can change at any time, therefore the complete simulated time range has to be executed.
+This executions requires the definitions of a resolution and the calculation of each moment within the time range.
+
+This requirement is not necessary for discrete simulations, because these simulations are event based.
+For each event a time is specified at which the event has to be executed or handled.
 For discrete simulations the system state is constant between two consecutive events and therefore this time can be skipped in simulation time.
-%TODO: find reference for simulation types
+The calculated moments within the simulation time are defined by the schedules events and their execution time.
+%TODO: find reference for simulation type
+
+Simulations written with OMNeT++ are by default discrete event based simulations.
 
 \subsection{Event simulation}
 \label{sec:EventSimulation}
-
-Simulations written with OMNeT++ are by default discrete event based simulations.
 Such simulations handle given events at the defined point in the simulation time.
 The execution of the event takes no simulation time.
 Each event processed in the simulation is handled at the exact simulation time which is defined individually.
+This type of simulation enables simulating various events even within a very short simulated time range.
 
 Within OMNeT++ this time is called \emph{arrival time}.
+Each message contains the \emph{arrival time} and the \emph{sending time}, both are time points in the simulation time.
+The \emph{sending time} is used for calculation of transmissions.
+For the execution and handling of an event the \emph{arrival time} is more important.
 Events are created by modules and then inserted in the so called future event structure (\emph{FES}).
 The simulation core executes all events within the \emph{FES} at the according simulation time.
 
+The main part of the simulation core of OMNeT++ which controls the event handling is the scheduler.
+This scheduler accesses the \emph{FES} and chooses the next event to be handled by the simulation.
+The class \emph{cScheduler} represents the interface which is required for a event scheduler usable in OMNeT++.
+By default the derived class \emph{cSequentialScheduler} is used.
+This scheduler implements the default discrete event based simulation and handles the events according to their execution time, scheduling priority and scheduled time.
+The scheduling priority provides a mechanism for controlling the execution order of multiple events at the same time.
+The functionality and the ordering of executed event by the \emph{cSequentialScheduler} are explained in \cite[section 4.1]{OMNETMANUAL}.
+
+Approaching the field of emulation and \emph{HiL} the discrete event based simulation is unusable.
+For such applications the type of real time simulation is required.
+
 \subsection{Real time simulation}
 \label{sec:RealTimeSimulation}
+Real time simulations change the meaning of simulation time.
+The simulated events should be executed at the correct time to match the real time.
+In this context \emph{the real time} means the real world time, cpu time, or wall time, i.e. the time which passes for the real world during the execution of the simulation.
+This type of simulation is not possible for every simulated systems as the limits are defined by the execution speed of the host system.
+Achieving this match of simulation time and real time is strongly depending on the targeted time resolutions and time spans between events.
+The needed time for calculating new events and reacting to incoming events is defined by the executed functions and is therefore defined by the simulated system.
+Lightweight simple modules with plain functions can be simulated with faster event frequencies than compound modules consisting of multiple modules with complex behavior.
+
+Approaches for achieving this type of simulations are implemented in the \emph{cRealTimeScheduler} within OMNeT++.
+This Scheduler executes the events according to their planned arrival time.
+The arrival time of the next event is compared with the current real time.
+When the simulation is ahead of the real time, the simulation is paused for the remaining time.
+The \emph{cRealTimeScheduler} waits in hard-coded 100 ms chunks for achieving a responsive simulation.
+For emulations and \emph{HiL} this concept is not applicable, because the communication with real components does not allow a sleep time.
+The OMNeT++ sample \emph{sockets} demonstrate this problem and a possible solution with a custom scheduler implementing the \emph{cScheduler} class.
+This custom scheduler named \emph{SocketRTScheduler} listens to the interface during the times when the simulation has to wait until the next event should be executed.
+This allows the receiving of packets from real clients and the connection of the simulated components with real ones.
+The implementation of \emph{SocketRTScheduler} is not fully optimized and is intended to show the possibility of emulation and \emph{HiL} using OMNeT++.
+
+Handling the difference for a simulation which is faster than the real world system can be done in various ways as demonstrated by \emph{cRealTimeScheduler} and \emph{SocketRTScheduler}.
+The implementation of the scheduler and a description of their functionality can be found in the OMNeT++ sources and samples or in the API reference \cite[]{OMNETAPIREF}.
+
+Is the simulation lagging behind the real time, the scheduler must try to speed up the simulation and catch up to the real time.
+The \emph{cRealTimeScheduler} executes the next events immediately and therefore skipping sleep times.
+With this behavior the task of catching up to the real time becomes very difficult for complex simulations with tight timings.
+Lags the simulation constantly behind the real world using the \emph{cRealTimeScheduler} it becomes discrete event based.
+
+The achieved simulation time can be defined by the performance ratio which can be shown during simulation.
+This ration represents the simulated seconds per real time seconds.
+A lagging simulation is defined by a performance ration of less than 1 and simulation which simulates faster as the real time shows a ratio of greater than one.
+The goal of a real time simulation is a constant ratio of 1.
+The process of catching up by a lagging simulation and achieving a performance ratio of 1 can also influence other timings.
+Therefore the variation of delays (jitter) increases when the simulation lags temporarily.
+For emulations and the field of \emph{HiL} a increased jitter for a signal can be very critical and must be analyzed carefully.
+
+The host machine for the simulation and its components affect the achieved simulation times.
+The dependencies of the host system and the result of existing researches is shown in section \ref{sec:SystemDependencies}.
+
+Developing the simulation of a given system results in the situation of many provided code which should be executed depending on incoming messages and therefore creating new message for sending.
+Given systems can be designed in various hierarchies in sight of number of modules and complexity of simple modules.
+The different designs and their effect on real time simulation is shown in the next section.
 
 \section{Module design}
 \label{sec:ModuleDesign}
+Implementing a simulation of a given system brings up different design questions regarding complexity of modules and the designed hierarchy.
+
+\subsection{Modular design}
+Designing a granular system in OMNeT++ with a bigger number of modules connected with channels and grouped in compound modules allows a more dynamic simulation and can increase the reuse-ability of modules.
+This approach is convenient for simulating deep features and procedures within systems.
+When a simulated system or network consists of multiple systems such a design can be problematic in sight of communication and simulation overhead.
+Approaching emulation and the field of \emph{HiL} using the real time simulation these design decisions are important for the achieved timings.
+
+A example of a modular design is shown in figure \ref{fig:OMNeTModularDesign}.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\columnwidth]{OMNeTModularDesign.eps}
+    \caption{Modular design with OMNeT++}
+    \label{fig:OMNeTModularDesign}
+\end{figure}
+
+\subsection{Monolithic design}
+Decreasing the overhead of communication and simulation can be achieved for example by condensing a compound module to a simple module with more complex functions to execute.
+This leads to a monolithic design containing less modules with more complex functions.
+The execution of the single modules include more normal C++ code using simple method calls and operations.
+
+The previous example network showing a modular design in figure \ref{fig:OMNeTModularDesign} can be condensed to a more monolithic design.
+In the example, shown in figure \ref{fig:OMNeTMonolithicDesign}, the compound modules 0 and 2 with all their submodules were replaced by two simple modules.
+The channels and the sent messages between the modules stay the same, but the calculation within the modules include the complete behavior of the previously included components.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\columnwidth]{OMNeTMonolithicDesign.eps}
+    \caption{Monolithic design with OMNeT++}
+    \label{fig:OMNeTMonolithicDesign}
+\end{figure}
 
 \section{System dependencies}
 \label{sec:SystemDependencies}
+The host system for the simulation is very important regarding simulation speed and achievable timings of a real time simulation.
+As described in \cite{Sekercioglu2003} OMNeT++ is capable of running a parallel simulation when specific requirements are met.
+Running the simulation parallelized can achieve better timings and increase the possibilities of real time simulations.
 
 % needed in second column of first page if using \IEEEpubid
 %\IEEEpubidadjcol
