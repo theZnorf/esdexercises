@@ -1,0 +1,19 @@
+﻿Build started 17.12.2015 13:34:36.
+     1>Project "U:\esdexercises\SPS\ueg\JuliaMengen\JuliaMengen.vcxproj" on node 2 (Build target(s)).
+     1>ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v7.5\include" /Zi /nologo /W3 /WX- /O2 /Oi /Oy- /GL /D WIN32 /D NDEBUG /D _CONSOLE /D _LIB /D _UNICODE /D UNICODE /Gm- /EHsc /MD /GS /Gy /Zc:wchar_t /Zc:forScope /Fo"Release\\" /Fd"Release\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt main.cpp
+         main.cpp
+     1>main.cpp(40): warning C4018: '<' : signed/unsigned mismatch
+       Link:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"U:\esdexercises\SPS\ueg\Release\JuliaMengen.exe" /INCREMENTAL:NO /NOLOGO /LIBPATH:"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v7.5\lib\Win32" kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"U:\esdexercises\SPS\ueg\Release\JuliaMengen.pdb" /SUBSYSTEM:CONSOLE /OPT:REF /OPT:ICF /LTCG /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"U:\esdexercises\SPS\ueg\Release\JuliaMengen.lib" /MACHINE:X86 /SAFESEH Release\KernelFractalCalculation.cu.obj
+         Release\DurationAnalyze.obj
+         Release\main.obj
+         "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v7.5\lib\Win32\cudart.lib"
+         Generating code
+         Finished generating code
+         JuliaMengen.vcxproj -> U:\esdexercises\SPS\ueg\Release\JuliaMengen.exe
+     1>Done Building Project "U:\esdexercises\SPS\ueg\JuliaMengen\JuliaMengen.vcxproj" (Build target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:00:06.44

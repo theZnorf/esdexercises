@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- <!DOCTYPE IntelParallelAdvisorAnnotationDatabase SYSTEM "IntelParallelAdvisorAnnotationDatabase.dtd"> -->
+<IntelParallelAdvisorAnnotationDatabase
+  version="0.9.2"
+  database="U:\esdexercises\SPS\ueg\JuliaMengen\My Advisor XE Results - JuliaMengen\annotations.advidb"
+  next_handle="1"
+  next_site="1"
+  next_task="1">
+  <language name="cpp" pattern=".*\.(c|h|cc|hh|c++|h++|cpp|hpp|cp|hp|cxx|hxx|C|H|CPP|HPP|tcc|i|ii|m|mi|mm|M|mii)" />
+  <language name="c_sharp" pattern=".*\.cs" />
+  <language name="fortran" pattern=".*\.(f|F|for|FOR|fpp|FPP|ftn|FTN|f77|F77|f90|F90|f95|F95|f03|F03|f08|F08|fi|fd)" />
+  <language name="unknown" pattern=".*" />
+  <source_exclude name="*\source_cache\temporary_files\*" />
+  <source_ide_project name="U:\esdexercises\SPS\ueg\JuliaMengen\JuliaMengen.vcxproj" />
+  <file name="U:\esdexercises\SPS\ueg\JuliaMengen\bitmap.h" modification_bin_time="563a4b02" language="cpp" lines="572" />
+  <file name="U:\esdexercises\SPS\ueg\JuliaMengen\complex.h" modification_bin_time="561fa498" language="cpp" lines="113" />
+  <file name="U:\esdexercises\SPS\ueg\JuliaMengen\cuda_timer.h" modification_bin_time="561fa4f6" language="cpp" lines="62" />
+  <file name="U:\esdexercises\SPS\ueg\JuliaMengen\cudaerror.h" modification_bin_time="560d27a0" language="cpp" lines="36" />
+  <file name="U:\esdexercises\SPS\ueg\JuliaMengen\cudainfo.h" modification_bin_time="560d278b" language="cpp" lines="89" />
+  <file name="U:\esdexercises\SPS\ueg\JuliaMengen\cudaprint.h" modification_bin_time="560d2777" language="cpp" lines="92" />
+  <file name="U:\esdexercises\SPS\ueg\JuliaMengen\cudautils.h" modification_bin_time="563a3cb2" language="cpp" lines="49" />
+  <file name="U:\esdexercises\SPS\ueg\JuliaMengen\DurationAnalyze.cpp" modification_bin_time="5672958f" language="cpp" lines="26" />
+  <file name="U:\esdexercises\SPS\ueg\JuliaMengen\DurationAnalyze.h" modification_bin_time="5672a925" language="cpp" lines="94" />
+  <file name="U:\esdexercises\SPS\ueg\JuliaMengen\JuliaFractalCalculation.h" modification_bin_time="5644a880" language="cpp" lines="87" />
+  <file name="U:\esdexercises\SPS\ueg\JuliaMengen\JuliaFractalCalculationCPU.h" modification_bin_time="56449f57" language="cpp" lines="73" />
+  <file name="U:\esdexercises\SPS\ueg\JuliaMengen\JuliaFractalCalculationCUDA.h" modification_bin_time="567286fe" language="cpp" lines="119" />
+  <file name="U:\esdexercises\SPS\ueg\JuliaMengen\JuliaFractalsSet.h" modification_bin_time="5644b4fd" language="cpp" lines="32" />
+  <file name="U:\esdexercises\SPS\ueg\JuliaMengen\JuliaPixelCalculation.h" modification_bin_time="563a3802" language="cpp" lines="59" />
+  <file name="U:\esdexercises\SPS\ueg\JuliaMengen\main.cpp" modification_bin_time="5672acc6" language="cpp" lines="83" />
+  <file name="U:\esdexercises\SPS\ueg\JuliaMengen\tsc_clock.h" modification_bin_time="56449b1b" language="cpp" lines="77" />
+  <file name="U:\esdexercises\SPS\ueg\JuliaMengen\wavelength.h" modification_bin_time="561fc097" language="cpp" lines="76" />
+  <statistics files="17" lines="1739" annotations="0" site_annotations="0" task_annotations="0" lock_annotations="0" other_annotations="0" />
+</IntelParallelAdvisorAnnotationDatabase>
