@@ -1,6 +1,3 @@
-add_subdirectory(gtest)
-include_directories(gtest_SOURCE_FILES)
 include_directories(../FibonacciIterator)
 
 add_executable(FibonacciIteratorTest FibonacciIteratorTest.cpp)
-target_link_libraries(FibonacciIteratorTest gtest gtest_main)
