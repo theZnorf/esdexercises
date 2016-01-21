@@ -31,7 +31,7 @@ namespace julia
     public:
         CUDA_ATTR_HOST_DEVICE T Calc(pfc::complex<TF> const & z0, pfc::complex<TF> const & c) const
         {
-            auto iteration = 0;
+            T iteration = 0;
             pfc::complex<TF> result = z0;
 
             while ((iteration < cMaxIterCount - 1) && (result.norm() < cUpperBound))
@@ -45,7 +45,8 @@ namespace julia
 
         CUDA_ATTR_HOST_DEVICE T CalcV2(pfc::complex<TF> const & z0, pfc::complex<TF> const & c) const
         {
-            auto iteration = 0;
+            T iteration = 0;
+            T dummy = 0;
             pfc::complex<TF> result0 = z0;
             pfc::complex<TF> result1 = z0;
 
@@ -58,13 +59,15 @@ namespace julia
 
             if ((iteration < cMaxIterCount - 1) && (result0.norm() < cUpperBound))
                 iteration--;
+            else
+                dummy++;
 
             return iteration;
         }
 
         CUDA_ATTR_HOST_DEVICE T CalcV3(pfc::complex<TF> const & z0, pfc::complex<TF> const & c) const
         {
-            auto iteration = 0;
+            T iteration = 0;
             pfc::complex<TF> result0 = z0;
             pfc::complex<TF> result1 = z0;
             pfc::complex<TF> dummy = z0;
