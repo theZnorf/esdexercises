@@ -12,6 +12,13 @@
 #ifndef CUDAERROR_H
 #define CUDAERROR_H
 
+
+#if defined __CUDACC__   /* NVIDIA CUDA compiler */
+#define CUDA_ATTR_HOST_DEVICE __host__ __device__
+#else
+#define CUDA_ATTR_HOST_DEVICE
+#endif
+
 #include <cuda_runtime.h>
 #include <stdexcept>
 
@@ -25,7 +32,7 @@ class cuda_exception : public std::runtime_error {
       }
 };
 
-inline void check (cudaError const error) {
+inline void check(cudaError const error) {
    if (error != cudaSuccess) {
       throw pfc::cuda_exception (error);
    }
