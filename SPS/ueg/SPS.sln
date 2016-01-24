@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HelloWorld", "HelloWorld\He
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JuliaMengen", "JuliaMengen\JuliaMengen.vcxproj", "{874DA7C9-3BB3-48E2-A5E2-E6CE1B78C7A8}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Filters", "Filters\Filters.vcxproj", "{C7A52559-2AB0-42E8-B56A-13F3AC22E469}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -27,6 +29,12 @@ Global
 		{874DA7C9-3BB3-48E2-A5E2-E6CE1B78C7A8}.Release|Win32.ActiveCfg = Release|Win32
 		{874DA7C9-3BB3-48E2-A5E2-E6CE1B78C7A8}.Release|Win32.Build.0 = Release|Win32
 		{874DA7C9-3BB3-48E2-A5E2-E6CE1B78C7A8}.Release|x64.ActiveCfg = Release|Win32
+		{C7A52559-2AB0-42E8-B56A-13F3AC22E469}.Debug|Win32.ActiveCfg = Debug|Win32
+		{C7A52559-2AB0-42E8-B56A-13F3AC22E469}.Debug|Win32.Build.0 = Debug|Win32
+		{C7A52559-2AB0-42E8-B56A-13F3AC22E469}.Debug|x64.ActiveCfg = Debug|Win32
+		{C7A52559-2AB0-42E8-B56A-13F3AC22E469}.Release|Win32.ActiveCfg = Release|Win32
+		{C7A52559-2AB0-42E8-B56A-13F3AC22E469}.Release|Win32.Build.0 = Release|Win32
+		{C7A52559-2AB0-42E8-B56A-13F3AC22E469}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

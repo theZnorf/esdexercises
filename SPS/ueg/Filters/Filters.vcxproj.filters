@@ -1,0 +1,97 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{ced4c9d8-cf84-4c4a-826e-f4810be03a82}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\device">
+      <UniqueIdentifier>{9f58de55-ca2e-43e8-aea1-126132785a87}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib">
+      <UniqueIdentifier>{a72c1800-d54e-4199-996f-12400e6de65f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\host">
+      <UniqueIdentifier>{3f4022ed-f453-4416-9849-3e04e605a13e}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="..\..\..\..\..\..\..\..\..\..\..\..\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v7.5\lib\Win32\cudart.lib">
+      <Filter>lib</Filter>
+    </Library>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="src\device\gaussian_filter.cu">
+      <Filter>src\device</Filter>
+    </CudaCompile>
+    <CudaCompile Include="src\device\sobel_filter.cu">
+      <Filter>src\device</Filter>
+    </CudaCompile>
+    <CudaCompile Include="src\device\rgba_to_gray.cu">
+      <Filter>src\device</Filter>
+    </CudaCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\device\rgba_to_gray.h">
+      <Filter>src\device</Filter>
+    </ClInclude>
+    <ClInclude Include="src\device\sobel_filter.h">
+      <Filter>src\device</Filter>
+    </ClInclude>
+    <ClInclude Include="src\device\gaussian_filter.h">
+      <Filter>src\device</Filter>
+    </ClInclude>
+    <ClInclude Include="src\host\pfc_cuda_device_info.h">
+      <Filter>src\host</Filter>
+    </ClInclude>
+    <ClInclude Include="src\host\pfc_cuda_exception.h">
+      <Filter>src\host</Filter>
+    </ClInclude>
+    <ClInclude Include="src\host\pfc_cuda_macros.h">
+      <Filter>src\host</Filter>
+    </ClInclude>
+    <ClInclude Include="src\host\pfc_cuda_memory.h">
+      <Filter>src\host</Filter>
+    </ClInclude>
+    <ClInclude Include="src\host\pfc_cuda_timer.h">
+      <Filter>src\host</Filter>
+    </ClInclude>
+    <ClInclude Include="src\host\pfc_timed_run.h">
+      <Filter>src\host</Filter>
+    </ClInclude>
+    <ClInclude Include="src\host\pfc_windows.h">
+      <Filter>src\host</Filter>
+    </ClInclude>
+    <ClInclude Include="src\host\pfc_helper.h">
+      <Filter>src\host</Filter>
+    </ClInclude>
+    <ClInclude Include="src\host\pfc_version.h">
+      <Filter>src\host</Filter>
+    </ClInclude>
+    <ClInclude Include="src\host\pfc_opengl_exception.h">
+      <Filter>src\host</Filter>
+    </ClInclude>
+    <ClInclude Include="src\host\pfc_opengl.h">
+      <Filter>src\host</Filter>
+    </ClInclude>
+    <ClInclude Include="src\host\pfc_config.h">
+      <Filter>src\host</Filter>
+    </ClInclude>
+    <ClInclude Include="src\host\pfc_filters.h">
+      <Filter>src\host</Filter>
+    </ClInclude>
+    <ClInclude Include="src\host\pfc_bitmap.h">
+      <Filter>src\host</Filter>
+    </ClInclude>
+    <ClInclude Include="src\host\pfc_status.h">
+      <Filter>src\host</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\host\pfc_opengl.cpp">
+      <Filter>src\host</Filter>
+    </ClCompile>
+    <ClCompile Include="src\host\pfc_filters.cpp">
+      <Filter>src\host</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

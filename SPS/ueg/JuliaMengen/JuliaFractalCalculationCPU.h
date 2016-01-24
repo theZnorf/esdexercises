@@ -21,7 +21,7 @@ namespace julia
 
         // Methods
     public:
-        virtual void Calc(pfc::complex<FloatingType> const & c) override
+        virtual void Calc(pfc::complex<FloatingType> const & c, int version = 0) override
         {
             boost::thread_group group;
 

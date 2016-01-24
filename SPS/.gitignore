@@ -1,3 +1,9 @@
 *.sdf
 Debug/
 Release/
+*Release*
+*Debug*
+*.db
+*.pdb
+*.suo
+*images*

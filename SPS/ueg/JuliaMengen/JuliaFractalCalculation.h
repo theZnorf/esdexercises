@@ -44,7 +44,7 @@ namespace julia
 
         // Methods
     public:
-        virtual void Calc(pfc::complex<FloatingType> const & c)
+        virtual void Calc(pfc::complex<FloatingType> const & c, int version = 0)
         {
             throw std::logic_error("Calc of abstract JuliaFractalCalculation called");
         };

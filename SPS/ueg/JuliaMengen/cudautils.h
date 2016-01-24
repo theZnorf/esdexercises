@@ -4,6 +4,12 @@
 #include <cuda_runtime.h>
 #include "cudaerror.h"
 
+#if defined __CUDACC__   /* NVIDIA CUDA compiler */
+#define CUDA_ATTR_HOST_DEVICE __host__ __device__
+#else
+#define CUDA_ATTR_HOST_DEVICE
+#endif
+
 namespace cudautils
 {
 
@@ -19,6 +25,16 @@ namespace cudautils
         }
 
         return p_dst;
+    }
+
+    template<typename TDst, typename TSrc>
+    void symbolmemcopy(TDst& p_dst, TSrc * p_src,
+        size_t const count)
+    {
+        if ((p_dst != nullptr) && (p_src != nullptr) && (count > 0))
+        {
+            pfc::check(cudaMemcpyToSymbol(p_dst, p_src, count * sizeof(TSrc)));
+        }
     }
 
     template<typename T>
