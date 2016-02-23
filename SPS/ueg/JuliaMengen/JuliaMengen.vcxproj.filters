@@ -82,4 +82,7 @@
       <Filter>Source Files</Filter>
     </CudaCompile>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\AnalyseAllVersions.nvact" />
+  </ItemGroup>
 </Project>

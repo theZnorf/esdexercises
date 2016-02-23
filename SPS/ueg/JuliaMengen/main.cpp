@@ -47,7 +47,7 @@ int main(int argc, char* argv[])
 
         std::string imagePrefix = "images/julia_";
 
-        std::initializer_list<size_t> cpuThreads = {1}; //{ 1, 2, 4, 8, 16 };
+        std::initializer_list<size_t> cpuThreads = {}; //{ 1, 2, 4, 8, 16 };
         std::initializer_list<size_t> gpuThreads = {}; //{ 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024 };
         std::vector<int> gpuVersions = {2, 3}; //{ 2, 3, 4 };
         size_t gpuVersionsThreadCount = 1024;
