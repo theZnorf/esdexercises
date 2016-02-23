@@ -27,11 +27,7 @@ namespace julia
             size_t const imgWidth, size_t const imgHeight, pfc::complex<FloatingType> const & lowerLeft,
             pfc::complex<FloatingType> const & upperRight, size_t const threadPerBlock)
             : JuliaFractalCalculation(calc, imgWidth, imgHeight, lowerLeft, upperRight), cThreadPerBlock(threadPerBlock)
-        {
-            // check special case
-            if (cThreadPerBlock > cImgWidth)
-                throw std::logic_error("more threads than image width");
-        }
+        {}
 
         // Methods
     public:
@@ -51,6 +47,9 @@ namespace julia
             case 3:
                 CalcV3(c);
                 break;
+            case 4:
+                CalcV4(c);
+                break;
 
             default:
                 throw new std::logic_error("invalid version number");
@@ -62,17 +61,13 @@ namespace julia
             // calculate number of blocks
             dim3 blockDimension(1, 1, 1);
             blockDimension.z = 1;
-            if (cThreadPerBlock <= cImgWidth)
-            {
-                blockDimension.x = static_cast<size_t>((cImgWidth + 0.5) * 1.0 / cThreadPerBlock);
-                blockDimension.y = cImgHeight;
-            }
-            else
-            {
-                blockDimension.x = 1;
-                blockDimension.y = static_cast<size_t>((cImgWidth)* 1.0 / cThreadPerBlock * cImgHeight);
-            }
 
+            // calculate block dimensions
+            auto dx = static_cast<FloatingType>(((cImgWidth * 1.0) / (cThreadPerBlock * 1.0)));
+            blockDimension.x = static_cast<size_t>(dx);
+            if (dx > blockDimension.x)
+                blockDimension.x++;
+            blockDimension.y = cImgHeight;
 
             // allocate memory
             auto dp_image = cudautils::malloc_on_device<pfc::RGB_3_t>(mBitMap.get_num_pixels());
@@ -120,17 +115,13 @@ namespace julia
             // calculate number of blocks
             dim3 blockDimension(1, 1, 1);
             blockDimension.z = 1;
-            if (cThreadPerBlock <= cImgWidth)
-            {
-                blockDimension.x = static_cast<size_t>((cImgWidth + 0.5) * 1.0 / cThreadPerBlock);
-                blockDimension.y = cImgHeight;
-            }
-            else
-            {
-                blockDimension.x = 1;
-                blockDimension.y = static_cast<size_t>((cImgWidth)* 1.0 / cThreadPerBlock * cImgHeight);
-            }
 
+            // calculate block dimensions
+            auto dx = static_cast<FloatingType>(((cImgWidth * 1.0) / (cThreadPerBlock * 1.0)));
+            blockDimension.x = static_cast<size_t>(dx);
+            if (dx > blockDimension.x)
+                blockDimension.x++;
+            blockDimension.y = cImgHeight;
 
             // allocate memory
             auto dp_image = cudautils::malloc_on_device<pfc::RGB_3_t>(mBitMap.get_num_pixels());
@@ -172,17 +163,13 @@ namespace julia
             // calculate number of blocks
             dim3 blockDimension(1, 1, 1);
             blockDimension.z = 1;
-            if (cThreadPerBlock <= cImgWidth)
-            {
-                blockDimension.x = static_cast<size_t>((cImgWidth + 0.5) * 1.0 / cThreadPerBlock);
-                blockDimension.y = cImgHeight;
-            }
-            else
-            {
-                blockDimension.x = 1;
-                blockDimension.y = static_cast<size_t>((cImgWidth)* 1.0 / cThreadPerBlock * cImgHeight);
-            }
 
+            // calculate block dimensions
+            auto dx = static_cast<FloatingType>(((cImgWidth * 1.0) / (cThreadPerBlock * 1.0)));
+            blockDimension.x = static_cast<size_t>(dx);
+            if (dx > blockDimension.x)
+                blockDimension.x++;
+            blockDimension.y = cImgHeight;
 
             // allocate memory
             auto dp_image = cudautils::malloc_on_device<pfc::RGB_3_t>(mBitMap.get_num_pixels());
@@ -224,16 +211,13 @@ namespace julia
             // calculate number of blocks
             dim3 blockDimension(1, 1, 1);
             blockDimension.z = 1;
-            if (cThreadPerBlock <= cImgWidth)
-            {
-                blockDimension.x = static_cast<size_t>((cImgWidth + 0.5) * 1.0 / cThreadPerBlock);
-                blockDimension.y = cImgHeight;
-            }
-            else
-            {
-                blockDimension.x = 1;
-                blockDimension.y = static_cast<size_t>((cImgWidth)* 1.0 / cThreadPerBlock * cImgHeight);
-            }
+
+            // calculate block dimensions
+            auto dx = static_cast<FloatingType>((((cImgWidth * 1.0 / (cPixelPerThread * 1.0)) * 1.0) / (cThreadPerBlock * 1.0)));
+            blockDimension.x = static_cast<size_t>(dx);
+            if (dx > blockDimension.x)
+                blockDimension.x++;
+            blockDimension.y = cImgHeight;
 
 
             // allocate memory
@@ -256,7 +240,61 @@ namespace julia
             // start calculation
             FractalCalculationWrapperV3(blockDimension, cThreadPerBlock, c, dp_image, mBitMap.get_num_pixels(),
                 cImgWidth, cImgHeight, mColorTable.data(), mColorTable.size(), cLowerLeft, cStepX, cStepY,
-                dp_pixelCalc);
+                dp_pixelCalc, cPixelPerThread);
+
+            // sync
+            pfc::check(cudaDeviceSynchronize());
+            pfc::check(cudaGetLastError());
+
+            // copy image
+            cudautils::memcopy(mBitMap.get_image_RGB_3(), dp_image, mBitMap.get_num_pixels()
+                * sizeof(pfc::RGB_3_t), cudaMemcpyKind::cudaMemcpyDeviceToHost);
+
+            // free memory
+            cudautils::free_on_device(dp_image);
+            cudautils::free_on_device(dp_pixelCalc);
+        }
+
+        void CalcV4(pfc::complex<FloatingType> const & c)
+        {
+            // calculate number of blocks
+            dim3 blockDimension(1, 1, 1);
+            blockDimension.z = 1;
+
+            // calculate block dimensions
+            auto dx = static_cast<FloatingType>((((cImgWidth * 1.0 / (cPixelPerThread * 1.0)) * 1.0) / (32 * 1.0)));
+            blockDimension.x = static_cast<size_t>(dx);
+            if (dx > blockDimension.x)
+                blockDimension.x++;
+
+            auto dy = static_cast<FloatingType>((((cImgHeight * 1.0) * 1.0) / (32 * 1.0)));
+            blockDimension.y = static_cast<size_t>(dy);
+            if (dy > blockDimension.y)
+                blockDimension.y++;
+
+            dim3 threadDimension(32, 32, 1);
+
+            // allocate memory
+            auto dp_image = cudautils::malloc_on_device<pfc::RGB_3_t>(mBitMap.get_num_pixels());
+
+            auto dp_pixelCalc = cudautils::malloc_on_device<JuliaPixelCalculation<T, FloatingType>>(1);
+
+
+            // copy image
+            cudautils::memcopy(dp_image, mBitMap.get_image_RGB_3(), mBitMap.get_num_pixels()
+                * sizeof(pfc::RGB_3_t), cudaMemcpyKind::cudaMemcpyHostToDevice);
+
+            // copy calculation object
+            cudautils::memcopy(dp_pixelCalc, &cCalc, sizeof(JuliaPixelCalculation<T, FloatingType>),
+                cudaMemcpyKind::cudaMemcpyHostToDevice);
+
+            // check if allocation and copy was successful
+            pfc::check(cudaGetLastError());
+
+            // start calculation
+            FractalCalculationWrapperV4(blockDimension, threadDimension, c, dp_image, mBitMap.get_num_pixels(),
+                cImgWidth, cImgHeight, mColorTable.data(), mColorTable.size(), cLowerLeft, cStepX, cStepY,
+                dp_pixelCalc, cPixelPerThread);
 
             // sync
             pfc::check(cudaDeviceSynchronize());
@@ -309,22 +347,50 @@ namespace julia
             uint3 const threadIdx, pfc::complex<FloatingType> const c, pfc::RGB_3_t * dp_data, size_t const dataSize,
             size_t const imageWidth, size_t const imageHeight, pfc::RGB_3_t * dp_colorTable,
             size_t const colorTableSize, pfc::complex<FloatingType> const lowerLeft, FloatingType const stepX,
-            FloatingType const stepY, julia::JuliaPixelCalculation<int, FloatingType> const * dp_pixelCalc)
+            FloatingType const stepY, julia::JuliaPixelCalculation<int, FloatingType> const * dp_pixelCalc,
+            size_t const pixelPerThread)
         {
-            auto x = (blockIdx.x * blockDim.x + threadIdx.x) % imageWidth;
+            auto x = ((blockIdx.x * blockDim.x + threadIdx.x) * pixelPerThread) % imageWidth;
             auto y = blockIdx.y * blockDim.y + threadIdx.y;
             auto i = x + y * imageWidth;
             auto pixel = dp_data;
 
             auto pos = JuliaFractalCalculation<T, FloatingType>::CalcPixelPos(x, y, stepX, stepY, lowerLeft);
-            auto res = dp_pixelCalc->CalcV3(pos, c);
+            auto pos1 = JuliaFractalCalculation<T, FloatingType>::CalcPixelPos(x + 1, y, stepX, stepY, lowerLeft);
+            auto res = dp_pixelCalc->Calc(pos, c);
+            auto res1 = dp_pixelCalc->Calc(pos1, c);
 
             pixel[i] = dp_colorTable[res];
+            pixel[i + 1] = dp_colorTable[res1];
+        }
+
+        CUDA_ATTR_HOST_DEVICE static void CalcPixelV4(uint3 const blockIdx, dim3 const blockDim,
+            uint3 const threadIdx, pfc::complex<FloatingType> const c, pfc::RGB_3_t * dp_data, size_t const dataSize,
+            size_t const imageWidth, size_t const imageHeight, pfc::RGB_3_t * dp_colorTable,
+            size_t const colorTableSize, pfc::complex<FloatingType> const lowerLeft, FloatingType const stepX,
+            FloatingType const stepY, julia::JuliaPixelCalculation<int, FloatingType> const * dp_pixelCalc,
+            size_t const pixelPerThread)
+        {
+            auto x = ((blockIdx.x * blockDim.x + threadIdx.x) * pixelPerThread) % imageWidth;
+            auto y = blockIdx.y * blockDim.y + threadIdx.y;
+            auto i = x + y * imageWidth;
+            auto pixel = dp_data;
+
+            auto pos = JuliaFractalCalculation<T, FloatingType>::CalcPixelPos(x, y, stepX, stepY, lowerLeft);
+            auto pos1 = JuliaFractalCalculation<T, FloatingType>::CalcPixelPos(x + 1, y, stepX, stepY, lowerLeft);
+            auto res = dp_pixelCalc->Calc(pos, c);
+            auto res1 = dp_pixelCalc->Calc(pos1, c);
+
+            pixel[i] = dp_colorTable[res];
+            pixel[i + 1] = dp_colorTable[res1];
         }
 
         // Member
     private:
         size_t const cThreadPerBlock;
+
+        // Version 3
+        size_t const cPixelPerThread = 2;
     };
 }
 
