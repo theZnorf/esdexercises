@@ -25,8 +25,8 @@ int main(int argc, char* argv[])
 
         long long const warmupCount = 2000000000;
 
-        IntType const imageWidth = 5120;
-        IntType const imageHeight = 5120;
+        IntType const imageWidth = 5000;
+        IntType const imageHeight = 5000;
         FloatingType const upperBound = 1000.0;
         IntType const maxIterations = 50;
         pfc::complex<FloatingType> lowerLeft(-2.0, -2.0);
@@ -41,17 +41,17 @@ int main(int argc, char* argv[])
 	    field.realStep = 1.0;
 
         bool printDurations = false;
-        bool saveCpuImages = false;
+        bool saveCpuImages = true;
         bool saveGpuImages = false;
-        bool saveGpuVersionImages = false;
+        bool saveGpuVersionImages = true;
 
         std::string imagePrefix = "images/julia_";
 
         std::initializer_list<size_t> cpuThreads = {}; //{ 1, 2, 4, 8, 16 };
-        std::initializer_list<size_t> gpuThreads = {}; // { 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024 };
-        std::vector<int> gpuVersions = { 2 };
+        std::initializer_list<size_t> gpuThreads = {}; //{ 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024 };
+        std::vector<int> gpuVersions = {2, 3}; //{ 2, 3, 4 };
         size_t gpuVersionsThreadCount = 1024;
-        int defaultVersion = 0;
+        int defaultVersion = 2;
 
         bool enableCpuWarmUp = false;
 
@@ -91,7 +91,7 @@ int main(int argc, char* argv[])
             std::shared_ptr<julia::JuliaFractalCalculation<IntType, FloatingType>> calc(
                 new julia::JuliaFractalCalculationCPU<IntType, FloatingType>(pixelCalc, imageWidth, imageHeight, lowerLeft, upperRight, threadCount));
 
-            analyze.RunCalculation(field, calc, "CPU", std::to_string(threadCount), defaultVersion, printDurations, saveCpuImages, imagePrefix);
+            analyze.RunCalculation(field, calc, "CPU", std::to_string(threadCount), defaultVersion, printDurations, saveCpuImages, imagePrefix + std::to_string(threadCount));
         }
 
         for (auto threadCount : gpuThreads)
@@ -99,7 +99,7 @@ int main(int argc, char* argv[])
             std::shared_ptr<julia::JuliaFractalCalculation<IntType, FloatingType>> calc(
                 new julia::JuliaFractalCalculationCUDA<IntType, FloatingType>(pixelCalc, imageWidth, imageHeight, lowerLeft, upperRight, threadCount));
 
-            analyze.RunCalculation(field, calc, "GPU", std::to_string(threadCount), defaultVersion, printDurations, saveGpuImages, imagePrefix);
+            analyze.RunCalculation(field, calc, "GPU", std::to_string(threadCount), defaultVersion, printDurations, saveGpuImages, imagePrefix + std::to_string(threadCount));
         }
 
         for (auto version : gpuVersions)
@@ -107,7 +107,7 @@ int main(int argc, char* argv[])
             std::shared_ptr<julia::JuliaFractalCalculation<IntType, FloatingType>> calc(
                 new julia::JuliaFractalCalculationCUDA<IntType, FloatingType>(pixelCalc, imageWidth, imageHeight, lowerLeft, upperRight, gpuVersionsThreadCount));
 
-            analyze.RunCalculation(field, calc, "GPU", std::to_string(version), version, printDurations, saveGpuVersionImages, imagePrefix);
+            analyze.RunCalculation(field, calc, "GPU", std::to_string(version), version, printDurations, saveGpuVersionImages, imagePrefix + std::to_string(version));
         }
 
         std::cout << "Write results" << std::endl;

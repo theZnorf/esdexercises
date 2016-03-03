@@ -46,48 +46,18 @@ namespace julia
         CUDA_ATTR_HOST_DEVICE T CalcV2(pfc::complex<TF> const & z0, pfc::complex<TF> const & c) const
         {
             T iteration = 0;
-            T dummy = 0;
-            pfc::complex<TF> result0 = z0;
-            pfc::complex<TF> result1 = z0;
+            pfc::complex<TF> result = z0;
 
-            while ((iteration < cMaxIterCount - 1) && (result0.norm() < cUpperBound) && (result1.norm() < cUpperBound))
+            while (iteration < (cMaxIterCount - 1))
             {
-                result0 = result1.square() + c;
-                result1 = result0.square() + c;
+                result = result.square() + c;
+                if (result.norm() >= cUpperBound)
+                    break;
+                result = result.square() + c;
+                if (result.norm() >= cUpperBound)
+                    break;
                 iteration += 2;
             }
-
-            if ((iteration < cMaxIterCount - 1) && (result0.norm() < cUpperBound))
-                iteration--;
-            else
-                dummy++;
-
-            return iteration;
-        }
-
-        CUDA_ATTR_HOST_DEVICE T CalcV3(pfc::complex<TF> const & z0, pfc::complex<TF> const & c) const
-        {
-            T iteration = 0;
-            pfc::complex<TF> result0 = z0;
-            pfc::complex<TF> result1 = z0;
-            pfc::complex<TF> dummy = z0;
-
-            for (; iteration < cMaxIterCount - 1; iteration += 2)
-            {
-                if (result0.norm() < cUpperBound)
-                    result0 = result1.square() + c;
-                else
-                    dummy = dummy.square() + c;
-
-                if (result1.norm() < cUpperBound)
-                    result1 = result0.square() + c;
-                else
-                    dummy = dummy.square() + c;
-            }
-
-            if ((iteration < cMaxIterCount - 1) && (result0.norm() < cUpperBound))
-                iteration--;
-
             return iteration;
         }
 

@@ -58,7 +58,7 @@ namespace julia
                 auto y = i / cImgWidth;
 
                 auto pos = CalcPixelPos(x, y);
-                auto res = cCalc.Calc(pos, c);
+                auto res = cCalc.CalcV2(pos, c);
 
                 pixel[i] = mColorTable[res];
             }
